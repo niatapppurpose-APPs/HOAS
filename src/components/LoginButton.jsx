@@ -12,7 +12,7 @@ const LoginButton = () => {
 
   return (
     <button onClick={handleLogin}>
-      Continue with Google
+      Continue with Google.
     </button>
   );
 };
