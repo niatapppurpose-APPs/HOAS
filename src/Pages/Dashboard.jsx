@@ -1,6 +1,6 @@
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../components/context/AuthContext";
 import { Navigate } from "react-router-dom";
-import LogoutButton from "../LogoutButton"
+import LogoutButton from "../components/LogoutButton"
 
 
 const getLargerPhotoUrl = (url) => {
