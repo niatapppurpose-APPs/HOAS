@@ -1,20 +1,17 @@
 import { signInWithPopup } from "firebase/auth";
-import { auth, provider } from "./firebase/firebaseConfig";
+import { auth, provider } from "../firebase/firebaseConfig";
 
 const LoginButton = () => {
-  const handleLogin = async () => {
+  const login = async () => {
     try {
-      await signInWithPopup(auth, provider);
-    } catch (err) {
-      console.log("Login Error:", err);
+      const result = await signInWithPopup(auth, provider);
+      console.log("Login successful:", result.user);
+    } catch (e) {
+      console.log("Login error:", e);
     }
   };
 
-  return (
-    <button onClick={handleLogin}>
-      Continue with Google.
-    </button>
-  );
+  return <button onClick={login}>Continue with Google</button>;
 };
 
 export default LoginButton;
