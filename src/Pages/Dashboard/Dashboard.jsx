@@ -6,9 +6,8 @@ import LogoutButton from '../LogoutButton';
 const Dashboard = () => {
   const { user } = useAuth();
 
-  // ADDED: state to control image popup open/close
   const [open, setOpen] = useState(false);
-  // ADDED: get high resolution profile image wil get here
+
   const highResPhoto = user.photoURL
     ? user.photoURL.replace("s96-c", "s5000-c")
     : "";
@@ -19,7 +18,6 @@ const Dashboard = () => {
 
       <div className="user-info">
         {highResPhoto && (
-          // ADDED: button wrapper to open popup on image click
           <button
             className='buttonIcon'
             onClick={() => setOpen(true)}
@@ -37,10 +35,7 @@ const Dashboard = () => {
         <h2>User Details</h2>
         <p><strong>Name:</strong> {user.displayName || 'N/A'}</p>
         <p><strong>Email:</strong> {user.email}</p>
-        <p><strong>Email Verified:</strong> {user.emailVerified ? 'Yes' : 'No'}</p>
-      </div>
-
-      {/* ADDED: image popup modal */}
+      </div>  
       {open && (
         <div
           className="image-popup-overlay"
