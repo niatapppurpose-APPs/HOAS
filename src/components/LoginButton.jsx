@@ -7,7 +7,7 @@ const LoginButton = () => {
       const result = await signInWithPopup(auth, provider);
       console.log("Login successful:", result.user);
     } catch (e) {
-      console.log("Login error:", e);
+      console.log("Login Error Please Try Again:", e);
     }
   };
 
