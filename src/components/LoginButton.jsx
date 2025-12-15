@@ -11,7 +11,7 @@ const LoginButton = () => {
     }
   };
 
-  return <button onClick={login}>Continue with Google</button>;
+  return <button onClick={login}>Continue with Google.</button>;
 };
 
 export default LoginButton;

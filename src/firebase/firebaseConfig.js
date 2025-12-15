@@ -16,5 +16,5 @@ export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 
-// Enable persistence so user stays logged in after page reload
+// Enable persistence so user stays logged in after page reload ok na
 setPersistence(auth, browserLocalPersistence);

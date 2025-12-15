@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
       setUser(user);
       setLoading(false);
       if (user) {
-        console.log("Logged in user:", user);
+        console.log("Logged in user successfully:", user);
       }
     });
 

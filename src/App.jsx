@@ -5,7 +5,7 @@ import Dashboard from "./components/Pages/Dashboard";
 const App = () => {
   const { user } = useAuth();
 
-  // If not authenticated, show login, otherwise show dashboard
+  // If not authenticated, show login, otherwise show dashboard ok na
   return user ? <Dashboard /> : <Login />;
 };
 
