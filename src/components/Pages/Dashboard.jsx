@@ -8,7 +8,7 @@ const Dashboard = () => {
 
   // ADDED: state to control image popup open/close
   const [open, setOpen] = useState(false);
-  // ADDED: get high resolution profile image
+  // ADDED: get high resolution profile image wil get here
   const highResPhoto = user.photoURL
     ? user.photoURL.replace("s96-c", "s5000-c")
     : "";
