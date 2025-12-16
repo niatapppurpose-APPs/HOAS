@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router"
+import {useNavigate } from "react-router"
 import "./userrole.css"
 import { useState } from "react"
 
@@ -8,31 +8,20 @@ const UserRole = () => {
   const navigate = useNavigate();
   const options = { replace: true }
   const handleContinue = () => {
-    if (role === "student") {
-      navigate('/student-profile', options)
-
-    } else if (role === "warden") {
-      navigate('/warden-profile', options)
-
-    } else if (role === "management") {
-      navigate('/management-profile', options)
-
-    }
+   navigate(`/profile/${role}`)
   }
 
   return (
     <div>
       <h2>Select your role</h2>
 
-      <label>
-        <input
-          type="input"
-          name="role"
-          value={null && ("student" || "warden" || "management")}
-          onChange={(e) => setUserRole(e.target.value)}
-        />
+      <select onChange={(e) => setUserRole(e.target.value)}>
+        <option value="">Select</option>
+        <option value="student-profile">Student</option>
+        <option value="warden-profile">Warden</option>
+        <option value="management-profile">Management</option>
+      </select>
 
-      </label>
 
       <button disabled={!role} onClick={handleContinue}>
         Continue
