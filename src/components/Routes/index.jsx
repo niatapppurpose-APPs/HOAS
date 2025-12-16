@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Home from '../../Pages/HOME/home'
-import Login from '../../Pages/Login'
+import Login from '../../Pages/LoginPage/Login'
 import Dashboard from '../../Pages/Dashboard/Dashboard'
 import UserRole from "../UserServices/userrole";
 import StudentProfile from '../../DashBoards/Student-DashBoard/index'
@@ -9,6 +9,8 @@ import ManagementProfile from '../../DashBoards/Principal-Dashbord/index'
 import StudentDashboard from "../../DashBoards/Student-DashBoard/StudentDashboard";
 import WardenDashboard from "../../DashBoards/Warden-Dashboard/WardenDashboard";
 import ManagementDashboard from "../../DashBoards/Principal-Dashbord/PrincipalDashboard";
+import OwnersDashboard from "../../Pages/OwnersDashboard/ownersdashbord"
+import AdminLogin from "../../Pages/AdminLogin/AdminLogin"
 const Routes_path = () => {
     return (
         <>
@@ -26,6 +28,9 @@ const Routes_path = () => {
                 <Route path="/dashboard/student" element={<StudentDashboard />} />
                 <Route path="/dashboard/warden" element={<WardenDashboard />} />
                 <Route path="/dashboard/management" element={<ManagementDashboard />} />
+                {/* --------------------------------------- Owners Page ------------------------------------- */}
+                <Route path="/admin-login" element={<AdminLogin />} />
+                <Route path="/OwnersDashboard" element={<OwnersDashboard />} />
 
             </Routes>
         </>

@@ -1,5 +1,5 @@
 import { signInWithPopup } from "firebase/auth";
-import { auth, provider } from "../firebase/firebaseConfig";
+import { auth, provider } from "../../firebase/firebaseConfig";
 
 const LoginButton = () => {
   const login = async () => {

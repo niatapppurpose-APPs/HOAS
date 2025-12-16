@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import "./dashboard.css"
 import { useAuth } from '../../context/AuthContext';
-import LogoutButton from '../LogoutButton';
+import LogoutButton from '../LoginPage/LogoutButton';
 
 const Dashboard = () => {
   const { user } = useAuth();
