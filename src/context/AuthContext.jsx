@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, getRedirectResult } from "firebase/auth";
-import { auth } from "../firebase/firebaseConfig";
+import { onAuthStateChanged, getRedirectResult, signOut } from "firebase/auth";
+import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
+import { auth, db } from "../firebase/firebaseConfig";
 
 const AuthContext = createContext();
 
@@ -14,6 +15,10 @@ export const AuthProvider = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [claims, setClaims] = useState(null);
   const [adminChecked, setAdminChecked] = useState(false);
+  
+  // User data from Firestore
+  const [userData, setUserData] = useState(null);
+  const [userDataLoading, setUserDataLoading] = useState(true);
 
   useEffect(() => {
     // Handle redirect result from Google Sign-In
@@ -44,6 +49,21 @@ export const AuthProvider = ({ children }) => {
           console.log("Logged in user successfully:", currentUser.email);
           console.log("User claims:", userClaims);
           console.log("Is Admin:", adminStatus);
+
+          // Check if user document exists, if not create it
+          try {
+            const userDocRef = doc(db, "users", currentUser.uid);
+            const userSnapshot = await getDoc(userDocRef);
+            
+            if (!userSnapshot.exists()) {
+              // Do NOT create the document here. Let the UserRole page handle it.
+              // This prevents the "default role" issue.
+              console.log("New user detected, waiting for role selection...");
+            }
+          } catch (firestoreError) {
+            console.error("Error checking/creating user document:", firestoreError);
+            // Don't block login if Firestore fails, just log it
+          }
         } catch (error) {
           console.error("Error getting token claims:", error);
           setIsAdmin(false);
@@ -54,6 +74,8 @@ export const AuthProvider = ({ children }) => {
         setIsAdmin(false);
         setClaims(null);
         setAdminChecked(true);
+        setUserData(null);
+        setUserDataLoading(false);
       }
       
       setLoading(false);
@@ -61,6 +83,36 @@ export const AuthProvider = ({ children }) => {
 
     return unsubscribe;
   }, []);
+
+  // Listen to user data from Firestore in real-time
+  useEffect(() => {
+    if (!user) {
+      setUserData(null);
+      setUserDataLoading(false);
+      return;
+    }
+
+    setUserDataLoading(true);
+    
+    // Real-time listener for user document
+    const userDocRef = doc(db, "users", user.uid);
+    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setUserData(data);
+        console.log("User data from Firestore:", data);
+      } else {
+        setUserData(null);
+        console.log("No user document found in Firestore");
+      }
+      setUserDataLoading(false);
+    }, (error) => {
+      console.error("Error listening to user data:", error);
+      setUserDataLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   // Function to refresh token and re-check admin status
   const refreshAdminStatus = async () => {
@@ -80,18 +132,71 @@ export const AuthProvider = ({ children }) => {
     return false;
   };
 
+  // Function to create or update user profile in Firestore
+  const createUserProfile = async (role, additionalData = {}) => {
+    if (!user) return false;
+
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      const profileData = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        role: role,
+        status: "pending", // pending, approved, denied
+        createdAt: userDoc.exists() ? userDoc.data().createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...additionalData,
+      };
+
+      await setDoc(userDocRef, profileData, { merge: true });
+      console.log("User profile created/updated:", profileData);
+      return true;
+    } catch (error) {
+      console.error("Error creating user profile:", error);
+      return false;
+    }
+  };
+
+  // Function to logout
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      setUserData(null);
+      setIsAdmin(false);
+      setClaims(null);
+      console.log("User logged out successfully");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
   const value = {
     user,
     loading,
     isAdmin,
     claims,
     adminChecked,
+    userData,
+    userDataLoading,
     refreshAdminStatus,
+    createUserProfile,
+    logout,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {loading ? (
+        <div className="flex items-center justify-center min-h-screen bg-slate-900">
+          <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 };

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
-import { auth } from "../../firebase/firebaseConfig";
+import { collection, query, where, onSnapshot, doc, updateDoc, getDocs, deleteDoc, writeBatch } from "firebase/firestore";
+import { auth, db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 import {
   Building2,
@@ -16,104 +17,11 @@ import {
   MapPin,
   LogOut,
   Loader2,
+  RefreshCw,
+  AlertCircle,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
-
-// Mock Data - Easily replaceable with database calls
-const mockCollegesData = [
-  {
-    id: "col_001",
-    name: "St. Xavier's College",
-    logo: "https://images.unsplash.com/photo-1562774053-701939374585?w=100&h=100&fit=crop",
-    email: "admin@stxaviers.edu",
-    location: "Mumbai, Maharashtra",
-    status: "PENDING", // PENDING, APPROVED, DENIED
-    campusCount: 3,
-    coAdmin: {
-      name: "Dr. Rajesh Kumar",
-      email: "rajesh.kumar@stxaviers.edu",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
-    },
-    students: [
-      { id: "STU001", name: "Amit Sharma", image: null, status: "APPROVED" },
-      { id: "STU002", name: "Priya Patel", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop", status: "APPROVED" },
-      { id: "STU003", name: "Rahul Verma", image: null, status: "PENDING" },
-      { id: "STU004", name: "Sneha Gupta", image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop", status: "APPROVED" },
-    ],
-    wardens: [
-      { id: "WAR001", name: "Mr. Suresh Menon", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop", status: "APPROVED" },
-      { id: "WAR002", name: "Mrs. Lakshmi Iyer", image: null, status: "APPROVED" },
-    ],
-  },
-  {
-    id: "col_002",
-    name: "Delhi Public School",
-    logo: null,
-    email: "principal@dps.edu",
-    location: "New Delhi",
-    status: "APPROVED",
-    campusCount: 5,
-    coAdmin: {
-      name: "Mrs. Anita Singh",
-      email: "anita.singh@dps.edu",
-      image: null,
-    },
-    students: [
-      { id: "STU005", name: "Vikram Reddy", image: null, status: "APPROVED" },
-      { id: "STU006", name: "Anjali Nair", image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop", status: "APPROVED" },
-      { id: "STU007", name: "Karan Malhotra", image: null, status: "DENIED" },
-    ],
-    wardens: [
-      { id: "WAR003", name: "Dr. Arun Joshi", image: null, status: "APPROVED" },
-    ],
-  },
-  {
-    id: "col_003",
-    name: "Presidency University",
-    logo: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=100&h=100&fit=crop",
-    email: "registrar@presidency.edu",
-    location: "Kolkata, West Bengal",
-    status: "DENIED",
-    campusCount: 2,
-    coAdmin: {
-      name: "Prof. Subhash Bose",
-      email: "subhash.bose@presidency.edu",
-      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
-    },
-    students: [
-      { id: "STU008", name: "Deepika Sen", image: null, status: "PENDING" },
-      { id: "STU009", name: "Arjun Das", image: null, status: "PENDING" },
-    ],
-    wardens: [
-      { id: "WAR004", name: "Mr. Bidhan Roy", image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop", status: "PENDING" },
-    ],
-  },
-  {
-    id: "col_004",
-    name: "IIT Bombay Hostels",
-    logo: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=100&h=100&fit=crop",
-    email: "hostel@iitb.ac.in",
-    location: "Mumbai, Maharashtra",
-    status: "PENDING",
-    campusCount: 8,
-    coAdmin: {
-      name: "Dr. Vikram Sarabhai",
-      email: "vikram.s@iitb.ac.in",
-      image: null,
-    },
-    students: [
-      { id: "STU010", name: "Neha Kapoor", image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop", status: "APPROVED" },
-      { id: "STU011", name: "Siddharth Rao", image: null, status: "APPROVED" },
-      { id: "STU012", name: "Meera Krishnan", image: null, status: "PENDING" },
-      { id: "STU013", name: "Rohan Mehta", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop", status: "APPROVED" },
-      { id: "STU014", name: "Tanya Bhatia", image: null, status: "APPROVED" },
-    ],
-    wardens: [
-      { id: "WAR005", name: "Prof. Ramesh Chandra", image: null, status: "APPROVED" },
-      { id: "WAR006", name: "Dr. Sunita Yadav", image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop", status: "APPROVED" },
-      { id: "WAR007", name: "Mr. Prakash Dubey", image: null, status: "PENDING" },
-    ],
-  },
-];
 
 // Avatar Component with fallback to initials
 const Avatar = ({ image, name, size = "md" }) => {
@@ -136,11 +44,13 @@ const Avatar = ({ image, name, size = "md" }) => {
   ];
 
   const getColorFromName = (name) => {
+    if (!name) return colors[0];
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
   };
 
   const getInitials = (name) => {
+    if (!name) return "?";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -170,6 +80,7 @@ const Avatar = ({ image, name, size = "md" }) => {
 
 // Status Badge Component
 const StatusBadge = ({ status }) => {
+  const normalizedStatus = status?.toUpperCase() || "PENDING";
   const statusStyles = {
     PENDING: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
     APPROVED: "bg-green-500/20 text-green-400 border-green-500/30",
@@ -184,10 +95,10 @@ const StatusBadge = ({ status }) => {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${statusStyles[status]}`}
+      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${statusStyles[normalizedStatus]}`}
     >
-      {statusIcons[status]}
-      {status}
+      {statusIcons[normalizedStatus]}
+      {normalizedStatus}
     </span>
   );
 };
@@ -245,7 +156,7 @@ const CollegeDetails = ({ college }) => {
               <GraduationCap className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-white">{college.students.length}</p>
+              <p className="text-2xl font-bold text-white">{college.students?.length || 0}</p>
               <p className="text-blue-300 text-sm">Total Students</p>
             </div>
           </div>
@@ -256,7 +167,7 @@ const CollegeDetails = ({ college }) => {
               <Shield className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-white">{college.wardens.length}</p>
+              <p className="text-2xl font-bold text-white">{college.wardens?.length || 0}</p>
               <p className="text-purple-300 text-sm">Total Wardens</p>
             </div>
           </div>
@@ -272,9 +183,13 @@ const CollegeDetails = ({ college }) => {
             Wardens
           </h4>
           <div className="space-y-2">
-            {college.wardens.map((warden) => (
-              <UserListItem key={warden.id} user={warden} type="warden" />
-            ))}
+            {college.wardens && college.wardens.length > 0 ? (
+              college.wardens.map((warden) => (
+                <UserListItem key={warden.id} user={warden} type="warden" />
+              ))
+            ) : (
+              <p className="text-slate-500 text-sm">No wardens registered yet</p>
+            )}
           </div>
         </div>
 
@@ -285,9 +200,13 @@ const CollegeDetails = ({ college }) => {
             Students
           </h4>
           <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-            {college.students.map((student) => (
-              <UserListItem key={student.id} user={student} type="student" />
-            ))}
+            {college.students && college.students.length > 0 ? (
+              college.students.map((student) => (
+                <UserListItem key={student.id} user={student} type="student" />
+              ))
+            ) : (
+              <p className="text-slate-500 text-sm">No students registered yet</p>
+            )}
           </div>
         </div>
       </div>
@@ -366,12 +285,75 @@ const CollegeRow = ({ college, onStatusChange, isExpanded, onToggle }) => {
   );
 };
 
+// Delete Confirmation Modal Component
+const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, collegeName, isDeleting, wardenCount, studentCount }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-3 rounded-full bg-red-500/20">
+            <AlertTriangle className="w-6 h-6 text-red-400" />
+          </div>
+          <h3 className="text-xl font-bold text-white">Delete College</h3>
+        </div>
+        
+        <p className="text-slate-300 mb-4">
+          Are you sure you want to delete <span className="font-semibold text-white">{collegeName}</span>?
+        </p>
+        
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+          <p className="text-red-300 text-sm font-medium mb-2">⚠️ This action will permanently delete:</p>
+          <ul className="text-red-300/80 text-sm space-y-1">
+            <li>• The college/management account</li>
+            <li>• {wardenCount} warden(s) under this college</li>
+            <li>• {studentCount} student(s) under this college</li>
+          </ul>
+          <p className="text-red-400 text-xs mt-3 font-medium">This action cannot be undone!</p>
+        </div>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={isDeleting}
+            className="flex-1 px-4 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-medium transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium transition-colors disabled:opacity-50"
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4" />
+                Delete All
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main Dashboard Component
 const OwnersDashboard = () => {
   const { user, isAdmin, loading, adminChecked } = useAuth();
   const navigate = useNavigate();
-  const [colleges, setColleges] = useState(mockCollegesData);
-  const [expandedId, setExpandedId] = useState(null);
+  const [allUsers, setAllUsers] = useState([]);
+  const [activeTab, setActiveTab] = useState("all");
+  const [dataLoading, setDataLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Protect the route - redirect if not admin
   useEffect(() => {
@@ -384,6 +366,39 @@ const OwnersDashboard = () => {
     }
   }, [user, isAdmin, loading, adminChecked, navigate]);
 
+  // Fetch ALL users from Firestore
+  useEffect(() => {
+    // Wait for admin status to be confirmed
+    if (!adminChecked || !user || !isAdmin) {
+      console.log("Skipping fetch - adminChecked:", adminChecked, "user:", user?.email, "isAdmin:", isAdmin);
+      return;
+    }
+
+    console.log("Starting to fetch users...");
+    setDataLoading(true);
+
+    // Real-time listener for management users only
+    const usersQuery = query(collection(db, "users"), where("role", "==", "management"));
+
+    const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      
+      console.log("Fetched users:", usersData.length, usersData);
+      setAllUsers(usersData);
+      setDataLoading(false);
+      setFetchError(null);
+    }, (error) => {
+      console.error("Error fetching users:", error);
+      setFetchError(error.message);
+      setDataLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user, isAdmin, adminChecked]);
+
   // Handle logout
   const handleLogout = async () => {
     try {
@@ -391,6 +406,106 @@ const OwnersDashboard = () => {
       navigate("/admin-login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
+    }
+  };
+
+  // Handle status change - Update in Firestore
+  const handleStatusChange = async (userId, newStatus) => {
+    try {
+      const userRef = doc(db, "users", userId);
+      await updateDoc(userRef, {
+        status: newStatus,
+        updatedAt: new Date().toISOString(),
+        approvedBy: user.uid,
+        approvedAt: new Date().toISOString(),
+      });
+      console.log(`User ${userId} status updated to ${newStatus}`);
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
+  };
+
+  // Open delete confirmation modal
+  const openDeleteModal = async (college) => {
+    try {
+      // Count wardens and students under this college
+      const wardensQuery = query(
+        collection(db, "users"),
+        where("role", "==", "warden"),
+        where("managementId", "==", college.id)
+      );
+      const studentsQuery = query(
+        collection(db, "users"),
+        where("role", "==", "student"),
+        where("managementId", "==", college.id)
+      );
+
+      const [wardensSnap, studentsSnap] = await Promise.all([
+        getDocs(wardensQuery),
+        getDocs(studentsQuery)
+      ]);
+
+      setDeleteModal({
+        isOpen: true,
+        college: college,
+        wardenCount: wardensSnap.docs.length,
+        studentCount: studentsSnap.docs.length
+      });
+    } catch (error) {
+      console.error("Error counting users:", error);
+      setDeleteModal({
+        isOpen: true,
+        college: college,
+        wardenCount: 0,
+        studentCount: 0
+      });
+    }
+  };
+
+  // Handle delete college and all associated users
+  const handleDeleteCollege = async () => {
+    if (!deleteModal.college) return;
+
+    setIsDeleting(true);
+    try {
+      const collegeId = deleteModal.college.id;
+      const batch = writeBatch(db);
+
+      // Get all wardens under this college
+      const wardensQuery = query(
+        collection(db, "users"),
+        where("role", "==", "warden"),
+        where("managementId", "==", collegeId)
+      );
+      const wardensSnap = await getDocs(wardensQuery);
+      wardensSnap.docs.forEach((docSnap) => {
+        batch.delete(doc(db, "users", docSnap.id));
+      });
+
+      // Get all students under this college
+      const studentsQuery = query(
+        collection(db, "users"),
+        where("role", "==", "student"),
+        where("managementId", "==", collegeId)
+      );
+      const studentsSnap = await getDocs(studentsQuery);
+      studentsSnap.docs.forEach((docSnap) => {
+        batch.delete(doc(db, "users", docSnap.id));
+      });
+
+      // Delete the college/management user
+      batch.delete(doc(db, "users", collegeId));
+
+      // Commit the batch
+      await batch.commit();
+
+      console.log(`Successfully deleted college ${collegeId} and ${wardensSnap.docs.length} wardens, ${studentsSnap.docs.length} students`);
+      setDeleteModal({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 });
+    } catch (error) {
+      console.error("Error deleting college:", error);
+      alert("Failed to delete college. Please try again.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -418,23 +533,46 @@ const OwnersDashboard = () => {
     );
   }
 
-  // Calculate stats
-  const totalColleges = colleges.length;
-  const totalCampuses = colleges.reduce((acc, col) => acc + col.campusCount, 0);
-  const pendingApprovals = colleges.filter((col) => col.status === "PENDING").length;
+  // Filter users by role (Only management users are fetched now)
+  // const students = []; 
+  // const wardens = [];
+  // const management = allUsers;
 
-  // Handle status change
-  const handleStatusChange = (collegeId, newStatus) => {
-    setColleges((prev) =>
-      prev.map((college) =>
-        college.id === collegeId ? { ...college, status: newStatus } : college
-      )
-    );
+  // Filter by active tab
+  const getFilteredUsers = () => {
+    switch (activeTab) {
+      case "pending": return allUsers.filter(u => u.status === "pending");
+      case "approved": return allUsers.filter(u => u.status === "approved");
+      default: return allUsers;
+    }
   };
 
-  // Toggle expanded college
-  const toggleExpanded = (collegeId) => {
-    setExpandedId((prev) => (prev === collegeId ? null : collegeId));
+  // Sort filtered users: Pending first, then by name
+  const filteredUsers = getFilteredUsers().sort((a, b) => {
+    // 1. Priority to pending status
+    if (a.status === "pending" && b.status !== "pending") return -1;
+    if (a.status !== "pending" && b.status === "pending") return 1;
+    
+    // 2. Then sort by name
+    const nameA = a.displayName || "";
+    const nameB = b.displayName || "";
+    return nameA.localeCompare(nameB);
+  });
+
+  // Calculate stats
+  const pendingCount = allUsers.filter(u => u.status === "pending").length;
+  const approvedCount = allUsers.filter(u => u.status === "approved").length;
+
+  const roleIcons = {
+    student: GraduationCap,
+    warden: Shield,
+    management: Building2,
+  };
+
+  const roleColors = {
+    student: "from-blue-500 to-indigo-600",
+    warden: "from-orange-500 to-amber-600",
+    management: "from-emerald-500 to-teal-600",
   };
 
   return (
@@ -453,9 +591,9 @@ const OwnersDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {pendingApprovals > 0 && (
+              {pendingCount > 0 && (
                 <span className="px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-sm font-medium border border-yellow-500/30">
-                  {pendingApprovals} Pending
+                  {pendingCount} Pending
                 </span>
               )}
               
@@ -484,89 +622,168 @@ const OwnersDashboard = () => {
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
           <StatsCard
             icon={Building2}
-            title="Total Colleges"
-            value={totalColleges}
-            subtitle="Registered institutions"
-            gradient="bg-gradient-to-br from-blue-600 to-blue-800"
-          />
-          <StatsCard
-            icon={Users}
-            title="HOAS"
-            value="Super Admin"
-            subtitle="Hostel Owner Admin System"
+            title="Total Principals"
+            value={allUsers.length}
+            subtitle="Registered Co-Admins"
             gradient="bg-gradient-to-br from-indigo-600 to-purple-800"
           />
           <StatsCard
-            icon={MapPin}
-            title="Campus Overview"
-            value={totalCampuses}
-            subtitle="Total campuses managed"
-            gradient="bg-gradient-to-br from-teal-600 to-emerald-800"
+            icon={Clock}
+            title="Pending Requests"
+            value={pendingCount}
+            subtitle="Awaiting Approval"
+            gradient="bg-gradient-to-br from-orange-600 to-amber-700"
+          />
+          <StatsCard
+            icon={CheckCircle}
+            title="Active Principals"
+            value={approvedCount}
+            subtitle="Approved Access"
+            gradient="bg-gradient-to-br from-emerald-600 to-teal-700"
           />
         </section>
 
-        {/* Co-Admin Approval List */}
+        {/* User Management */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-white">
-                Co-Admin Management
-              </h2>
-              <p className="text-slate-400 mt-1">
-                Approve or deny access for registered colleges
-              </p>
+              <h2 className="text-2xl font-bold text-white">User Management</h2>
+              <p className="text-slate-400 mt-1">Approve or deny user registrations</p>
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-400">
-              <span className="w-2 h-2 rounded-full bg-green-500" /> Active
-              <span className="w-2 h-2 rounded-full bg-yellow-500 ml-2" /> Pending
-              <span className="w-2 h-2 rounded-full bg-red-500 ml-2" /> Denied
+              <span className="w-2 h-2 rounded-full bg-green-500" /> Approved: {approvedCount}
+              <span className="w-2 h-2 rounded-full bg-yellow-500 ml-2" /> Pending: {pendingCount}
             </div>
           </div>
 
-          <div className="space-y-4">
-            {colleges.map((college) => (
-              <CollegeRow
-                key={college.id}
-                college={college}
-                onStatusChange={handleStatusChange}
-                isExpanded={expandedId === college.id}
-                onToggle={() => toggleExpanded(college.id)}
-              />
+          {/* Tabs */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {[
+              { id: "all", label: "All", count: allUsers.length },
+              { id: "pending", label: "Pending", count: pendingCount },
+              { id: "approved", label: "Approved", count: approvedCount },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === tab.id
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700/50"
+                }`}
+              >
+                {tab.label} ({tab.count})
+              </button>
             ))}
           </div>
+
+          {fetchError ? (
+            <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-6 text-center">
+              <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">Error Loading Users</h3>
+              <p className="text-red-300 max-w-md mx-auto mb-4">{fetchError}</p>
+              <p className="text-slate-400 text-sm">
+                Make sure your Firestore security rules allow reading the users collection.
+              </p>
+            </div>
+          ) : dataLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+              <span className="text-slate-400 ml-3">Loading users...</span>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-12 text-center">
+              <Users className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">No Users Found</h3>
+              <p className="text-slate-400 max-w-md mx-auto">
+                {activeTab === "pending" 
+                  ? "No pending approvals at the moment."
+                  : "When users register, they will appear here for your approval."
+                }
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredUsers.map((userData) => {
+                const RoleIcon = roleIcons[userData.role] || Users;
+                const colorClass = roleColors[userData.role] || "from-gray-500 to-gray-600";
+                
+                return (
+                  <div
+                    key={userData.id}
+                    className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 hover:border-slate-600/50 transition-all"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      {/* Left: User Info */}
+                      <div className="flex items-center gap-4">
+                        <Avatar image={userData.photoURL} name={userData.displayName} size="lg" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-white font-semibold truncate">
+                              {userData.displayName || "Unknown User"}
+                            </h3>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r ${colorClass} text-white`}>
+                              {userData.role}
+                            </span>
+                          </div>
+                          <p className="text-slate-400 text-sm truncate">{userData.email}</p>
+                          <p className="text-slate-500 text-xs mt-1">
+                            Registered: {userData.createdAt?.toDate?.()?.toLocaleDateString() || "Unknown"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right: Actions */}
+                      <div className="flex items-center gap-3">
+                        {userData.status === "pending" ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleStatusChange(userData.id, "approved")}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium text-sm transition-colors"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleStatusChange(userData.id, "denied")}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium text-sm transition-colors"
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Deny
+                            </button>
+                          </div>
+                        ) : (
+                          <StatusBadge status={userData.status} />
+                        )}
+                        
+                        {/* Delete Button */}
+                        <button
+                          onClick={() => openDeleteModal(userData)}
+                          className="p-2 rounded-lg bg-slate-700/50 hover:bg-red-600/80 text-slate-400 hover:text-white transition-colors"
+                          title="Delete College"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       </main>
 
-      {/* Custom Styles */}
-      <style>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(51, 65, 85, 0.5);
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(100, 116, 139, 0.5);
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(100, 116, 139, 0.8);
-        }
-      `}</style>
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 })}
+        onConfirm={handleDeleteCollege}
+        collegeName={deleteModal.college?.displayName || deleteModal.college?.collegeName || "this college"}
+        isDeleting={isDeleting}
+        wardenCount={deleteModal.wardenCount}
+        studentCount={deleteModal.studentCount}
+      />
     </div>
   );
 };

@@ -11,6 +11,8 @@ import WardenDashboard from "../../DashBoards/Warden-Dashboard/WardenDashboard";
 import ManagementDashboard from "../../DashBoards/Principal-Dashbord/PrincipalDashboard";
 import OwnersDashboard from "../../Pages/OwnersDashboard/ownersdashbord"
 import AdminLogin from "../../Pages/AdminLogin/AdminLogin"
+import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval"
+
 const Routes_path = () => {
     return (
         <>
@@ -19,7 +21,8 @@ const Routes_path = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/role" element={<UserRole />} />c
+                <Route path="/role" element={<UserRole />} />
+                <Route path="/waiting-approval" element={<WaitingApproval />} />
                 {/* ------------------------------ Profile Pages ----------------------------------------- */}
                 <Route path="/profile/student-profile" element={<StudentProfile />} />
                 <Route path="/profile/warden-profile" element={<WardenProfile />} />
