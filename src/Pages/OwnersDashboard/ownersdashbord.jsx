@@ -9,19 +9,17 @@ import {
   Users,
   GraduationCap,
   Shield,
-  ChevronDown,
-  ChevronUp,
   CheckCircle,
   XCircle,
   Clock,
-  MapPin,
   LogOut,
   Loader2,
-  RefreshCw,
   AlertCircle,
   Trash2,
   AlertTriangle,
 } from "lucide-react";
+
+
 
 // Avatar Component with fallback to initials
 const Avatar = ({ image, name, size = "md" }) => {
@@ -59,28 +57,44 @@ const Avatar = ({ image, name, size = "md" }) => {
       .slice(0, 2);
   };
 
-  if (image) {
-    return (
-      <img
-        src={image}
-        alt={name}
-        className={`${sizeClasses[size]} rounded-full object-cover ring-2 ring-white/20`}
-      />
-    );
-  }
+
+  // -------------------------Change Image component I updated Where this we can use as If google profile image is not present it will change Alternate background color and Collage First letter With uppercase------------------------
+ const GetImage = ({ image, name, size }) => {
+  const [imageError, setImageError] = useState(false)
 
   return (
-    <div
-      className={`${sizeClasses[size]} ${getColorFromName(name)} rounded-full flex items-center justify-center font-semibold text-white ring-2 ring-white/20`}
-    >
-      {getInitials(name)}
-    </div>
-  );
+    <>
+      {imageError ? (
+        <div
+          className={`${sizeClasses[size]} ${getColorFromName(
+            name
+          )} rounded-full flex items-center justify-center font-semibold text-white ring-2 ring-white/20`}
+        >
+          {getInitials(name)}
+        </div>
+      ) : (
+        <img
+          src={image}
+          alt={name}
+          referrerPolicy="no-referrer"
+          onError={() => setImageError(true)}
+          className={`${sizeClasses[size]} rounded-full object-cover ring-2 ring-white/20`}
+        />
+      )}
+    </>
+  )
+}
+return <GetImage image={image} name={name} size={size} />
+// ------------------------------------------------------------------------------------------------------------------------------------
 };
 
-// Status Badge Component
+
+
+
+// Status Badge Component it is use for where the owner is approved or denied ir will show that thing------------------------------------
 const StatusBadge = ({ status }) => {
   const normalizedStatus = status?.toUpperCase() || "PENDING";
+
   const statusStyles = {
     PENDING: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
     APPROVED: "bg-green-500/20 text-green-400 border-green-500/30",
@@ -94,7 +108,7 @@ const StatusBadge = ({ status }) => {
   };
 
   return (
-    <span
+    <span 
       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${statusStyles[normalizedStatus]}`}
     >
       {statusIcons[normalizedStatus]}
@@ -102,8 +116,12 @@ const StatusBadge = ({ status }) => {
     </span>
   );
 };
+// ---------------------------------------------------------------------------------------------------------------------------------------------
 
-// Stats Card Component
+
+
+
+// Stats Card Component it is used for count of campues are logged in for approval---------------------------------------------------------------------------------
 const StatsCard = ({ icon: Icon, title, value, subtitle, gradient }) => {
   return (
     <div className={`relative overflow-hidden rounded-2xl p-6 ${gradient}`}>
@@ -125,165 +143,7 @@ const StatsCard = ({ icon: Icon, title, value, subtitle, gradient }) => {
     </div>
   );
 };
-
-// User List Item Component
-const UserListItem = ({ user, type }) => {
-  return (
-    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition-colors">
-      <div className="flex items-center gap-3">
-        <Avatar image={user.image} name={user.name} size="sm" />
-        <div>
-          <p className="text-white font-medium text-sm">{user.name}</p>
-          <p className="text-slate-400 text-xs">
-            {type === "warden" ? `ID: ${user.id}` : user.id ? `ID: ${user.id}` : "Student"}
-          </p>
-        </div>
-      </div>
-      <StatusBadge status={user.status} />
-    </div>
-  );
-};
-
-// College Detail Section (Accordion Content)
-const CollegeDetails = ({ college }) => {
-  return (
-    <div className="px-6 pb-6 space-y-6 animate-fadeIn">
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-500/20 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/20">
-              <GraduationCap className="w-5 h-5 text-blue-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white">{college.students?.length || 0}</p>
-              <p className="text-blue-300 text-sm">Total Students</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-500/20 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-500/20">
-              <Shield className="w-5 h-5 text-purple-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white">{college.wardens?.length || 0}</p>
-              <p className="text-purple-300 text-sm">Total Wardens</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Users Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Wardens List */}
-        <div className="space-y-3">
-          <h4 className="text-white font-semibold flex items-center gap-2">
-            <Shield className="w-4 h-4 text-purple-400" />
-            Wardens
-          </h4>
-          <div className="space-y-2">
-            {college.wardens && college.wardens.length > 0 ? (
-              college.wardens.map((warden) => (
-                <UserListItem key={warden.id} user={warden} type="warden" />
-              ))
-            ) : (
-              <p className="text-slate-500 text-sm">No wardens registered yet</p>
-            )}
-          </div>
-        </div>
-
-        {/* Students List */}
-        <div className="space-y-3">
-          <h4 className="text-white font-semibold flex items-center gap-2">
-            <GraduationCap className="w-4 h-4 text-blue-400" />
-            Students
-          </h4>
-          <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-            {college.students && college.students.length > 0 ? (
-              college.students.map((student) => (
-                <UserListItem key={student.id} user={student} type="student" />
-              ))
-            ) : (
-              <p className="text-slate-500 text-sm">No students registered yet</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// College Row Component
-const CollegeRow = ({ college, onStatusChange, isExpanded, onToggle }) => {
-  return (
-    <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden hover:border-slate-600/50 transition-all duration-300">
-      {/* Main Row */}
-      <div className="p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          {/* Left: College Info */}
-          <div className="flex items-center gap-4">
-            <Avatar image={college.logo} name={college.name} size="lg" />
-            <div className="flex-1 min-w-0">
-              <h3 className="text-white font-semibold text-lg truncate">
-                {college.name}
-              </h3>
-              <p className="text-slate-400 text-sm flex items-center gap-1.5 mt-0.5">
-                <MapPin className="w-3.5 h-3.5" />
-                {college.location}
-              </p>
-              <p className="text-slate-500 text-xs mt-1">
-                Co-Admin: {college.coAdmin.name}
-              </p>
-            </div>
-          </div>
-
-          {/* Right: Actions */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-slate-400 text-sm hidden lg:block">
-              Displaying Co-Admin Dashboard
-            </span>
-            
-            {college.status === "PENDING" ? (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onStatusChange(college.id, "APPROVED")}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium text-sm transition-colors"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Access
-                </button>
-                <button
-                  onClick={() => onStatusChange(college.id, "DENIED")}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium text-sm transition-colors"
-                >
-                  <XCircle className="w-4 h-4" />
-                  Denied
-                </button>
-              </div>
-            ) : (
-              <StatusBadge status={college.status} />
-            )}
-
-            <button
-              onClick={onToggle}
-              className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 transition-colors"
-            >
-              {isExpanded ? (
-                <ChevronUp className="w-5 h-5" />
-              ) : (
-                <ChevronDown className="w-5 h-5" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Expanded Details */}
-      {isExpanded && <CollegeDetails college={college} />}
-    </div>
-  );
-};
+// ------------------------------------------------------------------------------------------------------------------------------------
 
 // Delete Confirmation Modal Component
 const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, collegeName, isDeleting, wardenCount, studentCount }) => {

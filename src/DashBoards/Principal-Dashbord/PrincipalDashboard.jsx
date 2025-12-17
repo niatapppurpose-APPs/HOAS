@@ -40,6 +40,7 @@ const Avatar = ({ image, name, size = "md" }) => {
     "bg-cyan-500",
   ];
 
+
   const getColorFromName = (name) => {
     if (!name) return colors[0];
     const index = name.charCodeAt(0) % colors.length;

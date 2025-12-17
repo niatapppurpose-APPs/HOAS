@@ -198,6 +198,22 @@ VITE_FIREBASE_APP_ID=your-app-id
 
 ## 📅 Version History
 
+### v1.0.2 (December 17, 2025)
+**Code Cleanup & Documentation**
+- Removed unused components from OwnersDashboard:
+  - `UserListItem` - was for accordion warden/student list (never used)
+  - `CollegeDetails` - accordion content section (never rendered)
+  - `CollegeRow` - expandable college row (never called)
+- Removed unused icon imports: `GraduationCap`, `Shield`, `ChevronDown`, `ChevronUp`, `MapPin`, `RefreshCw`
+- Fixed Avatar component image display:
+  - Corrected `imageError` state logic for fallback to initials
+  - Added `referrerPolicy="no-referrer"` for Google profile image compatibility
+- Added descriptive comments for each component explaining its purpose
+- Reduced ownersdashbord.jsx by ~170 lines of dead code
+
+### v1.0.1 (December 16, 2025)
+- Bug fixes and minor improvements
+
 ### v1.0.0 (December 16, 2025)
 - Initial implementation
 - User authentication with Google OAuth
