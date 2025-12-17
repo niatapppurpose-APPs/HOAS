@@ -10,7 +10,7 @@ import StudentDashboard from "../../DashBoards/Student-DashBoard/StudentDashboar
 import WardenDashboard from "../../DashBoards/Warden-Dashboard/WardenDashboard";
 import ManagementDashboard from "../../DashBoards/Principal-Dashbord/PrincipalDashboard";
 import OwnersDashboard from "../../Pages/OwnersDashboard/ownersdashbord"
-import AdminLogin from "../../Pages/AdminLogin/AdminLogin"
+import AdminLogin from '../OwnerServices/AdminLogin'
 import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval"
 
 const Routes_path = () => {

@@ -26,6 +26,9 @@ Owner (Super Admin)
 
 ---
 
+
+<!-- This All Work Completed the two day of planing This Work is done All thing are getting Ready -->
+
 ## ✅ Features Implemented
 
 ### 1. Authentication System
@@ -634,3 +637,34 @@ VITE_FIREBASE_APP_ID=your-app-id
 - [ ] Leave request management
 - [ ] Notifications system
 - [ ] Reports and analytics
+
+
+<!-- From 17th Dec 2025 The Work is the -->
+
+
+=> 3 Days Work
+
+
+=> For Owners DashBaord I will Hand Over By 20th Dec With All work Modal features. And Futher Future What features I will add also I will tell in here.
+
+
+=> I will Build the Profile Page where the Owner, student, warden, prinipal can see there Profile pages.
+
+=> And I will Build one Setting page for  Owner, student, warden, prinipal They want setting page for there DashBoards
+
+ In that I will add this Featutures
+
+ => Where User can chnage the Mode of color 
+ Example : Light, Dark Mode Buttons
+
+ => NOTE: This feature is for only Owners.
+
+       Where They Can give color theme for student, warden, CO-Admin Dashboard from starting where the admin are give this app to collage the theme will be where the collage have one color theme the owner will select that theme. After hanover the APP to collage.
+
+=> NOTE: This feature is for only Student dashboard where i have mentioned on sarting onwards. 
+       the Fearture is student can send the Anonymous Complaint through there dashboard.
+       Where they are enabled only.
+
+w             
+
+           
