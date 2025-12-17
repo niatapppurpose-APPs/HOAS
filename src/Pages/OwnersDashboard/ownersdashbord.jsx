@@ -215,9 +215,9 @@ const OwnersDashboard = () => {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 });
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Protect the route - redirect if not admin
+ 
   useEffect(() => {
-    // Only redirect after loading is complete AND admin status has been checked
+    
     if (!loading && adminChecked) {
       if (!user || !isAdmin) {
         console.log("Redirecting to admin-login: user=", user?.email, "isAdmin=", isAdmin);
@@ -228,7 +228,7 @@ const OwnersDashboard = () => {
 
   // Fetch ALL users from Firestore
   useEffect(() => {
-    // Wait for admin status to be confirmed
+    
     if (!adminChecked || !user || !isAdmin) {
       console.log("Skipping fetch - adminChecked:", adminChecked, "user:", user?.email, "isAdmin:", isAdmin);
       return;
