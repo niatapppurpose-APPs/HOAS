@@ -20,7 +20,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { user } = useAuth();
   const [activeItem, setActiveItem] = useState("dashboard");
   const [isPinned, setIsPinned] = useState(false);
-  const [imageError, setImageError] = useState(false)
+
+  // Determine if sidebar content should be shown (expanded view)
+  const showContent = !isCollapsed || isPinned;
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -73,19 +75,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       <aside
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`fixed top-0 left-0 h-full bg-slate-900/95 backdrop-blur-xl border-r  z-50 transition-all duration-300 ease-in-out
-          ${isCollapsed ? "-translate-x-full lg:translate-x-0 lg:w-20" : "translate-x-0 w-72 lg:w-72"}
+        className={`fixed top-0 left-0 h-full bg-slate-900/95 backdrop-blur-xl border-r z-50 transition-all duration-300 ease-in-out
+          ${showContent ? "translate-x-0 w-72 lg:w-72" : "-translate-x-full lg:translate-x-0 lg:w-20"}
         `}
       >
         {/* Logo Section */}
         <div className="flex items-center justify-between h-19 px-4 border-b border-slate-700/50">
-          <div className={`flex items-center gap-3 ${isCollapsed ? "lg:justify-center lg:w-full" : ""}`}>
+          <div className={`flex items-center gap-3 ${!showContent ? "lg:justify-center lg:w-full" : ""}`}>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
               <Building2 className="w-5 h-5 text-white" />
             </div>
             <span
               className={`text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent transition-opacity duration-200 ${
-                isCollapsed ? "lg:hidden" : ""
+                !showContent ? "lg:hidden" : ""
               }`}
             >
               HAOS Admin
@@ -96,7 +98,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <button
             onClick={handlePinClick}
             className={`hidden lg:flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${
-              isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
+              !showContent ? "opacity-0 pointer-events-none" : "opacity-100"
             } ${
               isPinned
                 ? "bg-indigo-600 text-white"
@@ -114,7 +116,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <div className="flex-1 px-3 space-y-1">
             <p
               className={`text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3 ${
-                isCollapsed ? "lg:hidden" : ""
+                !showContent ? "lg:hidden" : ""
               }`}
             >
               Main Menu
@@ -128,7 +130,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   key={item.id}
                   onClick={() => setActiveItem(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
-                    ${isCollapsed ? "lg:justify-center" : ""}
+                    ${!showContent ? "lg:justify-center" : ""}
                     ${
                       isActive
                         ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/25"
@@ -143,14 +145,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   />
                   <span
                     className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${
-                      isCollapsed ? "lg:hidden" : ""
+                      !showContent ? "lg:hidden" : ""
                     }`}
                   >
                     {item.label}
                   </span>
 
                   {/* Tooltip for collapsed state */}
-                  {isCollapsed && (
+                  {!showContent && (
                     <div className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl">
                       {item.label}
                       <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45" />
@@ -170,7 +172,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <div className="px-3 space-y-1">
             <p
               className={`text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3 ${
-                isCollapsed ? "lg:hidden" : ""
+                !showContent ? "lg:hidden" : ""
               }`}
             >
               Settings
@@ -184,7 +186,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   key={item.id}
                   onClick={() => setActiveItem(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
-                    ${isCollapsed ? "lg:justify-center" : ""}
+                    ${!showContent ? "lg:justify-center" : ""}
                     ${
                       isLogout
                         ? "text-red-400 hover:text-red-300 hover:bg-red-500/10"
@@ -195,14 +197,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   <span
                     className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${
-                      isCollapsed ? "lg:hidden" : ""
+                      !showContent ? "lg:hidden" : ""
                     }`}
                   >
                     {item.label}
                   </span>
 
                   {/* Tooltip for collapsed state */}
-                  {isCollapsed && (
+                  {!showContent && (
                     <div className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl">
                       {item.label}
                       <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45" />
@@ -214,13 +216,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           </div>
 
           {/* User Profile Card */}
-          <div className={`mt-4 mx-3 ${isCollapsed ? "lg:hidden" : ""}`}>
+          <div className={`mt-4 mx-3 ${!showContent ? "lg:hidden" : ""}`}>
             <div className="p-3 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-slate-700/50">
               <div className="flex items-center gap-3">
-                {imageError ? null : <Avatar image={user.photoURL} name={user.displayName} size="md" />}
+                <Avatar image={user?.photoURL} name={user?.displayName} size="md" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{user.displayName}</p>
-                  <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                  <p className="text-sm font-medium text-white truncate">{user?.displayName}</p>
+                  <p className="text-xs text-slate-400 truncate">{user?.email}</p>
                 </div>
               </div>
             </div>
