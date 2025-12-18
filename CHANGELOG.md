@@ -665,6 +665,6 @@ VITE_FIREBASE_APP_ID=your-app-id
        the Fearture is student can send the Anonymous Complaint through there dashboard.
        Where they are enabled only.
 
-w             
+
 
            

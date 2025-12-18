@@ -11,6 +11,7 @@ import Avatar from "../../components/OwnerServices/Avatar";
 import StatusBadge from "../../components/OwnerServices/StatusBadge";
 import StatsCard from "../../components/OwnerServices/StatsCard";
 import DeleteConfirmModal from "../../components/OwnerServices/DeleteConfirmModal";
+import Sidebar from '../../components/OwnerServices/Sidebar';
 
 import {
   Building2,
@@ -35,6 +36,7 @@ const OwnersDashboard = () => {
   const [fetchError, setFetchError] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
 
   useEffect(() => {
@@ -258,13 +260,16 @@ const OwnersDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Sidebar */}
+      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+
       {/* Header */}
       <Header pendingCount={pendingCount} handleLogout={handleLogout} user={user} />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className={`transition-all duration-300 px-4 sm:px-6 lg:px-8 py-8 ${isCollapsed ? "lg:ml-20" : "lg:ml-72"}`}>
         {/* Stats Section */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-10">
           <StatsCard
             icon={Building2}
             title="Total Principals"
