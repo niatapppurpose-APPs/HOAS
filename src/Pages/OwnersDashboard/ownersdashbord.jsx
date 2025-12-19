@@ -317,8 +317,8 @@ const OwnersDashboard = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                    ? "bg-indigo-600 text-white"
-                    : "bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700/50"
+                  ? "bg-indigo-600 text-white"
+                  : "bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700/50"
                   }`}
               >
                 {tab.label} ({tab.count})
@@ -377,20 +377,20 @@ const OwnersDashboard = () => {
                           </div>
                           <p className="text-slate-400 text-sm truncate">{userData.email}</p>
                           <div className="flex items-center gap-2">
-                          <p className="text-slate-500 text-xs mt-1">
-                             {userData.createdAt?.toDate?.()?.toLocaleDateString('en-IN', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric'
-                            }) || "Unknown"}
-                          </p>
-                          <p className="text-slate-500 text-xs mt-1">
-                             {userData.createdAt?.toDate?.()?.toLocaleTimeString('en-IN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: true
-                            }) || "Unknown"}
-                          </p>
+                            <p className="text-slate-500 text-xs mt-1">
+                              {userData.createdAt?.toDate?.()?.toLocaleDateString('en-IN', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric'
+                              }) || "Unknown"}
+                            </p>
+                            <p className="text-slate-500 text-xs mt-1">
+                              {userData.createdAt?.toDate?.()?.toLocaleTimeString('en-IN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true
+                              }) || "Unknown"}
+                            </p>
                           </div>
                         </div>
                       </div>

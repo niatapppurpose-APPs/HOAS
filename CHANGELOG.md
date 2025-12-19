@@ -1,4 +1,4 @@
-# HOAS - Hostel Owner Admin System
+# HOAS - Hostel Operations Accountability System
 
 ## Project Overview
 A comprehensive hostel management system with role-based access control, user approval workflows, and hierarchical administration.
