@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
       });
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      console.log("Auth state changed:", currentUser?.email);
+      console.log("Auth state changed:", currentUser ? currentUser.email : "No user (logged out)");
       setUser(currentUser);
       setAdminChecked(false);
       
@@ -164,14 +164,18 @@ export const AuthProvider = ({ children }) => {
   // Function to logout
   const logout = async () => {
     try {
-      await signOut(auth);
-      setUser(null);
+      // Clear state first to ensure UI updates immediately
       setUserData(null);
       setIsAdmin(false);
       setClaims(null);
+      setAdminChecked(false);
+      setLoading(true);
+      await signOut(auth);
+      // Note: onAuthStateChanged will set user to null and setLoading(false)
       console.log("User logged out successfully");
     } catch (error) {
       console.error("Error logging out:", error);
+      setLoading(false);
     }
   };
 

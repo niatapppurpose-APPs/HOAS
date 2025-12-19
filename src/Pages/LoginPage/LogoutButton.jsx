@@ -1,13 +1,17 @@
-import { signOut } from "firebase/auth";
-import { auth } from "../../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const LogoutButton = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = async () => {
-    await signOut(auth);
-    navigate("/");
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   return <button onClick={handleLogout}>Logout</button>;

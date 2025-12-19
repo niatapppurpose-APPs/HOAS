@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, db } from "../../firebase/firebaseConfig";
+import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 import {
   User,
@@ -18,7 +17,7 @@ import {
 } from "lucide-react";
 
 const OwnerProfile = () => {
-  const { user, isAdmin, loading, adminChecked } = useAuth();
+  const { user, isAdmin, loading, adminChecked, logout } = useAuth();
   const navigate = useNavigate();
 
   const [profileData, setProfileData] = useState({
@@ -78,7 +77,7 @@ const OwnerProfile = () => {
   /* ------------------ LOGOUT ------------------ */
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
       navigate("/admin-login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
