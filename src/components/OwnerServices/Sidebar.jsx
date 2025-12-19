@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Building2,
@@ -20,6 +20,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { user } = useAuth();
   const [activeItem, setActiveItem] = useState("dashboard");
   const [isPinned, setIsPinned] = useState(false);
+
+  // Reset pinned state when switching to mobile view
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024 && isPinned) {
+        setIsPinned(false);
+        setIsCollapsed(true);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isPinned, setIsCollapsed]);
 
   // Determine if sidebar content should be shown (expanded view)
   const showContent = !isCollapsed || isPinned;
@@ -93,20 +106,34 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             </span>
           </div>
 
-          {/* Pin Button - Desktop Only (visible when expanded) */}
-          <button
-            onClick={handlePinClick}
-            className={`hidden lg:flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${
-              !showContent ? "opacity-0 pointer-events-none" : "opacity-100"
-            } ${
-              isPinned
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
-            }`}
-            title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
-          >
-            <Pin className={`w-4 h-4 transition-transform ${isPinned ? "rotate-45" : ""}`} />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Pin Button - Desktop Only (visible when expanded) */}
+            <button
+              onClick={handlePinClick}
+              className={`hidden lg:flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${
+                !showContent ? "opacity-0 pointer-events-none" : "opacity-100"
+              } ${
+                isPinned
+                  ? "bg-indigo-600 text-white"
+                  : "bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
+              }`}
+              title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
+            >
+              <Pin className={`w-4 h-4 transition-transform ${isPinned ? "rotate-45" : ""}`} />
+            </button>
+
+            {/* Close Button - Mobile Only */}
+            <button
+              onClick={() => {
+                setIsPinned(false);
+                setIsCollapsed(true);
+              }}
+              className="flex lg:hidden items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all duration-200"
+              title="Close sidebar"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Navigation */}
