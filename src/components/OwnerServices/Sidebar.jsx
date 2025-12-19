@@ -26,8 +26,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "colleges", label: "Colleges", icon: Building2 },
-    { id: "users", label: "Users", icon: Users },
+    { id: "colleges", label: "Warden", icon: Building2 },
+    { id: "users", label: "Student", icon: Users },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "reports", label: "Reports", icon: FileText },
     { id: "notifications", label: "Notifications", icon: Bell },

@@ -297,7 +297,7 @@ const OwnersDashboard = () => {
         <section>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-white">Collages</h2>
+              <h2 className="text-2xl font-bold text-white">Approval Board</h2>
               <p className="text-slate-400 mt-1">Approve or deny 'CO-ADMIN' registrations</p>
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-400">

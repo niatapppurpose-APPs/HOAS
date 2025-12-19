@@ -19,7 +19,7 @@ const Header = ({ pendingCount = 0, handleLogout, user }) => {
           </div>
           <div className="flex items-center gap-4">
             {pendingCount > 0 && (
-              <span className="px-5 py-1 rounded-full bg-red-500/20 text-red-400 text-sm font-medium border border-red-500/30">
+              <span className="px-5 py-1 rounded-full bg-red-500/20 text-red-400 text-sm font-medium border border-red-500/30 animate-pulse">
                 {pendingCount} Pending
               </span>
             )}
