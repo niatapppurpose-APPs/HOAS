@@ -10,6 +10,7 @@ import StudentDashboard from "../../DashBoards/Student-DashBoard/StudentDashboar
 import WardenDashboard from "../../DashBoards/Warden-Dashboard/WardenDashboard";
 import ManagementDashboard from "../../DashBoards/Principal-Dashbord/PrincipalDashboard";
 import OwnersDashboard from "../../Pages/OwnersDashboard/ownersdashbord"
+import OwnerProfile from "../OwnerServices/OwnerProfile"
 import AdminLogin from '../OwnerServices/AdminLogin'
 import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval"
 
@@ -34,6 +35,7 @@ const Routes_path = () => {
                 {/* --------------------------------------- Owners Page ------------------------------------- */}
                 <Route path="/admin-login" element={<AdminLogin />} />
                 <Route path="/OwnersDashboard" element={<OwnersDashboard />} />
+                <Route path="/owner-profile" element={<OwnerProfile />} />
 
             </Routes>
         </>

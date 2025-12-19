@@ -54,6 +54,14 @@ Owner (Super Admin)
   - All Students under that college
 - [x] Confirmation modal with user count before deletion
 - [x] Real-time updates via Firestore onSnapshot
+- [x] **Owner Profile Page** (`/owner-profile`)
+  - Profile icon button in header for quick access
+  - View and edit display name, phone, and organization
+  - Profile photo display (from Google OAuth)
+  - Account status and creation date info
+  - Save profile data to Firestore (`admins` collection)
+  - Logout functionality from profile page
+  - Admin verification badge
 
 ### 4. Co-Admin Dashboard (Principal) (`/dashboard/management`)
 - [x] View Wardens and Students linked to their college
@@ -90,7 +98,8 @@ src/
 │   │   ├── userrole.jsx        # Role selection with college dropdown
 │   │   └── userrole.css
 │   └── OwnerServices/
-│       └── header.jsx
+│       ├── header.jsx          # Owner dashboard header with profile icon
+│       └── OwnerProfile.jsx    # Owner profile page
 ├── context/
 │   └── AuthContext.jsx         # Firebase auth state management
 ├── DashBoards/
@@ -654,7 +663,7 @@ VITE_FIREBASE_APP_ID=your-app-id
 
  In that I will add this Featutures
 
- => Where User can chnage the Mode of color 
+ => Where User can chnage the Mode of color
  Example : Light, Dark Mode Buttons
 
  => NOTE: This feature is for only Owners.

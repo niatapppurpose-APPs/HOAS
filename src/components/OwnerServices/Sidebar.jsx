@@ -36,7 +36,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const bottomMenuItems = [
     { id: "settings", label: "Settings", icon: Settings },
     { id: "help", label: "Help & Support", icon: HelpCircle },
-    { id: "logout", label: "Logout", icon: LogOut },
   ];
 
   const handleMouseEnter = () => {

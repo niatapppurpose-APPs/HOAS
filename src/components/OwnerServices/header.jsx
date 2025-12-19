@@ -1,7 +1,9 @@
-import { Building2, LogOut } from "lucide-react";
-import Avatar from "./Avatar";
+import { Building2, LogOut, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 
 const Header = ({ pendingCount = 0, handleLogout, user }) => {
+  const navigate = useNavigate();
   return (
     <header className="border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-xl  top-0 z-50">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -22,21 +24,16 @@ const Header = ({ pendingCount = 0, handleLogout, user }) => {
               </span>
             )}
 
-            {/* Logout Button */}
+            {/* Profile Icon Button */}
             <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-medium transition-colors"
+              onClick={() => navigate("/owner-profile")}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 transition-colors"
+              title="View Profile"
             >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Logout</span>
+              <User className="w-5 h-5 text-slate-300" />
             </button>
 
-            <Avatar
-              image={user.photoURL}
-              name={user.displayName || "Admin"}
-              size="md"
-              rounded="full"
-            />
+
           </div>
         </div>
       </div>
