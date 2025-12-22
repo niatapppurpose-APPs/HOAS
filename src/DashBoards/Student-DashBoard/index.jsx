@@ -87,7 +87,7 @@ const StudentProfile = () => {
                 phone: formData.phone,
                 rollNumber: formData.rollNumber,
                 roomNumber: formData.roomNumber,
-                collegeId: formData.collegeName,
+                managementId: formData.collegeName,
                 collegeName: selectedCollege?.collegeName || '',
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()

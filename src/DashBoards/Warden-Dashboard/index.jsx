@@ -87,7 +87,7 @@ const WardenProfile = () => {
                 phone: formData.phone,
                 employeeId: formData.employeeId,
                 designation: formData.designation,
-                collegeId: formData.collegeName,
+                managementId: formData.collegeName,
                 collegeName: selectedCollege?.collegeName || '',
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
