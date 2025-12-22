@@ -185,7 +185,9 @@ const UserCard = ({ userItem, onStatusChange, type }) => {
             <div>
               <p className="text-slate-500">Joined</p>
               <p className="text-slate-300">
-                {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : "N/A"}
+                {userItem.createdAt 
+                  ? (userItem.createdAt.toDate ? userItem.createdAt.toDate().toLocaleDateString() : new Date(userItem.createdAt).toLocaleDateString())
+                  : "N/A"}
               </p>
             </div>
             {userItem.collegeName && (

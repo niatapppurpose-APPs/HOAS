@@ -117,8 +117,8 @@ const UserRole = () => {
       // Create user profile in Firestore with pending status
       await setDoc(doc(db, "users", user.uid), userDataToSave);
 
-      // Redirect to waiting approval page
-      navigate("/waiting-approval", { replace: true });
+      // Redirect to profile page instead of waiting approval
+      navigate(`/profile/${role}-profile`, { replace: true });
     } catch (error) {
       console.error("Error creating profile:", error);
       setIsSubmitting(false);

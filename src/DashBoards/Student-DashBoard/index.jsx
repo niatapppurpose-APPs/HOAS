@@ -45,13 +45,16 @@ const StudentProfile = () => {
         fetchColleges();
     }, []);
 
-    // Redirect if profile already exists
+    // Redirect if profile already filled
     useEffect(() => {
         if (!userDataLoading && userData) {
-            if (userData.status === 'approved') {
-                navigate('/dashboard/student');
-            } else if (userData.status === 'pending' || userData.status === 'denied') {
-                navigate('/waiting-approval');
+            // Only redirect if profile details are already filled (has fullName or phone)
+            if (userData.fullName || userData.phone || userData.rollNumber) {
+                if (userData.status === 'approved') {
+                    navigate('/dashboard/student');
+                } else if (userData.status === 'pending' || userData.status === 'denied') {
+                    navigate('/waiting-approval');
+                }
             }
         }
     }, [userData, userDataLoading, navigate]);

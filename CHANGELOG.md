@@ -676,4 +676,11 @@ VITE_FIREBASE_APP_ID=your-app-id
 
 
 
+=>Issuse
+
+
+=> When We go to Home Page there is a button on Get Start After Clicking it I will redirect to Role after they select the respicitive role and there will see there selected role profile page and they select theere respcitive collage and ask the premission for.
+
+
+
            

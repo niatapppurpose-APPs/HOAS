@@ -45,13 +45,16 @@ const WardenProfile = () => {
         fetchColleges();
     }, []);
 
-    // Redirect if profile already exists
+    // Redirect if profile already filled
     useEffect(() => {
         if (!userDataLoading && userData) {
-            if (userData.status === 'approved') {
-                navigate('/dashboard/warden');
-            } else if (userData.status === 'pending' || userData.status === 'denied') {
-                navigate('/waiting-approval');
+            // Only redirect if profile details are already filled (has fullName or phone)
+            if (userData.fullName || userData.phone || userData.employeeId) {
+                if (userData.status === 'approved') {
+                    navigate('/dashboard/warden');
+                } else if (userData.status === 'pending' || userData.status === 'denied') {
+                    navigate('/waiting-approval');
+                }
             }
         }
     }, [userData, userDataLoading, navigate]);

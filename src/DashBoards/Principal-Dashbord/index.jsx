@@ -19,12 +19,15 @@ const ManagementProfile = () => {
       return;
     }
 
-    // If user already has profile, redirect based on status
+    // If user already has profile filled, redirect based on status
     if (!userDataLoading && userData && userData.role === "management") {
-      if (userData.status === "approved") {
-        navigate("/dashboard/management", { replace: true });
-      } else {
-        navigate("/waiting-approval", { replace: true });
+      // Only redirect if profile details are already filled (has collegeName)
+      if (userData.collegeName) {
+        if (userData.status === "approved") {
+          navigate("/dashboard/management", { replace: true });
+        } else {
+          navigate("/waiting-approval", { replace: true });
+        }
       }
     }
   }, [user, userData, userDataLoading, loading, navigate]);
