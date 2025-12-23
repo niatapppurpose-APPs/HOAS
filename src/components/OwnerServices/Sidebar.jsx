@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Building2,
@@ -7,7 +8,6 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
-  LogOut,
   Bell,
   BarChart3,
   FileText,
@@ -18,8 +18,24 @@ import Avatar from './Avatar'
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { user } = useAuth();
-  const [activeItem, setActiveItem] = useState("dashboard");
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isPinned, setIsPinned] = useState(false);
+
+  // Get active item from current path
+  const getActiveItem = () => {
+    const path = location.pathname;
+    if (path.includes('/wardens')) return 'wardens';
+    if (path.includes('/students')) return 'students';
+    if (path.includes('/analytics')) return 'analytics';
+    if (path.includes('/reports')) return 'reports';
+    if (path.includes('/notifications')) return 'notifications';
+    if (path.includes('/settings')) return 'settings';
+    if (path.includes('/help')) return 'help';
+    return 'dashboard';
+  };
+
+  const activeItem = getActiveItem();
 
   // Reset pinned state when switching to mobile view
   useEffect(() => {
@@ -38,17 +54,17 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const showContent = !isCollapsed || isPinned;
 
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "colleges", label: "Warden", icon: Building2 },
-    { id: "users", label: "Student", icon: Users },
-    { id: "analytics", label: "Analytics", icon: BarChart3 },
-    { id: "reports", label: "Reports", icon: FileText },
-    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/OwnersDashboard" },
+    { id: "wardens", label: "Wardens", icon: Building2, path: "/OwnersDashboard/wardens" },
+    { id: "students", label: "Students", icon: Users, path: "/OwnersDashboard/students" },
+    { id: "analytics", label: "Analytics", icon: BarChart3, path: "/OwnersDashboard/analytics" },
+    { id: "reports", label: "Reports", icon: FileText, path: "/OwnersDashboard/reports" },
+    { id: "notifications", label: "Notifications", icon: Bell, path: "/OwnersDashboard/notifications" },
   ];
 
   const bottomMenuItems = [
-    { id: "settings", label: "Settings", icon: Settings },
-    { id: "help", label: "Help & Support", icon: HelpCircle },
+    { id: "settings", label: "Settings", icon: Settings, path: "/OwnersDashboard/settings" },
+    { id: "help", label: "Help & Support", icon: HelpCircle, path: "/OwnersDashboard/help" },
   ];
 
   const handleMouseEnter = () => {
@@ -97,13 +113,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
               <Building2 className="w-5 h-5 text-white" />
             </div>
-            <span
-              className={`text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent transition-opacity duration-200 ${
-                !showContent ? "lg:hidden" : ""
-              }`}
-            >
-              HAOS Admin
-            </span>
+            <div className={`${!showContent ? "lg:hidden" : ""}`}>
+              <h1 className="text-xl font-bold text-white">HOAS</h1>
+              <p className="text-xs text-slate-400">Owner Dashboard</p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -119,10 +132,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               }`}
               title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
             >
-              <Pin className={`w-4 h-4 transition-transform ${isPinned ? "rotate-45" : ""}`} />
+              <Pin className={`w-4 h-4 transition-transform ${isPinned ? "rotate-60" : ""}`} />
             </button>
 
-            {/* Close Button - Mobile Only */}
+          
             <button
               onClick={() => {
                 setIsPinned(false);
@@ -154,7 +167,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveItem(item.id)}
+                  onClick={() => {
+                    navigate(item.path);
+                    if (window.innerWidth < 1024) setIsCollapsed(true);
+                  }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
                     ${!showContent ? "lg:justify-center" : ""}
                     ${
@@ -165,7 +181,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   `}
                 >
                   <Icon
-                    className={`w-5 h-5 flex-shrink-0 ${
+                    className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${
                       isActive ? "text-white" : "text-slate-400 group-hover:text-white"
                     }`}
                   />
@@ -210,7 +226,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveItem(item.id)}
+                  onClick={() => {
+                    navigate(item.path);
+                    if (window.innerWidth < 1024) setIsCollapsed(true);
+                  }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
                     ${!showContent ? "lg:justify-center" : ""}
                     ${
@@ -220,7 +239,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                     }
                   `}
                 >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <Icon className="w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
                   <span
                     className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${
                       !showContent ? "lg:hidden" : ""

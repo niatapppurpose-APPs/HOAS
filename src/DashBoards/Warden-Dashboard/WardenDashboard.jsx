@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../firebase/firebaseConfig';
-import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import * as cloudFunctions from '../../firebase/cloudFunctions';
 import { 
     Shield, 
     Building2, 
@@ -69,14 +70,16 @@ const WardenDashboard = () => {
 
     const handleStatusChange = async (studentId, newStatus) => {
         try {
-            await updateDoc(doc(db, 'users', studentId), {
-                status: newStatus,
-                updatedAt: serverTimestamp(),
-                approvedBy: user.uid,
-                approverName: userData.fullName
-            });
+            if (newStatus === 'approved') {
+                await cloudFunctions.approveUser(studentId, 'warden');
+                console.log(`Student ${studentId} approved successfully`);
+            } else if (newStatus === 'denied') {
+                await cloudFunctions.denyUser(studentId, 'Denied by warden');
+                console.log(`Student ${studentId} denied successfully`);
+            }
         } catch (error) {
             console.error('Error updating status:', error);
+            alert(`Failed to ${newStatus} student: ${error.message}`);
         }
     };
 

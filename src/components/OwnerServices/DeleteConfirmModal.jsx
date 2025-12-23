@@ -8,7 +8,9 @@ const DeleteConfirmModal = ({
   collegeName, 
   isDeleting, 
   wardenCount, 
-  studentCount 
+  studentCount,
+  showDetails = true,
+  title = 'Delete College'
 }) => {
   if (!isOpen) return null;
 
@@ -19,22 +21,24 @@ const DeleteConfirmModal = ({
           <div className="p-3 rounded-full bg-red-500/20">
             <AlertTriangle className="w-6 h-6 text-red-400" />
           </div>
-          <h3 className="text-xl font-bold text-white">Delete College</h3>
+          <h3 className="text-xl font-bold text-white">{title}</h3>
         </div>
 
         <p className="text-slate-300 mb-4">
           Are you sure you want to delete <span className="font-semibold text-white">{collegeName}</span>?
         </p>
 
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
-          <p className="text-red-300 text-sm font-medium mb-2">⚠️ This action will permanently delete:</p>
-          <ul className="text-red-300/80 text-sm space-y-1">
-            <li>• The college/management account</li>
-            <li>• {wardenCount} warden(s) under this college</li>
-            <li>• {studentCount} student(s) under this college</li>
-          </ul>
-          <p className="text-red-400 text-xs mt-3 font-medium">This action cannot be undone!</p>
-        </div>
+        {showDetails && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+            <p className="text-red-300 text-sm font-medium mb-2">⚠️ This action will permanently delete:</p>
+            <ul className="text-red-300/80 text-sm space-y-1">
+              <li>• The college/management account</li>
+              <li>• {wardenCount} warden(s) under this college</li>
+              <li>• {studentCount} student(s) under this college</li>
+            </ul>
+            <p className="text-red-400 text-xs mt-3 font-medium">This action cannot be undone!</p>
+          </div>
+        )}
 
         <div className="flex gap-3">
           <button

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
-import { collection, query, where, getDocs, doc, updateDoc, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
+import * as cloudFunctions from "../../firebase/cloudFunctions";
 import {
   Building2,
   Users,
@@ -304,19 +305,19 @@ const ManagementDashboard = () => {
     // Only re-run if user ID changes. userData content changes shouldn't trigger re-subscription
   }, [user?.uid, userData?.role, userData?.status]);
 
-  // Handle status change for wardens/students
+  // Handle status change for wardens/students - Call Cloud Function
   const handleStatusChange = async (userId, newStatus) => {
     try {
-      const userRef = doc(db, "users", userId);
-      await updateDoc(userRef, {
-        status: newStatus,
-        updatedAt: new Date().toISOString(),
-        approvedBy: user.uid,
-        approvedAt: new Date().toISOString(),
-      });
-      console.log(`User ${userId} status updated to ${newStatus}`);
+      if (newStatus === 'approved') {
+        await cloudFunctions.approveUser(userId, 'management');
+        console.log(`User ${userId} approved successfully`);
+      } else if (newStatus === 'denied') {
+        await cloudFunctions.denyUser(userId, 'Denied by management');
+        console.log(`User ${userId} denied successfully`);
+      }
     } catch (error) {
       console.error("Error updating user status:", error);
+      alert(`Failed to ${newStatus} user: ${error.message}`);
     }
   };
 

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
-import { collection, query, where, onSnapshot, doc, updateDoc, getDocs, writeBatch } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
+import * as cloudFunctions from "../../firebase/cloudFunctions";
 
 // Import components
 import Header from '../../components/OwnerServices/header';
@@ -11,7 +12,6 @@ import Avatar from "../../components/OwnerServices/Avatar";
 import StatusBadge from "../../components/OwnerServices/StatusBadge";
 import StatsCard from "../../components/OwnerServices/StatsCard";
 import DeleteConfirmModal from "../../components/OwnerServices/DeleteConfirmModal";
-import Sidebar from '../../components/OwnerServices/Sidebar';
 
 import {
   Building2,
@@ -36,7 +36,6 @@ const OwnersDashboard = () => {
   const [fetchError, setFetchError] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 });
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(true);
 
 
   useEffect(() => {
@@ -92,50 +91,36 @@ const OwnersDashboard = () => {
     }
   };
 
-  // Handle status change - Update in Firestore
+  // Handle status change - Call Cloud Function
   const handleStatusChange = async (userId, newStatus) => {
     try {
-      const userRef = doc(db, "users", userId);
-      await updateDoc(userRef, {
-        status: newStatus,
-        updatedAt: new Date().toISOString(),
-        approvedBy: user.uid,
-        approvedAt: new Date().toISOString(),
-      });
-      console.log(`User ${userId} status updated to ${newStatus}`);
+      if (newStatus === 'approved') {
+        await cloudFunctions.approveUser(userId, 'owner');
+        console.log(`User ${userId} approved successfully`);
+      } else if (newStatus === 'denied') {
+        await cloudFunctions.denyUser(userId, 'Denied by owner');
+        console.log(`User ${userId} denied successfully`);
+      }
     } catch (error) {
       console.error("Error updating status:", error);
+      alert(`Failed to ${newStatus} user: ${error.message}`);
     }
   };
 
   // Open delete confirmation modal
   const openDeleteModal = async (college) => {
     try {
-      // Count wardens and students under this college
-      const wardensQuery = query(
-        collection(db, "users"),
-        where("role", "==", "warden"),
-        where("managementId", "==", college.id)
-      );
-      const studentsQuery = query(
-        collection(db, "users"),
-        where("role", "==", "student"),
-        where("managementId", "==", college.id)
-      );
-
-      const [wardensSnap, studentsSnap] = await Promise.all([
-        getDocs(wardensQuery),
-        getDocs(studentsQuery)
-      ]);
-
+      // Get college stats using Cloud Function
+      const { stats } = await cloudFunctions.getCollegeStats(college.id);
+      
       setDeleteModal({
         isOpen: true,
         college: college,
-        wardenCount: wardensSnap.docs.length,
-        studentCount: studentsSnap.docs.length
+        wardenCount: stats.wardens.total,
+        studentCount: stats.students.total
       });
     } catch (error) {
-      console.error("Error counting users:", error);
+      console.error("Error getting college stats:", error);
       setDeleteModal({
         isOpen: true,
         college: college,
@@ -145,48 +130,22 @@ const OwnersDashboard = () => {
     }
   };
 
-  // Handle delete college and all associated users
+  // Handle delete college and all associated users - Call Cloud Function
   const handleDeleteCollege = async () => {
     if (!deleteModal.college) return;
 
     setIsDeleting(true);
     try {
       const collegeId = deleteModal.college.id;
-      const batch = writeBatch(db);
+      
+      // Call Cloud Function for cascade delete
+      const result = await cloudFunctions.deleteCollege(collegeId);
 
-      // Get all wardens under this college
-      const wardensQuery = query(
-        collection(db, "users"),
-        where("role", "==", "warden"),
-        where("managementId", "==", collegeId)
-      );
-      const wardensSnap = await getDocs(wardensQuery);
-      wardensSnap.docs.forEach((docSnap) => {
-        batch.delete(doc(db, "users", docSnap.id));
-      });
-
-      // Get all students under this college
-      const studentsQuery = query(
-        collection(db, "users"),
-        where("role", "==", "student"),
-        where("managementId", "==", collegeId)
-      );
-      const studentsSnap = await getDocs(studentsQuery);
-      studentsSnap.docs.forEach((docSnap) => {
-        batch.delete(doc(db, "users", docSnap.id));
-      });
-
-      // Delete the college/management user
-      batch.delete(doc(db, "users", collegeId));
-
-      // Commit the batch
-      await batch.commit();
-
-      console.log(`Successfully deleted college ${collegeId} and ${wardensSnap.docs.length} wardens, ${studentsSnap.docs.length} students`);
+      console.log(`Successfully deleted college: ${result.message}`, result.stats);
       setDeleteModal({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 });
     } catch (error) {
       console.error("Error deleting college:", error);
-      alert("Failed to delete college. Please try again.");
+      alert(`Failed to delete college: ${error.message}`);
     } finally {
       setIsDeleting(false);
     }
@@ -259,15 +218,12 @@ const OwnersDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Sidebar */}
-      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-
+    <>
       {/* Header */}
-      <Header pendingCount={pendingCount} handleLogout={handleLogout} user={user} />
+      <Header pendingCount={pendingCount} handleLogout={handleLogout} user={user} title="Dashboard" />
 
       {/* Main Content */}
-      <main className={`transition-all duration-300 px-4 sm:px-6 lg:px-8 py-8 ${isCollapsed ? "lg:ml-20" : "lg:ml-72"}`}>
+      <div className="px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Section */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-10">
           <StatsCard
@@ -434,7 +390,7 @@ const OwnersDashboard = () => {
             </div>
           )}
         </section>
-      </main>
+      </div>
 
       {/* Delete Confirmation Modal */}
       <DeleteConfirmModal
@@ -446,7 +402,7 @@ const OwnersDashboard = () => {
         wardenCount={deleteModal.wardenCount}
         studentCount={deleteModal.studentCount}
       />
-    </div>
+    </>
   );
 };
 

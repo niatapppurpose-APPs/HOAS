@@ -10,6 +10,14 @@ import StudentDashboard from "../../DashBoards/Student-DashBoard/StudentDashboar
 import WardenDashboard from "../../DashBoards/Warden-Dashboard/WardenDashboard";
 import ManagementDashboard from "../../DashBoards/Principal-Dashbord/PrincipalDashboard";
 import OwnersDashboard from "../../Pages/OwnersDashboard/ownersdashbord"
+import OwnersLayout from "../../Pages/OwnersDashboard/OwnersLayout"
+import Wardens from "../../Pages/OwnersDashboard/Pages/Wardens"
+import Students from "../../Pages/OwnersDashboard/Pages/Students"
+import Analytics from "../../Pages/OwnersDashboard/Pages/Analytics"
+import Reports from "../../Pages/OwnersDashboard/Pages/Reports"
+import Notifications from "../../Pages/OwnersDashboard/Pages/Notifications"
+import Settings from "../../Pages/OwnersDashboard/Pages/Settings"
+import Help from "../../Pages/OwnersDashboard/Pages/Help"
 import OwnerProfile from "../OwnerServices/OwnerProfile"
 import AdminLogin from '../OwnerServices/AdminLogin'
 import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval"
@@ -34,7 +42,16 @@ const Routes_path = () => {
                 <Route path="/dashboard/management" element={<ManagementDashboard />} />
                 {/* --------------------------------------- Owners Page ------------------------------------- */}
                 <Route path="/admin-login" element={<AdminLogin />} />
-                <Route path="/OwnersDashboard" element={<OwnersDashboard />} />
+                <Route path="/OwnersDashboard" element={<OwnersLayout />}>
+                    <Route index element={<OwnersDashboard />} />
+                    <Route path="wardens" element={<Wardens />} />
+                    <Route path="students" element={<Students />} />
+                    <Route path="analytics" element={<Analytics />} />
+                    <Route path="reports" element={<Reports />} />
+                    <Route path="notifications" element={<Notifications />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="help" element={<Help />} />
+                </Route>
                 <Route path="/owner-profile" element={<OwnerProfile />} />
 
             </Routes>

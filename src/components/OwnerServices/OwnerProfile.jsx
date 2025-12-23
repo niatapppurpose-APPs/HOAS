@@ -170,7 +170,7 @@ const OwnerProfile = () => {
               </p>
 
               <span className="inline-block mt-3 px-3 py-1 rounded-full text-xs bg-indigo-500/10 text-indigo-400">
-                Owner / Principal
+                Owner
               </span>
             </div>
           </div>
