@@ -103,7 +103,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       <aside
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`fixed top-0 left-0 h-full bg-slate-900/95 backdrop-blur-xl border-r z-50 transition-all duration-300 ease-in-out
+        style={{ backgroundColor: 'var(--owner-surface)', borderColor: 'rgba(255,255,255,0.03)' }}
+        className={`fixed top-0 left-0 h-full backdrop-blur-xl border-r z-50 transition-all duration-300 ease-in-out
           ${showContent ? "translate-x-0 w-72 lg:w-72" : "-translate-x-full lg:translate-x-0 lg:w-20"}
         `}
       >
@@ -164,6 +165,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               const Icon = item.icon;
               const isActive = activeItem === item.id;
 
+              const activeStyle = isActive
+                ? { background: `linear-gradient(90deg, var(--owner-accent), var(--owner-accent-2))`, color: 'var(--owner-text)' }
+                : {};
+
               return (
                 <button
                   key={item.id}
@@ -171,14 +176,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                     navigate(item.path);
                     if (window.innerWidth < 1024) setIsCollapsed(true);
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
-                    ${!showContent ? "lg:justify-center" : ""}
-                    ${
-                      isActive
-                        ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/25"
-                        : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                    }
-                  `}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${!showContent ? "lg:justify-center" : ""}`}
+                  style={activeStyle}
                 >
                   <Icon
                     className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${

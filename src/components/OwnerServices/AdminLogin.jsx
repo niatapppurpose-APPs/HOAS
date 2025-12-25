@@ -18,7 +18,7 @@ const AdminLogin = () => {
         navigate("/OwnersDashboard", { replace: true });
       } else if (user && !isAdmin) {
         setError("Access Denied: You are not authorized as an admin you can't login without proper access. Please contact the system administrator.");
-        signOut(auth);
+        
       }
     }
   }, [user, isAdmin, loading, adminChecked, navigate]);

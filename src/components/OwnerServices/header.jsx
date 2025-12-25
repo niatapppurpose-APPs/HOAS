@@ -5,12 +5,12 @@ import { useNavigate } from "react-router-dom";
 const Header = ({ pendingCount = 0, handleLogout, user, title }) => {
   const navigate = useNavigate();
   return (
-    <header className="border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-xl  top-0 z-50">
+    <header style={{ backgroundColor: 'var(--owner-surface)', borderColor: 'rgba(148,163,184,0.1)' }} className="border-b backdrop-blur-xl  top-0 z-50">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {title && (
-              <h1 className="text-xl font-bold text-white">{title}</h1>
+              <h1 style={{ color: 'var(--owner-text)' }} className="text-xl font-bold">{title}</h1>
             )}
           </div>
           <div className="flex items-center gap-4">
@@ -23,7 +23,8 @@ const Header = ({ pendingCount = 0, handleLogout, user, title }) => {
             {/* Profile Icon Button */}
             <button
               onClick={() => navigate("/owner-profile")}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 transition-colors"
+              className="p-2 rounded-xl border transition-colors"
+              style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.04)' }}
               title="View Profile"
             >
               <User className="w-5 h-5 text-slate-300" />
@@ -32,7 +33,8 @@ const Header = ({ pendingCount = 0, handleLogout, user, title }) => {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-red-500/20 border border-slate-600 hover:border-red-500/50 transition-colors group"
+              className="p-2 rounded-xl border transition-colors group"
+              style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.04)' }}
               title="Logout"
             >
               <LogOut className="w-5 h-5 text-slate-300 group-hover:text-red-400" />

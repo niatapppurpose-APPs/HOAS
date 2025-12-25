@@ -32,7 +32,7 @@ async function verifyAdmin(context) {
   }
 
   const userRecord = await auth.getUser(context.auth.uid);
-  const isAdmin = userRecord.customClaims?.admin === true;
+  const isAdmin = userRecord.customClaims?.role === 'admin';
 
   if (!isAdmin) {
     throw new HttpsError('permission-denied', 'User must be an admin');
@@ -58,7 +58,7 @@ async function verifyManagementAccess(context, collegeId) {
   
   // Check if user is admin
   const userRecord = await auth.getUser(context.auth.uid);
-  const isAdmin = userRecord.customClaims?.admin === true;
+  const isAdmin = userRecord.customClaims?.role === 'admin';
   
   // Check if user is management for this college
   const isManagement = userData.role === 'management' && userData.uid === collegeId;
@@ -335,8 +335,8 @@ export const getCollegeStats = onCall(async (request) => {
 /**
  * Set admin custom claim for a user
  */
-export const setAdminClaim = onCall(async (request) => {
-  const { email, isAdmin } = request.data;
+export const setRole = onCall(async (request) => {
+  const { email, role } = request.data;
 
   if (!email) {
     throw new HttpsError('invalid-argument', 'email is required');
@@ -350,12 +350,12 @@ export const setAdminClaim = onCall(async (request) => {
 
   // Set custom claim
   await auth.setCustomUserClaims(userRecord.uid, {
-    admin: isAdmin === true
+    role: role
   });
 
   return {
     success: true,
-    message: `Admin status ${isAdmin ? 'granted' : 'revoked'} for ${email}`
+    message: `Role ${role} granted for ${email}`
   };
 });
 

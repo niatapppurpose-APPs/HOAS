@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
           const tokenResult = await currentUser.getIdTokenResult(true); // Force refresh
           const userClaims = tokenResult.claims;
           setClaims(userClaims);
-          const adminStatus = userClaims.admin === true;
+          const adminStatus = userClaims.role === 'admin';
           setIsAdmin(adminStatus);
           setAdminChecked(true);
           console.log("Logged in user successfully:", currentUser.email);
@@ -56,9 +56,24 @@ export const AuthProvider = ({ children }) => {
             const userSnapshot = await getDoc(userDocRef);
             
             if (!userSnapshot.exists()) {
-              // Do NOT create the document here. Let the UserRole page handle it.
-              // This prevents the "default role" issue.
-              console.log("New user detected, waiting for role selection...");
+              if (adminStatus) {
+                // If the user is an admin and doesn't have a doc, create one
+                const adminProfileData = {
+                  uid: currentUser.uid,
+                  email: currentUser.email,
+                  displayName: currentUser.displayName,
+                  photoURL: currentUser.photoURL,
+                  role: 'admin',
+                  status: 'approved',
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                };
+                await setDoc(userDocRef, adminProfileData);
+                console.log("Admin user document created automatically.");
+              } else {
+                // For non-admins, let the user role page handle it
+                console.log("New user detected, waiting for role selection...");
+              }
             }
           } catch (firestoreError) {
             console.error("Error checking/creating user document:", firestoreError);
@@ -122,8 +137,8 @@ export const AuthProvider = ({ children }) => {
         const tokenResult = await user.getIdTokenResult(true);
         const userClaims = tokenResult.claims;
         setClaims(userClaims);
-        setIsAdmin(userClaims.admin === true);
-        return userClaims.admin === true;
+        setIsAdmin(userClaims.role === 'admin');
+        return userClaims.role === 'admin';
       } catch (error) {
         console.error("Error refreshing admin status:", error);
         return false;
@@ -161,6 +176,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Function to update user theme in Firestore
+  const updateUserTheme = async (theme) => {
+    if (!user) return false;
+
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(userDocRef, { theme: theme, updatedAt: new Date().toISOString() }, { merge: true });
+      console.log("User theme updated:", theme);
+      return true;
+    } catch (error) {
+      console.error("Error updating user theme:", error);
+      return false;
+    }
+  };
+
   // Function to logout
   const logout = async () => {
     try {
@@ -189,6 +219,7 @@ export const AuthProvider = ({ children }) => {
     userDataLoading,
     refreshAdminStatus,
     createUserProfile,
+    updateUserTheme,
     logout,
   };
 
