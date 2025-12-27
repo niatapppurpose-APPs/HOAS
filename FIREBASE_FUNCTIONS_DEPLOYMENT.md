@@ -45,7 +45,7 @@ cp serviceAccountKey.json functions/serviceAccountKey.json
 
 > **Important**: Never commit `serviceAccountKey.json` to version control!
 
-### 3. Install Functions Dependencies
+### 3. Install Functions Dependencies 
 
 ```bash
 cd functions
