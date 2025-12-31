@@ -17,7 +17,9 @@
   "dependencies": {
     "firebase-admin": "^12.6.0",
     "firebase-functions": "^6.1.1",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "pdfkit": "^0.15.0",
+    "zip-lib": "^0.7.3"
   },
   "devDependencies": {
     "firebase-functions-test": "^3.3.0"
