@@ -43,7 +43,8 @@ export const AuthProvider = ({ children }) => {
           const tokenResult = await currentUser.getIdTokenResult(true); // Force refresh
           const userClaims = tokenResult.claims;
           setClaims(userClaims);
-          const adminStatus = userClaims.role === 'admin';
+          // Check both possible admin claim formats
+          const adminStatus = userClaims.admin === true || userClaims.role === 'admin';
           setIsAdmin(adminStatus);
           setAdminChecked(true);
           console.log("Logged in user successfully:", currentUser.email);

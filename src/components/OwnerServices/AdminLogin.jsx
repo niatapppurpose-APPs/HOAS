@@ -28,6 +28,7 @@ const AdminLogin = () => {
     setIsLoggingIn(true);
 
     try {
+      // Use redirect instead of popup to avoid COOP warnings
       await signInWithPopup(auth, provider);
     } catch (e) {
       console.log("Login Error:", e);
