@@ -5,7 +5,7 @@ import { createRequire } from "module";
 if (process.env.FIREBASE_AUTH_EMULATOR_HOST) {
   console.log("Firebase emulator detected. Connecting to emulators...");
   admin.initializeApp({
-    projectId: "demo-project", // Using a dummy project ID for the emulator
+    projectId: "hoas-65dee", // Using the project ID from .firebaserc
   });
 } else {
   console.log("No Firebase emulator detected. Connecting to production...");
