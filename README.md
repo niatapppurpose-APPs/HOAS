@@ -207,7 +207,9 @@ Private and proprietary. All rights reserved.
 This is a private project. Contact administrators for access.
 
 ---
+---
 
+**Reports Page & Downloads**: Implementation guidance and sample code added in [REPORTS.md](REPORTS.md) — shows how to add an Owner-facing download button (PDF and JSON), using Node.js filesystem to create files and an example approach to produce password-protected PDFs (qpdf + pdfkit). See [REPORTS.md](REPORTS.md) for backend and frontend examples.
 **Version:** 1.0.0  
 **Last Updated:** December 22, 2025  
 **Status:** ✅ Production Ready
