@@ -1,0 +1,4 @@
+###
+GET http://localhost:5000/download/json
+###
+GET http://localhost:5000/download/pdf

@@ -1,0 +1,7 @@
+{
+  "collegeId": "ABC123",
+  "ownerName": "Hemanth",
+  "email": "owner@test.com",
+  "students": 120,
+  "wardens": 4
+}
