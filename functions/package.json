@@ -15,9 +15,12 @@
     "logs": "firebase functions:log"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
     "firebase-admin": "^12.6.0",
     "firebase-functions": "^6.1.1",
-    "cors": "^2.8.5",
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7",
     "pdfkit": "^0.15.0",
     "zip-lib": "^0.7.3"
   },
