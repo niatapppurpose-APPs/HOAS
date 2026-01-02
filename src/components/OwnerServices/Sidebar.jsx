@@ -37,8 +37,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   const activeItem = getActiveItem();
 
-  // Reset pinned state when switching to mobile view
+  // Restore pinned state from localStorage and reset on mobile view
   useEffect(() => {
+    const storedValue = localStorage.getItem("sidebarPinned");
+    if (storedValue === "true") {
+      setIsPinned(true);
+      setIsCollapsed(false);
+    }
+
     const handleResize = () => {
       if (window.innerWidth < 1024 && isPinned) {
         setIsPinned(false);
@@ -80,12 +86,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   };
 
   const handlePinClick = () => {
-    if (isPinned) {
-      setIsPinned(false);
-      setIsCollapsed(true);
-    } else {
-      setIsPinned(true);
+    const newValue = !isPinned;
+    setIsPinned(newValue);
+    localStorage.setItem('sidebarPinned', String(newValue));
+
+    if (newValue) {
+
       setIsCollapsed(false);
+    } else {
+
+      setIsCollapsed(true);
     }
   };
 
@@ -93,9 +103,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     <>
       {/* Mobile Overlay */}
       <div
-        className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300 ${
-          !isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300 ${!isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
         onClick={() => setIsCollapsed(true)}
       />
 
@@ -124,19 +133,17 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             {/* Pin Button - Desktop Only (visible when expanded) */}
             <button
               onClick={handlePinClick}
-              className={`hidden lg:flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${
-                !showContent ? "opacity-0 pointer-events-none" : "opacity-100"
-              } ${
-                isPinned
+              className={`hidden lg:flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${!showContent ? "opacity-0 pointer-events-none" : "opacity-100"
+                } ${isPinned
                   ? "bg-indigo-600 text-white"
                   : "bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
-              }`}
+                }`}
               title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
             >
               <Pin className={`w-4 h-4 transition-transform ${isPinned ? "rotate-60" : ""}`} />
             </button>
 
-          
+
             <button
               onClick={() => {
                 setIsPinned(false);
@@ -155,9 +162,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           {/* Main Menu */}
           <div className="flex-1 px-3 space-y-1">
             <p
-              className={`text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3 ${
-                !showContent ? "lg:hidden" : ""
-              }`}
+              className={`text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3 ${!showContent ? "lg:hidden" : ""
+                }`}
             >
               Main Menu
             </p>
@@ -180,14 +186,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   style={activeStyle}
                 >
                   <Icon
-                    className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${
-                      isActive ? "text-white" : "text-slate-400 group-hover:text-white"
-                    }`}
+                    className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : "text-slate-400 group-hover:text-white"
+                      }`}
                   />
                   <span
-                    className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${
-                      !showContent ? "lg:hidden" : ""
-                    }`}
+                    className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""
+                      }`}
                   >
                     {item.label}
                   </span>
@@ -212,9 +216,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           {/* Bottom Menu */}
           <div className="px-3 space-y-1">
             <p
-              className={`text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3 ${
-                !showContent ? "lg:hidden" : ""
-              }`}
+              className={`text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3 ${!showContent ? "lg:hidden" : ""
+                }`}
             >
               Settings
             </p>
@@ -231,18 +234,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
                     ${!showContent ? "lg:justify-center" : ""}
-                    ${
-                      isLogout
-                        ? "text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                        : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                    ${isLogout
+                      ? "text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                     }
                   `}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
                   <span
-                    className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${
-                      !showContent ? "lg:hidden" : ""
-                    }`}
+                    className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""
+                      }`}
                   >
                     {item.label}
                   </span>
@@ -277,9 +278,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`fixed top-4 left-4 z-30 lg:hidden p-2.5 rounded-xl bg-slate-800 border border-slate-700/50 text-slate-400 hover:text-white transition-colors ${
-          !isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
-        }`}
+        className={`fixed top-4 left-4 z-30 lg:hidden p-2.5 rounded-xl bg-slate-800 border border-slate-700/50 text-slate-400 hover:text-white transition-colors ${!isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
       >
         <ChevronRight className="w-5 h-5" />
       </button>
