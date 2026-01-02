@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ClipLoader } from 'react-spinners';
 import Header from '../../../components/OwnerServices/header';
+import { FileText, Download, Lock, Calendar, FileJson, FileType } from 'lucide-react';
 // --------------------------------Report Download code -------------------------------
 
 // This function extracts the filename from server response headers
@@ -101,91 +102,215 @@ async function downloadReport(type, password) {
 }
 // -------------------------------------------------------------------------------------------------------------------------
 export default function Reports() {
-  const [reportType, setReportType] = useState('pdf');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
+  const [downloadingFormat, setDownloadingFormat] = useState(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  // TODO: Replace with actual college data from props/context
+  const collegeInfo = {
+    name: "NIAT Engineering College",
+    location: "Bangalore, Karnataka",
+    id: "CLG-2024-001"
+  };
+
+  // TODO: Replace with actual reports data from backend
+  const reportsData = [
+    {
+      id: 1,
+      name: "Student Access Report",
+      description: "Complete student enrollment and access logs",
+      generatedDate: new Date(2026, 0, 1, 14, 30),
+      type: "both", // pdf, json, or both
+      isPasswordProtected: true,
+    },
+    {
+      id: 2,
+      name: "Admin Activity Report",
+      description: "Administrative actions and system changes",
+      generatedDate: new Date(2026, 0, 1, 10, 15),
+      type: "both",
+      isPasswordProtected: false,
+    },
+    {
+      id: 3,
+      name: "Hostel Occupancy Report",
+      description: "Room allocation and occupancy statistics",
+      generatedDate: new Date(2025, 11, 31, 16, 45),
+      type: "both",
+      isPasswordProtected: true,
+    },
+    {
+      id: 4,
+      name: "Financial Summary",
+      description: "Fee collection and payment records",
+      generatedDate: new Date(2025, 11, 30, 9, 0),
+      type: "both",
+      isPasswordProtected: true,
+    },
+  ];
+
+  const handleDownload = async (reportId, format) => {
+    setDownloadingId(reportId);
+    setDownloadingFormat(format);
     try {
-      await downloadReport(reportType, password);
+      // TODO: Implement actual download logic
+      await downloadReport(format, ''); // You can add password prompt if needed
+      console.log(`Downloading report ${reportId} as ${format}`);
     } catch (err) {
       console.error('Download failed', err);
       alert('Failed to download report: ' + (err.message || err));
     } finally {
-      setLoading(false);
+      setDownloadingId(null);
+      setDownloadingFormat(null);
     }
+  };
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
   return (
     <>
-      <Header title="Reports" />
-      <div className="p-6 text-white">
-        <div className="max-w-md mx-auto bg-gray-800 rounded-lg shadow-md p-8 mt-10">
-          <h2 className="text-2xl font-bold mb-6 text-center">Download College Report</h2>
-          <form onSubmit={handleSubmit} autoComplete="off">
-            <div className="mb-6">
-              <label className="block text-gray-300 text-sm font-bold mb-2">Report Format</label>
-              <div className="flex gap-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="reportType"
-                    value="pdf"
-                    checked={reportType === 'pdf'}
-                    onChange={() => setReportType('pdf')}
-                    className="form-radio h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-gray-300">PDF</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="reportType"
-                    autoComplete='none'
-                    value="json"
-                    checked={reportType === 'json'}
-                    onChange={() => setReportType('json')}
-                    className="form-radio h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-gray-300">JSON</span>
-                </label>
+      <Header title="Reports Board" />
+      
+      {/* Main Container */}
+      <div className="px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Page Header with College Context */}
+        <section className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-2xl font-bold text-white">Reports Board</h2>
+              <p className="text-slate-400 mt-1">Download reports for the selected college</p>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-slate-400">Total Reports:</span>
+              <span className="text-white font-semibold">{reportsData.length}</span>
+            </div>
+          </div>
+
+          {/* College Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 border border-indigo-500/30">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <span className="text-white font-semibold">College:</span>
+            <span className="text-white">{collegeInfo.name}</span>
+          </div>
+        </section>
+
+        {/* Reports List */}
+        <section className="space-y-3">
+          {reportsData.map((report) => (
+            <div
+              key={report.id}
+              className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 hover:border-slate-600/50 transition-all"
+            >
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                
+                {/* Left: Report Info */}
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex-shrink-0">
+                    <FileText className="w-6 h-6 text-white" />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-2 mb-1">
+                      <h3 className="text-white font-semibold text-lg">
+                        {report.name}
+                      </h3>
+                      {report.isPasswordProtected && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30">
+                          <Lock className="w-3 h-3 text-amber-400" />
+                          <span className="text-amber-400 text-xs font-medium">Protected</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <p className="text-slate-400 text-sm mb-2">
+                      {report.description}
+                    </p>
+                    
+                    <div className="flex flex-wrap items-center gap-3">
+                      {/* College Badge */}
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-medium">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        {collegeInfo.name}
+                      </span>
+                      
+                      {/* Date & Time */}
+                      <div className="flex items-center gap-2 text-slate-500 text-xs">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{formatDate(report.generatedDate)}</span>
+                        <span>•</span>
+                        <span>{formatTime(report.generatedDate)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Action Buttons */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Download PDF */}
+                  {(report.type === 'pdf' || report.type === 'both') && (
+                    <button
+                      onClick={() => handleDownload(report.id, 'pdf')}
+                      disabled={downloadingId === report.id}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium text-sm transition-all shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 disabled:from-slate-700 disabled:to-slate-700 disabled:shadow-none disabled:cursor-not-allowed"
+                    >
+                      {downloadingId === report.id && downloadingFormat === 'pdf' ? (
+                        <ClipLoader color="#ffffff" size={16} />
+                      ) : (
+                        <Download className="w-4 h-4" />
+                      )}
+                      <span>PDF</span>
+                    </button>
+                  )}
+
+                  {/* Download JSON */}
+                  {(report.type === 'json' || report.type === 'both') && (
+                    <button
+                      onClick={() => handleDownload(report.id, 'json')}
+                      disabled={downloadingId === report.id}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-medium text-sm transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 disabled:from-slate-700 disabled:to-slate-700 disabled:shadow-none disabled:cursor-not-allowed"
+                    >
+                      {downloadingId === report.id && downloadingFormat === 'json' ? (
+                        <ClipLoader color="#ffffff" size={16} />
+                      ) : (
+                        <Download className="w-4 h-4" />
+                      )}
+                      <span>JSON</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
+          ))}
+        </section>
 
-            <div className="mb-6">
-              <label className="block text-gray-300 text-sm font-bold mb-2" htmlFor="password">
-                Report Password
-              </label>
-              {/* Hidden dummy fields to discourage browser autofill/save-password prompts */}
-              <input type="text" name="__fake_username" autoComplete="username" style={{ display: 'none' }} />
-              <input type="password" name="__fake_password" autoComplete="new-password" style={{ display: 'none' }} />
-
-              <input
-                id="password"
-                name="report_pw"
-                type="password"
-                autoComplete="off"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter a password to lock the file"
-                required
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="flex items-center justify-center">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center disabled:bg-gray-500"
-              >
-                {loading ? <ClipLoader color="#ffffff" size={20} /> : 'Download Report'}
-              </button>
-            </div>
-          </form>
-        </div>
+        {/* Empty State (if no reports) */}
+        {reportsData.length === 0 && (
+          <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-12 text-center">
+            <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">No Reports Available</h3>
+            <p className="text-slate-400 max-w-md mx-auto">
+              Reports for {collegeInfo.name} will appear here once generated.
+            </p>
+          </div>
+        )}
       </div>
     </>
   );
