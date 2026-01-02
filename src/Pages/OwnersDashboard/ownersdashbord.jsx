@@ -4,6 +4,7 @@ import { signOut } from "firebase/auth";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
+import { HashLoader } from "react-spinners";
 import * as cloudFunctions from "../../firebase/cloudFunctions";
 
 // Import components
@@ -33,6 +34,7 @@ const OwnersDashboard = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
   const [dataLoading, setDataLoading] = useState(true);
+  const [minLoadingTime, setMinLoadingTime] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 });
   const [isDeleting, setIsDeleting] = useState(false);
@@ -47,6 +49,16 @@ const OwnersDashboard = () => {
       }
     }
   }, [user, isAdmin, loading, adminChecked, navigate]);
+
+  // 3-second minimum loading time
+  useEffect(() => {
+    setMinLoadingTime(true);
+    const timer = setTimeout(() => {
+      setMinLoadingTime(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Fetch ALL users from Firestore
   useEffect(() => {
@@ -291,10 +303,10 @@ const OwnersDashboard = () => {
                 Make sure your Firestore security rules allow reading the users collection.
               </p>
             </div>
-          ) : dataLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
-              <span className="text-slate-400 ml-3">Loading users...</span>
+          ) : (dataLoading || minLoadingTime) ? (
+            <div className="flex flex-col items-center justify-center py-30">
+              <HashLoader color="#6366f1" size={80} />
+              {/* <span className="text-slate-400 mt-4">Loading Collages...</span> */}
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-12 text-center">
