@@ -13,8 +13,11 @@ import { setGlobalOptions } from 'firebase-functions/v2';
 // Initialize Firebase Admin
 initializeApp();
 
-// Set global options
-setGlobalOptions({ region: 'us-central1' });
+// Set global options with CORS enabled
+setGlobalOptions({ 
+  region: 'us-central1',
+  cors: true // Enable CORS for all callable functions
+});
 
 const db = getFirestore();
 const auth = getAuth();
@@ -77,7 +80,7 @@ async function verifyManagementAccess(context, collegeId) {
 /**
  * Approve a user (Management approves Warden/Student, Owner approves Management)
  */
-export const approveUser = onCall(async (request) => {
+export const approveUser = onCall({ cors: true }, async (request) => {
   const { userId, approverRole } = request.data;
 
   if (!userId) {
@@ -116,7 +119,7 @@ export const approveUser = onCall(async (request) => {
 /**
  * Deny a user
  */
-export const denyUser = onCall(async (request) => {
+export const denyUser = onCall({ cors: true }, async (request) => {
   const { userId, reason } = request.data;
 
   if (!userId) {
@@ -153,7 +156,7 @@ export const denyUser = onCall(async (request) => {
 /**
  * Get all users for a management user (Wardens and Students)
  */
-export const getCollegeUsers = onCall(async (request) => {
+export const getCollegeUsers = onCall({ cors: true }, async (request) => {
   const { collegeId, role, status } = request.data;
 
   if (!collegeId) {
@@ -190,7 +193,7 @@ export const getCollegeUsers = onCall(async (request) => {
 /**
  * Get all management users (Owner only)
  */
-export const getAllManagementUsers = onCall(async (request) => {
+export const getAllManagementUsers = onCall({ cors: true }, async (request) => {
   // Verify admin
   await verifyAdmin(request);
 
@@ -216,7 +219,7 @@ export const getAllManagementUsers = onCall(async (request) => {
 /**
  * Delete a college and all associated users (cascade delete)
  */
-export const deleteCollege = onCall(async (request) => {
+export const deleteCollege = onCall({ cors: true }, async (request) => {
   const { collegeId } = request.data;
 
   if (!collegeId) {
@@ -277,7 +280,7 @@ export const deleteCollege = onCall(async (request) => {
 /**
  * Get college statistics
  */
-export const getCollegeStats = onCall(async (request) => {
+export const getCollegeStats = onCall({ cors: true }, async (request) => {
   const { collegeId } = request.data;
 
   if (!collegeId) {
@@ -335,7 +338,7 @@ export const getCollegeStats = onCall(async (request) => {
 /**
  * Set admin custom claim for a user
  */
-export const setRole = onCall(async (request) => {
+export const setRole = onCall({ cors: true }, async (request) => {
   const { email, role } = request.data;
 
   if (!email) {
@@ -362,7 +365,7 @@ export const setRole = onCall(async (request) => {
 /**
  * Get user profile with admin check
  */
-export const getUserProfile = onCall(async (request) => {
+export const getUserProfile = onCall({ cors: true }, async (request) => {
   const { userId } = request.data;
 
   if (!request.auth) {
@@ -394,7 +397,7 @@ export const getUserProfile = onCall(async (request) => {
 /**
  * Update user profile
  */
-export const updateUserProfile = onCall(async (request) => {
+export const updateUserProfile = onCall({ cors: true }, async (request) => {
   const { userId, profileData } = request.data;
 
   if (!request.auth) {
@@ -476,7 +479,7 @@ export const onUserStatusChanged = onDocumentUpdated('users/{userId}', async (ev
 /**
  * Health check endpoint
  */
-export const healthCheck = onCall(async () => {
+export const healthCheck = onCall({ cors: true }, async () => {
   return {
     success: true,
     timestamp: new Date().toISOString(),
