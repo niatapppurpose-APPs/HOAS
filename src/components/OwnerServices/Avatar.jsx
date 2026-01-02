@@ -42,32 +42,43 @@ const Avatar = ({ image, name, size = "md", rounded = "xl" }) => {
       .map((n) => n[0])
       .join("")
       .toUpperCase()
-      .slice(0, 2);
+      .slice(0, 3);
+  };
+  const getHighQualityImage = (url) => {
+    if (!url) return url;
+
+    if (url.includes("googleusercontent.com")) {
+      return url.replace(/=s\d+(-c)?/g, "=s700-c");
+    }
+
+    return url;
   };
 
- 
 
-    return (
-      <>
-        {imageError ? (
-          <div
-            className={`${sizeClasses[size]} ${getColorFromName(
-              name
-            )} ${roundedClasses[rounded]} flex items-center justify-center font-semibold text-white ring-2 ring-white/50`}
-          >
-            {getInitials(name)}
-          </div>
-        ) : (
-          <img
-            src={image}
-            alt={name}
-            referrerPolicy="no-referrer"
-            onError={() => setImageError(true)}
-            className={`${sizeClasses[size]} ${roundedClasses[rounded]} object-cover ring-2 ring-white/50`}
-          />
-        )}
-      </>
-    )
+
+  return (
+    <>
+      {imageError ? (
+        <div
+          className={`${sizeClasses[size]} ${getColorFromName(
+            name
+          )} ${roundedClasses[rounded]} flex items-center justify-center font-semibold p-10 text-white ring-2 ring-white/50`}
+        >
+          {getInitials(name)}
+        </div>
+      ) : (
+        <img
+          src={getHighQualityImage(image)}
+          alt={name}
+          referrerPolicy="no-referrer"
+          onError={() => setImageError(true)}
+          width={100}
+          height={100}
+          className={`${sizeClasses[size]} ${roundedClasses[rounded]} object-cover ring-2 ring-white/50`}
+        />
+      )}
+    </>
+  )
 };
 
 export default Avatar;

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
+import Avatar from "./Avatar";
 import {
   User,
   Mail,
@@ -128,16 +129,16 @@ const OwnerProfile = () => {
             >
               <ArrowLeft size={18} />
             </button>
-            <div>
+            <div className="flex items-center justify-between gap-2">
               <h1 className="text-lg font-semibold">Owner Profile</h1>
-              <p className="text-xs text-slate-400">
-                NIAT × Streamline (HOAS)
+              <p className="text-lg text-slate-400">
+             (HOAS)
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-indigo-400">
-            <ShieldCheck size={18} />
+            <ShieldCheck size={30} />
             <span className="text-sm font-medium">Verified Admin</span>
           </div>
         </div>
@@ -148,17 +149,12 @@ const OwnerProfile = () => {
         <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6">
           {/* PROFILE TOP */}
           <div className="flex flex-col md:flex-row md:items-center gap-6 border-b border-slate-800 pb-6">
-            <div className="w-24 h-24 rounded-full bg-indigo-600 flex items-center justify-center">
-              {user.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt="profile"
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <User size={36} />
-              )}
-            </div>
+            <Avatar 
+              image={user?.photoURL} 
+              name={profileData.displayName || user?.displayName} 
+              size={20}
+              rounded="full"
+            />
 
             <div className="flex-1">
               <h2 className="text-2xl font-semibold">
