@@ -124,7 +124,7 @@ const OwnersDashboard = () => {
     try {
       // Get college stats using Cloud Function
       const { stats } = await cloudFunctions.getCollegeStats(college.id);
-      
+
       setDeleteModal({
         isOpen: true,
         college: college,
@@ -149,7 +149,7 @@ const OwnersDashboard = () => {
     setIsDeleting(true);
     try {
       const collegeId = deleteModal.college.id;
-      
+
       // Call Cloud Function for cascade delete
       const result = await cloudFunctions.deleteCollege(collegeId);
 
@@ -306,7 +306,7 @@ const OwnersDashboard = () => {
           ) : (dataLoading || minLoadingTime) ? (
             <div className="flex flex-col items-center justify-center py-30">
               <HashLoader color="#6366f1" size={80} />
-              {/* <span className="text-slate-400 mt-4">Loading Collages...</span> */}
+
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-12 text-center">
