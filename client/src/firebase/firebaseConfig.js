@@ -54,20 +54,12 @@ async function detectAndConnectEmulators() {
     clearTimeout(timeoutId);
     
     // If we reach here, emulator is running
-    console.log('🔧 Firebase Emulators detected - connecting...');
     connectAuthEmulator(auth, AUTH_EMULATOR_URL, { disableWarnings: true });
     connectFirestoreEmulator(db, FIRESTORE_EMULATOR_HOST, FIRESTORE_EMULATOR_PORT);
     connectFunctionsEmulator(functions, FUNCTIONS_EMULATOR_HOST, FUNCTIONS_EMULATOR_PORT);
-    console.log('✅ Successfully connected to Firebase Emulators');
     
   } catch (error) {
     // Emulator not available - use production
-    if (error.name === 'AbortError') {
-      console.log('⏱️ Emulator detection timeout - using production Firebase');
-    } else {
-      console.log('🌐 Emulators not detected - using production Firebase');
-    }
-    console.log('📍 Auth Domain:', firebaseConfig.authDomain);
   }
 }
 

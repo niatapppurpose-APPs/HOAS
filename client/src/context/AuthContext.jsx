@@ -33,7 +33,6 @@ export const AuthProvider = ({ children }) => {
       });
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      console.log("Auth state changed:", currentUser ? currentUser.email : "No user (logged out)");
       setUser(currentUser);
       setAdminChecked(false);
       
@@ -47,9 +46,6 @@ export const AuthProvider = ({ children }) => {
           const adminStatus = userClaims.admin === true || userClaims.role === 'admin';
           setIsAdmin(adminStatus);
           setAdminChecked(true);
-          console.log("Logged in user successfully:", currentUser.email);
-          console.log("User claims:", userClaims);
-          console.log("Is Admin:", adminStatus);
 
           // Check if user document exists, if not create it
           try {
@@ -116,14 +112,11 @@ export const AuthProvider = ({ children }) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setUserData(data);
-        console.log("User data from Firestore:", data);
       } else {
         setUserData(null);
-        console.log("No user document found in Firestore");
       }
       setUserDataLoading(false);
     }, (error) => {
-      console.error("Error listening to user data:", error);
       setUserDataLoading(false);
     });
 
