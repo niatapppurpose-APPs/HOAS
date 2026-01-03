@@ -1,7 +1,0 @@
-###
-GET http://127.0.0.1:5000/download/json
-
-###
-GET http://127.0.0.1:5000/download/pdf
-###
-GET http://localhost:5000/download/pdf

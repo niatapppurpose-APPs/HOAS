@@ -8,11 +8,11 @@
   },
   "main": "index.js",
   "scripts": {
-    "serve": "firebase emulators:start --only functions",
-    "shell": "firebase functions:shell",
+    "serve": "cd .. && firebase emulators:start --only functions",
+    "shell": "cd .. && firebase functions:shell",
     "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "deploy": "cd .. && firebase deploy --only functions",
+    "logs": "cd .. && firebase functions:log"
   },
   "dependencies": {
     "cors": "^2.8.5",
