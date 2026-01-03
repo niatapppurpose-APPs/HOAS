@@ -20,9 +20,41 @@ setGlobalOptions({ region: 'us-central1' });
 const db = getFirestore();
 const auth = getAuth();
 
+// Check if running in emulator
+const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true';
+
+console.log('🚀 Functions initialized. Emulator mode:', isEmulator);
+
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
+
+/**
+ * Verify auth token (works in both emulator and production)
+ */
+async function verifyAuthToken(token) {
+  try {
+    // In emulator mode, token verification might fail, so we decode without verification
+    if (isEmulator) {
+      console.log('⚠️  Emulator mode: Decoding token without full verification');
+      // Try to verify anyway, but catch errors gracefully
+      try {
+        return await auth.verifyIdToken(token, false);
+      } catch (e) {
+        console.log('Emulator token verification failed, attempting decode:', e.message);
+        // In emulator, just decode the token payload
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        console.log('Decoded token payload:', payload);
+        return payload;
+      }
+    }
+    // In production, always verify properly
+    return await auth.verifyIdToken(token);
+  } catch (error) {
+    console.error('Token verification error:', error);
+    throw error;
+  }
+}
 
 /**
  * Verify if user is an admin
@@ -495,24 +527,33 @@ export const healthCheck = onCall({ cors: true }, async () => {
  */
 export const downloadReportJson = onRequest({ cors: true }, async (req, res) => {
   try {
+    console.log('=== downloadReportJson called ===');
+    console.log('Headers:', req.headers);
+    
     // Get the authenticated user's data
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
+      console.log('No Bearer token found');
       res.status(401).json({ error: 'Unauthorized - No token provided' });
       return;
     }
 
     const token = authHeader.split('Bearer ')[1];
+    console.log('Token received (first 20 chars):', token.substring(0, 20));
+    
     let decodedToken;
     try {
-      decodedToken = await auth.verifyIdToken(token);
+      decodedToken = await verifyAuthToken(token);
+      console.log('✅ Token verified for user:', decodedToken.uid || decodedToken.user_id);
     } catch (error) {
-      res.status(401).json({ error: 'Unauthorized - Invalid token' });
+      console.error('❌ Token verification failed:', error.message);
+      res.status(401).json({ error: 'Unauthorized - Invalid token', details: error.message });
       return;
     }
 
     // Get user data from Firestore
-    const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+    const userId = decodedToken.uid || decodedToken.user_id;
+    const userDoc = await db.collection('users').doc(userId).get();
     if (!userDoc.exists) {
       res.status(404).json({ error: 'User profile not found' });
       return;
@@ -597,24 +638,33 @@ export const downloadReportJson = onRequest({ cors: true }, async (req, res) => 
  */
 export const downloadReportPdf = onRequest({ cors: true }, async (req, res) => {
   try {
+    console.log('=== downloadReportPdf called ===');
+    console.log('Headers:', req.headers);
+    
     // Get the authenticated user's data
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
+      console.log('No Bearer token found');
       res.status(401).send('Unauthorized - No token provided');
       return;
     }
 
     const token = authHeader.split('Bearer ')[1];
+    console.log('Token received (first 20 chars):', token.substring(0, 20));
+    
     let decodedToken;
     try {
-      decodedToken = await auth.verifyIdToken(token);
+      decodedToken = await verifyAuthToken(token);
+      console.log('✅ Token verified for user:', decodedToken.uid || decodedToken.user_id);
     } catch (error) {
-      res.status(401).send('Unauthorized - Invalid token');
+      console.error('❌ Token verification failed:', error.message);
+      res.status(401).send(`Unauthorized - Invalid token: ${error.message}`);
       return;
     }
 
     // Get user data from Firestore
-    const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+    const userId = decodedToken.uid || decodedToken.user_id;
+    const userDoc = await db.collection('users').doc(userId).get();
     if (!userDoc.exists) {
       res.status(404).send('User profile not found');
       return;
