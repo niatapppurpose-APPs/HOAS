@@ -1,215 +1,175 @@
 # HOAS - Hostel Operations Accountability System
 
-A comprehensive full-stack hostel management system with role-based access control, Firebase Cloud Functions backend, and real-time data synchronization.
+A full-stack application for managing hostel operations with role-based access control.
 
-## 🎯 Features
-
-- **Role-Based Access Control**: Owner, Management, Warden, and Student roles
-- **Approval Workflows**: Multi-tier user approval system
-- **Real-Time Updates**: Firestore real-time listeners
-- **Secure Backend**: Firebase Cloud Functions for all critical operations
-- **Modern UI**: React 19 + Tailwind CSS
-- **Google OAuth**: Secure authentication
-
-## 🏗️ Architecture
+## 📁 Project Structure
 
 ```
-Frontend (React + Vite) → Cloud Functions (Backend) → Firebase Services
-                                                     ├── Firestore
-                                                     ├── Auth
-                                                     └── Functions Runtime
+HOAS/
+├── client/              # Frontend (React + Vite)
+│   ├── src/            # React source code
+│   ├── public/         # Static assets
+│   ├── index.html      # Entry HTML
+│   ├── package.json    # Frontend dependencies
+│   └── vite.config.js  # Vite configuration
+│
+├── server/             # Backend (Firebase Functions)
+│   ├── functions/      # Cloud Functions code
+│   ├── firebase.json   # Firebase configuration
+│   ├── setAdmin.js     # Admin setup utility
+│   └── serviceAccountKey.json  # Firebase credentials (gitignored)
+│
+├── docs/               # Documentation
+│   ├── ARCHITECTURE_DIAGRAMS.md
+│   ├── BACKEND_MIGRATION.md
+│   ├── DEPLOYMENT_CHECKLIST.md
+│   └── ... (other documentation)
+│
+├── package.json        # Root workspace configuration
+└── README.md          # This file
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js 20+
-- Firebase CLI: `npm install -g firebase-tools`
-- Firebase account
+- Firebase CLI
+- npm or yarn
 
 ### Installation
 
-1. **Clone and install dependencies:**
-```bash
-npm install
-cd functions && npm install && cd ..
-```
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd HOAS
+   ```
 
-2. **Configure Firebase:**
-```bash
-# Login to Firebase
-firebase login
+2. **Install client dependencies**
+   ```bash
+   cd client
+   npm install
+   ```
 
-# Update .firebaserc with your project ID
-# Edit: .firebaserc → "default": "your-project-id"
-```
-
-3. **Set up environment variables:**
-```bash
-cp .env.example .env
-# Edit .env with your Firebase credentials
-```
-
-4. **Copy service account key:**
-```bash
-cp serviceAccountKey.json functions/serviceAccountKey.json
-```
+3. **Install server dependencies**
+   ```bash
+   cd server/functions
+   npm install
+   ```
 
 ### Development
 
+#### Run Frontend (Client)
 ```bash
-# Terminal 1: Start Firebase Emulators
-firebase emulators:start
-
-# Terminal 2: Start frontend (set VITE_USE_FIREBASE_EMULATOR=true in .env)
+cd client
 npm run dev
 ```
+Frontend will run on `http://localhost:5173`
 
-Visit: `http://localhost:5173`
-
-### Production Deployment
-
+#### Run Backend (Firebase Emulators)
 ```bash
-# Build frontend
+cd server
+firebase emulators:start
+```
+- Functions: `http://localhost:5001`
+- Firestore: `http://localhost:8080`
+- Auth: `http://localhost:9099`
+- Emulator UI: `http://localhost:4000`
+
+### Building for Production
+
+#### Build Frontend
+```bash
+cd client
 npm run build
-
-# Deploy to Firebase
-firebase deploy
 ```
 
-## 📖 Documentation
-
-- **[QUICK_START.md](./QUICK_START.md)** - Get started in 5 minutes
-- **[BACKEND_MIGRATION.md](./BACKEND_MIGRATION.md)** - Backend architecture overview
-- **[FIREBASE_FUNCTIONS_DEPLOYMENT.md](./FIREBASE_FUNCTIONS_DEPLOYMENT.md)** - Deployment guide
-- **[CLOUD_FUNCTIONS_API.md](./CLOUD_FUNCTIONS_API.md)** - Complete API reference
-- **[PROJECT_DOCUMENTATION.md](./PROJECT_DOCUMENTATION.md)** - Full documentation
-
-## 🔧 Tech Stack
-
-### Frontend
-- React 19.2.0
-- Vite 7.2.4
-- Tailwind CSS 4.1.18
-- React Router 7.10.1
-- Lucide React (icons)
-
-### Backend
-- Firebase Cloud Functions
-- Firebase Firestore
-- Firebase Authentication
-- Firebase Admin SDK
-
-## 🎭 User Roles
-
-| Role | Access Level | Capabilities |
-|------|--------------|--------------|
-| **Owner** | Super Admin | Manage all colleges, approve management users |
-| **Management** | College Admin | Manage wardens & students in their college |
-| **Warden** | Hostel Manager | Approve students, manage hostel operations |
-| **Student** | User | Access personal dashboard, submit requests |
-
-## 🔥 Cloud Functions
-
-### User Management
-- `approveUser(userId, role)` - Approve pending users
-- `denyUser(userId, reason)` - Deny user requests
-- `getCollegeUsers(collegeId)` - Get users for a college
-
-### College Management
-- `deleteCollege(collegeId)` - Cascade delete college
-- `getCollegeStats(collegeId)` - Get statistics
-
-### Admin Operations
-- `setAdminClaim(email, isAdmin)` - Manage admin access
-- `getUserProfile(userId)` - Get user profile
-- `updateUserProfile(data)` - Update profile
-
-[See CLOUD_FUNCTIONS_API.md for complete reference](./CLOUD_FUNCTIONS_API.md)
-
-## 📁 Project Structure
-
-```
-HOAS/
-├── functions/              # Firebase Cloud Functions (backend)
-│   ├── index.js           # 10+ cloud functions
-│   └── package.json
-├── src/
-│   ├── components/        # React components
-│   ├── DashBoards/        # Role-specific dashboards
-│   ├── firebase/          # Firebase config & functions wrapper
-│   ├── context/           # React Context (Auth)
-│   └── Pages/             # Application pages
-├── firebase.json          # Firebase configuration
-├── .firebaserc            # Firebase project ID
-└── package.json           # Dependencies
-```
-
-## 🔐 Security
-
-- Server-side validation on all critical operations
-- Firebase Authentication with Google OAuth
-- Custom claims for admin roles
-- Firestore security rules (configured)
-- HTTPS-only Cloud Functions
-
-## 📊 Scripts
-
+#### Deploy Backend
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run lint         # Run ESLint
-
-# Firebase
-firebase emulators:start         # Start emulators
-firebase deploy                  # Deploy everything
-firebase deploy --only functions # Deploy functions only
-firebase functions:log           # View logs
-```
-
-## 🐛 Troubleshooting
-
-### Functions not deploying
-```bash
-cd functions && rm -rf node_modules && npm install && cd ..
+cd server
 firebase deploy --only functions
 ```
 
-### Permission errors
+#### Deploy Everything
 ```bash
-node setAdmin.js  # Set admin custom claims
+cd server
+firebase deploy
 ```
 
-### CORS issues
-Functions include CORS support. Check browser console for details.
+## 🔑 Key Features
 
-## 🌟 Features Coming Soon
+- **Role-Based Access Control**: Admin, Management, Warden, Student roles
+- **Firebase Authentication**: Secure login with Google OAuth
+- **Cloud Functions**: Serverless backend API
+- **Real-time Database**: Firestore for data storage
+- **Report Generation**: JSON and PDF reports
+- **Approval Workflow**: Multi-level user approval system
 
-- Complaint management system
-- Leave request workflow
-- Announcement broadcasting
-- Email/SMS notifications
-- Analytics dashboard
-- Export reports
+## 📖 Documentation
 
-## 👥 Authors
+See the `docs/` folder for detailed documentation:
+- [Quick Start Guide](docs/QUICK_START.md)
+- [Architecture Diagrams](docs/ARCHITECTURE_DIAGRAMS.md)
+- [Deployment Checklist](docs/DEPLOYMENT_CHECKLIST.md)
+- [Firebase Setup](docs/FIREBASE_EMULATOR_SETUP.md)
 
-- Admin: faziyashaik81@gmail.com
-- Admin: ramasaiahemanth@gmail.com
+## 🛠️ Tech Stack
+
+### Frontend
+- React 18
+- Vite
+- TailwindCSS
+- Firebase SDK
+
+### Backend
+- Node.js 20
+- Firebase Functions (v2)
+- Firebase Admin SDK
+- Express.js
+- PDFKit
+
+## 📝 Scripts
+
+### Root
+```bash
+npm run client          # Start client dev server
+npm run server          # Start Firebase emulators
+npm run build           # Build client for production
+```
+
+### Client
+```bash
+npm run dev            # Development server
+npm run build          # Production build
+npm run preview        # Preview production build
+npm run lint           # Run ESLint
+```
+
+### Server
+```bash
+cd server
+firebase emulators:start     # Start emulators
+firebase deploy              # Deploy to production
+firebase deploy --only functions  # Deploy only functions
+```
+
+## 🔐 Environment Setup
+
+1. Create `server/serviceAccountKey.json` with your Firebase credentials
+2. Update `server/firebase.json` with your project settings
+3. Configure Firebase in `client/src/firebase/firebaseConfig.js`
+
+## 👥 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 
-Private and proprietary. All rights reserved.
+This project is private and confidential.
 
-## 🤝 Contributing
+## 📧 Contact
 
-This is a private project. Contact administrators for access.
-
----
----
-
-**Reports Page & Downloads**: Implementation guidance and sample code added in [REPORTS.md](REPORTS.md) — shows how to add an Owner-facing download button (PDF and JSON), using Node.js filesystem to create files and an example approach to produce password-protected PDFs (qpdf + pdfkit). See [REPORTS.md](REPORTS.md) for backend and frontend examples.
-**Version:** 1.0.0  
-**Last Updated:** December 22, 2025  
-**Status:** ✅ Production Ready
+For questions or support, please contact the development team.
