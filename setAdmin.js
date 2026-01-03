@@ -39,14 +39,15 @@ async function makeUsersAdmins() {
   for (const email of adminEmails) {
     try {
       const user = await admin.auth().getUserByEmail(email);
-      const currentClaims = user.customClaims || {};
       
+      // Set the custom claim to match backend expectations: role === 'admin'
       await admin.auth().setCustomUserClaims(user.uid, {
-        ...currentClaims,
-        admin: true
+        role: 'admin'
       });
 
-      console.log(`✅ Success: ${email} is now an admin.`);
+      console.log(`✅ Success: ${email} is now an admin with role='admin' claim.`);
+      console.log(`   UID: ${user.uid}`);
+      console.log(`   ⚠️  User must sign out and sign in again for changes to take effect.`);
     } catch (error) {
       if (error.code === 'auth/user-not-found') {
         console.warn(`User with email ${email} not found. Skipping.`);
