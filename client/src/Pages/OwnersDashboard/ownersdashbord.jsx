@@ -81,7 +81,6 @@ const OwnersDashboard = () => {
       setDataLoading(false);
       setFetchError(null);
     }, (error) => {
-      console.error("Error fetching users:", error);
       setFetchError(error.message);
       setDataLoading(false);
     });
@@ -95,7 +94,6 @@ const OwnersDashboard = () => {
       await signOut(auth);
       navigate("/admin-login", { replace: true });
     } catch (error) {
-      console.error("Logout error:", error);
     }
   };
 
@@ -108,7 +106,6 @@ const OwnersDashboard = () => {
         await cloudFunctions.denyUser(userId, 'Denied by owner');
       }
     } catch (error) {
-      console.error("Error updating status:", error);
       alert(`Failed to ${newStatus} user: ${error.message}`);
     }
   };
@@ -126,7 +123,6 @@ const OwnersDashboard = () => {
         studentCount: stats.students.total
       });
     } catch (error) {
-      console.error("Error getting college stats:", error);
       setDeleteModal({
         isOpen: true,
         college: college,
@@ -149,7 +145,6 @@ const OwnersDashboard = () => {
 
       setDeleteModal({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 });
     } catch (error) {
-      console.error("Error deleting college:", error);
       alert(`Failed to delete college: ${error.message}`);
     } finally {
       setIsDeleting(false);

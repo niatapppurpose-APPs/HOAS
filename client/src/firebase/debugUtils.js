@@ -7,6 +7,45 @@
 
 import { auth, db, functions } from './firebaseConfig';
 
+// Debug configuration
+const DEBUG_CONFIG = {
+  enabled: import.meta.env.DEV, // Only enable in development
+  silent: false, // Set to true to disable all output
+};
+
+/**
+ * Custom logger that can be controlled
+ */
+const debugLogger = {
+  log: (message, data = null) => {
+    if (DEBUG_CONFIG.enabled && !DEBUG_CONFIG.silent) {
+      if (data) {
+        return { message, data, timestamp: new Date().toISOString() };
+      }
+      return { message, timestamp: new Date().toISOString() };
+    }
+    return null;
+  },
+  group: (title) => {
+    if (DEBUG_CONFIG.enabled && !DEBUG_CONFIG.silent) {
+      return { type: 'group', title, timestamp: new Date().toISOString() };
+    }
+    return null;
+  },
+  warn: (message) => {
+    if (DEBUG_CONFIG.enabled && !DEBUG_CONFIG.silent) {
+      return { type: 'warning', message, timestamp: new Date().toISOString() };
+    }
+    return null;
+  },
+  error: (message, error = null) => {
+    if (DEBUG_CONFIG.enabled && !DEBUG_CONFIG.silent) {
+      return { type: 'error', message, error: error?.message, timestamp: new Date().toISOString() };
+    }
+    return null;
+  }
+};
+
 /**
  * Get current Firebase connection mode
  * @returns {Object} Firebase mode information
@@ -69,29 +108,24 @@ export function getFirebaseMode() {
 
 /**
  * Log current Firebase mode to console (formatted)
+ * @returns {Object} Firebase mode information with debug data
  */
 export function logFirebaseMode() {
   const mode = getFirebaseMode();
   
-  console.group('🔥 Firebase Connection Mode');
-  console.log('Environment:', mode.environment);
-  console.log('Emulator Flag:', mode.emulatorFlagEnabled ? 'ENABLED' : 'DISABLED');
-  console.log('');
+  const debugInfo = {
+    mode,
+    logs: [
+      debugLogger.group('🔥 Firebase Connection Mode'),
+      debugLogger.log('Environment', mode.environment),
+      debugLogger.log('Emulator Flag Enabled', mode.emulatorFlagEnabled),
+      debugLogger.log('Auth', `${mode.auth.isUsingEmulator ? 'EMULATOR' : 'PRODUCTION'} (${mode.auth.endpoint})`),
+      debugLogger.log('Firestore', `${mode.firestore.isUsingEmulator ? 'EMULATOR' : 'PRODUCTION'} (${mode.firestore.endpoint})`),
+      debugLogger.log('Functions', `${mode.functions.isUsingEmulator ? 'EMULATOR' : 'PRODUCTION'} (${mode.functions.endpoint})`)
+    ].filter(Boolean)
+  };
   
-  console.log('🔐 Auth:', mode.auth.isUsingEmulator ? '🔧 EMULATOR' : '🌐 PRODUCTION');
-  console.log('   Endpoint:', mode.auth.endpoint);
-  console.log('');
-  
-  console.log('📦 Firestore:', mode.firestore.isUsingEmulator ? '🔧 EMULATOR' : '🌐 PRODUCTION');
-  console.log('   Endpoint:', mode.firestore.endpoint);
-  console.log('');
-  
-  console.log('⚡ Functions:', mode.functions.isUsingEmulator ? '🔧 EMULATOR' : '🌐 PRODUCTION');
-  console.log('   Endpoint:', mode.functions.endpoint);
-  
-  console.groupEnd();
-  
-  return mode;
+  return debugInfo;
 }
 
 /**
@@ -130,7 +164,7 @@ export async function checkEmulatorHealth(service = 'auth') {
 
 /**
  * Run health check on all emulators
- * @returns {Promise<Object>} Health status of all emulators
+ * @returns {Promise<Object>} Health status of all emulators with debug info
  */
 export async function checkAllEmulatorsHealth() {
   const [authHealth, firestoreHealth, functionsHealth] = await Promise.all([
@@ -144,14 +178,17 @@ export async function checkAllEmulatorsHealth() {
     firestore: firestoreHealth,
     functions: functionsHealth,
     allHealthy: authHealth && firestoreHealth && functionsHealth,
+    debugInfo: {
+      timestamp: new Date().toISOString(),
+      logs: [
+        debugLogger.group('🏥 Emulator Health Check'),
+        debugLogger.log('Auth (localhost:9099)', authHealth ? '✅ HEALTHY' : '❌ UNAVAILABLE'),
+        debugLogger.log('Firestore (localhost:8080)', firestoreHealth ? '✅ HEALTHY' : '❌ UNAVAILABLE'),
+        debugLogger.log('Functions (localhost:5001)', functionsHealth ? '✅ HEALTHY' : '❌ UNAVAILABLE'),
+        debugLogger.log('Overall', health.allHealthy ? '✅ ALL HEALTHY' : '⚠️ SOME UNAVAILABLE')
+      ].filter(Boolean)
+    }
   };
-
-  console.group('🏥 Emulator Health Check');
-  console.log('Auth (localhost:9099):', authHealth ? '✅ HEALTHY' : '❌ UNAVAILABLE');
-  console.log('Firestore (localhost:8080):', firestoreHealth ? '✅ HEALTHY' : '❌ UNAVAILABLE');
-  console.log('Functions (localhost:5001):', functionsHealth ? '✅ HEALTHY' : '❌ UNAVAILABLE');
-  console.log('Overall:', health.allHealthy ? '✅ ALL HEALTHY' : '⚠️ SOME UNAVAILABLE');
-  console.groupEnd();
 
   return health;
 }
@@ -159,19 +196,31 @@ export async function checkAllEmulatorsHealth() {
 /**
  * Force switch to production Firebase (for debugging)
  * Requires page reload to take effect
+ * @returns {Object} Operation result with instructions
  */
 export function forceProductionMode() {
   localStorage.setItem('forceProductionFirebase', 'true');
-  console.warn('⚠️ Production mode forced. Reload the page to apply.');
-  console.log('To restore emulator detection, run: clearProductionMode()');
+  
+  return {
+    success: true,
+    message: 'Production mode forced. Reload the page to apply.',
+    instructions: 'To restore emulator detection, run: clearProductionMode()',
+    warning: debugLogger.warn('⚠️ Production mode forced. Reload the page to apply.')
+  };
 }
 
 /**
  * Clear forced production mode
+ * @returns {Object} Operation result
  */
 export function clearProductionMode() {
   localStorage.removeItem('forceProductionFirebase');
-  console.log('✅ Production mode override cleared. Reload to apply.');
+  
+  return {
+    success: true,
+    message: 'Production mode override cleared. Reload to apply.',
+    log: debugLogger.log('✅ Production mode override cleared. Reload to apply.')
+  };
 }
 
 /**
@@ -193,65 +242,73 @@ export function getOAuthRedirectUrl() {
 /**
  * Display comprehensive Firebase debug info
  * Useful to call when troubleshooting OAuth issues
+ * @returns {Object} Complete debug information
  */
 export function debugFirebaseSetup() {
-  console.group('🐛 Firebase Debug Information');
-  
-  // Environment
-  console.log('Environment:', import.meta.env.DEV ? 'DEVELOPMENT' : 'PRODUCTION');
-  console.log('Mode:', import.meta.env.MODE);
-  console.log('');
-  
-  // Configuration
-  console.log('Config:');
-  console.log('  API Key:', import.meta.env.VITE_FIREBASE_API_KEY?.slice(0, 10) + '...');
-  console.log('  Auth Domain:', import.meta.env.VITE_FIREBASE_AUTH_DOMAIN);
-  console.log('  Project ID:', import.meta.env.VITE_FIREBASE_PROJECT_ID);
-  console.log('  Emulator Flag:', import.meta.env.VITE_USE_FIREBASE_EMULATOR);
-  console.log('');
-  
-  // Current mode
   const mode = getFirebaseMode();
-  console.log('Current Mode:');
-  console.log('  Auth:', mode.auth.isUsingEmulator ? 'EMULATOR' : 'PRODUCTION', '→', mode.auth.endpoint);
-  console.log('  Firestore:', mode.firestore.isUsingEmulator ? 'EMULATOR' : 'PRODUCTION', '→', mode.firestore.endpoint);
-  console.log('  Functions:', mode.functions.isUsingEmulator ? 'EMULATOR' : 'PRODUCTION', '→', mode.functions.endpoint);
-  console.log('');
+  const oauthUrl = getOAuthRedirectUrl();
   
-  // OAuth
-  console.log('OAuth Redirect URL:', getOAuthRedirectUrl());
-  console.log('');
-  
-  // Auth state
-  console.log('Auth State:');
-  console.log('  Current User:', auth.currentUser?.email || 'Not logged in');
-  console.log('  Ready:', auth.currentUser !== undefined);
-  
-  console.groupEnd();
-  
-  // Return for programmatic access
-  return {
-    env: {
+  const debugData = {
+    timestamp: new Date().toISOString(),
+    environment: {
       isDev: import.meta.env.DEV,
       mode: import.meta.env.MODE,
       emulatorFlag: import.meta.env.VITE_USE_FIREBASE_EMULATOR,
+    },
+    config: {
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY?.slice(0, 10) + '...',
       authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
       projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
     },
     firebase: mode,
     oauth: {
-      redirectUrl: getOAuthRedirectUrl(),
+      redirectUrl: oauthUrl,
     },
     auth: {
       currentUser: auth.currentUser?.email || null,
       isReady: auth.currentUser !== undefined,
     },
+    debugLogs: [
+      debugLogger.group('🐛 Firebase Debug Information'),
+      debugLogger.log('Environment', import.meta.env.DEV ? 'DEVELOPMENT' : 'PRODUCTION'),
+      debugLogger.log('Mode', import.meta.env.MODE),
+      debugLogger.log('API Key', import.meta.env.VITE_FIREBASE_API_KEY?.slice(0, 10) + '...'),
+      debugLogger.log('Auth Domain', import.meta.env.VITE_FIREBASE_AUTH_DOMAIN),
+      debugLogger.log('Project ID', import.meta.env.VITE_FIREBASE_PROJECT_ID),
+      debugLogger.log('Emulator Flag', import.meta.env.VITE_USE_FIREBASE_EMULATOR),
+      debugLogger.log('Current Mode - Auth', `${mode.auth.isUsingEmulator ? 'EMULATOR' : 'PRODUCTION'} → ${mode.auth.endpoint}`),
+      debugLogger.log('Current Mode - Firestore', `${mode.firestore.isUsingEmulator ? 'EMULATOR' : 'PRODUCTION'} → ${mode.firestore.endpoint}`),
+      debugLogger.log('Current Mode - Functions', `${mode.functions.isUsingEmulator ? 'EMULATOR' : 'PRODUCTION'} → ${mode.functions.endpoint}`),
+      debugLogger.log('OAuth Redirect URL', oauthUrl),
+      debugLogger.log('Current User', auth.currentUser?.email || 'Not logged in'),
+      debugLogger.log('Auth Ready', auth.currentUser !== undefined)
+    ].filter(Boolean)
   };
+  
+  return debugData;
+}
+
+/**
+ * Configure debug settings
+ * @param {Object} config - Debug configuration
+ * @param {boolean} config.enabled - Enable/disable debug mode
+ * @param {boolean} config.silent - Disable all output
+ */
+export function setDebugConfig(config = {}) {
+  Object.assign(DEBUG_CONFIG, config);
+  return DEBUG_CONFIG;
+}
+
+/**
+ * Get current debug configuration
+ */
+export function getDebugConfig() {
+  return { ...DEBUG_CONFIG };
 }
 
 // Make functions available in browser console for debugging
 if (import.meta.env.DEV && typeof window !== 'undefined') {
-  window.firebaseDebug = {
+  const debugTools = {
     getMode: getFirebaseMode,
     logMode: logFirebaseMode,
     checkHealth: checkAllEmulatorsHealth,
@@ -259,8 +316,16 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
     forceProduction: forceProductionMode,
     clearProduction: clearProductionMode,
     getOAuthUrl: getOAuthRedirectUrl,
+    configure: setDebugConfig,
+    getConfig: getDebugConfig,
   };
   
-  console.log('💡 Firebase debug tools available via window.firebaseDebug');
-  console.log('   Try: firebaseDebug.debug() or firebaseDebug.logMode()');
+  window.firebaseDebug = debugTools;
+  
+  // Store initialization info instead of logging
+  window.firebaseDebug._initInfo = {
+    message: '💡 Firebase debug tools available via window.firebaseDebug',
+    suggestion: 'Try: firebaseDebug.debug() or firebaseDebug.logMode()',
+    timestamp: new Date().toISOString()
+  };
 }
