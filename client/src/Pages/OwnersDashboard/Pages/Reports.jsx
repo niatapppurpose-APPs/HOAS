@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ClipLoader } from 'react-spinners';
 import Header from '../../../components/OwnerServices/header';
 import { FileText, Download, Lock, Calendar, FileJson, FileType } from 'lucide-react';
+import { auth, functions, db } from '../../../firebase/firebaseConfig';
+import { useAuth } from '../../../context/AuthContext';
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 // --------------------------------Report Download code -------------------------------
 
 // This function extracts the filename from server response headers
@@ -59,23 +62,57 @@ function saveBlob(blob, filename) {
 }
 
 async function downloadReport(type, password) {
-  // Step 1: Build the API URL with the report type (pdf or json)
-  const apiUrl = `http://localhost:5000/download/${type}`;
+  // Get the current user's auth token
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('You must be logged in to download reports');
+  }
+
+  // Get fresh token with force refresh to ensure it's valid
+  const token = await user.getIdToken(true);
+
+  // Determine the cloud function endpoint based on environment
+  const isDevelopment = import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
+  const baseUrl = isDevelopment 
+    ? 'http://127.0.0.1:5001/hoas-65dee/us-central1' 
+    : 'https://us-central1-hoas-65dee.cloudfunctions.net';
   
-  // Step 2: Send request to server with the password
+  const endpoint = type === 'pdf' ? 'downloadReportPdf' : 'downloadReportJson';
+  const apiUrl = `${baseUrl}/${endpoint}`;
+  
+  console.log('Downloading report from:', apiUrl);
+  console.log('Using token:', token.substring(0, 20) + '...');
+  
+  // Send request to cloud function with auth token
   const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password }), // Send password to server
+    method: 'GET',
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
   });
 
-  // Step 3: Check if the request was successful
+  // Check if the request was successful
   if (!response.ok) {
-    const errorMessage = await response.text();
+    let errorMessage;
+    const contentType = response.headers.get('content-type');
+    
+    try {
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || errorData.details;
+      } else {
+        errorMessage = await response.text();
+      }
+    } catch (e) {
+      errorMessage = `Server error: ${response.status} ${response.statusText}`;
+    }
+    
+    console.error('Download failed:', errorMessage);
     throw new Error(errorMessage || `Server error: ${response.status}`);
   }
 
-  // Step 4: Handle the response based on report type
+  // Handle the response based on report type
   if (type === 'pdf') {
     // For PDF: Download the file directly
     const pdfBlob = await response.blob(); // Get the PDF file data
@@ -102,49 +139,127 @@ async function downloadReport(type, password) {
 }
 // -------------------------------------------------------------------------------------------------------------------------
 export default function Reports() {
+  const { user } = useAuth();
   const [downloadingId, setDownloadingId] = useState(null);
   const [downloadingFormat, setDownloadingFormat] = useState(null);
+  const [collegeInfo, setCollegeInfo] = useState(null);
+  const [stats, setStats] = useState({ students: 0, wardens: 0, colleges: 0 });
+  const [loading, setLoading] = useState(true);
 
-  // TODO: Replace with actual college data from props/context
-  const collegeInfo = {
-    name: "NIAT Engineering College",
-    location: "Bangalore, Karnataka",
-    id: "CLG-2024-001"
-  };
+  // Fetch user profile and stats
+  useEffect(() => {
+    if (!user) return;
 
-  // TODO: Replace with actual reports data from backend
+    const fetchUserData = async () => {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        
+        if (!userDoc.exists()) {
+          console.error('User document not found in Firestore');
+          // Check if user is admin from custom claims
+          const tokenResult = await user.getIdTokenResult();
+          const isAdmin = tokenResult.claims.admin === true || tokenResult.claims.role === 'admin';
+          
+          if (isAdmin) {
+            // Create admin document
+            const adminData = {
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              role: 'admin',
+              status: 'approved',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            await setDoc(doc(db, 'users', user.uid), adminData);
+            console.log('Admin user document created');
+            
+            // Now fetch stats for admin
+            const studentsSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'student')));
+            const wardensSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'warden')));
+            const collegesSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'management')));
+            
+            setStats({
+              students: studentsSnap.size,
+              wardens: wardensSnap.size,
+              colleges: collegesSnap.size
+            });
+            setCollegeInfo({
+              name: 'System Administrator',
+              location: 'All Colleges',
+              id: 'ADMIN'
+            });
+          } else {
+            alert('User profile not found. Please complete your profile setup.');
+          }
+          setLoading(false);
+          return;
+        }
+
+        const userData = userDoc.data();
+          
+          if (userData.role === 'admin') {
+            // Admin sees system-wide stats
+            const studentsSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'student')));
+            const wardensSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'warden')));
+            const collegesSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'management')));
+            
+            setStats({
+              students: studentsSnap.size,
+              wardens: wardensSnap.size,
+              colleges: collegesSnap.size
+            });
+            setCollegeInfo({
+              name: 'System Administrator',
+              location: 'All Colleges',
+              id: 'ADMIN'
+            });
+          } else if (userData.role === 'management') {
+            // Management sees their college stats
+            const studentsSnap = await getDocs(query(
+              collection(db, 'users'), 
+              where('role', '==', 'student'),
+              where('managementId', '==', user.uid)
+            ));
+            const wardensSnap = await getDocs(query(
+              collection(db, 'users'), 
+              where('role', '==', 'warden'),
+              where('managementId', '==', user.uid)
+            ));
+            
+            setStats({
+              students: studentsSnap.size,
+              wardens: wardensSnap.size,
+              colleges: 0
+            });
+            setCollegeInfo({
+              name: userData.collegeName || userData.name || userData.email,
+              location: userData.location || 'Not specified',
+              id: userData.uid || user.uid
+            });
+          }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
+
+  // Available report types based on role
   const reportsData = [
     {
       id: 1,
-      name: "Student Access Report",
-      description: "Complete student enrollment and access logs",
-      generatedDate: new Date(2026, 0, 1, 14, 30),
-      type: "both", // pdf, json, or both
-      isPasswordProtected: true,
-    },
-    {
-      id: 2,
-      name: "Admin Activity Report",
-      description: "Administrative actions and system changes",
-      generatedDate: new Date(2026, 0, 1, 10, 15),
+      name: collegeInfo?.id === 'ADMIN' ? "System Overview Report" : "College Report",
+      description: collegeInfo?.id === 'ADMIN' 
+        ? `Complete system statistics - ${stats.colleges} colleges, ${stats.students} students, ${stats.wardens} wardens`
+        : `Student and warden data for ${collegeInfo?.name} - ${stats.students} students, ${stats.wardens} wardens`,
+      generatedDate: new Date(),
       type: "both",
       isPasswordProtected: false,
-    },
-    {
-      id: 3,
-      name: "Hostel Occupancy Report",
-      description: "Room allocation and occupancy statistics",
-      generatedDate: new Date(2025, 11, 31, 16, 45),
-      type: "both",
-      isPasswordProtected: true,
-    },
-    {
-      id: 4,
-      name: "Financial Summary",
-      description: "Fee collection and payment records",
-      generatedDate: new Date(2025, 11, 30, 9, 0),
-      type: "both",
-      isPasswordProtected: true,
     },
   ];
 
@@ -186,19 +301,49 @@ export default function Reports() {
       {/* Main Container */}
       <div className="px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Page Header with College Context */}
-        <section className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-white">Reports Board</h2>
-              <p className="text-slate-400 mt-1">Download reports for the selected college</p>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-slate-400">Total Reports:</span>
-              <span className="text-white font-semibold">{reportsData.length}</span>
-            </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <ClipLoader color="#818cf8" size={50} />
           </div>
-        </section>
+        ) : (
+          <>
+            {/* College Info Card */}
+            {collegeInfo && (
+              <section className="mb-6">
+                <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl p-6 text-white">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold mb-1">{collegeInfo.name}</h3>
+                      <p className="text-indigo-100 text-sm">{collegeInfo.location}</p>
+                      <p className="text-indigo-200 text-xs mt-1">ID: {collegeInfo.id}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-indigo-100">Statistics</div>
+                      {collegeInfo.id === 'ADMIN' && (
+                        <div className="text-2xl font-bold">{stats.colleges} Colleges</div>
+                      )}
+                      <div className="text-sm mt-1">
+                        {stats.students} Students • {stats.wardens} Wardens
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+            
+            {/* Page Header with College Context */}
+            <section className="mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Available Reports</h2>
+                  <p className="text-slate-400 mt-1">Download reports in PDF or JSON format</p>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-400">Total Reports:</span>
+                  <span className="text-white font-semibold">{reportsData.length}</span>
+                </div>
+              </div>
+            </section>
 
         {/* Reports List */}
         <section className="space-y-3">
@@ -297,9 +442,11 @@ export default function Reports() {
             <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">No Reports Available</h3>
             <p className="text-slate-400 max-w-md mx-auto">
-              Reports for {collegeInfo.name} will appear here once generated.
+              Reports for {collegeInfo?.name || 'your college'} will appear here once generated.
             </p>
           </div>
+        )}
+          </>
         )}
       </div>
     </>
