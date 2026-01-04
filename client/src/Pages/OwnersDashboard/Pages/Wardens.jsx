@@ -43,14 +43,6 @@ const Wardens = () => {
     const searchWarden = wardens.filter((wardenList) => (
         !searchListWarden.trim() || wardenList.fullName?.toLowerCase().includes(searchListWarden.toLowerCase())
     ))
-    const handleViewDetails = (wardenId) => {
-        // TODO: Implement view details modal or navigation
-    };
-
-    const handleEdit = (wardenId) => {
-        // TODO: Implement edit functionality
-    };
-
     const handleRemove = (warden) => {
         setDeleteModal({ isOpen: true, warden });
     };
@@ -188,26 +180,6 @@ const Wardens = () => {
 
                                         {/* Right: Action Buttons */}
                                         <div className="flex items-center gap-2 flex-shrink-0">
-                                            {/* View Details Button */}
-                                            <button
-                                                onClick={() => handleViewDetails(warden.id)}
-                                                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-sm font-medium transition-all"
-                                                title="View Details"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                                <span className="hidden sm:inline">View</span>
-                                            </button>
-
-                                            {/* Edit Button */}
-                                            <button
-                                                onClick={() => handleEdit(warden.id)}
-                                                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/80 hover:bg-slate-600 text-white text-sm font-medium transition-all"
-                                                title="Edit Warden"
-                                            >
-                                                <Edit2 className="w-4 h-4" />
-                                                <span className="hidden sm:inline">Edit</span>
-                                            </button>
-
                                             {/* Remove Button */}
                                             <button
                                                 onClick={() => handleRemove(warden)}

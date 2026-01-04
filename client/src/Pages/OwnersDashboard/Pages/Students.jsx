@@ -45,9 +45,6 @@ const Students = () => {
     const searchStudent = students.filter((studentlist) =>
         !searchListStudent.trim() || studentlist.fullName?.toLowerCase().includes(searchListStudent.toLowerCase())
     )
-    const handleViewDetails = (studentId) => {
-        // TODO: Implement view details modal or navigation
-    };
     const handleRemove = (student) => {
         setDeleteModal({ isOpen: true, student });
     };
@@ -170,15 +167,6 @@ const Students = () => {
 
                                         {/* Right: Action Buttons */}
                                         <div className="flex items-center gap-2 flex-shrink-0">
-                                            {/* View Details Button */}
-                                            <button
-                                                onClick={() => handleViewDetails(student.id)}
-                                                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-sm font-medium transition-all"
-                                                title="View Details"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                                <span className="hidden sm:inline">View</span>
-                                            </button>
                                             {/* Remove Button */}
                                             <button
                                                 onClick={() => handleRemove(student)}
