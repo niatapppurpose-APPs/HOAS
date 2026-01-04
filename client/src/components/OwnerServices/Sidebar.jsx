@@ -126,14 +126,21 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         `}
       >
         {/* Logo Section */}
-        <div className="flex items-center justify-between h-19 px-4 border-b border-slate-700/50">
-          <div className={`flex items-center gap-3 ${!showContent ? "lg:justify-center lg:w-full" : ""}`}>
+        <div className="flex items-center justify-between h-20 px-4 border-b border-slate-700/50 shrink-0">
+          <div className={`flex items-center gap-3 transition-all duration-300 ${!showContent ? "lg:justify-center lg:w-full" : ""}`}>
+            
+            <div className={`relative transition-all duration-300 ${!showContent ? "w-12 h-12" : "w-14 h-14"}`}>
+              <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <img 
+                src={Applogo} 
+                className="relative w-full h-full rounded-full object-cover border-2 border-slate-600/50 shadow-lg" 
+                alt="HOAS Logo"
+              />
+            </div>
 
-            <img src={Applogo} className="w-12 h-12 rounded-full" />
-
-            <div className={`${!showContent ? "lg:hidden" : ""}`}>
-              <h1 className="text-xl font-bold text-white">HOAS</h1>
-              <p className="text-xs text-slate-400">Owner Dashboard</p>
+            <div className={`flex flex-col transition-all duration-300 origin-left ${!showContent ? "lg:hidden opacity-0 w-0 scale-95" : "opacity-100 w-auto scale-100"}`}>
+              <h1 className="text-xl font-bold text-white leading-none tracking-tight">HOAS</h1>
+              <p className="text-xs text-slate-400 font-medium mt-1">Owner Dashboard</p>
             </div>
           </div>
 
@@ -269,16 +276,36 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           </div>
 
           {/* User Profile Card */}
-          <button onClick={() => navigate("/owner-profile")} className={`mt-5 mx-2 ${!showContent ? "lg:hidden" : ""} cursor-pointer`}>
-            <div className="p-3 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-2 border-slate-400/50">
-              <div className="flex items-center gap-3">
+          <button 
+            onClick={() => navigate("/owner-profile")} 
+            className={`mt-5 mb-5 mx-2 group relative ${!showContent ? "flex justify-center" : "block"} cursor-pointer  `}
+          >
+            <div className={`
+              transition-all duration-200 
+              ${showContent 
+                ? "p-3 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border-2 border-slate-400/50 hover:border-slate-300/50" 
+                : "p-0 hover:scale-105 transition-transform"
+              }
+            `}>
+              <div className={`flex items-center ${showContent ? "gap-3" : "justify-center"}`}>
                 <Avatar image={user?.photoURL} name={user?.displayName} size="md" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{user?.displayName}</p>
-                  <p className="text-xs text-slate-400 truncate">{user?.email}</p>
-                </div>
+                
+                {showContent && (
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-white truncate">{user?.displayName}</p>
+                    <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Tooltip for collapsed state */}
+            {!showContent && (
+              <div className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl top-1/2 -translate-y-1/2">
+                Profile
+                <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45" />
+              </div>
+            )}
           </button>
 
 

@@ -22,56 +22,25 @@ export const functions = getFunctions(app);
 // Enable persistence so user stays logged in after page reload
 setPersistence(auth, browserLocalPersistence);
 
-/**
- * Detect if Firebase emulators are running and connect automatically
- * Falls back to production if emulators are unavailable
- */
-async function detectAndConnectEmulators() {
-  // Only attempt in development mode with emulator flag enabled
-  if (!import.meta.env.DEV || import.meta.env.VITE_USE_FIREBASE_EMULATOR !== 'true') {
-    console.log('🌐 Using production Firebase services');
-    return;
-  }
-
-  const EMULATOR_DETECTION_TIMEOUT = 2000; // 2 seconds
+// Connect to emulators if enabled
+if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
   const AUTH_EMULATOR_URL = 'http://localhost:9099';
   const FIRESTORE_EMULATOR_HOST = '127.0.0.1';
   const FIRESTORE_EMULATOR_PORT = 8080;
   const FUNCTIONS_EMULATOR_HOST = 'localhost';
   const FUNCTIONS_EMULATOR_PORT = 5001;
 
-  try {
-    // Test if Auth emulator is reachable
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), EMULATOR_DETECTION_TIMEOUT);
-    
-    const response = await fetch(AUTH_EMULATOR_URL, {
-      method: 'GET',
-      signal: controller.signal,
-      mode: 'no-cors', // Avoid CORS issues during detection
-    });
-    
-    clearTimeout(timeoutId);
-    
-    // If we reach here, emulator is running
-    connectAuthEmulator(auth, AUTH_EMULATOR_URL, { disableWarnings: true });
-    connectFirestoreEmulator(db, FIRESTORE_EMULATOR_HOST, FIRESTORE_EMULATOR_PORT);
-    connectFunctionsEmulator(functions, FUNCTIONS_EMULATOR_HOST, FUNCTIONS_EMULATOR_PORT);
-    
-  } catch (error) {
-    // Emulator not available - use production
-  }
+  console.log('🔧 Connecting to Firebase Emulators...');
+  connectAuthEmulator(auth, AUTH_EMULATOR_URL, { disableWarnings: true });
+  connectFirestoreEmulator(db, FIRESTORE_EMULATOR_HOST, FIRESTORE_EMULATOR_PORT);
+  connectFunctionsEmulator(functions, FUNCTIONS_EMULATOR_HOST, FUNCTIONS_EMULATOR_PORT);
+} else {
+  console.log('🌐 Using production Firebase services');
 }
-
-// Initialize emulator detection (non-blocking)
-detectAndConnectEmulators();
 
 // Import debug utilities in development
 if (import.meta.env.DEV) {
   import('./debugUtils.js').then((module) => {
-    // Log current mode after emulator detection completes
-    setTimeout(() => {
-      module.logFirebaseMode();
-    }, 2500); // Wait for emulator detection to complete
+    module.logFirebaseMode();
   });
 }
