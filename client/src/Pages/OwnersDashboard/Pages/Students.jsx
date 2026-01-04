@@ -30,7 +30,7 @@ const Students = () => {
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setStudents(list);
-            timer = setTimeout(() => setLoading(false), 4000);
+            timer = setTimeout(() => setLoading(false), 2000);
         });
 
         return () => {
