@@ -251,7 +251,7 @@ const OwnersDashboard = () => {
 
         {/* User Management */}
         <section>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-bold text-white">Approval Board</h2>
               <p className="text-slate-400 mt-1">Approve or deny 'CO-ADMIN' registrations</p>
@@ -320,19 +320,19 @@ const OwnersDashboard = () => {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       {/* Left: User Info */}
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 min-w-0">
                         <Avatar image={userData.photoURL} name={userData.displayName} size="lg" />
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
                             <h3 className="text-white font-semibold truncate">
                               {userData.displayName || "Unknown User"}
                             </h3>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r ${colorClass} text-white`}>
+                            <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r ${colorClass} text-white`}>
                               {userData.role}
                             </span>
                           </div>
                           <p className="text-slate-400 text-sm truncate">{userData.email}</p>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0">
                             <p className="text-slate-500 text-xs mt-1">
                               {userData.createdAt?.toDate?.()?.toLocaleDateString('en-IN', {
                                 day: '2-digit',
@@ -352,9 +352,9 @@ const OwnersDashboard = () => {
                       </div>
 
                       {/* Right: Actions */}
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3 mt-2 sm:mt-0">
                         {userData.status === "pending" ? (
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2">
                             <button
                               onClick={() => handleStatusChange(userData.id, "approved")}
                               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium text-sm transition-colors"

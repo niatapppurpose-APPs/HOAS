@@ -57,7 +57,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   }, [isPinned, setIsCollapsed]);
 
   // Determine if sidebar content should be shown (expanded view)
-  const showContent = !isCollapsed || isPinned;
+  // On mobile: only show when not collapsed, ignore pin state
+  // On desktop: show when not collapsed OR pinned
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+  const showContent = isMobile ? !isCollapsed : (!isCollapsed || isPinned);
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/OwnersDashboard" },
@@ -74,13 +77,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   ];
 
   const handleMouseEnter = () => {
-    if (!isPinned) {
+    // Only enable hover behavior on desktop screens
+    if (!isPinned && window.innerWidth >= 1024) {
       setIsCollapsed(false);
     }
   };
 
   const handleMouseLeave = () => {
-    if (!isPinned) {
+    // Only enable hover behavior on desktop screens
+    if (!isPinned && window.innerWidth >= 1024) {
       setIsCollapsed(true);
     }
   };
@@ -114,7 +119,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         onMouseLeave={handleMouseLeave}
         style={{ backgroundColor: 'var(--owner-surface)', borderColor: 'rgba(255,255,255,0.03)' }}
         className={`fixed top-0 left-0 h-full backdrop-blur-xl border-r z-50 transition-all duration-300 ease-in-out
-          ${showContent ? "translate-x-0 w-72 lg:w-72" : "-translate-x-full lg:translate-x-0 lg:w-20"}
+          ${isCollapsed 
+            ? "-translate-x-full lg:translate-x-0 lg:w-20" 
+            : "translate-x-0 w-72 lg:w-72"}
         `}
       >
         {/* Logo Section */}
@@ -146,7 +153,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
             <button
               onClick={() => {
-                setIsPinned(false);
+                setIsPinned(true);
                 setIsCollapsed(true);
               }}
               className="flex lg:hidden items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all duration-200"
@@ -261,8 +268,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           </div>
 
           {/* User Profile Card */}
-          <div className={`mt-4 mx-3 ${!showContent ? "lg:hidden" : ""}`}>
-            <div className="p-3 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-slate-700/50">
+          <button  onClick={() => navigate("/owner-profile")} className={`mt-5 mx-2 ${!showContent ? "lg:hidden" : ""} cursor-pointer`}>
+            <div className="p-3 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-2 border-slate-400/50">
               <div className="flex items-center gap-3">
                 <Avatar image={user?.photoURL} name={user?.displayName} size="md" />
                 <div className="flex-1 min-w-0">
@@ -271,7 +278,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                 </div>
               </div>
             </div>
-          </div>
+          </button>
+
+
         </nav>
       </aside>
 

@@ -26,8 +26,4 @@ dist-ssr
 # API KEYS
 .env
 .env.example
-<<<<<<< HEAD
 serviceAccountKey.json
-=======
-serviceAccountKey.json
->>>>>>> 88e0b7530c75d8622c7984bc3b6dd5bb029c9e39
