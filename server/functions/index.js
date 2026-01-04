@@ -10,6 +10,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { setGlobalOptions } from 'firebase-functions/v2';
 import PDFDocument from 'pdfkit';
+import cors from 'cors';
 
 // Initialize Firebase Admin
 initializeApp();
@@ -19,6 +20,14 @@ setGlobalOptions({ region: 'us-central1' });
 
 const db = getFirestore();
 const auth = getAuth();
+
+// Configure CORS
+const corsHandler = cors({ 
+  origin: true, // Allow all origins in development
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+});
 
 // Check if running in emulator
 const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true';
@@ -82,22 +91,33 @@ async function verifyManagementAccess(context, collegeId) {
     throw new HttpsError('unauthenticated', 'User must be authenticated');
   }
 
+  console.log('Verifying management access for:', context.auth.uid, 'on college:', collegeId);
+
   const userDoc = await db.collection('users').doc(context.auth.uid).get();
   if (!userDoc.exists) {
     throw new HttpsError('not-found', 'User profile not found');
   }
 
   const userData = userDoc.data();
+  console.log('Current user data:', { role: userData.role, uid: userData.uid });
   
   // Check if user is admin
-  const userRecord = await auth.getUser(context.auth.uid);
-  const isAdmin = userRecord.customClaims?.role === 'admin';
+  let isAdmin = false;
+  try {
+    const userRecord = await auth.getUser(context.auth.uid);
+    isAdmin = userRecord.customClaims?.role === 'admin';
+    console.log('Is admin?', isAdmin);
+  } catch (error) {
+    console.warn('Could not fetch user record for admin check:', error.message);
+    // In emulator mode, this might fail, so we continue
+  }
   
   // Check if user is management for this college
   const isManagement = userData.role === 'management' && userData.uid === collegeId;
+  console.log('Is management for this college?', isManagement);
 
   if (!isAdmin && !isManagement) {
-    throw new HttpsError('permission-denied', 'Insufficient permissions');
+    throw new HttpsError('permission-denied', 'Insufficient permissions to manage this college');
   }
 
   return { userData, isAdmin };
@@ -111,76 +131,125 @@ async function verifyManagementAccess(context, collegeId) {
  * Approve a user (Management approves Warden/Student, Owner approves Management)
  */
 export const approveUser = onCall({ cors: true }, async (request) => {
-  const { userId, approverRole } = request.data;
+  try {
+    console.log('🔍 approveUser called with data:', request.data);
+    console.log('Auth context:', request.auth);
+    
+    const { userId, approverRole } = request.data;
 
-  if (!userId) {
-    throw new HttpsError('invalid-argument', 'userId is required');
+    if (!userId) {
+      throw new HttpsError('invalid-argument', 'userId is required');
+    }
+
+    // Check authentication
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    // Get user to approve
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (!userDoc.exists) {
+      throw new HttpsError('not-found', 'User not found');
+    }
+
+    const userData = userDoc.data();
+    console.log('User to approve:', { userId, role: userData.role, managementId: userData.managementId });
+
+    // Verify permissions
+    try {
+      if (userData.role === 'management') {
+        // Only admin can approve management
+        await verifyAdmin(request);
+      } else if (userData.role === 'warden' || userData.role === 'student') {
+        // Admin or the management of their college can approve
+        await verifyManagementAccess(request, userData.managementId);
+      }
+    } catch (permError) {
+      console.error('Permission verification failed:', permError.message);
+      throw permError;
+    }
+
+    // Update user status
+    await db.collection('users').doc(userId).update({
+      status: 'approved',
+      approvedAt: new Date().toISOString(),
+      approvedBy: request.auth.uid,
+      approverRole: approverRole || 'admin',
+      updatedAt: new Date().toISOString()
+    });
+
+    console.log('✅ User approved successfully:', userId);
+    return { success: true, message: 'User approved successfully' };
+    
+  } catch (error) {
+    console.error('❌ Error in approveUser:', error);
+    // Re-throw HttpsError as-is
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    // Wrap other errors
+    throw new HttpsError('internal', `Failed to approve user: ${error.message}`);
   }
-
-  // Get user to approve
-  const userDoc = await db.collection('users').doc(userId).get();
-  if (!userDoc.exists) {
-    throw new HttpsError('not-found', 'User not found');
-  }
-
-  const userData = userDoc.data();
-
-  // Verify permissions
-  if (userData.role === 'management') {
-    // Only admin can approve management
-    await verifyAdmin(request);
-  } else if (userData.role === 'warden' || userData.role === 'student') {
-    // Admin or the management of their college can approve
-    await verifyManagementAccess(request, userData.managementId);
-  }
-
-  // Update user status
-  await db.collection('users').doc(userId).update({
-    status: 'approved',
-    approvedAt: new Date().toISOString(),
-    approvedBy: request.auth.uid,
-    approverRole: approverRole || 'admin',
-    updatedAt: new Date().toISOString()
-  });
-
-  return { success: true, message: 'User approved successfully' };
 });
 
 /**
  * Deny a user
  */
 export const denyUser = onCall({ cors: true }, async (request) => {
-  const { userId, reason } = request.data;
+  try {
+    console.log('🔍 denyUser called with data:', request.data);
+    
+    const { userId, reason } = request.data;
 
-  if (!userId) {
-    throw new HttpsError('invalid-argument', 'userId is required');
+    if (!userId) {
+      throw new HttpsError('invalid-argument', 'userId is required');
+    }
+
+    // Check authentication
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    // Get user to deny
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (!userDoc.exists) {
+      throw new HttpsError('not-found', 'User not found');
+    }
+
+    const userData = userDoc.data();
+    console.log('User to deny:', { userId, role: userData.role });
+
+    // Verify permissions
+    try {
+      if (userData.role === 'management') {
+        await verifyAdmin(request);
+      } else {
+        await verifyManagementAccess(request, userData.managementId);
+      }
+    } catch (permError) {
+      console.error('Permission verification failed:', permError.message);
+      throw permError;
+    }
+
+    // Update user status
+    await db.collection('users').doc(userId).update({
+      status: 'denied',
+      deniedAt: new Date().toISOString(),
+      deniedBy: request.auth.uid,
+      denialReason: reason || '',
+      updatedAt: new Date().toISOString()
+    });
+
+    console.log('✅ User denied successfully:', userId);
+    return { success: true, message: 'User denied successfully' };
+    
+  } catch (error) {
+    console.error('❌ Error in denyUser:', error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError('internal', `Failed to deny user: ${error.message}`);
   }
-
-  // Get user to deny
-  const userDoc = await db.collection('users').doc(userId).get();
-  if (!userDoc.exists) {
-    throw new HttpsError('not-found', 'User not found');
-  }
-
-  const userData = userDoc.data();
-
-  // Verify permissions
-  if (userData.role === 'management') {
-    await verifyAdmin(request);
-  } else {
-    await verifyManagementAccess(request, userData.managementId);
-  }
-
-  // Update user status
-  await db.collection('users').doc(userId).update({
-    status: 'denied',
-    deniedAt: new Date().toISOString(),
-    deniedBy: request.auth.uid,
-    denialReason: reason || '',
-    updatedAt: new Date().toISOString()
-  });
-
-  return { success: true, message: 'User denied successfully' };
 });
 
 /**
@@ -526,40 +595,42 @@ export const healthCheck = onCall({ cors: true }, async () => {
  * Generate and download college report in JSON format
  */
 export const downloadReportJson = onRequest({ cors: true }, async (req, res) => {
-  try {
-    console.log('=== downloadReportJson called ===');
-    console.log('Headers:', req.headers);
-    
-    // Get the authenticated user's data
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      console.log('No Bearer token found');
-      res.status(401).json({ error: 'Unauthorized - No token provided' });
-      return;
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-    console.log('Token received (first 20 chars):', token.substring(0, 20));
-    
-    let decodedToken;
+  // Handle CORS
+  return corsHandler(req, res, async () => {
     try {
-      decodedToken = await verifyAuthToken(token);
-      console.log('✅ Token verified for user:', decodedToken.uid || decodedToken.user_id);
-    } catch (error) {
-      console.error('❌ Token verification failed:', error.message);
-      res.status(401).json({ error: 'Unauthorized - Invalid token', details: error.message });
-      return;
-    }
+      console.log('=== downloadReportJson called ===');
+      console.log('Headers:', req.headers);
+      
+      // Get the authenticated user's data
+      const authHeader = req.headers.authorization;
+      if (!authHeader?.startsWith('Bearer ')) {
+        console.log('No Bearer token found');
+        res.status(401).json({ error: 'Unauthorized - No token provided' });
+        return;
+      }
 
-    // Get user data from Firestore
-    const userId = decodedToken.uid || decodedToken.user_id;
-    const userDoc = await db.collection('users').doc(userId).get();
-    if (!userDoc.exists) {
-      res.status(404).json({ error: 'User profile not found' });
-      return;
-    }
+      const token = authHeader.split('Bearer ')[1];
+      console.log('Token received (first 20 chars):', token.substring(0, 20));
+      
+      let decodedToken;
+      try {
+        decodedToken = await verifyAuthToken(token);
+        console.log('✅ Token verified for user:', decodedToken.uid || decodedToken.user_id);
+      } catch (error) {
+        console.error('❌ Token verification failed:', error.message);
+        res.status(401).json({ error: 'Unauthorized - Invalid token', details: error.message });
+        return;
+      }
 
-    const userData = userDoc.data();
+      // Get user data from Firestore
+      const userId = decodedToken.uid || decodedToken.user_id;
+      const userDoc = await db.collection('users').doc(userId).get();
+      if (!userDoc.exists) {
+        res.status(404).json({ error: 'User profile not found' });
+        return;
+      }
+
+      const userData = userDoc.data();
 
     // Build report data based on user role
     let reportData;
@@ -627,50 +698,53 @@ export const downloadReportJson = onRequest({ cors: true }, async (req, res) => 
     // Send the JSON data
     res.status(200).json(reportData);
 
-  } catch (error) {
-    console.error('Error generating JSON report:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+    } catch (error) {
+      console.error('Error generating JSON report:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
 });
 
 /**
  * Generate and download college report in PDF format
  */
 export const downloadReportPdf = onRequest({ cors: true }, async (req, res) => {
-  try {
-    console.log('=== downloadReportPdf called ===');
-    console.log('Headers:', req.headers);
-    
-    // Get the authenticated user's data
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      console.log('No Bearer token found');
-      res.status(401).send('Unauthorized - No token provided');
-      return;
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-    console.log('Token received (first 20 chars):', token.substring(0, 20));
-    
-    let decodedToken;
+  // Handle CORS
+  return corsHandler(req, res, async () => {
     try {
-      decodedToken = await verifyAuthToken(token);
-      console.log('✅ Token verified for user:', decodedToken.uid || decodedToken.user_id);
-    } catch (error) {
-      console.error('❌ Token verification failed:', error.message);
-      res.status(401).send(`Unauthorized - Invalid token: ${error.message}`);
-      return;
-    }
+      console.log('=== downloadReportPdf called ===');
+      console.log('Headers:', req.headers);
+      
+      // Get the authenticated user's data
+      const authHeader = req.headers.authorization;
+      if (!authHeader?.startsWith('Bearer ')) {
+        console.log('No Bearer token found');
+        res.status(401).send('Unauthorized - No token provided');
+        return;
+      }
 
-    // Get user data from Firestore
-    const userId = decodedToken.uid || decodedToken.user_id;
-    const userDoc = await db.collection('users').doc(userId).get();
-    if (!userDoc.exists) {
-      res.status(404).send('User profile not found');
-      return;
-    }
+      const token = authHeader.split('Bearer ')[1];
+      console.log('Token received (first 20 chars):', token.substring(0, 20));
+      
+      let decodedToken;
+      try {
+        decodedToken = await verifyAuthToken(token);
+        console.log('✅ Token verified for user:', decodedToken.uid || decodedToken.user_id);
+      } catch (error) {
+        console.error('❌ Token verification failed:', error.message);
+        res.status(401).send(`Unauthorized - Invalid token: ${error.message}`);
+        return;
+      }
 
-    const userData = userDoc.data();
+      // Get user data from Firestore
+      const userId = decodedToken.uid || decodedToken.user_id;
+      const userDoc = await db.collection('users').doc(userId).get();
+      if (!userDoc.exists) {
+        res.status(404).send('User profile not found');
+        return;
+      }
+
+      const userData = userDoc.data();
 
     // Only admin and management can generate reports
     if (userData.role !== 'admin' && userData.role !== 'management') {
@@ -762,11 +836,12 @@ export const downloadReportPdf = onRequest({ cors: true }, async (req, res) => {
     // Finalize PDF
     doc.end();
 
-  } catch (error) {
-    console.error('Error generating PDF report:', error);
-    if (!res.headersSent) {
-      res.status(500).send('Internal server error');
+    } catch (error) {
+      console.error('Error generating PDF report:', error);
+      if (!res.headersSent) {
+        res.status(500).send('Internal server error');
+      }
     }
-  }
+  });
 });
 

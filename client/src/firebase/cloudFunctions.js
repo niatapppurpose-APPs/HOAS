@@ -20,7 +20,9 @@ export const approveUser = async (userId, approverRole = 'admin') => {
     return result.data;
   } catch (error) {
     console.error('Error approving user:', error);
-    throw error;
+    // Extract more helpful error message
+    const message = error.message || error.code || 'Unknown error';
+    throw new Error(message);
   }
 };
 
@@ -34,7 +36,8 @@ export const denyUser = async (userId, reason = '') => {
     return result.data;
   } catch (error) {
     console.error('Error denying user:', error);
-    throw error;
+    const message = error.message || error.code || 'Unknown error';
+    throw new Error(message);
   }
 };
 
