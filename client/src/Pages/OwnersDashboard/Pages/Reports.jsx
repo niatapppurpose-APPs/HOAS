@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ClipLoader } from 'react-spinners';
+import { ClipLoader, HashLoader } from 'react-spinners';
 import Header from '../../../components/OwnerServices/header';
 import { FileText, Download, Lock, Calendar, FileJson, FileType } from 'lucide-react';
 import { auth, functions, db } from '../../../firebase/firebaseConfig';
@@ -302,8 +302,8 @@ export default function Reports() {
       <div className="px-4 sm:px-6 lg:px-8 py-8">
         
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <ClipLoader color="#818cf8" size={50} />
+          <div className="flex items-center justify-center py-80">
+            <HashLoader color="#818cf8" size={70} />
           </div>
         ) : (
           <>
@@ -383,7 +383,7 @@ export default function Reports() {
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
-                        {collegeInfo.name}
+                        {collegeInfo?.name}
                       </span>
                       
                       {/* Date & Time */}
@@ -407,7 +407,7 @@ export default function Reports() {
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium text-sm transition-all shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 disabled:from-slate-700 disabled:to-slate-700 disabled:shadow-none disabled:cursor-not-allowed"
                     >
                       {downloadingId === report.id && downloadingFormat === 'pdf' ? (
-                        <ClipLoader color="#ffffff" size={16} />
+                        <HashLoader color="#ffffff" size={16} />
                       ) : (
                         <Download className="w-4 h-4" />
                       )}
@@ -423,7 +423,7 @@ export default function Reports() {
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-medium text-sm transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 disabled:from-slate-700 disabled:to-slate-700 disabled:shadow-none disabled:cursor-not-allowed"
                     >
                       {downloadingId === report.id && downloadingFormat === 'json' ? (
-                        <ClipLoader color="#ffffff" size={16} />
+                        <HashLoader color="#ffffff" size={16} />
                       ) : (
                         <Download className="w-4 h-4" />
                       )}
