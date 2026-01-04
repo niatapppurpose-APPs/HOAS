@@ -22,18 +22,33 @@ export const functions = getFunctions(app);
 // Enable persistence so user stays logged in after page reload
 setPersistence(auth, browserLocalPersistence);
 
-// Connect to emulators if enabled
+// Auto-detect and connect to emulators
+// We use top-level await to ensure connection decision is made BEFORE app loads
+// This prevents the "logout on reload" race condition
 if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
-  const AUTH_EMULATOR_URL = 'http://localhost:9099';
-  const FIRESTORE_EMULATOR_HOST = '127.0.0.1';
-  const FIRESTORE_EMULATOR_PORT = 8080;
-  const FUNCTIONS_EMULATOR_HOST = 'localhost';
-  const FUNCTIONS_EMULATOR_PORT = 5001;
-
-  console.log('🔧 Connecting to Firebase Emulators...');
-  connectAuthEmulator(auth, AUTH_EMULATOR_URL, { disableWarnings: true });
-  connectFirestoreEmulator(db, FIRESTORE_EMULATOR_HOST, FIRESTORE_EMULATOR_PORT);
-  connectFunctionsEmulator(functions, FUNCTIONS_EMULATOR_HOST, FUNCTIONS_EMULATOR_PORT);
+  const AUTH_URL = 'http://localhost:9099';
+  
+  try {
+    // Check if Auth Emulator is running (with short timeout)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 500);
+    
+    await fetch(AUTH_URL, { 
+      method: 'GET', 
+      mode: 'no-cors',
+      signal: controller.signal 
+    });
+    
+    clearTimeout(timeoutId);
+    
+    console.log('🔧 Emulator detected! Connecting...');
+    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+    connectFirestoreEmulator(db, '127.0.0.1', 8080);
+    connectFunctionsEmulator(functions, 'localhost', 5001);
+    
+  } catch (e) {
+    console.log('🌐 Emulator not found (or stopped). Using production services.');
+  }
 } else {
   console.log('🌐 Using production Firebase services');
 }
