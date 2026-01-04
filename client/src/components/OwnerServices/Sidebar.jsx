@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Avatar from './Avatar'
+import Applogo from '../../assets/Applogo.png'
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { user } = useAuth();
@@ -119,17 +120,17 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         onMouseLeave={handleMouseLeave}
         style={{ backgroundColor: 'var(--owner-surface)', borderColor: 'rgba(255,255,255,0.03)' }}
         className={`fixed top-0 left-0 h-full backdrop-blur-xl border-r z-50 transition-all duration-300 ease-in-out
-          ${isCollapsed 
-            ? "-translate-x-full lg:translate-x-0 lg:w-20" 
+          ${isCollapsed
+            ? "-translate-x-full lg:translate-x-0 lg:w-20"
             : "translate-x-0 w-72 lg:w-72"}
         `}
       >
         {/* Logo Section */}
         <div className="flex items-center justify-between h-19 px-4 border-b border-slate-700/50">
           <div className={`flex items-center gap-3 ${!showContent ? "lg:justify-center lg:w-full" : ""}`}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
+
+            <img src={Applogo} className="w-12 h-12 rounded-full" />
+
             <div className={`${!showContent ? "lg:hidden" : ""}`}>
               <h1 className="text-xl font-bold text-white">HOAS</h1>
               <p className="text-xs text-slate-400">Owner Dashboard</p>
@@ -268,7 +269,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           </div>
 
           {/* User Profile Card */}
-          <button  onClick={() => navigate("/owner-profile")} className={`mt-5 mx-2 ${!showContent ? "lg:hidden" : ""} cursor-pointer`}>
+          <button onClick={() => navigate("/owner-profile")} className={`mt-5 mx-2 ${!showContent ? "lg:hidden" : ""} cursor-pointer`}>
             <div className="p-3 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-2 border-slate-400/50">
               <div className="flex items-center gap-3">
                 <Avatar image={user?.photoURL} name={user?.displayName} size="md" />
