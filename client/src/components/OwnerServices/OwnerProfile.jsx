@@ -5,17 +5,16 @@ import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 import Avatar from "./Avatar";
 import {
-  User,
   Mail,
   Phone,
   Building2,
   ArrowLeft,
   Save,
-  Loader2,
   ShieldCheck,
   Calendar,
   LogOut,
 } from "lucide-react";
+import { HashLoader } from "react-spinners";
 
 const OwnerProfile = () => {
   const { user, isAdmin, loading, adminChecked, logout } = useAuth();
@@ -112,7 +111,7 @@ const OwnerProfile = () => {
   if (loading || isLoading || !adminChecked) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <HashLoader className="w-8 h-8 animate-spin text-indigo-500" />
       </div>
     );
   }
@@ -132,7 +131,7 @@ const OwnerProfile = () => {
             <div className="flex items-center justify-between gap-2">
               <h1 className="text-lg font-semibold">Owner Profile</h1>
               <p className="text-lg text-slate-400">
-             (HOAS)
+                (HOAS)
               </p>
             </div>
           </div>
@@ -149,9 +148,9 @@ const OwnerProfile = () => {
         <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6">
           {/* PROFILE TOP */}
           <div className="flex flex-col md:flex-row md:items-center gap-6 border-b border-slate-800 pb-6">
-            <Avatar 
-              image={user?.photoURL} 
-              name={profileData.displayName || user?.displayName} 
+            <Avatar
+              image={user?.photoURL}
+              name={profileData.displayName || user?.displayName}
               size={20}
               rounded="full"
             />
@@ -221,7 +220,7 @@ const OwnerProfile = () => {
               className="px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50"
             >
               {isSaving ? (
-                <Loader2 size={18} className="animate-spin" />
+                <HashLoader size={18} className="animate-spin" />
               ) : (
                 <Save size={18} />
               )}

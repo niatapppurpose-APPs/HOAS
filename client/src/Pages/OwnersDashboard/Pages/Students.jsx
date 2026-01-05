@@ -170,7 +170,7 @@ const Students = () => {
                                             {/* Remove Button */}
                                             <button
                                                 onClick={() => handleRemove(student)}
-                                                className="p-2 rounded-lg bg-slate-700/50 hover:bg-red-600/80 text-slate-400 hover:text-white transition-all border border-1 border-[#E1251B]"
+                                                className="p-2 rounded-lg bg-slate-700/50 text-slate-400 hover:text-white transition-all border border-1 border-[#E1251B]"
                                                 title="Remove Student"
                                             >
                                                 <UserMinus className="text-[#E1251B] w-6 h-6" />

@@ -22,7 +22,6 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Loader2,
   AlertCircle,
   Trash2,
 } from "lucide-react";
@@ -156,7 +155,7 @@ const OwnersDashboard = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto" />
+          <HashLoader className="w-8 h-8 text-indigo-500 animate-spin mx-auto" />
           <p className="text-slate-400 mt-4">Verifying admin access...</p>
         </div>
       </div>
@@ -168,7 +167,7 @@ const OwnersDashboard = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto" />
+          <HashLoader className="w-8 h-8 text-indigo-500 animate-spin mx-auto" />
           <p className="text-slate-400 mt-4">Redirecting...</p>
         </div>
       </div>
