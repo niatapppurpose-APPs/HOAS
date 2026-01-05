@@ -37,7 +37,9 @@ const OwnersDashboard = () => {
   const [fetchError, setFetchError] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 });
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const [isApproving, setIsApproving] = useState(null);
+  const [isDenying, setIsDenying] = useState(null);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(null);
 
   useEffect(() => {
 
@@ -98,6 +100,8 @@ const OwnersDashboard = () => {
 
   // Handle status change - Call Cloud Function
   const handleStatusChange = async (userId, newStatus) => {
+    if (newStatus === 'approved') setIsApproving(userId);
+    if (newStatus === 'denied') setIsDenying(userId);
     try {
       if (newStatus === 'approved') {
         await cloudFunctions.approveUser(userId, 'owner');
@@ -106,11 +110,15 @@ const OwnersDashboard = () => {
       }
     } catch (error) {
       alert(`Failed to ${newStatus} user: ${error.message}`);
+    } finally {
+      if (newStatus === 'approved') setIsApproving(null);
+      if (newStatus === 'denied') setIsDenying(null);
     }
   };
 
   // Open delete confirmation modal
   const openDeleteModal = async (college) => {
+    setIsDeleteLoading(college.id);
     try {
       // Get college stats using Cloud Function
       const { stats } = await cloudFunctions.getCollegeStats(college.id);
@@ -128,6 +136,8 @@ const OwnersDashboard = () => {
         wardenCount: 0,
         studentCount: 0
       });
+    } finally {
+      setIsDeleteLoading(null);
     }
   };
 
@@ -357,16 +367,36 @@ const OwnersDashboard = () => {
                             <button
                               onClick={() => handleStatusChange(userData.id, "approved")}
                               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium text-sm transition-colors"
+                              disabled={isApproving === userData.id}
                             >
-                              <CheckCircle className="w-4 h-4" />
-                              Approve
+                              {isApproving === userData.id ? (
+                                <>
+                                <HashLoader size={20} color="#ffffff" />
+                                 Approving
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="w-4 h-4" />
+                                  Approve
+                                </>
+                              )}
                             </button>
                             <button
                               onClick={() => handleStatusChange(userData.id, "denied")}
                               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium text-sm transition-colors"
+                              disabled={isDenying === userData.id}
                             >
-                              <XCircle className="w-4 h-4" />
-                              Deny
+                              {isDenying === userData.id ? (
+                               <>
+                                <HashLoader size={20} color="#ffffff" />
+                                 Denying
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="w-4 h-4" />
+                                  Deny
+                                </>
+                              )}
                             </button>
                           </div>
                         ) : (
@@ -378,8 +408,13 @@ const OwnersDashboard = () => {
                           onClick={() => openDeleteModal(userData)}
                           className="p-2 rounded-lg bg-slate-700/50 hover:bg-red-600/80 text-slate-400 hover:text-white transition-colors"
                           title="Delete College"
+                          disabled={isDeleteLoading === userData.id}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          {isDeleteLoading === userData.id ? (
+                            <HashLoader size={20} color="#ffffff" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
                         </button>
                       </div>
                     </div>

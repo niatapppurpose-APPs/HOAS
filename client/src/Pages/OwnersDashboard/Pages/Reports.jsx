@@ -430,7 +430,7 @@ export default function Reports() {
                       <span>JSON</span>
                     </button>
                   )}
-                </div>
+                </div> 
               </div>
             </div>
           ))}
