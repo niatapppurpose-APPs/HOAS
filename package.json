@@ -12,10 +12,7 @@
     "install:client": "cd client && npm install",
     "install:server": "cd server/functions && npm install",
     "install:all": "npm run install:client && npm run install:server",
-    "predeploy": "npm run build && xcopy /E /I /Y client\\dist server\\dist",
-    "deploy": "npm run predeploy && cd server && firebase deploy",
-    "deploy:functions": "cd server && firebase deploy --only functions",
-    "deploy:hosting": "npm run predeploy && cd server && firebase deploy --only hosting"
+    "deploy": "cd server && firebase deploy --only functions"
   },
   "workspaces": [
     "client",
