@@ -119,7 +119,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{ backgroundColor: 'var(--owner-surface)', borderColor: 'rgba(255,255,255,0.03)' }}
-        className={`fixed top-0 left-0 h-full backdrop-blur-xl border-r z-50 transition-all duration-300 ease-in-out
+        className={`fixed top-0 left-0 h-full backdrop-blur-xl border-r z-40 transition-all duration-300 ease-in-out
           ${isCollapsed
             ? "-translate-x-full lg:translate-x-0 lg:w-20"
             : "translate-x-0 w-72 lg:w-72"}
@@ -277,7 +277,41 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
           {/* User Profile Card */}
           <button 
-            onClick={() => navigate("/owner-profile")} 
+            onClick={() => {
+              // Save current page state before navigating to profile
+              const currentPath = location.pathname;
+              const state = {
+                scrollPosition: window.scrollY,
+                returnPath: currentPath
+              };
+              
+              // Save to sessionStorage as backup
+              sessionStorage.setItem('ownerProfileReturnPath', currentPath);
+              
+              // Also save the current page's specific state if it exists
+              const pageStates = {
+                '/OwnersDashboard/students': 'studentsPageState',
+                '/OwnersDashboard/wardens': 'wardensPageState',
+                '/OwnersDashboard/analytics': 'analyticsPageState',
+                '/OwnersDashboard/reports': 'reportsPageState',
+                '/OwnersDashboard/settings': 'settingsPageState'
+              };
+              
+              const pageStateKey = pageStates[currentPath];
+              if (pageStateKey) {
+                const existingState = sessionStorage.getItem(pageStateKey);
+                if (existingState) {
+                  const parsedState = JSON.parse(existingState);
+                  state.searchText = parsedState.searchText;
+                }
+              }
+              
+              // Navigate to profile with state
+              navigate("/owner-profile", { state });
+              
+              // Close sidebar on mobile
+              if (window.innerWidth < 1024) setIsCollapsed(true);
+            }} 
             className={`mt-5 mb-5 mx-2 group relative ${!showContent ? "flex justify-center" : "block"} cursor-pointer  `}
           >
             <div className={`

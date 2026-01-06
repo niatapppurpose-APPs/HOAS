@@ -32,7 +32,7 @@ const OwnersLayout = () => {
       <main className={`transition-all duration-300 ease-in-out ${
         isCollapsed ? 'lg:ml-20' : 'lg:ml-72'
       }`}>
-        <Outlet />
+        <Outlet context={{ isCollapsed }} />
       </main>
     </div>
   );

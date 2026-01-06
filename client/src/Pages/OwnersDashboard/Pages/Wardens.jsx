@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/firebaseConfig';
+import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
 import Avatar from '../../../components/OwnerServices/Avatar';
 import { HashLoader } from "react-spinners";
 import { User, Mail, Shield, Eye, Edit2, UserMinus, Building2, Search } from 'lucide-react';
 import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmModal';
 const Wardens = () => {
+    const { isCollapsed } = useOutletContext();
+    const location = useLocation();
+    const navigate = useNavigate();
     const [wardens, setWardens] = useState([]);
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, warden: null });
     const [isDeleting, setIsDeleting] = useState(false);
@@ -21,6 +25,22 @@ const Wardens = () => {
         hostelName: "Boys Hostel – Block A",
         hostelId: "HST-2024-001"
     };
+
+    // Restore state when coming back from profile
+    useEffect(() => {
+        if (location.state?.searchText !== undefined) {
+            setSearchListWarden(location.state.searchText);
+            if (location.state.scrollPosition) {
+                setTimeout(() => {
+                    window.scrollTo(0, location.state.scrollPosition);
+                    // Clear the state after restoring
+                    window.history.replaceState({}, document.title);
+                }, 100);
+            }
+        }
+        // Clear sessionStorage after checking
+        sessionStorage.removeItem('wardensPageState');
+    }, [location.state]);
 
     useEffect(() => {
         let timer;
@@ -43,6 +63,18 @@ const Wardens = () => {
     const searchWarden = wardens.filter((wardenList) => (
         !searchListWarden.trim() || wardenList.fullName?.toLowerCase().includes(searchListWarden.toLowerCase())
     ))
+    
+    // Save page state before navigating away
+    const savePageState = () => {
+        const state = {
+            searchText: searchListWarden,
+            scrollPosition: window.scrollY,
+            returnPath: '/OwnersDashboard/wardens'
+        };
+        sessionStorage.setItem('wardensPageState', JSON.stringify(state));
+        return state;
+    };
+    
     const handleRemove = (warden) => {
         setDeleteModal({ isOpen: true, warden });
     };
@@ -63,10 +95,14 @@ const Wardens = () => {
 
     return (
         <>
-            <Header title="Hostel Wardens" />
+            <Header 
+                title="Hostel Wardens" 
+                isCollapsed={isCollapsed}
+                onProfileClick={savePageState}
+            />
 
             {/* Main Container */}
-            <div className="px-4 sm:px-6 lg:px-8 py-8">
+            <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
 
                 {/* Page Header with Context */}
                 <section className="mb-8">

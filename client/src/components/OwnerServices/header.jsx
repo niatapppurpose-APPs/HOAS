@@ -2,10 +2,15 @@ import { Building2, LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 
-const Header = ({ pendingCount = 0, handleLogout, user, title }) => {
+const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = true }) => {
   const navigate = useNavigate();
   return (
-    <header style={{ backgroundColor: 'var(--owner-surface)', borderColor: 'rgba(148,163,184,0.1)' }} className="border-b backdrop-blur-xl top-0 z-50 h-20">
+    <header 
+      style={{ backgroundColor: 'var(--owner-surface)', borderColor: 'rgba(148,163,184,0.1)' }} 
+      className={`fixed top-0 right-0 border-b backdrop-blur-xl z-50 h-20 transition-all duration-300 ${
+        isCollapsed ? 'left-0 lg:left-20' : 'left-0 lg:left-72'
+      }`}
+    >
       <div className="mx-auto px-6 sm:px-6 lg:px-8 h-full">
         <div className="flex items-center justify-between h-full">
           <div className="flex items-center gap-3">
@@ -19,8 +24,6 @@ const Header = ({ pendingCount = 0, handleLogout, user, title }) => {
                 {pendingCount} Pending
               </span>
             )}
-
-           
 
             {/* Logout Button */}
             <button

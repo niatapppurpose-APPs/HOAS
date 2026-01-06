@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ClipLoader, HashLoader } from 'react-spinners';
+import { useOutletContext, useLocation } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
 import { FileText, Download, Lock, Calendar, FileJson, FileType } from 'lucide-react';
 import { auth, functions, db } from '../../../firebase/firebaseConfig';
@@ -139,12 +140,27 @@ async function downloadReport(type, password) {
 }
 // -------------------------------------------------------------------------------------------------------------------------
 export default function Reports() {
+  const { isCollapsed } = useOutletContext();
+  const location = useLocation();
   const { user } = useAuth();
   const [downloadingId, setDownloadingId] = useState(null);
   const [downloadingFormat, setDownloadingFormat] = useState(null);
   const [collegeInfo, setCollegeInfo] = useState(null);
   const [stats, setStats] = useState({ students: 0, wardens: 0, colleges: 0 });
   const [loading, setLoading] = useState(true);
+
+  // Restore scroll position when coming back from profile
+  useEffect(() => {
+    if (location.state?.scrollPosition) {
+      setTimeout(() => {
+        window.scrollTo(0, location.state.scrollPosition);
+        // Clear the state after restoring
+        window.history.replaceState({}, document.title);
+      }, 100);
+    }
+    // Clear sessionStorage after checking
+    sessionStorage.removeItem('reportsPageState');
+  }, [location.state]);
 
   // Fetch user profile and stats
   useEffect(() => {
@@ -294,12 +310,26 @@ export default function Reports() {
     });
   };
 
+  // Save page state before navigating away
+  const savePageState = () => {
+    const state = {
+      scrollPosition: window.scrollY,
+      returnPath: '/OwnersDashboard/reports'
+    };
+    sessionStorage.setItem('reportsPageState', JSON.stringify(state));
+    return state;
+  };
+
   return (
     <>
-      <Header title="Reports Board" />
+      <Header 
+        title="Reports Board" 
+        isCollapsed={isCollapsed}
+        onProfileClick={savePageState}
+      />
       
       {/* Main Container */}
-      <div className="px-4 sm:px-6 lg:px-8 py-8">
+      <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
         
         {loading ? (
           <div className="flex items-center justify-center py-80">

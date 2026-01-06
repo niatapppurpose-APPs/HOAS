@@ -1,3 +1,5 @@
+// Radial chart: shows approval % for each role (students/wardens/colleges).
+import { memo } from 'react';
 import {
   RadialBarChart,
   RadialBar,
@@ -83,4 +85,4 @@ const RoleApprovalChart = ({ data }) => {
   );
 };
 
-export default RoleApprovalChart;
+export default memo(RoleApprovalChart);

@@ -1,9 +1,12 @@
-import Header from '../../../components/OwnerServices/header';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { useOutletContext, useLocation } from 'react-router-dom';
 import { HexColorPicker } from "react-colorful"
+import Header from '../../../components/OwnerServices/header';
 
 const Settings = () => {
+  const { isCollapsed } = useOutletContext();
+  const location = useLocation();
   const { userData, updateUserTheme } = useAuth();
   const initial = userData?.theme || {};
 
@@ -14,6 +17,19 @@ const Settings = () => {
   const [textColor, setTextColor] = useState(initial.text || '#ffffff');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+
+  // Restore scroll position when coming back from profile
+  useEffect(() => {
+    if (location.state?.scrollPosition) {
+      setTimeout(() => {
+        window.scrollTo(0, location.state.scrollPosition);
+        // Clear the state after restoring
+        window.history.replaceState({}, document.title);
+      }, 100);
+    }
+    // Clear sessionStorage after checking
+    sessionStorage.removeItem('settingsPageState');
+  }, [location.state]);
 
   useEffect(() => {
     if (userData?.theme) {
@@ -37,10 +53,24 @@ const Settings = () => {
     setTimeout(() => setMessage(''), 2500);
   };
 
+  // Save page state before navigating away
+  const savePageState = () => {
+    const state = {
+      scrollPosition: window.scrollY,
+      returnPath: '/OwnersDashboard/settings'
+    };
+    sessionStorage.setItem('settingsPageState', JSON.stringify(state));
+    return state;
+  };
+
   return (
     <>
-      <Header title="Settings" />
-      <div className="p-6">
+      <Header 
+        title="Settings" 
+        isCollapsed={isCollapsed}
+        onProfileClick={savePageState}
+      />
+      <div className="pt-24 p-6">
         <h1 style={{ color: 'var(--owner-text)' }} className="text-2xl font-bold mb-4">Theme Settings</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-10">

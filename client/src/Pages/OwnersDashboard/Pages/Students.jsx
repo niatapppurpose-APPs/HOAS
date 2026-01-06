@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/firebaseConfig';
+import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
 import Avatar from '../../../components/OwnerServices/Avatar';
 import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmModal';
@@ -8,6 +9,9 @@ import { HashLoader } from "react-spinners";
 import { User, Mail, GraduationCap, Eye, Edit2, UserMinus, Building2, Search } from 'lucide-react';
 
 const Students = () => {
+    const { isCollapsed } = useOutletContext();
+    const location = useLocation();
+    const navigate = useNavigate();
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, student: null });
@@ -22,6 +26,23 @@ const Students = () => {
         hostelName: "Boys Hostel – Block A",
         hostelId: "HST-2024-001"
     };
+
+    // Restore state when coming back from profile
+    useEffect(() => {
+        if (location.state?.searchText !== undefined) {
+            setSearchListStudent(location.state.searchText);
+            // Restore scroll position after data loads
+            if (location.state.scrollPosition) {
+                setTimeout(() => {
+                    window.scrollTo(0, location.state.scrollPosition);
+                    // Clear the state after restoring to prevent it from triggering again
+                    window.history.replaceState({}, document.title);
+                }, 100);
+            }
+        }
+        // Clear sessionStorage after checking
+        sessionStorage.removeItem('studentsPageState');
+    }, [location.state]);
 
     useEffect(() => {
         let timer;
@@ -45,16 +66,32 @@ const Students = () => {
     const searchStudent = students.filter((studentlist) =>
         !searchListStudent.trim() || studentlist.fullName?.toLowerCase().includes(searchListStudent.toLowerCase())
     )
+    
+    // Save page state before navigating away
+    const savePageState = () => {
+        const state = {
+            searchText: searchListStudent,
+            scrollPosition: window.scrollY,
+            returnPath: '/OwnersDashboard/students'
+        };
+        sessionStorage.setItem('studentsPageState', JSON.stringify(state));
+        return state;
+    };
+    
     const handleRemove = (student) => {
         setDeleteModal({ isOpen: true, student });
     };
 
     return (
         <>
-            <Header title="Hostel Students" />
+            <Header 
+                title="Hostel Students" 
+                isCollapsed={isCollapsed}
+                onProfileClick={savePageState}
+            />
 
             {/* Main Container */}
-            <div className="px-4 sm:px-6 lg:px-8 py-8">
+            <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
 
                 {/* Page Header */}
                 <section className="mb-8">

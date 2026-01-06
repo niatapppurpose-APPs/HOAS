@@ -11,8 +11,8 @@ const RefreshButton = ({ onRefresh, refreshing, lastUpdated }) => {
   };
 
   return (
-    <div className="flex justify-between items-center mb-4">
-      <div className="flex items-center gap-3">
+    <div className="flex flex-row-reverse justify-between items-center mb-4">
+      <div className="flex flex-col items-center gap-3">
         <button
           onClick={onRefresh}
           disabled={refreshing}

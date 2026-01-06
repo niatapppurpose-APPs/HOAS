@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
@@ -19,6 +19,7 @@ import { HashLoader } from "react-spinners";
 const OwnerProfile = () => {
   const { user, isAdmin, loading, adminChecked, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [profileData, setProfileData] = useState({
     displayName: "",
@@ -123,8 +124,21 @@ const OwnerProfile = () => {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate("/OwnersDashboard")}
+              onClick={() => {
+                // Get return path from location state or sessionStorage
+                const returnPath = location.state?.returnPath || 
+                  sessionStorage.getItem('ownerProfileReturnPath') || 
+                  "/OwnersDashboard";
+                const savedState = location.state || {};
+                
+                // Navigate back with saved state
+                navigate(returnPath, { state: savedState });
+                
+                // Clean up sessionStorage
+                sessionStorage.removeItem('ownerProfileReturnPath');
+              }}
               className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700"
+              title="Go back"
             >
               <ArrowLeft size={18} />
             </button>

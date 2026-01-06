@@ -1,3 +1,5 @@
+// Line chart: shows daily registrations for students and wardens (last 30 days).
+import { memo } from 'react';
 import {
   LineChart,
   Line,
@@ -65,4 +67,4 @@ const UserTrendChart = ({ data, dateRange }) => {
   );
 };
 
-export default UserTrendChart;
+export default memo(UserTrendChart);

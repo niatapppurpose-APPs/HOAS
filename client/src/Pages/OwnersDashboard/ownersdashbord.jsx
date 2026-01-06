@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../../firebase/firebaseConfig";
@@ -28,6 +28,7 @@ import {
 
 // Main Dashboard Component
 const OwnersDashboard = () => {
+  const { isCollapsed } = useOutletContext();
   const { user, isAdmin, loading, adminChecked } = useAuth();
   const navigate = useNavigate();
   const [allUsers, setAllUsers] = useState([]);
@@ -229,10 +230,10 @@ const OwnersDashboard = () => {
   return (
     <>
       {/* Header */}
-      <Header pendingCount={pendingCount} handleLogout={handleLogout} user={user} title="Dashboard" />
+      <Header pendingCount={pendingCount} handleLogout={handleLogout} user={user} title="Dashboard" isCollapsed={isCollapsed} />
 
       {/* Main Content */}
-      <div className="px-4 sm:px-6 lg:px-8 py-8">
+      <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Section */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-10">
           <StatsCard
