@@ -48,21 +48,22 @@ const Avatar = ({ image, name, size = "md", rounded = "xl" }) => {
     if (!url) return url;
 
     if (url.includes("googleusercontent.com")) {
-      return url.replace(/=s\d+(-c)?/g, "=s700-c");
+      return url.replace(/=s\d+(-c)?/g, "=s1000-c");
     }
 
     return url;
   };
 
-
+  // Determine if we should show custom initials
+  const shouldShowInitials = !image || imageError;
 
   return (
     <>
-      {imageError ? (
+      {shouldShowInitials ? (
         <div
           className={`${sizeClasses[size]} ${getColorFromName(
             name
-          )} ${roundedClasses[rounded]} flex items-center justify-center font-semibold p-10 text-white ring-2 ring-white/50`}
+          )} ${roundedClasses[rounded]} flex items-center justify-center font-semibold p-8 text-white ring-2 ring-white/50`}
         >
           {getInitials(name)}
         </div>
