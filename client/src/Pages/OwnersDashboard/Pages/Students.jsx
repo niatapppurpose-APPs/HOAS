@@ -17,6 +17,7 @@ const Students = () => {
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, student: null });
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchListStudent, setSearchListStudent] = useState('')
+    const [searchOpen, setSearchOpen] = useState(false);
     const [error, setError] = useState(null);
 
     // TODO: Replace with actual college and hostel data from props/context
@@ -100,17 +101,41 @@ const Students = () => {
                             <h2 className="text-2xl font-bold text-white">Hostel Students</h2>
                             <p className="text-slate-400 mt-1">Students assigned to the selected college hostel</p>
                         </div>
-                        <div className="relative w-full sm:w-auto sm:min-w-[280px]">
-                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <div className="relative flex items-center justify-end">
+                            {/* Search Icon Button */}
+                            <button
+                                onClick={() => setSearchOpen(!searchOpen)}
+                                className={`p-2.5 bg-slate-800/50 border-2 border-slate-900/50 rounded-lg hover:bg-slate-700/50 hover:border-indigo-500/50 transition-all duration-300 z-10 ${
+                                    searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                                }`}
+                                aria-label="Toggle search"
+                            >
                                 <Search className="w-5 h-5 text-slate-400" />
+                            </button>
+                            
+                            {/* Expandable Search Input */}
+                            <div 
+                                className={`absolute right-0 overflow-hidden transition-all duration-500 ease-in-out ${
+                                    searchOpen ? 'w-full sm:w-80 opacity-100' : 'w-0 opacity-0'
+                                }`}
+                            >
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                        <Search className="w-5 h-5 text-slate-400" />
+                                    </div>
+                                    <input
+                                        type="search"
+                                        value={searchListStudent}
+                                        onChange={onSearchEventStudent}
+                                        placeholder="Search students..."
+                                        className="w-full pl-10 pr-14 py-2.5 bg-slate-800/50 border-2 border-slate-900/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
+                                        style={{ 
+                                            transform: searchOpen ? 'translateX(0)' : 'translateX(20px)',
+                                            transition: 'transform 0.5s ease-in-out'
+                                        }}
+                                    />
+                                </div>
                             </div>
-                            <input
-                                type="search"
-                                value = {searchListStudent}
-                                onChange={onSearchEventStudent}
-                                placeholder="Search students..."
-                                className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border-2 border-slate-900/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
-                            />
                         </div>
                     </div>
                 </section>

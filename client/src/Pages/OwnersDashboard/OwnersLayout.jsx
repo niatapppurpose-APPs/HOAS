@@ -29,7 +29,7 @@ const OwnersLayout = () => {
     <div style={themeVars} className="min-h-screen text-slate-200 font-sans selection:bg-indigo-500/30">
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       
-      <main className={`transition-all duration-300 ease-in-out ${
+      <main className={`transition-all duration-300 ease-in-out ml-0 ${
         isCollapsed ? 'lg:ml-20' : 'lg:ml-72'
       }`}>
         <Outlet context={{ isCollapsed }} />

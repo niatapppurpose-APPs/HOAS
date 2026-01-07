@@ -4,7 +4,25 @@
  */
 
 import { httpsCallable } from 'firebase/functions';
-import { functions } from './firebaseConfig';
+import { functions, isEmulatorConnected } from './firebaseConfig';
+
+// =============================================================================
+// ENVIRONMENT DETECTION
+// =============================================================================
+
+/**
+ * Check if we should use the emulator or production endpoints
+ * This uses the isEmulatorConnected flag set during Firebase initialization
+ */
+export const getApiBaseUrl = () => {
+  if (isEmulatorConnected) {
+    console.log('🔧 Using Firebase Emulator for Cloud Functions');
+    return 'http://127.0.0.1:5001/hoas-65dee/us-central1';
+  } else {
+    console.log('🌐 Using Production Firebase Cloud Functions');
+    return 'https://us-central1-hoas-65dee.cloudfunctions.net';
+  }
+};
 
 // =============================================================================
 // USER MANAGEMENT FUNCTIONS

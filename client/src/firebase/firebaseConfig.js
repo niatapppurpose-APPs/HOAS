@@ -19,6 +19,9 @@ export const provider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 export const functions = getFunctions(app);
 
+// Track emulator status for other modules
+export let isEmulatorConnected = false;
+
 // Enable persistence so user stays logged in after page reload
 setPersistence(auth, browserLocalPersistence);
 
@@ -45,12 +48,15 @@ if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true'
     connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
     connectFirestoreEmulator(db, '127.0.0.1', 8080);
     connectFunctionsEmulator(functions, 'localhost', 5001);
+    isEmulatorConnected = true;
     
   } catch (e) {
     console.log('🌐 Emulator not found (or stopped). Using production services.');
+    isEmulatorConnected = false;
   }
 } else {
   console.log('🌐 Using production Firebase services');
+  isEmulatorConnected = false;
 }
 
 // Import debug utilities in development

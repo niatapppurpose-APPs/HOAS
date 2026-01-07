@@ -22,6 +22,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isPinned, setIsPinned] = useState(false);
+  const [showLogoPopup, setShowLogoPopup] = useState(false);
 
   // Get active item from current path
   const getActiveItem = () => {
@@ -47,15 +48,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     }
 
     const handleResize = () => {
-      if (window.innerWidth < 1024 && isPinned) {
+      if (window.innerWidth < 1024) {
+        // Always collapse sidebar on mobile
         setIsPinned(false);
         setIsCollapsed(true);
       }
     };
 
+    // Run once on mount to ensure mobile starts collapsed
+    handleResize();
+
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [isPinned, setIsCollapsed]);
+  }, [setIsCollapsed]);
 
   // Determine if sidebar content should be shown (expanded view)
   // On mobile: only show when not collapsed, ignore pin state
@@ -129,14 +134,18 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         <div className="flex items-center justify-between h-20 px-4 border-b border-slate-700/50 shrink-0">
           <div className={`flex items-center gap-3 transition-all duration-300 ${!showContent ? "lg:justify-center lg:w-full" : ""}`}>
             
-            <div className={`relative transition-all duration-300 ${!showContent ? "w-12 h-12" : "w-14 h-14"}`}>
+            <button 
+              onClick={() => setShowLogoPopup(true)}
+              className={`relative transition-all duration-300 group cursor-pointer ${!showContent ? "w-12 h-12" : "w-14 h-14"}`}
+              title="Click to view logo"
+            >
               <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <img 
                 src={Applogo} 
-                className="relative w-full h-full rounded-full object-cover border-2 border-slate-600/50 shadow-lg" 
+                className="relative w-full h-full rounded-full object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-indigo-500/50 transition-all duration-300 group-hover:scale-105" 
                 alt="HOAS Logo"
               />
-            </div>
+            </button>
 
             <div className={`flex flex-col transition-all duration-300 origin-left ${!showContent ? "lg:hidden opacity-0 w-0 scale-95" : "opacity-100 w-auto scale-100"}`}>
               <h1 className="text-xl font-bold text-white leading-none tracking-tight">HOAS</h1>
@@ -349,11 +358,84 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`fixed top-4 left-4 z-30 lg:hidden p-2.5 rounded-xl bg-slate-800 border border-slate-700/50 text-slate-400 hover:text-white transition-colors ${!isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
+        className={`fixed top-5 left-4 z-50 lg:hidden p-2.5 rounded-xl bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 text-slate-400 hover:text-white shadow-lg transition-all duration-200 ${!isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
       >
         <ChevronRight className="w-5 h-5" />
       </button>
+
+      {/* Logo Popup Modal */}
+      {showLogoPopup && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setShowLogoPopup(false)}
+        >
+          <div 
+            className="relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-8 max-w-2xl w-full shadow-2xl border border-slate-700/50 animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowLogoPopup(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all duration-200 group"
+              title="Close"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Modal Content */}
+            <div className="text-center">
+              <div className="mb-6">
+                <div className="inline-block relative">
+                  <div className="absolute inset-0 bg-indigo-500/30 rounded-full blur-2xl animate-pulse" />
+                  <img 
+                    src={Applogo} 
+                    alt="HOAS Logo" 
+                    className="relative w-48 h-48 mx-auto rounded-full object-cover border-4 border-indigo-500/50 shadow-2xl"
+                  />
+                </div>
+              </div>
+              
+              <h2 className="text-3xl font-bold text-white mb-2 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                HOAS
+              </h2>
+              <p className="text-lg text-slate-300 mb-1">
+                Hostel Accommodation System
+              </p>
+              <p className="text-sm text-slate-400 mb-6">
+                Owner Dashboard Management Portal
+              </p>
+              
+              <div className="border-t border-slate-700/50 pt-6">
+                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                  <div className="bg-slate-800/50 rounded-lg p-4 text-center">
+                    <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Platform</p>
+                    <p className="text-sm font-semibold text-white">Web Application</p>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-lg p-4 text-center">
+                    <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Version</p>
+                    <p className="text-sm font-semibold text-white">2.0.0</p>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-lg p-4 text-center">
+                    <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Status</p>
+                    <p className="text-sm font-semibold text-green-400">Active</p>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-lg p-4 text-center">
+                    <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Year</p>
+                    <p className="text-sm font-semibold text-white">2026</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 text-xs text-slate-500">
+                © 2026 HOAS. All rights reserved.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

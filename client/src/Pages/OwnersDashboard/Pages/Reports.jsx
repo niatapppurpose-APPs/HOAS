@@ -4,6 +4,7 @@ import { useOutletContext, useLocation } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
 import { FileText, Download, Lock, Calendar, FileJson, FileType } from 'lucide-react';
 import { auth, functions, db } from '../../../firebase/firebaseConfig';
+import { getApiBaseUrl } from '../../../firebase/cloudFunctions';
 import { useAuth } from '../../../context/AuthContext';
 import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 // --------------------------------Report Download code -------------------------------
@@ -72,11 +73,9 @@ async function downloadReport(type, password) {
   // Get fresh token with force refresh to ensure it's valid
   const token = await user.getIdToken(true);
 
-  // Determine the cloud function endpoint based on environment
-  const isDevelopment = import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
-  const baseUrl = isDevelopment 
-    ? 'http://127.0.0.1:5001/hoas-65dee/us-central1' 
-    : 'https://us-central1-hoas-65dee.cloudfunctions.net';
+  // Use the helper function to get the correct base URL
+  // This automatically detects if emulator is running
+  const baseUrl = getApiBaseUrl();
   
   const endpoint = type === 'pdf' ? 'downloadReportPdf' : 'downloadReportJson';
   const apiUrl = `${baseUrl}/${endpoint}`;
@@ -128,6 +127,10 @@ async function downloadReport(type, password) {
     // For JSON: Get data, format it nicely, then download
     const jsonData = await response.json(); // Get the JSON data
     
+    // Get the filename from server response headers
+    const contentDisposition = response.headers.get('content-disposition') || '';
+    const filename = parseFilename(contentDisposition) || 'HOAS-Report.json';
+    
     // Convert JSON to a formatted string with 2-space indentation
     const formattedJson = JSON.stringify(jsonData, null, 2);
     
@@ -135,7 +138,7 @@ async function downloadReport(type, password) {
     const jsonBlob = new Blob([formattedJson], { type: 'application/json' });
     
     // Trigger download in browser
-    saveBlob(jsonBlob, 'report.json');
+    saveBlob(jsonBlob, filename);
   }
 }
 // -------------------------------------------------------------------------------------------------------------------------
