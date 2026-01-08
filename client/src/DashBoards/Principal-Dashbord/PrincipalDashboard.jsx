@@ -5,6 +5,7 @@ import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 import * as cloudFunctions from "../../firebase/cloudFunctions";
+import { useToast } from "../../components/Toast";
 import {
   Building2,
   Users,
@@ -307,7 +308,7 @@ const ManagementDashboard = () => {
       }
     } catch (error) {
       console.error("Error updating user status:", error);
-      alert(`Failed to ${newStatus} user: ${error.message}`);
+      toast.error(`Failed to ${newStatus} user: ${error.message}`);
     }
   };
 

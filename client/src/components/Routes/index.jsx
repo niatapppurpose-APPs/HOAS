@@ -21,6 +21,7 @@ import Help from "../../Pages/OwnersDashboard/Pages/Help"
 import OwnerProfile from "../OwnerServices/OwnerProfile"
 import AdminLogin from '../OwnerServices/AdminLogin'
 import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval"
+import NotFound from "../../Pages/NotFound"
 
 const Routes_path = () => {
     return (
@@ -54,6 +55,8 @@ const Routes_path = () => {
                 </Route>
                 <Route path="/owner-profile" element={<OwnerProfile />} />
 
+                {/* 404 Not Found - Catch all unmatched routes */}
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </>
     )

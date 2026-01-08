@@ -6,6 +6,7 @@ import { FileText, Download, Lock, Calendar, FileJson, FileType } from 'lucide-r
 import { auth, functions, db } from '../../../firebase/firebaseConfig';
 import { getApiBaseUrl } from '../../../firebase/cloudFunctions';
 import { useAuth } from '../../../context/AuthContext';
+import { useToast } from '../../../components/Toast';
 import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 // --------------------------------Report Download code -------------------------------
 
@@ -146,6 +147,7 @@ export default function Reports() {
   const { isCollapsed } = useOutletContext();
   const location = useLocation();
   const { user } = useAuth();
+  const toast = useToast();
   const [downloadingId, setDownloadingId] = useState(null);
   const [downloadingFormat, setDownloadingFormat] = useState(null);
   const [collegeInfo, setCollegeInfo] = useState(null);
@@ -210,7 +212,7 @@ export default function Reports() {
               id: 'ADMIN'
             });
           } else {
-            alert('User profile not found. Please complete your profile setup.');
+            toast.warning('User profile not found. Please complete your profile setup.');
           }
           setLoading(false);
           return;
@@ -290,7 +292,7 @@ export default function Reports() {
       await downloadReport(format, ''); // You can add password prompt if needed
     } catch (err) {
       console.error('Download failed', err);
-      alert('Failed to download report: ' + (err.message || err));
+      toast.error('Failed to download report: ' + (err.message || err));
     } finally {
       setDownloadingId(null);
       setDownloadingFormat(null);

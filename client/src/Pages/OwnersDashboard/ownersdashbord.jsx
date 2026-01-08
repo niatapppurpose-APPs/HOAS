@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { signOut } from "firebase/auth";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { auth, db } from "../../firebase/firebaseConfig";
+import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
+import { useModal } from "../../context/ModalContext";
 import { HashLoader } from "react-spinners";
 import * as cloudFunctions from "../../firebase/cloudFunctions";
+import { useToast } from "../../components/Toast";
 
 // Import components
 import Header from '../../components/OwnerServices/header';
 import Avatar from "../../components/OwnerServices/Avatar";
 import StatusBadge from "../../components/OwnerServices/StatusBadge";
 import StatsCard from "../../components/OwnerServices/StatsCard";
-import DeleteConfirmModal from "../../components/OwnerServices/DeleteConfirmModal";
 
 import {
   Building2,
@@ -33,16 +33,16 @@ import {
 // Main Dashboard Component
 const OwnersDashboard = () => {
   const { isCollapsed } = useOutletContext();
-  const { user, isAdmin, loading, adminChecked } = useAuth();
+  const { user, isAdmin, loading, adminChecked, logout } = useAuth();
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
+  const toast = useToast();
+  const { openDeleteModal } = useModal();
   const [allUsers, setAllUsers] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
   const [dataLoading, setDataLoading] = useState(true);
   const [minLoadingTime, setMinLoadingTime] = useState(true);
   const [fetchError, setFetchError] = useState(null);
-  const [deleteModal, setDeleteModal] = useState({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 });
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isApproving, setIsApproving] = useState(null);
   const [isDenying, setIsDenying] = useState(null);
   const [isDeleteLoading, setIsDeleteLoading] = useState(null);
@@ -82,32 +82,32 @@ const OwnersDashboard = () => {
   }, []);
 
   // 🧪 TESTING MODE - Generate dummy data
-  const ENABLE_TEST_DATA = false; // Set to false to use real Firestore data
+  const ENABLE_TEST_DATA = false ; // Set to false to use real Firestore data
   
   useEffect(() => {
-    // if (ENABLE_TEST_DATA) {
-    //   // Generate 25 dummy colleges for testing
-    //   const dummyUsers = Array.from({ length: 25 }, (_, i) => ({
-    //     id: `dummy-college-${i + 1}`,
-    //     displayName: `${['MIT', 'IIT', 'NIT', 'VIT', 'SRM', 'BITS', 'DTU', 'IIIT', 'Anna University', 'Amrita'][i % 10]} College ${i + 1}`,
-    //     email: `principal${i + 1}@college${i + 1}.edu`,
-    //     role: 'management',
-    //     status: i < 15 ? 'pending' : 'approved', // First 15 are pending, rest approved
-    //     photoURL: `https://api.dicebear.com/7.x/initials/svg?seed=College${i + 1}`,
-    //     createdAt: {
-    //       toDate: () => new Date(2025, 0, 7 - Math.floor(i / 3))
-    //     }
-    //   }));
-    //   
-    //   // Simulate loading delay
-    //   setTimeout(() => {
-    //     setAllUsers(dummyUsers);
-    //     setDataLoading(false);
-    //     setFetchError(null);
-    //   }, 1500);
-    //   
-    //   return;
-    // }
+    if (ENABLE_TEST_DATA) {
+      // Generate 25 dummy colleges for testing
+      const dummyUsers = Array.from({ length: 25 }, (_, i) => ({
+        id: `dummy-college-${i + 1}`,
+        displayName: `${['MIT', 'IIT', 'NIT', 'VIT', 'SRM', 'BITS', 'DTU', 'IIIT', 'Anna University', 'Amrita'][i % 10]} College ${i + 1}`,
+        email: `principal${i + 1}@college${i + 1}.edu`,
+        role: 'management',
+        status: i < 15 ? 'pending' : 'approved', // First 15 are pending, rest approved
+        photoURL: `https://api.dicebear.com/7.x/initials/svg?seed=College${i + 1}`,
+        createdAt: {
+          toDate: () => new Date(2025, 0, 7 - Math.floor(i / 3))
+        }
+      }));
+      
+      // Simulate loading delay
+      setTimeout(() => {
+        setAllUsers(dummyUsers);
+        setDataLoading(false);
+        setFetchError(null);
+      }, 1500);
+      
+      return;
+    }
 
     // Real Firestore data fetching
     if (!adminChecked || !user || !isAdmin) {
@@ -139,9 +139,12 @@ const OwnersDashboard = () => {
   // Handle logout
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
+      toast.success('Logged out successfully');
       navigate("/admin-login", { replace: true });
     } catch (error) {
+      toast.error('Failed to logout. Please try again.');
+      console.error("Logout error:", error);
     }
   };
 
@@ -162,7 +165,7 @@ const OwnersDashboard = () => {
         return newSet;
       });
     } catch (error) {
-      alert(`Failed to ${newStatus} user: ${error.message}`);
+      toast.error(`Failed to ${newStatus} user: ${error.message}`);
     } finally {
       if (newStatus === 'approved') setIsApproving(null);
       if (newStatus === 'denied') setIsDenying(null);
@@ -171,10 +174,17 @@ const OwnersDashboard = () => {
 
   // Handle bulk approve
   const handleBulkApprove = async () => {
-    if (selectedUsers.size === 0) return;
-    
-    const confirmMessage = `Are you sure you want to approve ${selectedUsers.size} college${selectedUsers.size > 1 ? 's' : ''}?`;
-    if (!confirm(confirmMessage)) return;
+    if (selectedUsers.size === 0) {
+      toast.warning('No colleges selected for approval');
+      return;
+    }
+
+    // Show confirmation toast
+    const confirmed = await toast.confirm(
+      `Are you sure you want to approve ${selectedUsers.size} college${selectedUsers.size > 1 ? 's' : ''}?`
+    );
+
+    if (!confirmed) return;
 
     setIsBulkApproving(true);
     const userIds = Array.from(selectedUsers);
@@ -199,12 +209,12 @@ const OwnersDashboard = () => {
       setSelectedUsers(new Set());
       
       if (failCount === 0) {
-        alert(`Successfully approved ${successCount} college${successCount > 1 ? 's' : ''}!`);
+        toast.success(`Successfully approved ${successCount} college${successCount > 1 ? 's' : ''}!`);
       } else {
-        alert(`Approved ${successCount} colleges. ${failCount} failed.`);
+        toast.warning(`Approved ${successCount} colleges. ${failCount} failed.`);
       }
     } catch (error) {
-      alert(`Bulk approval error: ${error.message}`);
+      toast.error(`Bulk approval error: ${error.message}`);
     } finally {
       setIsBulkApproving(false);
     }
@@ -235,49 +245,41 @@ const OwnersDashboard = () => {
     }
   };
 
-  // Open delete confirmation modal
-  const openDeleteModal = async (college) => {
+  // Open delete confirmation modal with context
+  const handleOpenDeleteModal = async (college) => {
     setIsDeleteLoading(college.id);
     try {
       // Get college stats using Cloud Function
       const { stats } = await cloudFunctions.getCollegeStats(college.id);
 
-      setDeleteModal({
-        isOpen: true,
+      // Use context to open modal
+      openDeleteModal({
         college: college,
         wardenCount: stats.wardens.total,
-        studentCount: stats.students.total
+        studentCount: stats.students.total,
+        onConfirm: async () => {
+          const collegeId = college.id;
+          await cloudFunctions.deleteCollege(collegeId);
+          toast.success('College deleted successfully!');
+        }
       });
     } catch (error) {
-      setDeleteModal({
-        isOpen: true,
+      openDeleteModal({
         college: college,
         wardenCount: 0,
-        studentCount: 0
+        studentCount: 0,
+        onConfirm: async () => {
+          const collegeId = college.id;
+          await cloudFunctions.deleteCollege(collegeId);
+          toast.success('College deleted successfully!');
+        }
       });
     } finally {
       setIsDeleteLoading(null);
     }
   };
 
-  // Handle delete college and all associated users - Call Cloud Function
-  const handleDeleteCollege = async () => {
-    if (!deleteModal.college) return;
 
-    setIsDeleting(true);
-    try {
-      const collegeId = deleteModal.college.id;
-
-      // Call Cloud Function for cascade delete
-      const result = await cloudFunctions.deleteCollege(collegeId);
-
-      setDeleteModal({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 });
-    } catch (error) {
-      alert(`Failed to delete college: ${error.message}`);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
   // Show loading while checking auth OR while admin status is being verified
   if (loading || !adminChecked) {
@@ -609,7 +611,7 @@ const OwnersDashboard = () => {
 
                           {/* Delete Button */}
                           <button
-                            onClick={() => openDeleteModal(userData)}
+                            onClick={() => handleOpenDeleteModal(userData)}
                             className="p-2 rounded-lg bg-slate-700/50 hover:bg-red-600/80 text-slate-400 hover:text-white transition-colors"
                             title="Delete College"
                             disabled={isDeleteLoading === userData.id}
@@ -687,17 +689,6 @@ const OwnersDashboard = () => {
           )}
         </section>
       </div>
-
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmModal
-        isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, college: null, wardenCount: 0, studentCount: 0 })}
-        onConfirm={handleDeleteCollege}
-        collegeName={deleteModal.college?.displayName || deleteModal.college?.collegeName || "this college"}
-        isDeleting={isDeleting}
-        wardenCount={deleteModal.wardenCount}
-        studentCount={deleteModal.studentCount}
-      />
     </>
   );
 };

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../../firebase/firebaseConfig';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import * as cloudFunctions from '../../firebase/cloudFunctions';
+import { useToast } from '../../components/Toast';
 import { 
     Shield, 
     Building2, 
@@ -25,6 +26,7 @@ import {
 const WardenDashboard = () => {
     const { user, userData, userDataLoading, logout } = useAuth();
     const navigate = useNavigate();
+    const toast = useToast();
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('pending');
@@ -77,7 +79,7 @@ const WardenDashboard = () => {
             }
         } catch (error) {
             console.error('Error updating status:', error);
-            alert(`Failed to ${newStatus} student: ${error.message}`);
+            toast.error(`Failed to ${newStatus} student: ${error.message}`);
         }
     };
 
