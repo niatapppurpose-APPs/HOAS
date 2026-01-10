@@ -1,12 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext, useLocation } from "react-router-dom";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { useModal } from "../../context/ModalContext";
 import { HashLoader } from "react-spinners";
 import * as cloudFunctions from "../../firebase/cloudFunctions";
 import { useToast } from "../../components/Toast";
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
+import { dashboardTourSteps } from "./tourConfig";
 
 // Import components
 import Header from '../../components/OwnerServices/header';
@@ -35,6 +39,7 @@ const OwnersDashboard = () => {
   const { isCollapsed } = useOutletContext();
   const { user, isAdmin, loading, adminChecked, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const scrollContainerRef = useRef(null);
   const toast = useToast();
   const { openDeleteModal } = useModal();
@@ -49,10 +54,34 @@ const OwnersDashboard = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(15);
+  const { isDark } = useTheme();
   
   // Bulk selection state
   const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [isBulkApproving, setIsBulkApproving] = useState(false);
+
+  // Tour Driver Effect
+  useEffect(() => {
+    if (location.state?.startTour) {
+      // Clear state
+      window.history.replaceState({}, document.title);
+      
+      const driverObj = driver({
+        showProgress: true,
+        animate: true,
+        steps: dashboardTourSteps(isDark),
+        popoverClass: isDark ? 'driverjs-theme-dark' : 'driverjs-theme-light',
+        onDestroy: () => {
+             // Optional: Navigate back or show completion toast
+        }
+      });
+
+      // Delay to ensure rendering
+      setTimeout(() => {
+        driverObj.drive();
+      }, 1000);
+    }
+  }, [location.state, isDark]);
 
   // Reset to page 1 when changing tabs
   useEffect(() => {
@@ -369,7 +398,7 @@ const OwnersDashboard = () => {
       {/* Main Content */}
       <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Section */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-10">
+        <section id="tour-stats" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-10">
           <StatsCard
             icon={Building2}
             title="Total Principals"
@@ -394,7 +423,7 @@ const OwnersDashboard = () => {
         </section>
 
         {/* User Management */}
-        <section>
+        <section id="tour-approval-board">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Approval Board</h2>

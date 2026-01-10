@@ -304,6 +304,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
           {/* User Profile Card */}
           <button 
+            id="tour-profile"
             onClick={() => {
               // Save current page state before navigating to profile
               const currentPath = location.pathname;

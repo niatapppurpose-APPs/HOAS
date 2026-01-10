@@ -5,7 +5,6 @@ import { useServerStatus } from "./hooks/useServerStatus";
 import ServerOffline from "./components/ServerOffline/ServerOffline";
 
 const App = () => {
-  const { user } = useAuth();
   const { isServerOnline, lastChecked } = useServerStatus();
 
   // Show server offline screen if server is down

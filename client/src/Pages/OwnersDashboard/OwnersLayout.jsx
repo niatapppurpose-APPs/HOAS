@@ -33,7 +33,7 @@ const OwnersLayout = () => {
       <div 
         className="min-h-screen transition-colors duration-300"
         style={{ 
-          backgroundColor: 'var(--bg-primary)', 
+          backgroundColor: 'transparent',
           color: 'var(--text-primary)' 
         }}
       >

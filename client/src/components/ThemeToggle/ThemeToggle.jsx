@@ -1,12 +1,14 @@
+import { useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Monitor } from 'lucide-react';
 
 /**
  * A compact theme toggle button that switches between light and dark mode
  * Can be placed in headers, sidebars, or any navigation area
  */
 const ThemeToggle = ({ className = '', size = 'md' }) => {
-  const { toggleTheme, isDark } = useTheme();
+  const { toggleTheme, setSystemMode, isDark, mode } = useTheme();
+  const [clickTimeout, setClickTimeout] = useState(null);
 
   const sizes = {
     sm: { button: 'w-8 h-8', icon: 'w-4 h-4' },
@@ -16,18 +18,52 @@ const ThemeToggle = ({ className = '', size = 'md' }) => {
 
   const { button, icon } = sizes[size] || sizes.md;
 
+  const handleSingleClick = (e) => {
+    // If a timer is already running, it means this is a second click coming in fast.
+    // We clear the timer (canceling the single click action) to let the double click handler take over.
+    if (clickTimeout) {
+      clearTimeout(clickTimeout);
+      setClickTimeout(null);
+      return;
+    }
+
+    // Set a timer to delay the single click action
+    const timeout = setTimeout(() => {
+      toggleTheme();
+      setClickTimeout(null);
+    }, 250); 
+    
+    setClickTimeout(timeout);
+  };
+
+  const handleDoubleClick = (e) => {
+    // Clear any pending single click action
+    if (clickTimeout) {
+      clearTimeout(clickTimeout);
+      setClickTimeout(null);
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    setSystemMode(); // Enable Auto System mode
+  };
+
   return (
     <button
-      onClick={toggleTheme}
+      id="tour-theme-toggle"
+      onClick={handleSingleClick}
+      onDoubleClick={handleDoubleClick}
       className={`${button} flex items-center justify-center rounded-lg transition-all duration-300 hover:scale-105 ${className}`}
       style={{
         backgroundColor: 'var(--bg-tertiary)',
         color: 'var(--text-primary)',
+        border: mode === 'system' ? '2px solid var(--accent-primary)' : '1px solid transparent' // Visual indicator for system mode
       }}
-      aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode (Double-click for Auto System)`}
+      title={`Click: Switch Theme | Double-Click: Auto System Mode (${mode === 'system' ? 'Active' : 'Inactive'})`}
     >
-      {isDark ? (
+      {mode === 'system' ? (
+        <Monitor className={`${icon} ${isDark ? 'text-blue-400' : 'text-blue-600'} transition-transform duration-300`} />
+      ) : isDark ? (
         <Sun className={`${icon} text-yellow-400 transition-transform duration-300`} />
       ) : (
         <Moon className={`${icon} text-indigo-600 transition-transform duration-300`} />

@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTheme } from '../../../context/ThemeContext';
-import { useOutletContext, useLocation } from 'react-router-dom';
+import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import { HexColorPicker } from "react-colorful"
 import Header from '../../../components/OwnerServices/header';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { Sun, Moon, Monitor, PlayCircle, Loader2 } from 'lucide-react';
 
 const Settings = () => {
   const { isCollapsed } = useOutletContext();
   const location = useLocation();
+  const navigate = useNavigate();
   const { userData, updateUserTheme } = useAuth();
   const { theme, mode, setLightMode, setDarkMode, setSystemMode, isDark, isSystemMode } = useTheme();
   const initial = userData?.theme || {};
@@ -20,6 +21,26 @@ const Settings = () => {
   const [textColor, setTextColor] = useState(initial.text || '#ffffff');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  
+  // Tour specific state
+  const [tourCountdown, setTourCountdown] = useState(null);
+
+  useEffect(() => {
+    if (tourCountdown === null) return;
+    
+    if (tourCountdown > 0) {
+      const timer = setTimeout(() => setTourCountdown(prev => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    } else {
+      // Countdown finished
+      navigate('/OwnersDashboard', { state: { startTour: true } });
+      setTourCountdown(null);
+    }
+  }, [tourCountdown, navigate]);
+
+  const startTourTest = () => {
+    setTourCountdown(5);
+  };
 
   // Restore scroll position when coming back from profile
   useEffect(() => {
@@ -244,6 +265,37 @@ const Settings = () => {
             {saving ? 'Saving...' : 'Save Theme'}
           </button>
           {message && <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{message}</span>}
+        </div>
+
+        {/* User Experience / Tour Section */}
+        <div className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--border-primary)' }}>
+          <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>System Onboarding</h3>
+          <p className="mb-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Test the new user tour functionality. This will trigger a guided walkthrough of the dashboard features.
+          </p>
+          
+          <button
+            onClick={startTourTest}
+            disabled={tourCountdown !== null}
+            className={`flex items-center gap-3 px-6 py-3 rounded-xl transition-all ${tourCountdown !== null ? 'opacity-80' : 'hover:scale-[1.02]'}`}
+            style={{ 
+              backgroundColor: 'var(--bg-card)', 
+              border: '1px solid var(--border-primary)',
+              color: 'var(--text-primary)'
+            }}
+          >
+            {tourCountdown !== null ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+                <span className="font-medium">Starting Tour in {tourCountdown}s...</span>
+              </>
+            ) : (
+              <>
+                <PlayCircle className="w-5 h-5 text-indigo-500" />
+                <span className="font-medium">Start Dashboard Tour</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </>

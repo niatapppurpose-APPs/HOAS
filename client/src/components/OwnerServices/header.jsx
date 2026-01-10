@@ -7,6 +7,7 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
   const navigate = useNavigate();
   return (
     <header 
+      id="tour-welcome"
       style={{ backgroundColor: 'var(--bg-header)', borderColor: 'var(--border-primary)' }} 
       className={`fixed top-0 right-0 border-b backdrop-blur-xl z-30 h-20 transition-all duration-300 ${
         isCollapsed ? 'left-0 lg:left-20' : 'left-0 lg:left-72'
@@ -28,7 +29,9 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
             )}
 
             {/* Theme Toggle Button */}
-            <ThemeToggle size="md" />
+            <div id="tour-theme-toggle">
+              <ThemeToggle size="md" />
+            </div>
 
             {/* Logout Button */}
             <button

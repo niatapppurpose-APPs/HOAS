@@ -56,7 +56,7 @@ const Analytics = () => {
         isCollapsed={isCollapsed}
         onProfileClick={savePageState}
       />
-      <div className="pt-24 p-6 min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="pt-24 p-6 min-h-screen">
         
         {/* Loading State */}
         {loading && <LoadingState />}
