@@ -72,11 +72,10 @@ const FirebaseModeIndicator = () => {
           <div className="mb-2">
             <div className="flex items-center justify-between mb-1">
               <span className="font-semibold">🔐 Authentication</span>
-              <span className={`px-2 py-0.5 rounded text-[10px] ${
-                mode.auth.isUsingEmulator 
-                  ? 'bg-orange-900 text-orange-200' 
+              <span className={`px-2 py-0.5 rounded text-[10px] ${mode.auth.isUsingEmulator
+                  ? 'bg-orange-900 text-orange-200'
                   : 'bg-green-900 text-green-200'
-              }`}>
+                }`}>
                 {mode.auth.isUsingEmulator ? 'EMULATOR' : 'PRODUCTION'}
               </span>
             </div>
@@ -89,11 +88,10 @@ const FirebaseModeIndicator = () => {
           <div className="mb-2">
             <div className="flex items-center justify-between mb-1">
               <span className="font-semibold">📦 Firestore</span>
-              <span className={`px-2 py-0.5 rounded text-[10px] ${
-                mode.firestore.isUsingEmulator 
-                  ? 'bg-orange-900 text-orange-200' 
+              <span className={`px-2 py-0.5 rounded text-[10px] ${mode.firestore.isUsingEmulator
+                  ? 'bg-orange-900 text-orange-200'
                   : 'bg-green-900 text-green-200'
-              }`}>
+                }`}>
                 {mode.firestore.isUsingEmulator ? 'EMULATOR' : 'PRODUCTION'}
               </span>
             </div>
@@ -106,11 +104,10 @@ const FirebaseModeIndicator = () => {
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
               <span className="font-semibold">⚡ Functions</span>
-              <span className={`px-2 py-0.5 rounded text-[10px] ${
-                mode.functions.isUsingEmulator 
-                  ? 'bg-orange-900 text-orange-200' 
+              <span className={`px-2 py-0.5 rounded text-[10px] ${mode.functions.isUsingEmulator
+                  ? 'bg-orange-900 text-orange-200'
                   : 'bg-green-900 text-green-200'
-              }`}>
+                }`}>
                 {mode.functions.isUsingEmulator ? 'EMULATOR' : 'PRODUCTION'}
               </span>
             </div>
@@ -125,8 +122,7 @@ const FirebaseModeIndicator = () => {
               onClick={() => {
                 import('../firebase/debugUtils').then(m => m.logFirebaseMode());
               }}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 rounded text-[10px] transition-colors"
-            >
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 rounded text-[10px] transition-colors">
               Log Details
             </button>
             <button

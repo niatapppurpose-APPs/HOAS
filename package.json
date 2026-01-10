@@ -22,6 +22,7 @@
     "concurrently": "^9.2.1"
   },
   "dependencies": {
-    "lottie-react": "^2.4.1"
+    "lottie-react": "^2.4.1",
+    "recharts": "^3.6.0"
   }
 }

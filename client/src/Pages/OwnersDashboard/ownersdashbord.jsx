@@ -82,7 +82,7 @@ const OwnersDashboard = () => {
   }, []);
 
   // 🧪 TESTING MODE - Generate dummy data
-  const ENABLE_TEST_DATA = false ; // Set to false to use real Firestore data
+  const ENABLE_TEST_DATA = true ; // Set to false to use real Firestore data
   
   useEffect(() => {
     if (ENABLE_TEST_DATA) {
