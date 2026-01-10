@@ -5,6 +5,7 @@ import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 import { useModal } from "../../context/ModalContext";
 import { HashLoader } from "react-spinners";
+import DashboardSkeleton from "./DashboardSkeleton";
 import * as cloudFunctions from "../../firebase/cloudFunctions";
 import { useToast } from "../../components/Toast";
 
@@ -55,6 +56,12 @@ const OwnersDashboard = () => {
   const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [isBulkApproving, setIsBulkApproving] = useState(false);
 
+  // Reset to page 1 when changing tabs
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedUsers(new Set());
+  }, [activeTab]);
+
   // Scroll to top when page changes
   useEffect(() => {
     if (scrollContainerRef.current) {
@@ -82,7 +89,7 @@ const OwnersDashboard = () => {
   }, []);
 
   // 🧪 TESTING MODE - Generate dummy data
-  const ENABLE_TEST_DATA = false ; // Set to false to use real Firestore data
+  const ENABLE_TEST_DATA = true ; // Set to false to use real Firestore data
   
   useEffect(() => {
     if (ENABLE_TEST_DATA) {
@@ -305,6 +312,11 @@ const OwnersDashboard = () => {
     );
   }
 
+  // Show skeleton loading for data
+  if (dataLoading || minLoadingTime) {
+    return <DashboardSkeleton />;
+  }
+
   // Filter by active tab
   const getFilteredUsers = () => {
     switch (activeTab) {
@@ -336,11 +348,7 @@ const OwnersDashboard = () => {
   const endIndex = startIndex + itemsPerPage;
   const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
 
-  // Reset to page 1 when changing tabs
-  useEffect(() => {
-    setCurrentPage(1);
-    setSelectedUsers(new Set());
-  }, [activeTab]);
+
 
   // Check if all pending users on current page are selected
   const pendingOnPage = paginatedUsers.filter(u => u.status === 'pending');
