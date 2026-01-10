@@ -41,11 +41,11 @@ const CollegeDistributionChart = ({ data }) => {
     : data.map(college => ({ ...college, total: 1 })); // Give each college value of 1 for display
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl shadow-2xl p-6 border border-gray-700">
-      <h2 className="text-xl font-bold text-white mb-6">College-wise User Distribution</h2>
+    <div className="backdrop-blur-sm rounded-xl shadow-2xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
+      <h2 className="text-xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>College-wise User Distribution</h2>
       {data.length === 0 ? (
         <div className="flex items-center justify-center h-[350px]">
-          <p className="text-gray-400 text-center">No colleges registered yet</p>
+          <p className="text-center" style={{ color: 'var(--text-muted)' }}>No colleges registered yet</p>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={350}>
@@ -72,11 +72,11 @@ const CollegeDistributionChart = ({ data }) => {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload;
                   return (
-                    <div className="bg-gray-800 border border-gray-600 p-3 rounded-lg shadow-lg">
-                      <p className="text-white font-semibold">{data.name}</p>
+                    <div className="p-3 rounded-lg shadow-lg" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
+                      <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{data.name}</p>
                       <p className="text-blue-400 text-sm">Students: {data.students}</p>
                       <p className="text-green-400 text-sm">Wardens: {data.wardens}</p>
-                      <p className="text-gray-300 text-sm">Total: {data.total}</p>
+                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Total: {data.total}</p>
                     </div>
                   );
                 }
@@ -98,7 +98,7 @@ const CollegeDistributionChart = ({ data }) => {
         {data.map((college, index) => (
           <div key={index} className="flex items-center gap-2">
             <div className="w-4 h-4 rounded" style={{ backgroundColor: college.fill }}></div>
-            <span className="text-gray-300 text-sm truncate">{college.name}</span>
+            <span className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>{college.name}</span>
           </div>
         ))}
       </div>

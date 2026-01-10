@@ -4,7 +4,30 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>reactapp</title>
+    <meta name="theme-color" content="#0f172a" />
+    <title>HOAS - Hostel Accommodation System</title>
+    <!-- Prevent flash of wrong theme -->
+    <script>
+      (function() {
+        try {
+          const mode = localStorage.getItem('hoas-theme-mode');
+          const savedTheme = localStorage.getItem('hoas-theme');
+          let theme = 'dark';
+          
+          if (mode === 'system') {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          } else if (savedTheme === 'light' || savedTheme === 'dark') {
+            theme = savedTheme;
+          }
+          
+          document.documentElement.classList.add(theme);
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

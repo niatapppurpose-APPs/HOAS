@@ -14,8 +14,8 @@ import {
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-gray-800 border border-gray-600 p-3 rounded-lg shadow-lg">
-        <p className="text-white font-semibold">{payload[0].payload.date}</p>
+      <div className="p-3 rounded-lg shadow-lg" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
+        <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{payload[0].payload.date}</p>
         {payload.map((entry, index) => (
           <p key={index} style={{ color: entry.color }} className="text-sm">
             {entry.name}: {entry.value}
@@ -29,11 +29,11 @@ const CustomTooltip = ({ active, payload }) => {
 
 const UserTrendChart = ({ data, dateRange }) => {
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl shadow-2xl p-6 mb-6 border border-gray-700">
+    <div className="backdrop-blur-sm rounded-xl shadow-2xl p-6 mb-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-white">User Registration Trend (Last 30 Days)</h2>
-        <div className="bg-gray-700 px-4 py-2 rounded-lg">
-          <span className="text-white text-sm">{dateRange}</span>
+        <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>User Registration Trend (Last 30 Days)</h2>
+        <div className="px-4 py-2 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+          <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{dateRange}</span>
         </div>
       </div>
       <ResponsiveContainer width="100%" height={300}>

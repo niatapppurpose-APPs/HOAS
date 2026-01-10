@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { useTheme } from '../../../context/ThemeContext';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import { HexColorPicker } from "react-colorful"
 import Header from '../../../components/OwnerServices/header';
+import { Sun, Moon, Monitor } from 'lucide-react';
 
 const Settings = () => {
   const { isCollapsed } = useOutletContext();
   const location = useLocation();
   const { userData, updateUserTheme } = useAuth();
+  const { theme, mode, setLightMode, setDarkMode, setSystemMode, isDark, isSystemMode } = useTheme();
   const initial = userData?.theme || {};
 
   const [primary, setPrimary] = useState(initial.primary || '#6366F1');
@@ -70,41 +73,177 @@ const Settings = () => {
         isCollapsed={isCollapsed}
         onProfileClick={savePageState}
       />
-      <div className="pt-24 p-6">
-        <h1 style={{ color: 'var(--owner-text)' }} className="text-2xl font-bold mb-4">Theme Settings</h1>
+      <div className="pt-24 p-6" style={{ backgroundColor: 'var(--bg-primary)', minHeight: '100vh' }}>
+        {/* Appearance Mode Section */}
+        <div className="mb-10">
+          <h1 style={{ color: 'var(--text-primary)' }} className="text-2xl font-bold mb-2">Appearance</h1>
+          <p style={{ color: 'var(--text-secondary)' }} className="text-sm mb-6">Choose how the dashboard looks for you. Select a single theme or sync with your system settings.</p>
+          
+          <div className="flex flex-wrap gap-4">
+            {/* Light Mode Button */}
+            <button
+              onClick={() => setLightMode()}
+              className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-300 min-w-[140px] ${
+                mode === 'light' 
+                  ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' 
+                  : 'hover:border-slate-500'
+              }`}
+              style={{ 
+                backgroundColor: mode === 'light' ? 'var(--accent-primary)' : 'var(--bg-card)',
+                borderColor: mode === 'light' ? undefined : 'var(--border-secondary)'
+              }}
+            >
+              <Sun 
+                className={`w-8 h-8 mb-3 ${mode === 'light' ? 'text-white' : ''}`}
+                style={{ color: mode === 'light' ? '#ffffff' : 'var(--text-secondary)' }}
+              />
+              <span 
+                className="font-medium"
+                style={{ color: mode === 'light' ? '#ffffff' : 'var(--text-primary)' }}
+              >
+                Light
+              </span>
+              <span 
+                className="text-xs mt-1"
+                style={{ color: mode === 'light' ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)' }}
+              >
+                Bright & Clean
+              </span>
+            </button>
+
+            {/* Dark Mode Button */}
+            <button
+              onClick={() => setDarkMode()}
+              className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-300 min-w-[140px] ${
+                mode === 'dark' 
+                  ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' 
+                  : 'hover:border-slate-500'
+              }`}
+              style={{ 
+                backgroundColor: mode === 'dark' ? 'var(--accent-primary)' : 'var(--bg-card)',
+                borderColor: mode === 'dark' ? undefined : 'var(--border-secondary)'
+              }}
+            >
+              <Moon 
+                className={`w-8 h-8 mb-3`}
+                style={{ color: mode === 'dark' ? '#ffffff' : 'var(--text-secondary)' }}
+              />
+              <span 
+                className="font-medium"
+                style={{ color: mode === 'dark' ? '#ffffff' : 'var(--text-primary)' }}
+              >
+                Dark
+              </span>
+              <span 
+                className="text-xs mt-1"
+                style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)' }}
+              >
+                Easy on eyes
+              </span>
+            </button>
+
+            {/* System Mode Button */}
+            <button
+              onClick={() => setSystemMode()}
+              className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-300 min-w-[140px] ${
+                mode === 'system' 
+                  ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' 
+                  : 'hover:border-slate-500'
+              }`}
+              style={{ 
+                backgroundColor: mode === 'system' ? 'var(--accent-primary)' : 'var(--bg-card)',
+                borderColor: mode === 'system' ? undefined : 'var(--border-secondary)'
+              }}
+            >
+              <Monitor 
+                className={`w-8 h-8 mb-3`}
+                style={{ color: mode === 'system' ? '#ffffff' : 'var(--text-secondary)' }}
+              />
+              <span 
+                className="font-medium"
+                style={{ color: mode === 'system' ? '#ffffff' : 'var(--text-primary)' }}
+              >
+                System
+              </span>
+              <span 
+                className="text-xs mt-1"
+                style={{ color: mode === 'system' ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)' }}
+              >
+                Auto switch
+              </span>
+            </button>
+          </div>
+
+          {/* Current Theme Indicator */}
+          <div 
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm"
+            style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+          >
+            {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            <span>Currently using <strong style={{ color: 'var(--text-primary)' }}>{theme}</strong> mode{isSystemMode && ' (System)'}</span>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <hr style={{ borderColor: 'var(--border-primary)' }} className="mb-10" />
+
+        {/* Custom Color Theme Section */}
+        <h1 style={{ color: 'var(--text-primary)' }} className="text-2xl font-bold mb-4">Custom Color Theme</h1>
+        <p style={{ color: 'var(--text-secondary)' }} className="text-sm mb-6">Personalize your dashboard colors to match your brand or preference.</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-10">
-          <label className="flex  item-center justify-center flex-col gap-3 rounded-lg border border-slate-700 p-8">
-            <span className="text-sm text-slate-300">Primary</span>
-            <HexColorPicker color={primary} onChange={setPrimary} className="flex  item-center justify-center rounded-xl shadow-lg" />
+          <label 
+            className="flex item-center justify-center flex-col gap-3 rounded-lg p-8 transition-colors"
+            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
+          >
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Primary</span>
+            <HexColorPicker color={primary} onChange={setPrimary} className="flex item-center justify-center rounded-xl shadow-lg" />
           </label>
 
-          <label className="flex flex-col gap-3 rounded-lg border border-slate-700 p-8">
-            <span className="text-sm text-slate-300">Secondary</span>
+          <label 
+            className="flex flex-col gap-3 rounded-lg p-8 transition-colors"
+            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
+          >
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Secondary</span>
             <HexColorPicker color={secondary} onChange={setSecondary} className="rounded-xl shadow-lg" />
           </label>
 
-          <label className="flex flex-col gap-3 rounded-lg border border-slate-700 p-8">
-            <span className="text-sm text-slate-300">Surface</span>
+          <label 
+            className="flex flex-col gap-3 rounded-lg p-8 transition-colors"
+            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
+          >
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Surface</span>
             <HexColorPicker color={surface} onChange={setSurface} className="rounded-xl shadow-lg" />
           </label>
-          <label className="flex flex-col gap-3 rounded-lg border border-slate-700 p-8">
-            <span className="text-sm text-slate-300">Text</span>
+
+          <label 
+            className="flex flex-col gap-3 rounded-lg p-8 transition-colors"
+            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
+          >
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Text</span>
             <HexColorPicker color={textColor} onChange={setTextColor} className="rounded-xl shadow-lg" />
           </label>
 
-          <label className="flex flex-col gap-3 rounded-lg border border-slate-700 p-8">
-            <span className="text-sm text-slate-300">Background</span>
+          <label 
+            className="flex flex-col gap-3 rounded-lg p-8 transition-colors"
+            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
+          >
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Background</span>
             <HexColorPicker color={background} onChange={setBackground} className="rounded-xl shadow-lg" />
           </label>
         </div>
 
 
         <div className="mt-6 flex items-center gap-3">
-          <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded bg-indigo-600 text-white">
+          <button 
+            onClick={handleSave} 
+            disabled={saving} 
+            className="px-4 py-2 rounded text-white transition-colors"
+            style={{ backgroundColor: 'var(--accent-primary)' }}
+          >
             {saving ? 'Saving...' : 'Save Theme'}
           </button>
-          {message && <span className="text-sm text-slate-300">{message}</span>}
+          {message && <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{message}</span>}
         </div>
       </div>
     </>
