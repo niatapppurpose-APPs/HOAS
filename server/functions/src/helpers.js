@@ -36,14 +36,23 @@ export async function verifyAdmin(context) {
     throw new HttpsError('unauthenticated', 'User must be authenticated');
   }
 
-  const userRecord = await auth.getUser(context.auth.uid);
-  const isAdmin = userRecord.customClaims?.role === 'admin';
+  try {
+    const userRecord = await auth.getUser(context.auth.uid);
+    const isAdmin = userRecord.customClaims?.role === 'admin';
 
-  if (!isAdmin) {
-    throw new HttpsError('permission-denied', 'User must be an admin');
+    if (!isAdmin) {
+      throw new HttpsError('permission-denied', 'User must be an admin');
+    }
+
+    return userRecord;
+  } catch (error) {
+    console.error('Error verifying admin status:', error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    // Wrap auth errors
+    throw new HttpsError('internal', `Failed to verify admin status: ${error.message}`);
   }
-
-  return userRecord;
 }
 
 /**
@@ -56,32 +65,40 @@ export async function verifyManagementAccess(context, collegeId) {
 
   console.log('Verifying management access for:', context.auth.uid, 'on college:', collegeId);
 
-  const userDoc = await db.collection('users').doc(context.auth.uid).get();
-  if (!userDoc.exists) {
-    throw new HttpsError('not-found', 'User profile not found');
-  }
-
-  const userData = userDoc.data();
-  console.log('Current user data:', { role: userData.role, uid: userData.uid });
-  
-  // Check if user is admin
-  let isAdmin = false;
   try {
-    const userRecord = await auth.getUser(context.auth.uid);
-    isAdmin = userRecord.customClaims?.role === 'admin';
-    console.log('Is admin?', isAdmin);
-  } catch (error) {
-    console.warn('Could not fetch user record for admin check:', error.message);
-    // In emulator mode, this might fail, so we continue
-  }
+    const userDoc = await db.collection('users').doc(context.auth.uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError('not-found', 'User profile not found');
+    }
+
+    const userData = userDoc.data();
+    console.log('Current user data:', { role: userData.role, uid: userData.uid });
+    
+    // Check if user is admin
+    let isAdmin = false;
+    try {
+      const userRecord = await auth.getUser(context.auth.uid);
+      isAdmin = userRecord.customClaims?.role === 'admin';
+      console.log('Is admin?', isAdmin);
+    } catch (error) {
+      console.warn('Could not fetch user record for admin check:', error.message);
+      // Don't throw here, just assume not admin if we can't check
+    }
   
-  // Check if user is management for this college
-  const isManagement = userData.role === 'management' && userData.uid === collegeId;
-  console.log('Is management for this college?', isManagement);
+    // Check if user is management for this college
+    const isManagement = userData.role === 'management' && userData.uid === collegeId;
+    console.log('Is management for this college?', isManagement);
 
-  if (!isAdmin && !isManagement) {
-    throw new HttpsError('permission-denied', 'Insufficient permissions to manage this college');
+    if (!isAdmin && !isManagement) {
+      throw new HttpsError('permission-denied', 'Insufficient permissions to manage this college');
+    }
+
+    return { userData, isAdmin };
+  } catch (error) {
+    console.error('Error in verifyManagementAccess:', error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError('internal', `Authorization check failed: ${error.message}`);
   }
-
-  return { userData, isAdmin };
 }
