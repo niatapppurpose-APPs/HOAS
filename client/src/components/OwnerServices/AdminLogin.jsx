@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useEffect, useState } from "react";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { auth, provider } from "../../firebase/firebaseConfig";
-import { Building2, LogIn, AlertCircle, Loader2, ShieldAlert, ArrowBigLeft } from "lucide-react";
+import {LogIn, AlertCircle, Loader2, ShieldAlert, ArrowBigLeft } from "lucide-react";
 import GoogleImage from "../../assets/GoogleImage.png";
 
 const AdminLogin = () => {
