@@ -23,8 +23,8 @@ const RefreshButton = ({ onRefresh, refreshing, lastUpdated }) => {
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           <span>{refreshing ? 'Refreshing...' : 'Refresh Data'}</span>
         </button>
-        <div className="text-sm text-gray-400">
-          Last updated: <span className="text-gray-300 font-medium">{getTimeAgo()}</span>
+        <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          Last updated: <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{getTimeAgo()}</span>
         </div>
       </div>
       <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1 rounded-lg border border-green-500/40">

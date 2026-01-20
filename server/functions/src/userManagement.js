@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db } from './config.js';
+import * as logger from 'firebase-functions/logger';
 import { verifyAdmin, verifyManagementAccess } from './helpers.js';
 
 /**
@@ -7,18 +8,16 @@ import { verifyAdmin, verifyManagementAccess } from './helpers.js';
  */
 export const approveUser = onCall({ cors: true }, async (request) => {
   try {
-    console.log('🔍 approveUser called with data:', request.data);
-    console.log('Auth context:', request.auth);
+    logger.info('🔍 approveUser called with data:', request.data);
     
-    const { userId, approverRole } = request.data;
-
-    if (!userId) {
-      throw new HttpsError('invalid-argument', 'userId is required');
-    }
-
-    // Check authentication
+    // Check authentication first
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    const { userId, approverRole } = request.data;
+    if (!userId) {
+      throw new HttpsError('invalid-argument', 'userId is required');
     }
 
     // Get user to approve
@@ -28,7 +27,7 @@ export const approveUser = onCall({ cors: true }, async (request) => {
     }
 
     const userData = userDoc.data();
-    console.log('User to approve:', { userId, role: userData.role, managementId: userData.managementId });
+    logger.info('User to approve:', { userId, role: userData.role, managementId: userData.managementId, approver: request.auth.uid });
 
     // Verify permissions
     try {
@@ -38,9 +37,12 @@ export const approveUser = onCall({ cors: true }, async (request) => {
       } else if (userData.role === 'warden' || userData.role === 'student') {
         // Admin or the management of their college can approve
         await verifyManagementAccess(request, userData.managementId);
+      } else {
+        // For other roles or unknown, require admin by default
+        await verifyAdmin(request);
       }
     } catch (permError) {
-      console.error('Permission verification failed:', permError.message);
+      logger.error('Permission verification failed:', permError.message);
       throw permError;
     }
 
@@ -53,11 +55,11 @@ export const approveUser = onCall({ cors: true }, async (request) => {
       updatedAt: new Date().toISOString()
     });
 
-    console.log('✅ User approved successfully:', userId);
+    logger.info('✅ User approved successfully:', userId);
     return { success: true, message: 'User approved successfully' };
     
   } catch (error) {
-    console.error('❌ Error in approveUser:', error);
+    logger.error('❌ Error in approveUser:', error);
     // Re-throw HttpsError as-is
     if (error instanceof HttpsError) {
       throw error;
@@ -72,17 +74,16 @@ export const approveUser = onCall({ cors: true }, async (request) => {
  */
 export const denyUser = onCall({ cors: true }, async (request) => {
   try {
-    console.log('🔍 denyUser called with data:', request.data);
+    logger.info('🔍 denyUser called with data:', request.data);
     
-    const { userId, reason } = request.data;
-
-    if (!userId) {
-      throw new HttpsError('invalid-argument', 'userId is required');
-    }
-
     // Check authentication
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    const { userId, reason } = request.data;
+    if (!userId) {
+      throw new HttpsError('invalid-argument', 'userId is required');
     }
 
     // Get user to deny
@@ -92,17 +93,19 @@ export const denyUser = onCall({ cors: true }, async (request) => {
     }
 
     const userData = userDoc.data();
-    console.log('User to deny:', { userId, role: userData.role });
+    logger.info('User to deny:', { userId, role: userData.role });
 
     // Verify permissions
     try {
       if (userData.role === 'management') {
         await verifyAdmin(request);
-      } else {
+      } else if (userData.role === 'warden' || userData.role === 'student') {
         await verifyManagementAccess(request, userData.managementId);
+      } else {
+        await verifyAdmin(request);
       }
     } catch (permError) {
-      console.error('Permission verification failed:', permError.message);
+      logger.error('Permission verification failed:', permError.message);
       throw permError;
     }
 
@@ -115,11 +118,11 @@ export const denyUser = onCall({ cors: true }, async (request) => {
       updatedAt: new Date().toISOString()
     });
 
-    console.log('✅ User denied successfully:', userId);
+    logger.info('✅ User denied successfully:', userId);
     return { success: true, message: 'User denied successfully' };
     
   } catch (error) {
-    console.error('❌ Error in denyUser:', error);
+    logger.error('❌ Error in denyUser:', error);
     if (error instanceof HttpsError) {
       throw error;
     }

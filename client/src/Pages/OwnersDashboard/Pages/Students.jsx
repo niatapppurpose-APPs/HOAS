@@ -98,19 +98,20 @@ const Students = () => {
                 <section className="mb-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h2 className="text-2xl font-bold text-white">Hostel Students</h2>
-                            <p className="text-slate-400 mt-1">Students assigned to the selected college hostel</p>
+                            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Hostel Students</h2>
+                            <p className="mt-1" style={{ color: 'var(--text-muted)' }}>Students assigned to the selected college hostel</p>
                         </div>
                         <div className="relative flex items-center justify-end">
                             {/* Search Icon Button */}
                             <button
                                 onClick={() => setSearchOpen(!searchOpen)}
-                                className={`p-2.5 bg-slate-800/50 border-2 border-slate-900/50 rounded-lg hover:bg-slate-700/50 hover:border-indigo-500/50 transition-all duration-300 z-10 ${
+                                className={`p-2.5 rounded-lg border-2 hover:border-indigo-500/50 transition-all duration-300 z-10 ${
                                     searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
                                 }`}
+                                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
                                 aria-label="Toggle search"
                             >
-                                <Search className="w-5 h-5 text-slate-400" />
+                                <Search className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
                             </button>
                             
                             {/* Expandable Search Input */}
@@ -142,10 +143,10 @@ const Students = () => {
 
                 {/* This is for when Search student are not found this will display */}
                 {searchListStudent.trim() && students.length > 0 && searchStudent.length === 0 && !loading ? (
-                    <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-8 text-center mb-4">
-                        <Search className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                        <p className="text-slate-300 text-lg font-medium mb-1">No students found</p>
-                        <p className="text-slate-400 text-sm">
+                    <div className="rounded-xl p-8 text-center mb-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
+                        <Search className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
+                        <p className="text-lg font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>No students found</p>
+                        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                             No matches for "<span className="text-indigo-400">{searchListStudent}</span>"
                         </p>
                     </div>
@@ -160,10 +161,10 @@ const Students = () => {
                             </div>
                         </div>
                     ) : (students.length === 0) ? (
-                        <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-12 text-center">
-                            <GraduationCap className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                            <h3 className="text-xl font-semibold text-white mb-2">No Students Assigned</h3>
-                            <p className="text-slate-400 max-w-md mx-auto">
+                        <div className="rounded-xl p-12 text-center" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
+                            <GraduationCap className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
+                            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>No Students Assigned</h3>
+                            <p className="max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
                                 No students have been assigned to {contextInfo.hostelName} yet.
                             </p>
 
@@ -173,7 +174,8 @@ const Students = () => {
                             {searchStudent.map((student) => (
                                 <div
                                     key={student.id}
-                                    className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 hover:border-slate-600/50 transition-all"
+                                    className="rounded-xl p-4 hover:border-slate-600/50 transition-all"
+                                    style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
                                 >
                                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
 
@@ -189,7 +191,7 @@ const Students = () => {
                                             <div className="flex-1 min-w-0">
                                                 {/* Name and Badge */}
                                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                    <h3 className="text-white font-semibold text-lg">
+                                                    <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
                                                         {student.fullName || student.displayName || 'Unknown Student'}
                                                     </h3>
 
@@ -202,7 +204,7 @@ const Students = () => {
 
                                                 {/* Email */}
                                                 {student.email && (
-                                                    <div className="flex items-center gap-1.5 text-slate-400 text-sm mb-2">
+                                                    <div className="flex items-center gap-1.5 text-sm mb-2" style={{ color: 'var(--text-muted)' }}>
                                                         <Mail className="w-3.5 h-3.5" />
                                                         <span className="truncate">{student.email}</span>
                                                     </div>
@@ -232,7 +234,8 @@ const Students = () => {
                                             {/* Remove Button */}
                                             <button
                                                 onClick={() => handleRemove(student)}
-                                                className="p-2 rounded-lg bg-slate-700/50 text-slate-400 hover:text-white transition-all border border-1 border-[#E1251B]"
+                                                className="p-2 rounded-lg transition-all border border-1 border-[#E1251B]"
+                                                style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}
                                                 title="Remove Student"
                                             >
                                                 <UserMinus className="text-[#E1251B] w-6 h-6" />

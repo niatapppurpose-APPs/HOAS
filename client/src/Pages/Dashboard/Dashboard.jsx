@@ -1,56 +1,31 @@
-import React, { useState } from 'react';
-import "./dashboard.css"
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import LogoutButton from '../LoginPage/LogoutButton';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
-  const [open, setOpen] = useState(false);
-
-  const highResPhoto = user.photoURL
-    ? user.photoURL.replace("s96-c", "s5000-c")
-    : "";
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        navigate('/login', { replace: true });
+      } else if (user.role) {
+        // Redirect to role-specific dashboard
+        navigate(`/dashboard/${user.role}`, { replace: true });
+      } else {
+        // If no role assigned, go to role selection
+        navigate('/role', { replace: true });
+      }
+    }
+  }, [user, loading, navigate]);
 
   return (
-    <div className="dashboard">
-      <h1>Welcome to HOAS Dashboard</h1>
-
-      <div className="user-info">
-        {highResPhoto && (
-          <button
-            className='buttonIcon'
-            onClick={() => setOpen(true)}
-            style={{ background: "none", border: "none", cursor: "pointer" }}
-          >
-            <img
-              src={highResPhoto}
-              alt="Profile"
-              className='image1'
-              referrerPolicy='no-referrer'
-            />
-          </button>
-        )}
-
-        <h2>User Details</h2>
-        <p><strong>Name:</strong> {user.displayName || 'N/A'}</p>
-        <p><strong>Email:</strong> {user.email}</p>
-      </div>  
-      {open && (
-        <div
-          className="image-popup-overlay"
-          onClick={() => setOpen(false)}
-        >
-          <img
-            src={highResPhoto}
-            alt="Profile Large"
-            className="image-popup"
-            referrerPolicy="no-referrer"
-          />
-        </div>
-      )}
-
-      <LogoutButton />
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400">Redirecting to your dashboard...</p>
+      </div>
     </div>
   );
 };

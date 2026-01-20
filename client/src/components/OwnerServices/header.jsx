@@ -1,12 +1,14 @@
 import { Building2, LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ThemeToggle } from "../ThemeToggle";
 
 
 const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = true }) => {
   const navigate = useNavigate();
   return (
     <header 
-      style={{ backgroundColor: 'var(--owner-surface)', borderColor: 'rgba(148,163,184,0.1)' }} 
+      id="tour-welcome"
+      style={{ backgroundColor: 'var(--bg-header)', borderColor: 'var(--border-primary)' }} 
       className={`fixed top-0 right-0 border-b backdrop-blur-xl z-30 h-20 transition-all duration-300 ${
         isCollapsed ? 'left-0 lg:left-20' : 'left-0 lg:left-72'
       }`}
@@ -15,7 +17,7 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
         <div className="flex items-center justify-between h-full">
           <div className="flex items-center gap-3">
             {title && (
-              <h1 style={{ color: 'var(--owner-text)' }} className="text-lg sm:text-xl font-bold truncate">{title}</h1>
+              <h1 style={{ color: 'var(--text-primary)' }} className="text-lg sm:text-xl font-bold truncate">{title}</h1>
             )}
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
@@ -26,15 +28,20 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
               </span>
             )}
 
+            {/* Theme Toggle Button */}
+            <div id="tour-theme-toggle">
+              <ThemeToggle size="md" />
+            </div>
+
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl border transition-all duration-200 border-white/10 group hover:border-red-500/50 hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/5"
-              style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl border transition-all duration-200 group hover:border-red-500/50 hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/5"
+              style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)' }}
               title="Logout"
             >
-              <LogOut className="w-4 h-4 text-slate-400 group-hover:text-red-400 transition-colors" />
-              <span className="text-xs sm:text-sm font-medium text-slate-300 group-hover:text-red-300 transition-colors">Logout</span>
+              <LogOut className="w-4 h-4 group-hover:text-red-400 transition-colors" style={{ color: 'var(--text-secondary)' }} />
+              <span className="text-xs sm:text-sm font-medium group-hover:text-red-300 transition-colors" style={{ color: 'var(--text-secondary)' }}>Logout</span>
             </button>
 
 

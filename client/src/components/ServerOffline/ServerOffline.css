@@ -1,0 +1,213 @@
+.server-offline-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: hidden;
+  color: #1e293b;
+}
+
+/* Abstract Background Shapes */
+.background-shapes .shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.6;
+  z-index: -1;
+  animation: float 20s infinite ease-in-out;
+}
+
+.shape-1 {
+  top: -10%;
+  right: -5%;
+  width: 600px;
+  height: 600px;
+  background: rgba(99, 102, 241, 0.4); /* Indigo */
+  animation-delay: 0s;
+}
+
+.shape-2 {
+  bottom: -10%;
+  left: -5%;
+  width: 500px;
+  height: 500px;
+  background: rgba(236, 72, 153, 0.3); /* Pink */
+  animation-delay: -5s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+
+/* Card Design */
+.server-offline-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 24px;
+  padding: 3rem;
+  width: 90%;
+  max-width: 480px;
+  text-align: center;
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* Icon & Waves */
+.icon-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.disconnect-icon {
+  width: 48px;
+  height: 48px;
+  color: #64748b;
+  z-index: 2;
+  position: relative;
+}
+
+.signal-waves span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid #e2e8f0;
+  opacity: 0;
+  animation: ripple 2s infinite linear;
+}
+
+.signal-waves span:nth-child(1) { width: 100%; height: 100%; animation-delay: 0s; }
+.signal-waves span:nth-child(2) { width: 100%; height: 100%; animation-delay: 0.6s; }
+.signal-waves span:nth-child(3) { width: 100%; height: 100%; animation-delay: 1.2s; }
+
+@keyframes ripple {
+  0% { width: 40px; height: 40px; opacity: 1; border-width: 2px; }
+  100% { width: 120px; height: 120px; opacity: 0; border-width: 0px; }
+}
+
+/* Typography */
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.75rem 0;
+  letter-spacing: -0.025em;
+}
+
+.description {
+  color: #64748b;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+/* Terminal Window */
+.terminal-window {
+  width: 100%;
+  background: #1e293b;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.terminal-header {
+  background: #334155;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.terminal-header .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.dot.red { background: #ef4444; }
+.dot.yellow { background: #f59e0b; }
+.dot.green { background: #22c55e; }
+
+.terminal-title {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  margin-left: 8px;
+  font-family: monospace;
+}
+
+.terminal-body {
+  padding: 16px;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.9rem;
+}
+
+.command-line {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.prompt { color: #22c55e; font-weight: bold; }
+.path { color: #60a5fa; }
+.command { color: #e2e8f0; font-weight: 500; }
+
+.timestamp {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}

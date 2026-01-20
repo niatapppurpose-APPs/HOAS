@@ -370,12 +370,12 @@ export default function Reports() {
             <section className="mb-8">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Available Reports</h2>
-                  <p className="text-slate-400 mt-1">Download reports in PDF or JSON format</p>
+                  <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Available Reports</h2>
+                  <p className="mt-1" style={{ color: 'var(--text-muted)' }}>Download reports in PDF or JSON format</p>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-slate-400">Total Reports:</span>
-                  <span className="text-white font-semibold">{reportsData.length}</span>
+                  <span style={{ color: 'var(--text-muted)' }}>Total Reports:</span>
+                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{reportsData.length}</span>
                 </div>
               </div>
             </section>
@@ -385,7 +385,8 @@ export default function Reports() {
           {reportsData.map((report) => (
             <div
               key={report.id}
-              className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 hover:border-slate-600/50 transition-all"
+              className="rounded-xl p-4 hover:border-slate-600/50 transition-all"
+              style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 
@@ -397,7 +398,7 @@ export default function Reports() {
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2 mb-1">
-                      <h3 className="text-white font-semibold text-lg">
+                      <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
                         {report.name}
                       </h3>
                       {report.isPasswordProtected && (
@@ -408,7 +409,7 @@ export default function Reports() {
                       )}
                     </div>
                     
-                    <p className="text-slate-400 text-sm mb-2">
+                    <p className="text-sm mb-2" style={{ color: 'var(--text-muted)' }}>
                       {report.description}
                     </p>
                     
@@ -422,7 +423,7 @@ export default function Reports() {
                       </span>
                       
                       {/* Date & Time */}
-                      <div className="flex items-center gap-2 text-slate-500 text-xs">
+                      <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
                         <Calendar className="w-3.5 h-3.5" />
                         <span>{formatDate(report.generatedDate)}</span>
                         <span>•</span>
@@ -473,10 +474,10 @@ export default function Reports() {
 
         {/* Empty State (if no reports) */}
         {reportsData.length === 0 && (
-          <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-12 text-center">
-            <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">No Reports Available</h3>
-            <p className="text-slate-400 max-w-md mx-auto">
+          <div className="rounded-xl p-12 text-center" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
+            <FileText className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
+            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>No Reports Available</h3>
+            <p className="max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
               Reports for {collegeInfo?.name || 'your college'} will appear here once generated.
             </p>
           </div>

@@ -681,6 +681,24 @@ VITE_FIREBASE_APP_ID=your-app-id
 
 => When We go to Home Page there is a button on Get Start After Clicking it I will redirect to Role after they select the respicitive role and there will see there selected role profile page and they select theere respcitive collage and ask the premission for.
 
+---
+
+## 🚀 Updates - Jan 10, 2026
+
+### User Experience (UX)
+- **Guided Dashboard Tour**: Implemented an interactive tour using `driver.js` to onboard new owners/admins.
+  - Covers: Welcome, Stats, Approval Board, Theme Toggle, and Profile.
+  - Triggered via "Start Dashboard Tour" in Settings or programmatically.
+- **Auto-System Theme**: Enhanced `ThemeToggle` to support system preference syncing.
+  - **Single Click**: Toggles between Light/Dark manually.
+  - **Double Click**: Activates "System Mode" (Auto), indicated by a Monitor icon.
+
+### Technical Improvements
+- **Debounced Interaction**: Implemented strict separation between single-click and double-click events on the theme toggle to prevent state flickering.
+- **Accessibility**: Added descriptive IDs to core UI components (`#tour-welcome`, `#tour-stats`, etc.) to facilitate the tour and future testing.
+- **State Management**: Fixed regression in `OwnersDashboard` related to pagination state (`currentPage`).
+
+
 
 
            

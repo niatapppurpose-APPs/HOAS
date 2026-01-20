@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
 // AnalyticsComponents/* are UI-only charts/cards (no Firebase logic inside).
-import LoadingState from './AnalyticsComponents/LoadingState'; // Full-page skeleton while loading
+import LoadingState from './AnalyticsComponents/LoadingState'; // Loading spinner
 import RefreshButton from './AnalyticsComponents/RefreshButton'; // Manual refresh + “last updated” badge
 import StatsGrid from './AnalyticsComponents/StatsGrid'; // KPI summary cards
 import UserTrendChart from './AnalyticsComponents/UserTrendChart'; // 30-day registration trend
@@ -56,7 +56,7 @@ const Analytics = () => {
         isCollapsed={isCollapsed}
         onProfileClick={savePageState}
       />
-      <div className="pt-24 p-6 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 min-h-screen">
+      <div className="pt-24 p-6 min-h-screen">
         
         {/* Loading State */}
         {loading && <LoadingState />}

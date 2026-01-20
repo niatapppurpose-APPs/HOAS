@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useEffect, useState } from "react";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { auth, provider } from "../../firebase/firebaseConfig";
-import { Building2, LogIn, AlertCircle, Loader2, ShieldAlert, ArrowBigLeft } from "lucide-react";
+import {LogIn, AlertCircle, Loader2, ShieldAlert, ArrowBigLeft } from "lucide-react";
 import GoogleImage from "../../assets/GoogleImage.png";
 
 const AdminLogin = () => {
@@ -51,7 +51,7 @@ const AdminLogin = () => {
 
   return (
     
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
  {/* Back to Home */}
         <div className="flex items-center justify-space-evently text-center mb-5">

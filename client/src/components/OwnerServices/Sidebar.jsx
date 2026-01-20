@@ -14,11 +14,13 @@ import {
   Pin,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import Avatar from './Avatar'
 import Applogo from '../../assets/Applogo.png'
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [isPinned, setIsPinned] = useState(false);
@@ -123,7 +125,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       <aside
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        style={{ backgroundColor: 'var(--owner-surface)', borderColor: 'rgba(255,255,255,0.03)' }}
+        style={{ 
+          backgroundColor: 'var(--bg-sidebar)', 
+          borderColor: 'var(--border-primary)' 
+        }}
         className={`fixed top-0 left-0 h-full backdrop-blur-xl border-r z-40 transition-all duration-300 ease-in-out
           ${isCollapsed
             ? "-translate-x-full lg:translate-x-0 lg:w-20"
@@ -131,7 +136,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         `}
       >
         {/* Logo Section */}
-        <div className="flex items-center justify-between h-20 px-4 border-b border-slate-700/50 shrink-0">
+        <div 
+          className="flex items-center justify-between h-20 px-4 border-b shrink-0"
+          style={{ borderColor: 'var(--border-primary)' }}
+        >
           <div className={`flex items-center gap-3 transition-all duration-300 ${!showContent ? "lg:justify-center lg:w-full" : ""}`}>
             
             <button 
@@ -148,8 +156,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             </button>
 
             <div className={`flex flex-col transition-all duration-300 origin-left ${!showContent ? "lg:hidden opacity-0 w-0 scale-95" : "opacity-100 w-auto scale-100"}`}>
-              <h1 className="text-xl font-bold text-white leading-none tracking-tight">HOAS</h1>
-              <p className="text-xs text-slate-400 font-medium mt-1">Owner Dashboard</p>
+              <h1 className="text-xl font-bold leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>HOAS</h1>
+              <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>Owner Dashboard</p>
             </div>
           </div>
 
@@ -160,8 +168,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               className={`hidden lg:flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${!showContent ? "opacity-0 pointer-events-none" : "opacity-100"
                 } ${isPinned
                   ? "bg-indigo-600 text-white"
-                  : "bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
+                  : "hover:text-white"
                 }`}
+              style={{ 
+                backgroundColor: isPinned ? undefined : 'var(--bg-tertiary)',
+                color: isPinned ? undefined : 'var(--text-muted)'
+              }}
               title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
             >
               <Pin className={`w-4 h-4 transition-transform ${isPinned ? "rotate-60" : ""}`} />
@@ -173,7 +185,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                 setIsPinned(true);
                 setIsCollapsed(true);
               }}
-              className="flex lg:hidden items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all duration-200"
+              className="flex lg:hidden items-center justify-center w-8 h-8 rounded-lg transition-all duration-200"
+              style={{ 
+                backgroundColor: 'var(--bg-tertiary)',
+                color: 'var(--text-muted)'
+              }}
               title="Close sidebar"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -186,8 +202,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           {/* Main Menu */}
           <div className="flex-1 px-3 space-y-1">
             <p
-              className={`text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3 ${!showContent ? "lg:hidden" : ""
-                }`}
+              className={`text-xs font-semibold uppercase tracking-wider mb-3 px-3 ${!showContent ? "lg:hidden" : ""}`}
+              style={{ color: 'var(--text-muted)' }}
             >
               Main Menu
             </p>
@@ -196,7 +212,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               const isActive = activeItem === item.id;
 
               const activeStyle = isActive
-                ? { background: `linear-gradient(90deg, var(--owner-accent), var(--owner-accent-2))`, color: 'var(--owner-text)' }
+                ? { background: `linear-gradient(90deg, var(--owner-accent), var(--owner-accent-2))`, color: '#ffffff' }
                 : {};
 
               return (
@@ -207,24 +223,26 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                     if (window.innerWidth < 1024) setIsCollapsed(true);
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${!showContent ? "lg:justify-center" : ""}`}
-                  style={activeStyle}
+                  style={isActive ? activeStyle : { color: 'var(--text-secondary)' }}
                 >
                   <Icon
-                    className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : "text-slate-400 group-hover:text-white"
-                      }`}
+                    className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : ""}`}
+                    style={{ color: isActive ? '#ffffff' : 'var(--text-secondary)' }}
                   />
                   <span
-                    className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""
-                      }`}
+                    className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""}`}
                   >
                     {item.label}
                   </span>
 
                   {/* Tooltip for collapsed state */}
                   {!showContent && (
-                    <div className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl">
+                    <div 
+                      className="hidden lg:block absolute left-full ml-3 px-3 py-2 text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50"
+                      style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', boxShadow: 'var(--shadow-lg)' }}
+                    >
                       {item.label}
-                      <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45" />
+                      <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 rotate-45" style={{ backgroundColor: 'var(--bg-card)' }} />
                     </div>
                   )}
                 </button>
@@ -234,14 +252,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
           {/* Divider */}
           <div className="px-6 my-4">
-            <div className="h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
+            <div className="h-px" style={{ background: 'linear-gradient(to right, transparent, var(--border-primary), transparent)' }} />
           </div>
 
           {/* Bottom Menu */}
           <div className="px-3 space-y-1">
             <p
-              className={`text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3 ${!showContent ? "lg:hidden" : ""
-                }`}
+              className={`text-xs font-semibold uppercase tracking-wider mb-3 px-3 ${!showContent ? "lg:hidden" : ""}`}
+              style={{ color: 'var(--text-muted)' }}
             >
               Settings
             </p>
@@ -258,25 +276,25 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
                     ${!showContent ? "lg:justify-center" : ""}
-                    ${isLogout
-                      ? "text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/50"
-                    }
+                    ${isLogout ? "text-red-400 hover:text-red-300 hover:bg-red-500/10" : ""}
                   `}
+                  style={!isLogout ? { color: 'var(--text-secondary)' } : undefined}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
                   <span
-                    className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""
-                      }`}
+                    className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""}`}
                   >
                     {item.label}
                   </span>
 
                   {/* Tooltip for collapsed state */}
                   {!showContent && (
-                    <div className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl">
+                    <div 
+                      className="hidden lg:block absolute left-full ml-3 px-3 py-2 text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50"
+                      style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', boxShadow: 'var(--shadow-lg)' }}
+                    >
                       {item.label}
-                      <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45" />
+                      <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 rotate-45" style={{ backgroundColor: 'var(--bg-card)' }} />
                     </div>
                   )}
                 </button>
@@ -286,6 +304,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
           {/* User Profile Card */}
           <button 
+            id="tour-profile"
             onClick={() => {
               // Save current page state before navigating to profile
               const currentPath = location.pathname;
@@ -321,22 +340,28 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               // Close sidebar on mobile
               if (window.innerWidth < 1024) setIsCollapsed(true);
             }} 
-            className={`mt-5 mb-5 mx-2 group relative ${!showContent ? "flex justify-center" : "block"} cursor-pointer  `}
+            className={`mt-5 mb-5 mx-2 group relative ${!showContent ? "flex justify-center" : "block"} cursor-pointer`}
           >
-            <div className={`
-              transition-all duration-200 
-              ${showContent 
-                ? "p-3 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border-2 border-slate-400/50 hover:border-slate-300/50" 
-                : "p-0 hover:scale-105 transition-transform"
-              }
-            `}>
+            <div 
+              className={`transition-all duration-200 
+                ${showContent 
+                  ? "p-3 rounded-xl border-2" 
+                  : "p-0 hover:scale-105 transition-transform"
+                }`}
+              style={showContent ? {
+                background: isDark 
+                  ? 'linear-gradient(to bottom right, rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.4))'
+                  : 'linear-gradient(to bottom right, rgba(241, 245, 249, 0.8), rgba(241, 245, 249, 0.4))',
+                borderColor: 'var(--border-secondary)'
+              } : undefined}
+            >
               <div className={`flex items-center ${showContent ? "gap-3" : "justify-center"}`}>
                 <Avatar image={user?.photoURL} name={user?.displayName} size="md" />
                 
                 {showContent && (
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-white truncate">{user?.displayName}</p>
-                    <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{user?.displayName}</p>
+                    <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
                   </div>
                 )}
               </div>
@@ -344,9 +369,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
             {/* Tooltip for collapsed state */}
             {!showContent && (
-              <div className="hidden lg:block absolute left-full ml-3 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl top-1/2 -translate-y-1/2">
+              <div 
+                className="hidden lg:block absolute left-full ml-3 px-3 py-2 text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 top-1/2 -translate-y-1/2"
+                style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', boxShadow: 'var(--shadow-lg)' }}
+              >
                 Profile
-                <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45" />
+                <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 rotate-45" style={{ backgroundColor: 'var(--bg-card)' }} />
               </div>
             )}
           </button>
@@ -358,8 +386,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`fixed top-5 left-4 z-50 lg:hidden p-2.5 rounded-xl bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 text-slate-400 hover:text-white shadow-lg transition-all duration-200 ${!isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
-          }`}
+        className={`fixed top-5 left-4 z-50 lg:hidden p-2.5 rounded-xl backdrop-blur-sm border shadow-lg transition-all duration-200 ${!isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+        style={{ 
+          backgroundColor: 'var(--bg-card)', 
+          borderColor: 'var(--border-primary)',
+          color: 'var(--text-secondary)'
+        }}
       >
         <ChevronRight className="w-5 h-5" />
       </button>
@@ -371,13 +403,20 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           onClick={() => setShowLogoPopup(false)}
         >
           <div 
-            className="relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-8 max-w-2xl w-full shadow-2xl border border-slate-700/50 animate-scaleIn"
+            className="relative rounded-2xl p-8 max-w-2xl w-full shadow-2xl animate-scaleIn"
+            style={{ 
+              background: isDark 
+                ? 'linear-gradient(to bottom right, #0f172a, #1e293b)'
+                : 'linear-gradient(to bottom right, #ffffff, #f1f5f9)',
+              border: '1px solid var(--border-primary)'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
               onClick={() => setShowLogoPopup(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all duration-200 group"
+              className="absolute top-4 right-4 p-2 rounded-full transition-all duration-200 group"
+              style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}
               title="Close"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -398,38 +437,38 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                 </div>
               </div>
               
-              <h2 className="text-3xl font-bold text-white mb-2 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+              <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                 HOAS
               </h2>
-              <p className="text-lg text-slate-300 mb-1">
+              <p className="text-lg mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Hostel Accommodation System
               </p>
-              <p className="text-sm text-slate-400 mb-6">
+              <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
                 Owner Dashboard Management Portal
               </p>
               
-              <div className="border-t border-slate-700/50 pt-6">
+              <div className="border-t pt-6" style={{ borderColor: 'var(--border-primary)' }}>
                 <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                  <div className="bg-slate-800/50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Platform</p>
-                    <p className="text-sm font-semibold text-white">Web Application</p>
+                  <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                    <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Platform</p>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Web Application</p>
                   </div>
-                  <div className="bg-slate-800/50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Version</p>
-                    <p className="text-sm font-semibold text-white">2.0.0</p>
+                  <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                    <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Version</p>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>2.0.0</p>
                   </div>
-                  <div className="bg-slate-800/50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Status</p>
+                  <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                    <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Status</p>
                     <p className="text-sm font-semibold text-green-400">Active</p>
                   </div>
-                  <div className="bg-slate-800/50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">Year</p>
-                    <p className="text-sm font-semibold text-white">2026</p>
+                  <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                    <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Year</p>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>2026</p>
                   </div>
                 </div>
               </div>
               
-              <div className="mt-6 text-xs text-slate-500">
+              <div className="mt-6 text-xs" style={{ color: 'var(--text-muted)' }}>
                 © 2026 HOAS. All rights reserved.
               </div>
             </div>
