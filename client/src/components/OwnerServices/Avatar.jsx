@@ -3,6 +3,7 @@ import { useState } from "react";
 // Reusable Avatar Component with fallback to initials
 const Avatar = ({ image, name, size = "md", rounded = "xl" }) => {
   const [imageError, setImageError] = useState(false);
+  const [randomSeed] = useState(() => Math.random().toString(36).substring(7));
 
   const sizeClasses = {
     sm: "w-8 h-8 text-xs",
@@ -47,8 +48,7 @@ const Avatar = ({ image, name, size = "md", rounded = "xl" }) => {
 
   // Generate random avatar image when no name is provided
   const getRandomAvatar = () => {
-    const seed = Math.random().toString(36).substring(7);
-    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${randomSeed}`;
   };
   const getHighQualityImage = (url) => {
     if (!url) return url;

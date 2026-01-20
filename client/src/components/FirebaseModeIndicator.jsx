@@ -1,30 +1,31 @@
-/**
- * Firebase Mode Indicator Component
- * 
- * Optional component to display current Firebase connection mode
- * Useful during development to verify emulator connectivity
- * 
- * Usage:
- *   import FirebaseModeIndicator from './components/FirebaseModeIndicator';
- *   // Add to your app (dev only):
- *   {import.meta.env.DEV && <FirebaseModeIndicator />}
- */
-
 import { useState, useEffect } from 'react';
 import { getFirebaseMode } from '../firebase/debugUtils';
 
 const FirebaseModeIndicator = () => {
   const [mode, setMode] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [debugOutput, setDebugOutput] = useState(null);
 
   useEffect(() => {
-    // Wait a bit for emulator detection to complete
     const timer = setTimeout(() => {
       setMode(getFirebaseMode());
     }, 2500);
-
     return () => clearTimeout(timer);
   }, []);
+
+  const handleLogDetails = () => {
+    import('../firebase/debugUtils').then(m => {
+      const data = m.logFirebaseMode();
+      setDebugOutput({ type: 'mode', data });
+    });
+  };
+
+  const handleFullDebug = () => {
+    import('../firebase/debugUtils').then(m => {
+      const data = m.debugFirebaseSetup();
+      setDebugOutput({ type: 'full', data });
+    });
+  };
 
   if (!mode) {
     return (
@@ -60,7 +61,7 @@ const FirebaseModeIndicator = () => {
 
       {/* Expanded details */}
       {isOpen && (
-        <div className="absolute bottom-14 right-0 bg-gray-900 text-white rounded-lg shadow-xl p-4 w-80 text-xs">
+        <div className="absolute bottom-14 right-0 bg-gray-900 text-white rounded-lg shadow-xl p-4 w-80 text-xs max-h-[80vh] overflow-y-auto">
           <div className="mb-3 pb-3 border-b border-gray-700">
             <h3 className="font-bold text-sm mb-1">🔥 Firebase Mode</h3>
             <p className="text-gray-400">
@@ -122,22 +123,38 @@ const FirebaseModeIndicator = () => {
           {/* Actions */}
           <div className="pt-3 border-t border-gray-700 flex gap-2">
             <button
-              onClick={() => {
-                import('../firebase/debugUtils').then(m => m.logFirebaseMode());
-              }}
+              onClick={handleLogDetails}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 rounded text-[10px] transition-colors"
             >
               Log Details
             </button>
             <button
-              onClick={() => {
-                import('../firebase/debugUtils').then(m => m.debugFirebaseSetup());
-              }}
+              onClick={handleFullDebug}
               className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-1 px-2 rounded text-[10px] transition-colors"
             >
               Full Debug
             </button>
           </div>
+
+          {/* Debug Output Display */}
+          {debugOutput && (
+            <div className="mt-3 p-3 bg-black bg-opacity-50 rounded border border-gray-700 max-h-60 overflow-y-auto">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-yellow-400 font-semibold text-[10px]">
+                  {debugOutput.type === 'mode' ? '📋 Mode Details' : '🐛 Full Debug'}
+                </span>
+                <button
+                  onClick={() => setDebugOutput(null)}
+                  className="text-gray-400 hover:text-white text-[10px]"
+                >
+                  ✕
+                </button>
+              </div>
+              <pre className="text-[9px] text-green-400 font-mono whitespace-pre-wrap break-all">
+                {JSON.stringify(debugOutput.data, null, 2)}
+              </pre>
+            </div>
+          )}
 
           {isUsingEmulator && (
             <div className="mt-3 p-2 bg-orange-900 bg-opacity-30 rounded border border-orange-800 text-[10px]">
