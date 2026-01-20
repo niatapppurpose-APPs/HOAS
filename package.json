@@ -22,7 +22,12 @@
     "concurrently": "^9.2.1"
   },
   "dependencies": {
+<<<<<<< HEAD
+    "lottie-react": "^2.4.1",
+    "recharts": "^3.6.0"
+=======
     "driver.js": "^1.4.0",
     "lottie-react": "^2.4.1"
+>>>>>>> 7025bfe0fbd9d81b477e713a14e8c0af2c5f8ce2
   }
 }
