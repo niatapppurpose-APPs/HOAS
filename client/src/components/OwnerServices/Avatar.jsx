@@ -36,7 +36,7 @@ const Avatar = ({ image, name, size = "md", rounded = "xl" }) => {
   };
 
   const getInitials = (name) => {
-    if (!name) return "?";
+    if (!name) return null; // Return null to show random image instead
     return name
       .split(" ")
       .map((n) => n[0])
@@ -44,11 +44,17 @@ const Avatar = ({ image, name, size = "md", rounded = "xl" }) => {
       .toUpperCase()
       .slice(0, 3);
   };
+
+  // Generate random avatar image when no name is provided
+  const getRandomAvatar = () => {
+    const seed = Math.random().toString(36).substring(7);
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+  };
   const getHighQualityImage = (url) => {
     if (!url) return url;
 
     if (url.includes("googleusercontent.com")) {
-      return url.replace(/=s\d+(-c)?/g, "=s1000-c");
+      return url.replace(/=s\d+(-c)?/g, "=s2000-c");
     }
 
     return url;
@@ -56,17 +62,28 @@ const Avatar = ({ image, name, size = "md", rounded = "xl" }) => {
 
   // Determine if we should show custom initials
   const shouldShowInitials = !image || imageError;
+  const initials = getInitials(name);
 
   return (
     <>
       {shouldShowInitials ? (
-        <div
-          className={`${sizeClasses[size]} ${getColorFromName(
-            name
-          )} ${roundedClasses[rounded]} flex items-center justify-center font-semibold p-8 text-white ring-2 ring-white/50`}
-        >
-          {getInitials(name)}
-        </div>
+        initials ? (
+          <div
+            className={`${sizeClasses[size]} ${getColorFromName(
+              name
+            )} ${roundedClasses[rounded]} flex items-center justify-center font-semibold p-8 text-white ring-2 ring-white/50`}
+          >
+            {initials}
+          </div>
+        ) : (
+          <img
+            src={getRandomAvatar()}
+            alt="Random Avatar"
+            width={100}
+            height={100}
+            className={`${sizeClasses[size]} ${roundedClasses[rounded]} object-cover ring-2 ring-white/50`}
+          />
+        )
       ) : (
         <img
           src={getHighQualityImage(image)}
