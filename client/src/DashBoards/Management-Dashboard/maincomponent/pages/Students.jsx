@@ -16,7 +16,7 @@ const Students = () => {
 
     // Read optional collegeId from URL query params (e.g. ?collegeId=COL123)
     const searchParams = new URLSearchParams(location.search);
-    const initialCollegeId = searchParams.get('collegeId') ?? null;
+    const initialCollegeId = searchParams.get('collegeId') ?? null; 
     const [collegeId, setCollegeId] = useState(initialCollegeId);
 
     useEffect(() => {
