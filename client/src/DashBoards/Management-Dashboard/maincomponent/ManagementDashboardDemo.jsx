@@ -19,7 +19,7 @@ const ManagementDashboardDemo = () => {
 
   // Sample user data
   const sampleUser = {
-    displayName: "niatapppurpose",
+    displayName: "Management Admin",
     email: "admin@management.com",
     photoURL: null
   };

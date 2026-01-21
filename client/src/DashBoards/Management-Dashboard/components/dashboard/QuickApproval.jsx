@@ -2,7 +2,7 @@ import { ChevronDown } from "lucide-react";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 
 
-const QuickApproval = ({ pendingUser, onApprove, onViewDetails }) => {
+const QuickApproval = ({ pendingUser, onApprove, onViewDetails, isApproving }) => {
   if (!pendingUser) {
     return (
       <div className="quick-approval-card">
@@ -45,8 +45,13 @@ const QuickApproval = ({ pendingUser, onApprove, onViewDetails }) => {
           <button onClick={onViewDetails} className="btn-view-details">
             View Details
           </button>
-          <button onClick={onApprove} className="btn-approve">
-            Approve
+          <button
+            onClick={onApprove}
+            className={`btn-approve ${isApproving ? 'opacity-80 pointer-events-none' : ''}`}
+            disabled={isApproving}
+            title={isApproving ? 'Approving...' : 'Approve user'}
+          >
+            {isApproving ? 'Approving...' : 'Approve'}
           </button>
         </div>
       </div>

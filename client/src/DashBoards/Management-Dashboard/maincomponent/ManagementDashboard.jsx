@@ -104,13 +104,27 @@ const ManagementDashboard = () => {
     }
   };
 
+  const [approvingUserId, setApprovingUserId] = useState(null);
+
   const handleApprove = async (userId) => {
+    console.log('handleApprove called', { userId, user });
+
+    if (!user) {
+      toast.error("You must be signed in to approve users");
+      return;
+    }
+
+    setApprovingUserId(userId);
     try {
+      toast.info('Approving user...');
       await cloudFunctions.approveUser(userId);
       toast.success("User approved successfully");
     } catch (error) {
-      toast.error("Failed to approve user");
-      console.error(error);
+      const msg = error?.message || error?.code || 'Unknown error';
+      toast.error(`Failed to approve user: ${msg}`);
+      console.error('approveUser error:', error);
+    } finally {
+      setApprovingUserId(null);
     }
   };
 
@@ -161,6 +175,7 @@ const ManagementDashboard = () => {
                 pendingUser={firstPendingUser}
                 onApprove={() => handleApprove(firstPendingUser?.id)}
                 onViewDetails={handleViewDetails}
+                isApproving={approvingUserId === firstPendingUser?.id}
               />
             </div>
           </div>
@@ -169,6 +184,7 @@ const ManagementDashboard = () => {
           <RecentActivity 
             recentUsers={recentUsers}
             onApprove={handleApprove}
+            approvingUserId={approvingUserId}
           />
 
           {/* Bottom Row: Status Table + Visualization */}

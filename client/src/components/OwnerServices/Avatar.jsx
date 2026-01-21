@@ -1,7 +1,10 @@
 import { useState } from "react";
 
 // Reusable Avatar Component with fallback to initials
-const Avatar = ({ image, name, size = "md", rounded = "xl" }) => {
+const Avatar = ({ image, name, size = "md", rounded = "xl", user }) => {
+  // If user prop is provided, extract image and name from it
+  const avatarImage = image || user?.photoURL || user?.image;
+  const avatarName = name || user?.displayName || user?.name;
   const [imageError, setImageError] = useState(false);
   const [randomSeed] = useState(() => Math.random().toString(36).substring(7));
 
@@ -48,7 +51,7 @@ const Avatar = ({ image, name, size = "md", rounded = "xl" }) => {
 
   // Generate random avatar image when no name is provided
   const getRandomAvatar = () => {
-    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${randomSeed}`;
+    return `https://api.dicebear.com/5.x/avataaars/svg?seed=${randomSeed}`;
   };
   const getHighQualityImage = (url) => {
     if (!url) return url;
@@ -61,8 +64,8 @@ const Avatar = ({ image, name, size = "md", rounded = "xl" }) => {
   };
 
   // Determine if we should show custom initials
-  const shouldShowInitials = !image || imageError;
-  const initials = getInitials(name);
+  const shouldShowInitials = !avatarImage || imageError;
+  const initials = getInitials(avatarName);
 
   return (
     <>
@@ -70,7 +73,7 @@ const Avatar = ({ image, name, size = "md", rounded = "xl" }) => {
         initials ? (
           <div
             className={`${sizeClasses[size]} ${getColorFromName(
-              name
+              avatarName
             )} ${roundedClasses[rounded]} flex items-center justify-center font-semibold p-8 text-white ring-2 ring-white/50`}
           >
             {initials}
@@ -86,8 +89,8 @@ const Avatar = ({ image, name, size = "md", rounded = "xl" }) => {
         )
       ) : (
         <img
-          src={getHighQualityImage(image)}
-          alt={name}
+          src={getHighQualityImage(avatarImage)}
+          alt={avatarName}
           referrerPolicy="no-referrer"
           onError={() => setImageError(true)}
           width={100}

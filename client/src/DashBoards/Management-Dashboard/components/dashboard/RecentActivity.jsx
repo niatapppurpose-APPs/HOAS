@@ -2,7 +2,7 @@ import { CheckCircle, ChevronDown } from "lucide-react";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 
 
-const RecentActivity = ({ recentUsers, onApprove }) => {
+const RecentActivity = ({ recentUsers, onApprove, approvingUserId }) => {
   return (
     <div className="recent-activity-section">
       <h2 className="section-title">Recent Activity</h2>
@@ -34,12 +34,14 @@ const RecentActivity = ({ recentUsers, onApprove }) => {
             </div>
 
             <div className="activity-actions">
-              <button 
-                onClick={() => onApprove(user.id)} 
-                className="btn-approve-inline"
+              <button
+                onClick={() => onApprove(user.id)}
+                className={`btn-approve-inline ${approvingUserId === user.id ? 'opacity-80 pointer-events-none' : ''}`}
+                disabled={approvingUserId === user.id}
+                title={approvingUserId === user.id ? 'Approving...' : 'Approve user'}
               >
                 <CheckCircle size={16} />
-                Approve
+                {approvingUserId === user.id ? 'Approving...' : 'Approve'}
               </button>
               <button className="btn-more">
                 <ChevronDown size={16} />

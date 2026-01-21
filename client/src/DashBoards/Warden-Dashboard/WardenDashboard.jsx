@@ -20,8 +20,10 @@ import {
     CheckCircle,
     XCircle,
     Clock,
-    GraduationCap
+    GraduationCap,
+    Languages
 } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const WardenDashboard = () => {
     const { user, userData, userDataLoading, logout } = useAuth();
@@ -30,6 +32,11 @@ const WardenDashboard = () => {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('pending');
+    const [activeMenu, setActiveMenu] = useState('students');
+    const { currentLanguage, languages, translatePage } = useTranslation(toast);
+
+
+
 
     useEffect(() => {
         if (!userDataLoading) {
@@ -65,10 +72,22 @@ const WardenDashboard = () => {
         return () => unsubscribe();
     }, [userData?.collegeId]);
 
+    const handleLanguageChange = async (language) => {
+        await translatePage(language);
+    };
+
     const handleLogout = async () => {
         await logout();
         navigate('/');
     };
+
+
+
+
+
+
+
+
 
     const handleStatusChange = async (studentId, newStatus) => {
         try {
@@ -99,10 +118,11 @@ const WardenDashboard = () => {
     };
 
     const menuItems = [
-        { icon: Users, label: 'Students', active: true },
-        { icon: FileText, label: 'Complaints', active: false },
-        { icon: Bell, label: 'Announcements', active: false },
-        { icon: Settings, label: 'Settings', active: false },
+        { icon: Users, label: 'Students', key: 'students' },
+        { icon: Languages, label: 'Translator', key: 'translator' },
+        { icon: FileText, label: 'Complaints', key: 'complaints' },
+        { icon: Bell, label: 'Announcements', key: 'announcements' },
+        { icon: Settings, label: 'Settings', key: 'settings' },
     ];
 
     return (
@@ -129,6 +149,18 @@ const WardenDashboard = () => {
                                     </span>
                                 )}
                             </button>
+                            {/* Language Selector */}
+                            <select
+                                value={currentLanguage}
+                                onChange={(e) => handleLanguageChange(e.target.value)}
+                                className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm bg-white"
+                            >
+                                {languages.map(lang => (
+                                    <option key={lang.code} value={lang.code}>
+                                        {lang.name}
+                                    </option>
+                                ))}
+                            </select>
                             <div className="flex items-center gap-3">
                                 <img
                                     src={user?.photoURL || '/default-avatar.png'}
@@ -159,8 +191,9 @@ const WardenDashboard = () => {
                                 {menuItems.map((item, index) => (
                                     <button
                                         key={index}
+                                        onClick={() => setActiveMenu(item.key)}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                                            item.active
+                                            activeMenu === item.key
                                                 ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white'
                                                 : 'text-gray-600 hover:bg-gray-50'
                                         }`}
@@ -198,140 +231,156 @@ const WardenDashboard = () => {
 
                     {/* Main Content */}
                     <div className="lg:col-span-3 space-y-6">
-                        {/* Stats Cards */}
-                        <div className="grid sm:grid-cols-3 gap-4">
-                            <div className="bg-white rounded-2xl shadow-lg p-5">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-500">Pending</p>
-                                        <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
-                                    </div>
-                                    <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                                        <Clock className="w-6 h-6 text-amber-600" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="bg-white rounded-2xl shadow-lg p-5">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-500">Approved</p>
-                                        <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
-                                    </div>
-                                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                        <CheckCircle className="w-6 h-6 text-green-600" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="bg-white rounded-2xl shadow-lg p-5">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-500">Denied</p>
-                                        <p className="text-2xl font-bold text-red-600">{stats.denied}</p>
-                                    </div>
-                                    <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                                        <XCircle className="w-6 h-6 text-red-600" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Student Management */}
-                        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                            <div className="p-6 border-b border-gray-100">
-                                <h3 className="text-lg font-semibold text-gray-900">Student Management</h3>
-                                <p className="text-sm text-gray-500 mt-1">Manage student registrations for {userData.collegeName}</p>
-                            </div>
-
-                            {/* Tabs */}
-                            <div className="flex border-b border-gray-100">
-                                {['pending', 'approved', 'denied'].map((tab) => (
-                                    <button
-                                        key={tab}
-                                        onClick={() => setActiveTab(tab)}
-                                        className={`flex-1 py-3 text-sm font-medium transition-all ${
-                                            activeTab === tab
-                                                ? 'text-orange-600 border-b-2 border-orange-600 bg-orange-50'
-                                                : 'text-gray-500 hover:text-gray-700'
-                                        }`}
-                                    >
-                                        {tab.charAt(0).toUpperCase() + tab.slice(1)} ({
-                                            tab === 'pending' ? stats.pending :
-                                            tab === 'approved' ? stats.approved : stats.denied
-                                        })
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Student List */}
-                            <div className="p-6">
-                                {loading ? (
-                                    <div className="flex items-center justify-center py-12">
-                                        <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
-                                    </div>
-                                ) : filteredStudents.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <GraduationCap className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                                        <p className="text-gray-500">No {activeTab} students</p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {filteredStudents.map((student) => (
-                                            <div
-                                                key={student.id}
-                                                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <img
-                                                        src={student.photoURL || '/default-avatar.png'}
-                                                        alt={student.fullName}
-                                                        className="w-12 h-12 rounded-full object-cover"
-                                                    />
-                                                    <div>
-                                                        <p className="font-medium text-gray-900">{student.fullName}</p>
-                                                        <p className="text-sm text-gray-500">{student.email}</p>
-                                                        <div className="flex gap-4 mt-1 text-xs text-gray-500">
-                                                            <span>Roll: {student.rollNumber}</span>
-                                                            <span>Room: {student.roomNumber}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {activeTab === 'pending' && (
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => handleStatusChange(student.id, 'approved')}
-                                                            className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
-                                                        >
-                                                            <CheckCircle className="w-4 h-4" />
-                                                            Approve
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleStatusChange(student.id, 'denied')}
-                                                            className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1"
-                                                        >
-                                                            <XCircle className="w-4 h-4" />
-                                                            Deny
-                                                        </button>
-                                                    </div>
-                                                )}
-                                                {activeTab === 'approved' && (
-                                                    <span className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
-                                                        Active
-                                                    </span>
-                                                )}
-                                                {activeTab === 'denied' && (
-                                                    <button
-                                                        onClick={() => handleStatusChange(student.id, 'approved')}
-                                                        className="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
-                                                    >
-                                                        Restore
-                                                    </button>
-                                                )}
+                        {activeMenu === 'students' && (
+                            <>
+                                {/* Stats Cards */}
+                                <div className="grid sm:grid-cols-3 gap-4">
+                                    <div className="bg-white rounded-2xl shadow-lg p-5">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm text-gray-500">Pending</p>
+                                                <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
                                             </div>
+                                            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                                                <Clock className="w-6 h-6 text-amber-600" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white rounded-2xl shadow-lg p-5">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm text-gray-500">Approved</p>
+                                                <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
+                                            </div>
+                                            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                                <CheckCircle className="w-6 h-6 text-green-600" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white rounded-2xl shadow-lg p-5">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm text-gray-500">Denied</p>
+                                                <p className="text-2xl font-bold text-red-600">{stats.denied}</p>
+                                            </div>
+                                            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                                <XCircle className="w-6 h-6 text-red-600" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Student Management */}
+                                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                                    <div className="p-6 border-b border-gray-100">
+                                        <h3 className="text-lg font-semibold text-gray-900">Student Management</h3>
+                                        <p className="text-sm text-gray-500 mt-1">Manage student registrations for {userData.collegeName}</p>
+                                    </div>
+
+                                    {/* Tabs */}
+                                    <div className="flex border-b border-gray-100">
+                                        {['pending', 'approved', 'denied'].map((tab) => (
+                                            <button
+                                                key={tab}
+                                                onClick={() => setActiveTab(tab)}
+                                                className={`flex-1 py-3 text-sm font-medium transition-all ${
+                                                    activeTab === tab
+                                                        ? 'text-orange-600 border-b-2 border-orange-600 bg-orange-50'
+                                                        : 'text-gray-500 hover:text-gray-700'
+                                                }`}
+                                            >
+                                                {tab.charAt(0).toUpperCase() + tab.slice(1)} ({
+                                                    tab === 'pending' ? stats.pending :
+                                                    tab === 'approved' ? stats.approved : stats.denied
+                                                })
+                                            </button>
                                         ))}
                                     </div>
-                                )}
+
+                                    {/* Student List */}
+                                    <div className="p-6">
+                                        {loading ? (
+                                            <div className="flex items-center justify-center py-12">
+                                                <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+                                            </div>
+                                        ) : filteredStudents.length === 0 ? (
+                                            <div className="text-center py-12">
+                                                <GraduationCap className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                                <p className="text-gray-500">No {activeTab} students</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                {filteredStudents.map((student) => (
+                                                    <div
+                                                        key={student.id}
+                                                        className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
+                                                    >
+                                                        <div className="flex items-center gap-4">
+                                                            <img
+                                                                src={student.photoURL || '/default-avatar.png'}
+                                                                alt={student.fullName}
+                                                                className="w-12 h-12 rounded-full object-cover"
+                                                            />
+                                                            <div>
+                                                                <p className="font-medium text-gray-900">{student.fullName}</p>
+                                                                <p className="text-sm text-gray-500">{student.email}</p>
+                                                                <div className="flex gap-4 mt-1 text-xs text-gray-500">
+                                                                    <span>Roll: {student.rollNumber}</span>
+                                                                    <span>Room: {student.roomNumber}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        {activeTab === 'pending' && (
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    onClick={() => handleStatusChange(student.id, 'approved')}
+                                                                    className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
+                                                                >
+                                                                    <CheckCircle className="w-4 h-4" />
+                                                                    Approve
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleStatusChange(student.id, 'denied')}
+                                                                    className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1"
+                                                                >
+                                                                    <XCircle className="w-4 h-4" />
+                                                                    Deny
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                        {activeTab === 'approved' && (
+                                                            <span className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
+                                                                Active
+                                                            </span>
+                                                        )}
+                                                        {activeTab === 'denied' && (
+                                                            <button
+                                                                onClick={() => handleStatusChange(student.id, 'approved')}
+                                                                className="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+                                                            >
+                                                                Restore
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {activeMenu === 'translator' && <Translator />}
+
+                        {activeMenu !== 'students' && activeMenu !== 'translator' && (
+                            <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Settings className="w-8 h-8 text-gray-400" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">{menuItems.find(item => item.key === activeMenu)?.label}</h3>
+                                <p className="text-gray-500">This feature is coming soon.</p>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>

@@ -22,9 +22,9 @@ const Students = () => {
 
     // TODO: Replace with actual college and hostel data from props/context
     const contextInfo = {
-        collegeName: "NIAT Engineering College",
+        collegeName: "Professional Institution",
         collegeLocation: "Bangalore, Karnataka",
-        hostelName: "Boys Hostel – Block A",
+        hostelName: "Premium Hostel – Block A",
         hostelId: "HST-2024-001"
     };
 
@@ -212,18 +212,24 @@ const Students = () => {
 
                                                 {/* College and Hostel Badges */}
                                                 <div className="flex flex-wrap items-center gap-2">
-                                                    {/* College Badge */}
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-purple-600/80 to-indigo-600/80 text-white text-xs font-medium">
-                                                        <Building2 className="w-3 h-3" />
+                                                    {/* Professional Institution Badge */}
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-600/90 to-indigo-600/90 text-white text-xs font-semibold shadow-lg border border-purple-500/30">
+                                                        <Building2 className="w-3.5 h-3.5" />
                                                         {student.collegeName || contextInfo.collegeName}
+                                                        <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold">
+                                                            PRO
+                                                        </span>
                                                     </span>
 
-                                                    {/* Hostel Badge */}
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-600/80 to-teal-600/80 text-white text-xs font-medium">
-                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    {/* Premium Hostel Badge */}
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white text-xs font-semibold shadow-lg border border-emerald-500/30">
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                                         </svg>
                                                         {student.hostelBlock || contextInfo.hostelName}
+                                                        <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold">
+                                                            ★
+                                                        </span>
                                                     </span>
                                                 </div>
                                             </div>

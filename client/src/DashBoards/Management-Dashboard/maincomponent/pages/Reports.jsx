@@ -3,16 +3,32 @@ import ManagementSidebar from "../../components/layout/ManagementSidebar";
 import ManagementHeader from "../../components/layout/ManagementHeader";
 import { FileText, Search, Filter, Download } from "lucide-react";
 import "../ManagementDashboard.css";
+import { useAuth } from "../../../../context/AuthContext";
 
 const Reports = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { user, logout } = useAuth();
+
+  // Logout handler
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Navigation will be handled by auth context
+    } catch (error) {
+      console.error("Failed to logout:", error);
+    }
+  };
 
   return (
     <div className="management-dashboard">
       <ManagementSidebar />
       
       <main className="dashboard-main">
-        <ManagementHeader user={{ displayName: "Admin" }} />
+        <ManagementHeader 
+          user={user} 
+          pendingCount={0}
+          handleLogout={handleLogout}
+        />
         
         <div className="dashboard-content">
           {/* Page Header */}
