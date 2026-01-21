@@ -8,11 +8,15 @@ import WardenProfile from '../../DashBoards/Warden-Dashboard/index'
 import ManagementProfile from '../../DashBoards/Principal-Dashbord/index'
 import StudentDashboard from "../../DashBoards/Student-DashBoard/StudentDashboard";
 import WardenDashboard from "../../DashBoards/Warden-Dashboard/WardenDashboard";
+<<<<<<< HEAD
+// import ManagementDashboard from "../../DashBoards/Principal-Dashbord/PrincipalDashboard";
+=======
 import { ManagementDashboard } from "../../DashBoards/Management-Dashboard";
 import ManagementWardens from "../../DashBoards/Management-Dashboard/maincomponent/pages/Wardens";
 import ManagementStudents from "../../DashBoards/Management-Dashboard/maincomponent/pages/Students";
 import ManagementHostels from "../../DashBoards/Management-Dashboard/maincomponent/pages/Hostels";
 import ManagementReports from "../../DashBoards/Management-Dashboard/maincomponent/pages/Reports";
+>>>>>>> f2f8122e6dc1edb071ff0cac0fc613bfb6757116
 import OwnersDashboard from "../../Pages/OwnersDashboard/ownersdashbord"
 import OwnersLayout from "../../Pages/OwnersDashboard/OwnersLayout"
 import Wardens from "../../Pages/OwnersDashboard/Pages/Wardens"
@@ -26,6 +30,7 @@ import OwnerProfile from "../OwnerServices/OwnerProfile"
 import AdminLogin from '../OwnerServices/AdminLogin'
 import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval"
 import NotFound from "../../Pages/NotFound"
+import  {ManagementDashboard} from '../../DashBoards/Management-Dashboard'
 
 const Routes_path = () => {
     return (
