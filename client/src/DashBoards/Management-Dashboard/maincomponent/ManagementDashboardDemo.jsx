@@ -1,11 +1,11 @@
 import { useState } from "react";
-import ManagementSidebar from "./components/ManagementSidebar";
-import ManagementHeader from "./components/ManagementHeader";
-import KPICards from "./components/KPICards";
-import QuickApproval from "./components/QuickApproval";
-import RecentActivity from "./components/RecentActivity";
-import StatusTable from "./components/StatusTable";
-import StatusVisualization from "./components/StatusVisualization";
+import ManagementSidebar from "../components/layout/ManagementSidebar";
+import ManagementHeader from "../components/layout/ManagementHeader";
+import KPICards from "../components/dashboard/KPICards";
+import QuickApproval from "../components/dashboard/QuickApproval";
+import RecentActivity from "../components/dashboard/RecentActivity";
+import StatusTable from "../components/dashboard/StatusTable";
+import StatusVisualization from "../components/dashboard/StatusVisualization";
 import "./ManagementDashboard.css";
 
 /**

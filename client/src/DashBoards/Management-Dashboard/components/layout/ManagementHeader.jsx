@@ -1,5 +1,6 @@
 import { LogOut } from "lucide-react";
-import Avatar from '../../../components/OwnerServices/Avatar';
+import Avatar from "../../../../components/OwnerServices/Avatar";
+
 
 const ManagementHeader = ({ user, pendingCount = 0, handleLogout }) => {
   return (

@@ -1,5 +1,6 @@
 import { ChevronDown } from "lucide-react";
-import Avatar from '../../../components/OwnerServices/Avatar';
+import Avatar from "../../../../components/OwnerServices/Avatar";
+
 
 const QuickApproval = ({ pendingUser, onApprove, onViewDetails }) => {
   if (!pendingUser) {

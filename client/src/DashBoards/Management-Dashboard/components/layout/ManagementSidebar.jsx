@@ -7,7 +7,7 @@ import {
   Home,
   FileText,
 } from "lucide-react";
-import Applogo from '../../../assets/Applogo.png';
+import Applogo from '../../../../assets/Applogo.png';
 
 const ManagementSidebar = () => {
   const navigate = useNavigate();
@@ -26,11 +26,11 @@ const ManagementSidebar = () => {
   const activeItem = getActiveItem();
 
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/management-dashboard" },
-    { id: "wardens", label: "Wardens", icon: Building2, path: "/management-dashboard/wardens" },
-    { id: "students", label: "Students", icon: Users, path: "/management-dashboard/students" },
-    { id: "hostels", label: "Hostels", icon: Home, path: "/management-dashboard/hostels" },
-    { id: "reports", label: "Reports", icon: FileText, path: "/management-dashboard/reports" },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/management" },
+    { id: "wardens", label: "Wardens", icon: Building2, path: "/dashboard/management/wardens" },
+    { id: "students", label: "Students", icon: Users, path: "/dashboard/management/students" },
+    { id: "hostels", label: "Hostels", icon: Home, path: "/dashboard/management/hostels" },
+    { id: "reports", label: "Reports", icon: FileText, path: "/dashboard/management/reports" },
   ];
 
   return (
@@ -68,6 +68,8 @@ const ManagementSidebar = () => {
       <div className="sidebar-footer">
         <div className="sidebar-settings">
           <span className="settings-label">SETTINGS</span>
+        </div> <div className="sidebar-settings">
+          <span className="settings-label">Help & Support</span>
         </div>
       </div>
     </aside>

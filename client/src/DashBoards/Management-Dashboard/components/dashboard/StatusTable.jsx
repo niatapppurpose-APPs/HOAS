@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import Avatar from '../../../components/OwnerServices/Avatar';
+import Avatar from "../../../../components/OwnerServices/Avatar";
 
 const StatusTable = ({ users, currentPage, totalPages, onPageChange }) => {
   return (

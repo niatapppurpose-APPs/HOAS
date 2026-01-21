@@ -1,5 +1,6 @@
 import { CheckCircle, ChevronDown } from "lucide-react";
-import Avatar from '../../../components/OwnerServices/Avatar';
+import Avatar from "../../../../components/OwnerServices/Avatar";
+
 
 const RecentActivity = ({ recentUsers, onApprove }) => {
   return (
