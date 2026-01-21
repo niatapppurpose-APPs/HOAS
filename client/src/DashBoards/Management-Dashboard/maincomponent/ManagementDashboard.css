@@ -518,6 +518,8 @@
   transition: all 0.3s ease;
 }
 
+
+
 .btn-view-details:hover {
   background: rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
