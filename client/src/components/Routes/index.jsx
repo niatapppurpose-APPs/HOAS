@@ -8,7 +8,7 @@ import WardenProfile from '../../DashBoards/Warden-Dashboard/index'
 import ManagementProfile from '../../DashBoards/Principal-Dashbord/index'
 import StudentDashboard from "../../DashBoards/Student-DashBoard/StudentDashboard";
 import WardenDashboard from "../../DashBoards/Warden-Dashboard/WardenDashboard";
-import ManagementDashboard from "../../DashBoards/Principal-Dashbord/PrincipalDashboard";
+// import ManagementDashboard from "../../DashBoards/Principal-Dashbord/PrincipalDashboard";
 import OwnersDashboard from "../../Pages/OwnersDashboard/ownersdashbord"
 import OwnersLayout from "../../Pages/OwnersDashboard/OwnersLayout"
 import Wardens from "../../Pages/OwnersDashboard/Pages/Wardens"
@@ -22,6 +22,7 @@ import OwnerProfile from "../OwnerServices/OwnerProfile"
 import AdminLogin from '../OwnerServices/AdminLogin'
 import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval"
 import NotFound from "../../Pages/NotFound"
+import  {ManagementDashboard} from '../../DashBoards/Management-Dashboard'
 
 const Routes_path = () => {
     return (
