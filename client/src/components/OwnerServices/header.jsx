@@ -6,12 +6,11 @@ import { ThemeToggle } from "../ThemeToggle";
 const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = true }) => {
   const navigate = useNavigate();
   return (
-    <header 
+    <header
       id="tour-welcome"
-      style={{ backgroundColor: 'var(--bg-header)', borderColor: 'var(--border-primary)' }} 
-      className={`fixed top-0 right-0 border-b backdrop-blur-xl z-30 h-20 transition-all duration-300 ${
-        isCollapsed ? 'left-0 lg:left-20' : 'left-0 lg:left-72'
-      }`}
+      style={{ backgroundColor: 'var(--bg-header)', borderColor: 'var(--border-primary)' }}
+      className={`fixed top-0 right-0 border-b backdrop-blur-xl z-30 h-20 transition-all duration-300 ${isCollapsed ? 'left-0 lg:left-20' : 'left-0 lg:left-72'
+        }`}
     >
       <div className="mx-auto px-4 pl-14 sm:pl-6 lg:px-8 h-full">
         <div className="flex items-center justify-between h-full">
@@ -35,6 +34,7 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
 
             {/* Logout Button */}
             <button
+              id="tour-logout"
               onClick={handleLogout}
               className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl border transition-all duration-200 group hover:border-red-500/50 hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/5"
               style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)' }}

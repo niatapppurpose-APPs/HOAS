@@ -6,7 +6,7 @@ import Header from '../../../components/OwnerServices/header';
 import Avatar from '../../../components/OwnerServices/Avatar';
 import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmModal';
 import { HashLoader } from "react-spinners";
-import { User, Mail, GraduationCap, Eye, Edit2, UserMinus, Building2, Search } from 'lucide-react';
+import {Mail, GraduationCap, Eye, Edit2, UserMinus, Building2, Search } from 'lucide-react';
 
 const Students = () => {
     const { isCollapsed } = useOutletContext();
@@ -181,7 +181,7 @@ const Students = () => {
 
                                         {/* Left: Student Info */}
                                         <div className="flex items-center gap-4 flex-1 min-w-0">
-                                            {/* Avatar */}
+                                            
                                             <Avatar
                                                 image={student.photoURL}
                                                 name={student.fullName || student.displayName || student.email}
