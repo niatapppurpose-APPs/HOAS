@@ -12,6 +12,7 @@ import {
   BarChart3,
   FileText,
   Pin,
+  X,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -71,17 +72,17 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const showContent = isMobile ? !isCollapsed : (!isCollapsed || isPinned);
 
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/OwnersDashboard" },
-    { id: "wardens", label: "Wardens", icon: Building2, path: "/OwnersDashboard/wardens" },
-    { id: "students", label: "Students", icon: Users, path: "/OwnersDashboard/students" },
-    { id: "analytics", label: "Analytics", icon: BarChart3, path: "/OwnersDashboard/analytics" },
-    { id: "reports", label: "Reports", icon: FileText, path: "/OwnersDashboard/reports" },
-    { id: "notifications", label: "Notifications", icon: Bell, path: "/OwnersDashboard/notifications" },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/OwnersDashboard", tourId: "tour-nav-dashboard" },
+    { id: "wardens", label: "Wardens", icon: Building2, path: "/OwnersDashboard/wardens", tourId: "tour-nav-wardens" },
+    { id: "students", label: "Students", icon: Users, path: "/OwnersDashboard/students", tourId: "tour-nav-students" },
+    { id: "analytics", label: "Analytics", icon: BarChart3, path: "/OwnersDashboard/analytics", tourId: "tour-nav-analytics" },
+    { id: "reports", label: "Reports", icon: FileText, path: "/OwnersDashboard/reports", tourId: "tour-nav-reports" },
+    { id: "notifications", label: "Notifications", icon: Bell, path: "/OwnersDashboard/notifications", tourId: "tour-nav-notifications" },
   ];
 
   const bottomMenuItems = [
-    { id: "settings", label: "Settings", icon: Settings, path: "/OwnersDashboard/settings" },
-    { id: "help", label: "Help & Support", icon: HelpCircle, path: "/OwnersDashboard/help" },
+    { id: "settings", label: "Settings", icon: Settings, path: "/OwnersDashboard/settings", tourId: "tour-nav-settings" },
+    { id: "help", label: "Help & Support", icon: HelpCircle, path: "/OwnersDashboard/help", tourId: "tour-nav-help" },
   ];
 
   const handleMouseEnter = () => {
@@ -112,6 +113,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     }
   };
 
+  const handleDateYear = () => {
+    const Year = new Date().getFullYear()
+    return Year
+  }
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -123,11 +129,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
       {/* Sidebar */}
       <aside
+        id="tour-sidebar"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        style={{ 
-          backgroundColor: 'var(--bg-sidebar)', 
-          borderColor: 'var(--border-primary)' 
+        style={{
+          backgroundColor: 'var(--bg-sidebar)',
+          borderColor: 'var(--border-primary)'
         }}
         className={`fixed top-0 left-0 h-full backdrop-blur-xl border-r z-40 transition-all duration-300 ease-in-out
           ${isCollapsed
@@ -136,21 +143,21 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         `}
       >
         {/* Logo Section */}
-        <div 
+        <div
           className="flex items-center justify-between h-20 px-4 border-b shrink-0"
           style={{ borderColor: 'var(--border-primary)' }}
         >
           <div className={`flex items-center gap-3 transition-all duration-300 ${!showContent ? "lg:justify-center lg:w-full" : ""}`}>
-            
-            <button 
+
+            <button
               onClick={() => setShowLogoPopup(true)}
               className={`relative transition-all duration-300 group cursor-pointer ${!showContent ? "w-12 h-12" : "w-14 h-14"}`}
               title="Click to view logo"
             >
               <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <img 
-                src={Applogo} 
-                className="relative w-full h-full rounded-full object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-indigo-500/50 transition-all duration-300 group-hover:scale-105" 
+              <img
+                src={Applogo}
+                className="relative w-full h-full rounded-full object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-indigo-500/50 transition-all duration-300 group-hover:scale-105"
                 alt="HOAS Logo"
               />
             </button>
@@ -164,13 +171,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <div className="flex items-center gap-2">
             {/* Pin Button - Desktop Only (visible when expanded) */}
             <button
+              id="tour-pin-sidebar"
               onClick={handlePinClick}
               className={`hidden lg:flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${!showContent ? "opacity-0 pointer-events-none" : "opacity-100"
                 } ${isPinned
                   ? "bg-indigo-600 text-white"
                   : "hover:text-white"
                 }`}
-              style={{ 
+              style={{
                 backgroundColor: isPinned ? undefined : 'var(--bg-tertiary)',
                 color: isPinned ? undefined : 'var(--text-muted)'
               }}
@@ -186,7 +194,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                 setIsCollapsed(true);
               }}
               className="flex lg:hidden items-center justify-center w-8 h-8 rounded-lg transition-all duration-200"
-              style={{ 
+              style={{
                 backgroundColor: 'var(--bg-tertiary)',
                 color: 'var(--text-muted)'
               }}
@@ -218,6 +226,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               return (
                 <button
                   key={item.id}
+                  id={item.tourId}
                   onClick={() => {
                     navigate(item.path);
                     if (window.innerWidth < 1024) setIsCollapsed(true);
@@ -237,7 +246,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
                   {/* Tooltip for collapsed state */}
                   {!showContent && (
-                    <div 
+                    <div
                       className="hidden lg:block absolute left-full ml-3 px-3 py-2 text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50"
                       style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', boxShadow: 'var(--shadow-lg)' }}
                     >
@@ -270,6 +279,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               return (
                 <button
                   key={item.id}
+                  id={item.tourId}
                   onClick={() => {
                     navigate(item.path);
                     if (window.innerWidth < 1024) setIsCollapsed(true);
@@ -289,7 +299,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
                   {/* Tooltip for collapsed state */}
                   {!showContent && (
-                    <div 
+                    <div
                       className="hidden lg:block absolute left-full ml-3 px-3 py-2 text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50"
                       style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', boxShadow: 'var(--shadow-lg)' }}
                     >
@@ -303,7 +313,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           </div>
 
           {/* User Profile Card */}
-          <button 
+          <button
             id="tour-profile"
             onClick={() => {
               // Save current page state before navigating to profile
@@ -312,10 +322,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                 scrollPosition: window.scrollY,
                 returnPath: currentPath
               };
-              
+
               // Save to sessionStorage as backup
               sessionStorage.setItem('ownerProfileReturnPath', currentPath);
-              
+
               // Also save the current page's specific state if it exists
               const pageStates = {
                 '/OwnersDashboard/students': 'studentsPageState',
@@ -324,7 +334,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                 '/OwnersDashboard/reports': 'reportsPageState',
                 '/OwnersDashboard/settings': 'settingsPageState'
               };
-              
+
               const pageStateKey = pageStates[currentPath];
               if (pageStateKey) {
                 const existingState = sessionStorage.getItem(pageStateKey);
@@ -333,23 +343,23 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   state.searchText = parsedState.searchText;
                 }
               }
-              
+
               // Navigate to profile with state
               navigate("/owner-profile", { state });
-              
+
               // Close sidebar on mobile
               if (window.innerWidth < 1024) setIsCollapsed(true);
-            }} 
+            }}
             className={`mt-5 mb-5 mx-2 group relative ${!showContent ? "flex justify-center" : "block"} cursor-pointer`}
           >
-            <div 
+            <div
               className={`transition-all duration-200 
-                ${showContent 
-                  ? "p-3 rounded-xl border-2" 
+                ${showContent
+                  ? "p-3 rounded-xl border-2"
                   : "p-0 hover:scale-105 transition-transform"
                 }`}
               style={showContent ? {
-                background: isDark 
+                background: isDark
                   ? 'linear-gradient(to bottom right, rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.4))'
                   : 'linear-gradient(to bottom right, rgba(241, 245, 249, 0.8), rgba(241, 245, 249, 0.4))',
                 borderColor: 'var(--border-secondary)'
@@ -357,7 +367,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             >
               <div className={`flex items-center ${showContent ? "gap-3" : "justify-center"}`}>
                 <Avatar image={user?.photoURL} name={user?.displayName} size="md" />
-                
+
                 {showContent && (
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{user?.displayName}</p>
@@ -369,7 +379,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
             {/* Tooltip for collapsed state */}
             {!showContent && (
-              <div 
+              <div
                 className="hidden lg:block absolute left-full ml-3 px-3 py-2 text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 top-1/2 -translate-y-1/2"
                 style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', boxShadow: 'var(--shadow-lg)' }}
               >
@@ -387,25 +397,25 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
         className={`fixed top-5 left-4 z-50 lg:hidden p-2.5 rounded-xl backdrop-blur-sm border shadow-lg transition-all duration-200 ${!isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"}`}
-        style={{ 
-          backgroundColor: 'var(--bg-card)', 
+        style={{
+          backgroundColor: 'var(--bg-card)',
           borderColor: 'var(--border-primary)',
           color: 'var(--text-secondary)'
         }}
       >
         <ChevronRight className="w-5 h-5" />
       </button>
-
+         
       {/* Logo Popup Modal */}
       {showLogoPopup && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
           onClick={() => setShowLogoPopup(false)}
         >
-          <div 
+          <div
             className="relative rounded-2xl p-8 max-w-2xl w-full shadow-2xl animate-scaleIn"
-            style={{ 
-              background: isDark 
+            style={{
+              background: isDark
                 ? 'linear-gradient(to bottom right, #0f172a, #1e293b)'
                 : 'linear-gradient(to bottom right, #ffffff, #f1f5f9)',
               border: '1px solid var(--border-primary)'
@@ -415,13 +425,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             {/* Close Button */}
             <button
               onClick={() => setShowLogoPopup(false)}
-              className="absolute top-4 right-4 p-2 rounded-full transition-all duration-200 group"
-              style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}
+              className="absolute top-4 right-4 p-2 rounded-full transition-all duration-200 group hover:bg-red-500/10"
+              style={{ backgroundColor: 'var(--bg-tertiary)' }}
               title="Close"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-5 h-5 text-red-500" />
             </button>
 
             {/* Modal Content */}
@@ -429,24 +437,24 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               <div className="mb-6">
                 <div className="inline-block relative">
                   <div className="absolute inset-0 bg-indigo-500/30 rounded-full blur-2xl animate-pulse" />
-                  <img 
-                    src={Applogo} 
-                    alt="HOAS Logo" 
+                  <img
+                    src={Applogo}
+                    alt="HOAS Logo"
                     className="relative w-48 h-48 mx-auto rounded-full object-cover border-4 border-indigo-500/50 shadow-2xl"
                   />
                 </div>
               </div>
-              
+
               <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                 HOAS
               </h2>
               <p className="text-lg mb-1" style={{ color: 'var(--text-secondary)' }}>
-                Hostel Accommodation System
+                Hostel Operation Accountability System
               </p>
               <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
-                Owner Dashboard Management Portal
+                Owners Portal
               </p>
-              
+
               <div className="border-t pt-6" style={{ borderColor: 'var(--border-primary)' }}>
                 <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
                   <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
@@ -463,13 +471,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   </div>
                   <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                     <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Year</p>
-                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>2026</p>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{handleDateYear()}</p>
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-6 text-xs" style={{ color: 'var(--text-muted)' }}>
-                © 2026 HOAS. All rights reserved.
+                © { handleDateYear()} HOAS. All rights reserved.
               </div>
             </div>
           </div>

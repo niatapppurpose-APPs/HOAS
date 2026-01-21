@@ -6,7 +6,9 @@ import { verifyAdmin, verifyManagementAccess } from './helpers.js';
 /**
  * Approve a user (Management approves Warden/Student, Owner approves Management)
  */
-export const approveUser = onCall({ cors: true }, async (request) => {
+export const approveUser = onCall({ 
+  cors: ['http://localhost:5173', 'https://hoas-65dee.web.app', 'https://hoas-65dee.firebaseapp.com']
+}, async (request) => {
   try {
     logger.info('🔍 approveUser called with data:', request.data);
     
@@ -72,7 +74,9 @@ export const approveUser = onCall({ cors: true }, async (request) => {
 /**
  * Deny a user
  */
-export const denyUser = onCall({ cors: true }, async (request) => {
+export const denyUser = onCall({ 
+  cors: ['http://localhost:5173', 'https://hoas-65dee.web.app', 'https://hoas-65dee.firebaseapp.com']
+}, async (request) => {
   try {
     logger.info('🔍 denyUser called with data:', request.data);
     

@@ -1,18 +1,19 @@
 import { CheckCircle, CheckSquare, Square } from "lucide-react";
 import { HashLoader } from "react-spinners";
 
-const BulkActionsBar = ({ 
-  pendingOnPage, 
-  selectedUsers, 
-  allPendingSelected, 
+const BulkActionsBar = ({
+  pendingOnPage,
+  selectedUsers,
+  allPendingSelected,
   isBulkApproving,
-  onSelectAll, 
-  onBulkApprove 
+  onSelectAll,
+  onBulkApprove
 }) => {
   return (
-    <div 
+    <div
+      id="tour-bulk-actions"
       className="rounded-xl p-4 mb-6 border"
-      style={{ 
+      style={{
         background: 'linear-gradient(to right, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1))',
         borderColor: 'rgba(99, 102, 241, 0.3)'
       }}

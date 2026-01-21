@@ -42,12 +42,12 @@ const OwnersDashboard = () => {
   const [isApproving, setIsApproving] = useState(null);
   const [isDenying, setIsDenying] = useState(null);
   const [isDeleteLoading, setIsDeleteLoading] = useState(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(15);
   const { isDark } = useTheme();
-  
+
   // Bulk selection state
   const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [isBulkApproving, setIsBulkApproving] = useState(false);
@@ -57,14 +57,14 @@ const OwnersDashboard = () => {
     if (location.state?.startTour) {
       // Clear state
       window.history.replaceState({}, document.title);
-      
+
       const driverObj = driver({
         showProgress: true,
         animate: true,
         steps: dashboardTourSteps(isDark),
         popoverClass: isDark ? 'driverjs-theme-dark' : 'driverjs-theme-light',
         onDestroy: () => {
-             // Optional: Navigate back or show completion toast
+          // Optional: Navigate back or show completion toast
         }
       });
 
@@ -98,8 +98,8 @@ const OwnersDashboard = () => {
   }, [user, isAdmin, loading, adminChecked, navigate]);
 
   // 🧪 TESTING MODE - Generate dummy data
-  const ENABLE_TEST_DATA = false ; // Set to false to use real Firestore data
-  
+  const ENABLE_TEST_DATA = false; // Set to false to use real Firestore data
+
   useEffect(() => {
     if (ENABLE_TEST_DATA) {
       // Generate 25 dummy colleges for testing
@@ -114,14 +114,14 @@ const OwnersDashboard = () => {
           toDate: () => new Date(2025, 0, 7 - Math.floor(i / 3))
         }
       }));
-      
+
       // Simulate loading delay
       setTimeout(() => {
         setAllUsers(dummyUsers);
         setDataLoading(false);
         setFetchError(null);
       }, 1500);
-      
+
       return;
     }
 
@@ -152,7 +152,11 @@ const OwnersDashboard = () => {
     return () => unsubscribe();
   }, [user, isAdmin, adminChecked]);
 
-  // Handle logout
+
+
+
+
+  //---------------------------------- Handle logout--------------------------------------------------
   const handleLogout = async () => {
     try {
       await logout();
@@ -164,7 +168,10 @@ const OwnersDashboard = () => {
     }
   };
 
-  // Handle status change - Call Cloud Function
+
+
+
+  //------------------------------------------- Handle status change - Call Cloud Function -------------------------------------------------
   const handleStatusChange = async (userId, newStatus) => {
     if (newStatus === 'approved') setIsApproving(userId);
     if (newStatus === 'denied') setIsDenying(userId);
@@ -187,6 +194,9 @@ const OwnersDashboard = () => {
       if (newStatus === 'denied') setIsDenying(null);
     }
   };
+
+
+
 
   // Handle bulk approve
   const handleBulkApprove = async () => {
@@ -215,7 +225,7 @@ const OwnersDashboard = () => {
         const results = await Promise.allSettled(
           batch.map(userId => cloudFunctions.approveUser(userId, 'owner'))
         );
-        
+
         results.forEach(result => {
           if (result.status === 'fulfilled') successCount++;
           else failCount++;
@@ -223,7 +233,7 @@ const OwnersDashboard = () => {
       }
 
       setSelectedUsers(new Set());
-      
+
       if (failCount === 0) {
         toast.success(`Successfully approved ${successCount} college${successCount > 1 ? 's' : ''}!`);
       } else {
@@ -235,6 +245,11 @@ const OwnersDashboard = () => {
       setIsBulkApproving(false);
     }
   };
+
+
+
+
+
 
   // Toggle user selection
   const toggleUserSelection = (userId) => {
@@ -249,6 +264,9 @@ const OwnersDashboard = () => {
     });
   };
 
+
+
+
   // Select all pending users on current page
   const handleSelectAll = () => {
     const pendingOnPage = paginatedUsers.filter(u => u.status === 'pending');
@@ -261,7 +279,10 @@ const OwnersDashboard = () => {
     }
   };
 
-  // Open delete confirmation modal with context
+
+
+
+  //---------------------------------------- Open delete confirmation modal with context -------------------------------------------------
   const handleOpenDeleteModal = async (college) => {
     setIsDeleteLoading(college.id);
     try {
@@ -361,7 +382,6 @@ const OwnersDashboard = () => {
     management: "from-emerald-500 to-teal-600",
   };
 
-  // ...existing code...
   return (
     <>
       {/* Header */}
@@ -407,7 +427,7 @@ const OwnersDashboard = () => {
             </div>
           </div>
 
-          <UserListTabs 
+          <UserListTabs
             activeTab={activeTab}
             allUsersCount={allUsers.length}
             pendingCount={pendingCount}
@@ -433,7 +453,7 @@ const OwnersDashboard = () => {
             <EmptyState activeTab={activeTab} />
           ) : (
             <div ref={scrollContainerRef}>
-              {paginatedUsers.map((userData) => (
+              {paginatedUsers.map((userData, index) => (
                 <UserCard
                   key={userData.id}
                   userData={userData}
@@ -444,6 +464,7 @@ const OwnersDashboard = () => {
                   isDenying={isDenying}
                   isDeleteLoading={isDeleteLoading}
                   roleColors={roleColors}
+                  isFirst={index === 0}
                   onToggleSelection={toggleUserSelection}
                   onStatusChange={handleStatusChange}
                   onDelete={handleOpenDeleteModal}

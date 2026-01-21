@@ -1,17 +1,18 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const PaginationControls = ({ 
-  currentPage, 
-  totalPages, 
-  startIndex, 
-  endIndex, 
+const PaginationControls = ({
+  currentPage,
+  totalPages,
+  startIndex,
+  endIndex,
   totalItems,
-  onPageChange 
+  onPageChange
 }) => {
   if (totalPages <= 1) return null;
 
   return (
-    <div 
+    <div
+      id="tour-pagination"
       className="mt-4 flex-shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl p-4"
       style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
     >
@@ -20,7 +21,7 @@ const PaginationControls = ({
         <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{Math.min(endIndex, totalItems)}</span> of{' '}
         <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{totalItems}</span> colleges
       </div>
-      
+
       <div className="flex items-center gap-2">
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
@@ -30,7 +31,7 @@ const PaginationControls = ({
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        
+
         <div className="flex items-center gap-1">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
             // Show first page, last page, current page, and pages around current
@@ -43,9 +44,8 @@ const PaginationControls = ({
                 <button
                   key={page}
                   onClick={() => onPageChange(page)}
-                  className={`min-w-[2.5rem] px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                    currentPage === page ? 'bg-indigo-600 text-white' : ''
-                  }`}
+                  className={`min-w-[2.5rem] px-3 py-2 rounded-lg text-sm font-medium transition-all ${currentPage === page ? 'bg-indigo-600 text-white' : ''
+                    }`}
                   style={currentPage !== page ? { backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' } : undefined}
                 >
                   {page}
@@ -57,7 +57,7 @@ const PaginationControls = ({
             return null;
           })}
         </div>
-        
+
         <button
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
