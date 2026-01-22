@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
-import { HexColorPicker } from "react-colorful"
 import Header from '../../../components/OwnerServices/header';
 import { Sun, Moon, Monitor, PlayCircle, Loader2 } from 'lucide-react';
 
@@ -10,17 +9,10 @@ const Settings = () => {
   const { isCollapsed } = useOutletContext();
   const location = useLocation();
   const navigate = useNavigate();
-  const { userData, updateUserTheme } = useAuth();
+  const { userData } = useAuth();
   const { theme, mode, setLightMode, setDarkMode, setSystemMode, isDark, isSystemMode } = useTheme();
-  const initial = userData?.theme || {};
 
-  const [primary, setPrimary] = useState(initial.primary || '#6366F1');
-  const [secondary, setSecondary] = useState(initial.secondary || '#8B5CF6');
-  const [background, setBackground] = useState(initial.background || '#ffffff');
-  const [surface, setSurface] = useState(initial.surface || '#0f172a');
-  const [textColor, setTextColor] = useState(initial.text || '#ffffff');
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
+
   
   // Tour specific state
   const [tourCountdown, setTourCountdown] = useState(null);
@@ -55,27 +47,9 @@ const Settings = () => {
     sessionStorage.removeItem('settingsPageState');
   }, [location.state]);
 
-  useEffect(() => {
-    if (userData?.theme) {
-      setPrimary(userData.theme.primary || primary);
-      setSecondary(userData.theme.secondary || secondary);
-      setBackground(userData.theme.background || background);
-      setSurface(userData.theme.surface || surface);
-      setTextColor(userData.theme.text || textColor);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userData]);
 
-  const handleSave = async () => {
-    setSaving(true);
-    setMessage('');
-    const theme = { primary, secondary, surface, text: textColor, background };
-    const ok = await updateUserTheme(theme);
-    if (ok) setMessage('Theme saved');
-    else setMessage('Save failed');
-    setSaving(false);
-    setTimeout(() => setMessage(''), 2500);
-  };
+
+
 
   // Save page state before navigating away
   const savePageState = () => {
@@ -208,64 +182,7 @@ const Settings = () => {
         {/* Divider */}
         <hr style={{ borderColor: 'var(--border-primary)' }} className="mb-10" />
 
-        {/* Custom Color Theme Section */}
-        <h1 style={{ color: 'var(--text-primary)' }} className="text-2xl font-bold mb-4">Custom Color Theme</h1>
-        <p style={{ color: 'var(--text-secondary)' }} className="text-sm mb-6">Personalize your dashboard colors to match your brand or preference.</p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-10">
-          <label 
-            className="flex item-center justify-center flex-col gap-3 rounded-lg p-8 transition-colors"
-            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
-          >
-            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Primary</span>
-            <HexColorPicker color={primary} onChange={setPrimary} className="flex item-center justify-center rounded-xl shadow-lg" />
-          </label>
-
-          <label 
-            className="flex flex-col gap-3 rounded-lg p-8 transition-colors"
-            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
-          >
-            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Secondary</span>
-            <HexColorPicker color={secondary} onChange={setSecondary} className="rounded-xl shadow-lg" />
-          </label>
-
-          <label 
-            className="flex flex-col gap-3 rounded-lg p-8 transition-colors"
-            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
-          >
-            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Surface</span>
-            <HexColorPicker color={surface} onChange={setSurface} className="rounded-xl shadow-lg" />
-          </label>
-
-          <label 
-            className="flex flex-col gap-3 rounded-lg p-8 transition-colors"
-            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
-          >
-            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Text</span>
-            <HexColorPicker color={textColor} onChange={setTextColor} className="rounded-xl shadow-lg" />
-          </label>
-
-          <label 
-            className="flex flex-col gap-3 rounded-lg p-8 transition-colors"
-            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
-          >
-            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Background</span>
-            <HexColorPicker color={background} onChange={setBackground} className="rounded-xl shadow-lg" />
-          </label>
-        </div>
-
-
-        <div className="mt-6 flex items-center gap-3">
-          <button 
-            onClick={handleSave} 
-            disabled={saving} 
-            className="px-4 py-2 rounded text-white transition-colors"
-            style={{ backgroundColor: 'var(--accent-primary)' }}
-          >
-            {saving ? 'Saving...' : 'Save Theme'}
-          </button>
-          {message && <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{message}</span>}
-        </div>
 
         {/* User Experience / Tour Section */}
         <div className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--border-primary)' }}>

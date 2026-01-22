@@ -170,20 +170,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Function to update user theme in Firestore
-  const updateUserTheme = async (theme) => {
-    if (!user) return false;
 
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, { theme: theme, updatedAt: new Date().toISOString() }, { merge: true });
-      console.log("User theme updated:", theme);
-      return true;
-    } catch (error) {
-      console.error("Error updating user theme:", error);
-      return false;
-    }
-  };
 
   // Function to logout
   const logout = async () => {
@@ -213,7 +200,6 @@ export const AuthProvider = ({ children }) => {
     userDataLoading,
     refreshAdminStatus,
     createUserProfile,
-    updateUserTheme,
     logout,
   };
 

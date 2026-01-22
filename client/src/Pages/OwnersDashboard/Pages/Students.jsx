@@ -98,8 +98,8 @@ const Students = () => {
                 <section className="mb-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Hostel Students</h2>
-                            <p className="mt-1" style={{ color: 'var(--text-muted)' }}>Students assigned to the selected college hostel</p>
+                            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Assigned List :-</h2>
+                            <p className="mt-1" style={{ color: 'var(--text-muted)' }}>Active students for the selected hostel</p>
                         </div>
                         <div className="relative flex items-center justify-end">
                             {/* Search Icon Button */}

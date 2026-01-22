@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../components/Toast';
+import { useTranslation } from '../../hooks/useTranslation';
 import { 
     GraduationCap, 
     Building2, 
@@ -13,12 +15,15 @@ import {
     Calendar,
     Bell,
     FileText,
-    Settings
+    Settings,
+    Languages
 } from 'lucide-react';
 
 const StudentDashboard = () => {
     const { user, userData, userDataLoading, logout } = useAuth();
     const navigate = useNavigate();
+    const toast = useToast();
+    const { currentLanguage, languages, translatePage, translating } = useTranslation(toast);
 
     useEffect(() => {
         if (!userDataLoading) {
@@ -35,6 +40,10 @@ const StudentDashboard = () => {
     const handleLogout = async () => {
         await logout();
         navigate('/');
+    };
+
+    const handleLanguageChange = async (language) => {
+        await translatePage(language);
     };
 
     if (userDataLoading || !userData) {
@@ -54,7 +63,16 @@ const StudentDashboard = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+            {/* Translation Loader Overlay */}
+            {translating && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+                    <div className="bg-white p-6 rounded-lg shadow-lg flex items-center gap-3">
+                        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                        <span className="text-gray-700">Translating page...</span>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <header className="bg-white shadow-sm border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -73,6 +91,18 @@ const StudentDashboard = () => {
                                 <Bell className="w-5 h-5" />
                                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                             </button>
+                            {/* Language Selector */}
+                            <select
+                                value={currentLanguage}
+                                onChange={(e) => handleLanguageChange(e.target.value)}
+                                className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                            >
+                                {languages.map(lang => (
+                                    <option key={lang.code} value={lang.code}>
+                                        {lang.name}
+                                    </option>
+                                ))}
+                            </select>
                             <div className="flex items-center gap-3">
                                 <img
                                     src={user?.photoURL || '/default-avatar.png'}

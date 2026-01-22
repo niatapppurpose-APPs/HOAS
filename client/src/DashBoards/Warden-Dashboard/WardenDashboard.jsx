@@ -33,7 +33,7 @@ const WardenDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('pending');
     const [activeMenu, setActiveMenu] = useState('students');
-    const { currentLanguage, languages, translatePage } = useTranslation(toast);
+    const { currentLanguage, languages, translatePage, translating } = useTranslation(toast);
 
 
 
@@ -119,14 +119,22 @@ const WardenDashboard = () => {
 
     const menuItems = [
         { icon: Users, label: 'Students', key: 'students' },
-        { icon: Languages, label: 'Translator', key: 'translator' },
         { icon: FileText, label: 'Complaints', key: 'complaints' },
         { icon: Bell, label: 'Announcements', key: 'announcements' },
         { icon: Settings, label: 'Settings', key: 'settings' },
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50">
+        <div className="relative min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50">
+            {/* Translation Loader Overlay */}
+            {translating && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+                    <div className="bg-white p-6 rounded-lg shadow-lg flex items-center gap-3">
+                        <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
+                        <span className="text-gray-700">Translating page...</span>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <header className="bg-white shadow-sm border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

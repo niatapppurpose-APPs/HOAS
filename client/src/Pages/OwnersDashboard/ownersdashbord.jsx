@@ -24,7 +24,7 @@ import EmptyState from "./components/EmptyState";
 import ErrorState from "./components/ErrorState";
 import LoadingState from "./components/LoadingState";
 
-import { Building2, CheckCircle, Clock, GraduationCap, Shield } from "lucide-react";
+import { Building2, CheckCircle, Clock, GraduationCap, Shield, LayoutDashboard  } from "lucide-react";
 
 // Main Dashboard Component
 const OwnersDashboard = () => {
@@ -385,7 +385,7 @@ const OwnersDashboard = () => {
   return (
     <>
       {/* Header */}
-      <Header pendingCount={pendingCount} handleLogout={handleLogout} user={user} title="Dashboard" isCollapsed={isCollapsed} />
+      <Header pendingCount={pendingCount} handleLogout={handleLogout} user={user} title="Dashboard · Admin Overview" isCollapsed={isCollapsed} />
 
       {/* Main Content */}
       <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
@@ -452,7 +452,7 @@ const OwnersDashboard = () => {
           ) : filteredUsers.length === 0 ? (
             <EmptyState activeTab={activeTab} />
           ) : (
-            <div ref={scrollContainerRef}>
+            <div ref={scrollContainerRef} className="flex flex-col gap-6">
               {paginatedUsers.map((userData, index) => (
                 <UserCard
                   key={userData.id}

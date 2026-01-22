@@ -78,7 +78,7 @@ export const useTranslation = (toast) => {
         localStorage.setItem('selectedLanguage', language);
 
         // Show loading indicator
-        if (showToasts && toast) toast.info('Starting translation...', 2000);
+        if (showToasts && toast) toast.info('Starting translation...', 1000);
 
         try {
             const apiKey = import.meta.env.VITE_GOOGLE_TRANSLATE_API_KEY;

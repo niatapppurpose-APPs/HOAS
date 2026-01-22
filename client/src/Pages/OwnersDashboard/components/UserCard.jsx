@@ -29,7 +29,7 @@ const UserCard = ({
   return (
     <div
       id={isFirst ? 'tour-user-card' : undefined}
-      className={`rounded-xl p-4 transition-all ${isSelected ? 'border-indigo-500/50' : ''}`}
+      className={`rounded-xl p-4 transition-all ${isSelected ? 'border-indigo-500/50' : ''} `}
       style={{
         backgroundColor: isSelected ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-card)',
         border: `1px solid ${isSelected ? 'rgba(99, 102, 241, 0.5)' : 'var(--border-primary)'}`

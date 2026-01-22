@@ -70,7 +70,7 @@ const Analytics = () => {
             <StatsGrid stats={stats} />
 
             {/* User Registration Trend */}
-            <UserTrendChart data={userTrendData} dateRange={dateRange} />
+            {/* <UserTrendChart data={userTrendData} dateRange={dateRange} /> */}
 
             {/* Two Chart Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

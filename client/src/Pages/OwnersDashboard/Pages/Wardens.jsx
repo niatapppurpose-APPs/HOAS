@@ -109,8 +109,8 @@ const Wardens = () => {
                 <section className="mb-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Hostel Wardens</h2>
-                            <p className="mt-1" style={{ color: 'var(--text-muted)' }}>Wardens assigned to the selected college hostel</p>
+                            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Assigned List :-</h2>
+                            <p className="mt-1" style={{ color: 'var(--text-muted)' }}>Active wardens for the selected hostel</p>
                         </div>
                         {/* <div className="flex items-center gap-2 text-sm">
                             <span className="text-slate-400">Total Wardens:</span>

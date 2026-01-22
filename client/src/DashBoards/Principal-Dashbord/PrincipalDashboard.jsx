@@ -4,8 +4,9 @@ import { signOut } from "firebase/auth";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
-import * as cloudFunctions from "../../firebase/cloudFunctions";
 import { useToast } from "../../components/Toast";
+import { useTranslation } from "../../hooks/useTranslation";
+import * as cloudFunctions from "../../firebase/cloudFunctions";
 import {
   Building2,
   Users,
@@ -20,6 +21,7 @@ import {
   Loader2,
   UserPlus,
   Home,
+  Languages,
 } from "lucide-react";
 
 // Avatar Component with fallback to initials
