@@ -270,7 +270,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               className={`text-xs font-semibold uppercase tracking-wider mb-3 px-3 ${!showContent ? "lg:hidden" : ""}`}
               style={{ color: 'var(--text-muted)' }}
             >
-              Settings
+              More
             </p>
             {bottomMenuItems.map((item) => {
               const Icon = item.icon;

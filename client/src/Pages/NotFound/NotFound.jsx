@@ -6,7 +6,7 @@ import './NotFound.css';
 const NotFound = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [countdown, setCountdown] = useState(10);
+  const [countdown, setCountdown] = useState(4);
 
   useEffect(() => {
     const timer = setInterval(() => {
