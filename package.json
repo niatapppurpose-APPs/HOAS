@@ -1,0 +1,29 @@
+{
+  "name": "hoas-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "HOAS - Hostel Operations Accountability System (Full-Stack Workspace)",
+  "scripts": {
+    "client": "cd client && npm run dev",
+    "server": "cd server && firebase emulators:start",
+    "dev": "concurrently \"npm run client\" \"npm run server\"",
+    "build": "cd client && npm run build",
+    "install:client": "cd client && npm install",
+    "install:server": "cd server/functions && npm install",
+    "install:all": "npm run install:client && npm run install:server",
+    "deploy": "cd server && firebase deploy --only functions"
+  },
+  "workspaces": [
+    "client",
+    "server/functions"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "driver.js": "^1.4.0",
+    "lottie-react": "^2.4.1",
+    "recharts": "^3.6.0"
+  }
+}

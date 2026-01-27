@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+
+# Firebase
+.firebase
+firebase-debug.log
+firebase-debug.*.log
+
+# Service Account Keys (IMPORTANT: Never commit these!)
+serviceAccountKey.json
+**/serviceAccountKey.json
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache
+.cache
