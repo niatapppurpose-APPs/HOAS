@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-<<<<<<< HEAD
+
 import { collection, query, where, onSnapshot, doc } from "firebase/firestore";
-=======
-import { collection, query, where, onSnapshot } from "firebase/firestore";
->>>>>>> e65f70b95142cc49dd3dc931bb3682817397f16c
+
 import { db } from "../../../firebase/firebaseConfig";
 import { useAuth } from "../../../context/AuthContext";
 import * as cloudFunctions from "../../../firebase/cloudFunctions";
@@ -23,11 +21,7 @@ import StatusVisualization from "../components/dashboard/StatusVisualization";
 import "./ManagementDashboard.css";
 
 const ManagementDashboard = () => {
-<<<<<<< HEAD
   const { user, userData, logout } = useAuth();
-=======
-  const { user, logout } = useAuth();
->>>>>>> e65f70b95142cc49dd3dc931bb3682817397f16c
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -38,12 +32,9 @@ const ManagementDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
-<<<<<<< HEAD
   // College logo (from colleges collection)
   const [collegeLogo, setCollegeLogo] = useState(null);
 
-=======
->>>>>>> e65f70b95142cc49dd3dc931bb3682817397f16c
   // Fetch wardens and students
   useEffect(() => {
     const wardensQuery = query(collection(db, "users"), where("role", "==", "warden"));
@@ -72,7 +63,6 @@ const ManagementDashboard = () => {
     };
   }, []);
 
-<<<<<<< HEAD
   // Subscribe to college doc to get logo (if user has a collegeName)
   useEffect(() => {
     if (!userData?.collegeName) {
@@ -94,8 +84,6 @@ const ManagementDashboard = () => {
     return () => unsubscribe();
   }, [userData]);
 
-=======
->>>>>>> e65f70b95142cc49dd3dc931bb3682817397f16c
   // Calculate statistics
   const stats = {
     totalWardens: wardens.length,
@@ -200,10 +188,9 @@ const ManagementDashboard = () => {
           user={user} 
           pendingCount={stats.totalPending}
           handleLogout={handleLogout}
-<<<<<<< HEAD
+
           collegeLogo={collegeLogo}
-=======
->>>>>>> e65f70b95142cc49dd3dc931bb3682817397f16c
+
         />
 
         <div className="dashboard-content">
