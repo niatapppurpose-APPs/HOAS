@@ -175,7 +175,7 @@ const ManagementProfile = () => {
               <input
                 type="number"
                 min="1"
-                max="50"
+                max="50" 
                 value={hostelCount}
                 onChange={(e) => setHostelCount(parseInt(e.target.value))}
                 className="w-full px-4 py-3 rounded-xl bg-slate-700/50 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
