@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { useState, useEffect, useRef } from 'react';
+import { collection, query, where, onSnapshot, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/firebaseConfig';
 import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
@@ -7,6 +7,7 @@ import Avatar from '../../../components/OwnerServices/Avatar';
 import { HashLoader } from "react-spinners";
 import { User, Mail, Shield, Eye, Edit2, UserMinus, Building2, Search } from 'lucide-react';
 import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmModal';
+import NotFound from './NOT-FOUND.mp4'
 const Wardens = () => {
     const { isCollapsed } = useOutletContext();
     const location = useLocation();
@@ -18,6 +19,35 @@ const Wardens = () => {
     const [searchListWarden, setSearchListWarden] = useState('')
     const [searchOpen, setSearchOpen] = useState(false);
     const [error, setError] = useState(null);
+    const videoRef = useRef(null);
+
+    // Refresh wardens list (manual) and Assign Warden navigation
+    const handleRefresh = async () => {
+        setLoading(true);
+        try {
+            const q = query(collection(db, 'users'), where('role', '==', 'warden'));
+            const snapshot = await getDocs(q);
+            const wardenList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            setWardens(wardenList);
+            setError(null);
+        } catch (err) {
+            console.error('Failed to refresh wardens:', err);
+            setError(err.message || 'Refresh failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const assignWarden = () => {
+        // preserve current page state so user can return after assigning
+        const state = {
+            searchText: searchListWarden,
+            scrollPosition: window.scrollY,
+            returnPath: '/OwnersDashboard/wardens'
+        };
+        sessionStorage.setItem('wardensPageState', JSON.stringify(state));
+        navigate('/OwnersDashboard/assign-warden');
+    };
 
     // TODO: Replace with actual college and hostel data from props/context
     const contextInfo = {
@@ -58,13 +88,43 @@ const Wardens = () => {
             if (timer) clearTimeout(timer);
         };
     }, []);
+
+    // Video autoplay: attempt to play the empty-state video; show controls if blocked
+    useEffect(() => {
+        if (!loading && wardens.length === 0 && videoRef?.current) {
+            const v = videoRef.current;
+            // ensure muted for autoplay policy
+            v.muted = true;
+            v.playsInline = true;
+            const tryPlay = async () => {
+                try {
+                    const p = v.play();
+                    if (p !== undefined) await p;
+                } catch (err) {
+                    console.warn('Video autoplay prevented:', err);
+                    v.controls = true;
+                } finally {
+                    // fallback: if still paused after 700ms, show controls
+                    setTimeout(() => {
+                        if (v.paused) v.controls = true;
+                    }, 700);
+                }
+            };
+            tryPlay();
+
+            const onError = (e) => { console.error('Video error event:', e); v.controls = true; };
+            v.addEventListener('error', onError);
+            return () => v.removeEventListener('error', onError);
+        }
+    }, [loading, wardens.length]);
+
     const onSearchEventWarden = (event) => {
         setSearchListWarden(event.target.value)
     }
     const searchWarden = wardens.filter((wardenList) => (
         !searchListWarden.trim() || wardenList.fullName?.toLowerCase().includes(searchListWarden.toLowerCase())
     ))
-    
+
     // Save page state before navigating away
     const savePageState = () => {
         const state = {
@@ -75,7 +135,7 @@ const Wardens = () => {
         sessionStorage.setItem('wardensPageState', JSON.stringify(state));
         return state;
     };
-    
+
     const handleRemove = (warden) => {
         setDeleteModal({ isOpen: true, warden });
     };
@@ -96,8 +156,8 @@ const Wardens = () => {
 
     return (
         <>
-            <Header 
-                title="Hostel Wardens" 
+            <Header
+                title="Hostel Wardens"
                 isCollapsed={isCollapsed}
                 onProfileClick={savePageState}
             />
@@ -120,20 +180,18 @@ const Wardens = () => {
                             {/* Search Icon Button */}
                             <button
                                 onClick={() => setSearchOpen(!searchOpen)}
-                                className={`p-2.5 rounded-lg border-2 hover:border-indigo-500/50 transition-all duration-300 z-10 ${
-                                    searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-                                }`}
+                                className={`p-2.5 rounded-lg border-2 hover:border-indigo-500/50 transition-all duration-300 z-10 ${searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                                    }`}
                                 style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
                                 aria-label="Toggle search"
                             >
                                 <Search className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
                             </button>
-                            
+
                             {/* Expandable Search Input */}
-                            <div 
-                                className={`absolute right-0 overflow-hidden transition-all duration-500 ease-in-out ${
-                                    searchOpen ? 'w-full sm:w-80 opacity-100' : 'w-0 opacity-0'
-                                }`}
+                            <div
+                                className={`absolute right-0 overflow-hidden transition-all duration-500 ease-in-out ${searchOpen ? 'w-full sm:w-80 opacity-100' : 'w-0 opacity-0'
+                                    }`}
                             >
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -145,7 +203,7 @@ const Wardens = () => {
                                         onChange={onSearchEventWarden}
                                         placeholder="Search wardens..."
                                         className="w-full pl-10 pr-14 py-2.5 bg-slate-800/50 border-2 border-slate-900/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
-                                        style={{ 
+                                        style={{
                                             transform: searchOpen ? 'translateX(0)' : 'translateX(20px)',
                                             transition: 'transform 0.5s ease-in-out'
                                         }}
@@ -166,7 +224,7 @@ const Wardens = () => {
                     </div>
                 ) : null}
                 {/* Wardens List */}
-                <section>
+                <section className='min-h-[60vh] flex items-center justify-center'>
                     {loading ? (
                         <div className="flex items-center justify-center w-full min-h-[calc(60vh)]">
                             <div className="text-center">
@@ -174,12 +232,39 @@ const Wardens = () => {
                             </div>
                         </div>
                     ) : wardens.length === 0 ? (
-                        <div className="rounded-xl p-12 text-center" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
-                            <Shield className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
-                            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>No Wardens Assigned</h3>
-                            <p className="max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
-                                No wardens have been assigned to {contextInfo.hostelName} yet.
-                            </p>
+                        <div className="mx-auto w-full max-w-2xl p-8 text-center" role="region" aria-labelledby="no-wardens-title" style={{ background: 'transparent', border: 'none' }}>
+                            <div className="mx-auto mb-6 w-full max-w-sm">
+                                {/* Video-only empty state */}
+                                <video
+                                    ref={videoRef}
+                                    src={NotFound}
+                                    autoPlay
+                                    muted
+                                    playsInline
+                                    preload="auto"
+                                    controls={false}
+                                    aria-label="No wardens animation"
+                                    className="mx-auto w-full rounded-md"
+                                />
+                            </div>
+
+                            <h3 id="no-wardens-title" className="text-2xl font-semibold mb-2" style={{ fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial', color: 'var(--text-primary)' }}>No Wardens Assigned Yet</h3>
+                            <p className="text-sm mb-6 max-w-[56ch] mx-auto" style={{ color: 'var(--text-muted)' }}>No wardens have been assigned to <strong style={{ color: 'var(--text-primary)' }}>{contextInfo.hostelName}</strong> yet. Assign a warden to manage resident lists, shift schedules, and notifications for this hostel block.</p>
+
+                            <div className="flex items-center justify-center gap-3">
+                                <button
+                                    onClick={assignWarden}
+                                    aria-label="Assign Warden"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md shadow-sm focus:outline-none"
+                                    style={{ backgroundColor: 'var(--accent-primary)', color: 'var(--text-inverse)', border: '1px solid rgba(0,0,0,0)' }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary-hover') || ''; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary') || ''; }}
+                                >
+                                    Assign Warden
+                                </button>
+
+
+                            </div>
                         </div>
                     ) : (
                         <div className="space-y-3">
