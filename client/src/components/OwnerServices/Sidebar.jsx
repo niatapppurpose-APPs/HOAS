@@ -13,6 +13,7 @@ import {
   FileText,
   Pin,
   X,
+  Cog,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -35,6 +36,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     if (path.includes('/analytics')) return 'analytics';
     if (path.includes('/reports')) return 'reports';
     if (path.includes('/notifications')) return 'notifications';
+    if (path.includes('/system-settings')) return 'system-settings';
     if (path.includes('/settings')) return 'settings';
     if (path.includes('/help')) return 'help';
     return 'dashboard';
@@ -81,6 +83,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   ];
 
   const bottomMenuItems = [
+    { id: "system-settings", label: "System Settings", icon: Cog, path: "/OwnersDashboard/system-settings", tourId: "tour-nav-system-settings" },
     { id: "settings", label: "Settings", icon: Settings, path: "/OwnersDashboard/settings", tourId: "tour-nav-settings" },
     { id: "help", label: "Help & Support", icon: HelpCircle, path: "/OwnersDashboard/help", tourId: "tour-nav-help" },
   ];

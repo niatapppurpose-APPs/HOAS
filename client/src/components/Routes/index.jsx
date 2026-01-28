@@ -21,6 +21,7 @@ import Analytics from "../../Pages/OwnersDashboard/Pages/Analytics"
 import Reports from "../../Pages/OwnersDashboard/Pages/Reports"
 import Notifications from "../../Pages/OwnersDashboard/Pages/Notifications"
 import Settings from "../../Pages/OwnersDashboard/Pages/Settings"
+import GlobalSystemSettings from "../../Pages/OwnersDashboard/Pages/GlobalSystemSettings"
 import Help from "../../Pages/OwnersDashboard/Pages/Help"
 import OwnerProfile from "../OwnerServices/OwnerProfile"
 import AdminLogin from '../OwnerServices/AdminLogin'
@@ -59,6 +60,7 @@ const Routes_path = () => {
                     <Route path="reports" element={<Reports />} />
                     <Route path="notifications" element={<Notifications />} />
                     <Route path="settings" element={<Settings />} />
+                    <Route path="system-settings" element={<GlobalSystemSettings />} />
                     <Route path="help" element={<Help />} />
                 </Route>
                 <Route path="/owner-profile" element={<OwnerProfile />} />

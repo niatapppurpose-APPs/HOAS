@@ -1,13 +1,13 @@
 import { Loader2, Trash2, AlertTriangle } from "lucide-react";
 
 // Delete Confirmation Modal Component
-const DeleteConfirmModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  collegeName, 
-  isDeleting, 
-  wardenCount, 
+const DeleteConfirmModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  collegeName,
+  isDeleting,
+  wardenCount,
   studentCount,
   showDetails = true,
   title = 'Delete College'

@@ -179,6 +179,212 @@ export const healthCheck = async () => {
   }
 };
 
+// =============================================================================
+// SYSTEM SETTINGS FUNCTIONS
+// =============================================================================
+
+/**
+ * Get global system settings
+ */
+export const getSystemSettings = async () => {
+  const callable = httpsCallable(functions, 'getSystemSettings');
+  try {
+    const result = await callable();
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching system settings:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update global system settings (Owner only)
+ */
+export const updateSystemSettings = async (settings) => {
+  const callable = httpsCallable(functions, 'updateSystemSettings');
+  try {
+    const result = await callable({ settings });
+    return result.data;
+  } catch (error) {
+    console.error('Error updating system settings:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all role permission templates
+ */
+export const getRolePermissionTemplates = async () => {
+  const callable = httpsCallable(functions, 'getRolePermissionTemplates');
+  try {
+    const result = await callable();
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching role permission templates:', error);
+    throw error;
+  }
+};
+
+/**
+ * Save a role permission template
+ */
+export const saveRolePermissionTemplate = async (template, templateId = null) => {
+  const callable = httpsCallable(functions, 'saveRolePermissionTemplate');
+  try {
+    const result = await callable({ templateId, template });
+    return result.data;
+  } catch (error) {
+    console.error('Error saving role permission template:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a role permission template
+ */
+export const deleteRolePermissionTemplate = async (templateId) => {
+  const callable = httpsCallable(functions, 'deleteRolePermissionTemplate');
+  try {
+    const result = await callable({ templateId });
+    return result.data;
+  } catch (error) {
+    console.error('Error deleting role permission template:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all approval workflows
+ */
+export const getApprovalWorkflows = async () => {
+  const callable = httpsCallable(functions, 'getApprovalWorkflows');
+  try {
+    const result = await callable();
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching approval workflows:', error);
+    throw error;
+  }
+};
+
+/**
+ * Save an approval workflow
+ */
+export const saveApprovalWorkflow = async (workflow, workflowId = null) => {
+  const callable = httpsCallable(functions, 'saveApprovalWorkflow');
+  try {
+    const result = await callable({ workflowId, workflow });
+    return result.data;
+  } catch (error) {
+    console.error('Error saving approval workflow:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete an approval workflow
+ */
+export const deleteApprovalWorkflow = async (workflowId) => {
+  const callable = httpsCallable(functions, 'deleteApprovalWorkflow');
+  try {
+    const result = await callable({ workflowId });
+    return result.data;
+  } catch (error) {
+    console.error('Error deleting approval workflow:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get user limits for all colleges
+ */
+export const getCollegeLimits = async () => {
+  const callable = httpsCallable(functions, 'getCollegeLimits');
+  try {
+    const result = await callable();
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching college limits:', error);
+    throw error;
+  }
+};
+
+/**
+ * Set user limits for a specific college
+ */
+export const setCollegeLimits = async (collegeId, limits) => {
+  const callable = httpsCallable(functions, 'setCollegeLimits');
+  try {
+    const result = await callable({ collegeId, limits });
+    return result.data;
+  } catch (error) {
+    console.error('Error setting college limits:', error);
+    throw error;
+  }
+};
+
+/**
+ * Check if registration is allowed
+ */
+export const checkRegistrationAllowed = async () => {
+  const callable = httpsCallable(functions, 'checkRegistrationAllowed');
+  try {
+    const result = await callable();
+    return result.data;
+  } catch (error) {
+    console.error('Error checking registration:', error);
+    // Default to allowed if we can't check
+    return { allowed: true };
+  }
+};
+
+/**
+ * Check college capacity for new users
+ */
+export const checkCollegeCapacity = async (collegeId, role) => {
+  const callable = httpsCallable(functions, 'checkCollegeCapacity');
+  try {
+    const result = await callable({ collegeId, role });
+    return result.data;
+  } catch (error) {
+    console.error('Error checking college capacity:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get system status (maintenance mode, features, etc.)
+ */
+export const getSystemStatus = async () => {
+  const callable = httpsCallable(functions, 'getSystemStatus');
+  try {
+    const result = await callable();
+    return result.data;
+  } catch (error) {
+    console.error('Error getting system status:', error);
+    // Default response if we can't check
+    return {
+      maintenanceMode: false,
+      registrationEnabled: true,
+      approvalsEnabled: true,
+    };
+  }
+};
+
+/**
+ * Initialize system settings with defaults
+ */
+export const initializeSystemSettings = async () => {
+  const callable = httpsCallable(functions, 'initializeSystemSettings');
+  try {
+    const result = await callable();
+    return result.data;
+  } catch (error) {
+    console.error('Error initializing system settings:', error);
+    throw error;
+  }
+};
+
 export default {
   approveUser,
   denyUser,
@@ -189,5 +395,20 @@ export default {
   setAdminClaim,
   getUserProfile,
   updateUserProfile,
-  healthCheck
+  healthCheck,
+  // System Settings
+  getSystemSettings,
+  updateSystemSettings,
+  getRolePermissionTemplates,
+  saveRolePermissionTemplate,
+  deleteRolePermissionTemplate,
+  getApprovalWorkflows,
+  saveApprovalWorkflow,
+  deleteApprovalWorkflow,
+  getCollegeLimits,
+  setCollegeLimits,
+  checkRegistrationAllowed,
+  checkCollegeCapacity,
+  getSystemStatus,
+  initializeSystemSettings,
 };
