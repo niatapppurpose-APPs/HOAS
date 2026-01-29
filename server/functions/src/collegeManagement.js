@@ -5,7 +5,7 @@ import { verifyAdmin, verifyManagementAccess } from './helpers.js';
 /**
  * Delete a college and all associated users (cascade delete)
  */
-export const deleteCollege = onCall({ cors: true }, async (request) => {
+export const deleteCollege = onCall(async (request) => {
   const { collegeId } = request.data;
 
   if (!collegeId) {
@@ -66,7 +66,7 @@ export const deleteCollege = onCall({ cors: true }, async (request) => {
 /**
  * Get college statistics
  */
-export const getCollegeStats = onCall({ cors: true }, async (request) => {
+export const getCollegeStats = onCall(async (request) => {
   const { collegeId } = request.data;
 
   if (!collegeId) {

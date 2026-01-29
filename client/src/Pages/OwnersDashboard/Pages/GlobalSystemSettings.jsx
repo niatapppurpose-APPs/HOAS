@@ -34,8 +34,203 @@ import {
   ArrowRight,
   GraduationCap,
   UserCheck,
-  Home
+  Home,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+
+// =============================================================================
+// BRANDING SECTION COMPONENT
+// =============================================================================
+const BrandingSection = ({ settings, onUpdate, saving }) => {
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [error, setError] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const toast = useToast();
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+
+    // Validation
+    const allowedTypes = ['image/png', 'image/jpeg'];
+    const maxSize = 2 * 1024 * 1024; // 2MB
+
+    if (!allowedTypes.includes(selectedFile.type)) {
+      setError('Invalid file type. Please upload a PNG or JPG image.');
+      setFile(null);
+      setPreview(null);
+      return;
+    }
+
+    if (selectedFile.size > maxSize) {
+      setError('File is too large. Please upload an image smaller than 2MB.');
+      setFile(null);
+      setPreview(null);
+      return;
+    }
+
+    setError(null);
+    setFile(selectedFile);
+    setPreview(URL.createObjectURL(selectedFile));
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+
+    setUploading(true);
+    setProgress(0);
+    setError(null);
+
+    try {
+      const storage = getStorage();
+      const path = `branding/logo-${Date.now()}-${file.name}`;
+      const storageRef = ref(storage, path);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          setProgress(progress);
+        },
+        (error) => {
+          console.error("Upload failed:", error);
+          setError('An error occurred during upload. Please try again.');
+          toast.error('Upload failed.');
+          setUploading(false);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          onUpdate({ logoUrl: downloadURL });
+          toast.success('Logo uploaded successfully!');
+          setUploading(false);
+          setFile(null);
+          setPreview(null);
+        }
+      );
+    } catch (err) {
+      console.error("Upload failed:", err);
+      setError('An error occurred. Please try again.');
+      toast.error('Upload failed.');
+      setUploading(false);
+    }
+  };
+  
+  const currentLogoUrl = settings?.logoUrl;
+
+  return (
+    <div className="space-y-6">
+      <div 
+        className="p-4 rounded-lg border"
+        style={{ 
+          backgroundColor: 'var(--bg-tertiary)', 
+          borderColor: 'var(--border-secondary)' 
+        }}
+      >
+        <div className="flex flex-col md:flex-row items-start gap-6">
+          {/* Logo Preview */}
+          <div className="w-full md:w-1/3">
+            <p className="font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+              College Logo
+            </p>
+            <div 
+              className="aspect-square w-full max-w-[200px] md:max-w-none bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center border-2 border-dashed"
+              style={{ borderColor: 'var(--border-primary)' }}
+            >
+              {preview ? (
+                <img src={preview} alt="New Logo Preview" className="w-full h-full object-contain rounded-lg p-2" />
+              ) : currentLogoUrl ? (
+                <img src={currentLogoUrl} alt="Current Logo" className="w-full h-full object-contain rounded-lg p-2" />
+              ) : (
+                <div className="text-center p-4">
+                  <ImageIcon className="w-10 h-10 mx-auto text-gray-400" />
+                  <p className="text-xs mt-2" style={{ color: 'var(--text-muted)'}}>No logo uploaded</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Upload Controls */}
+          <div className="w-full md:w-2/3">
+            <label 
+              htmlFor="logo-upload" 
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Upload new logo
+            </label>
+            <div 
+              className="flex items-center justify-center w-full px-4 py-6 border-2 border-dashed rounded-lg"
+              style={{ borderColor: 'var(--border-primary)' }}
+            >
+              <div className="text-center">
+                <Upload className="mx-auto h-10 w-10 text-gray-400" />
+                <div className="mt-2 flex text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  <label
+                    htmlFor="logo-upload"
+                    className="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                  >
+                    <span>Upload a file</span>
+                    <input id="logo-upload" name="logo-upload" type="file" className="sr-only" onChange={handleFileChange} accept="image/png, image/jpeg" />
+                  </label>
+                  <p className="pl-1">or drag and drop</p>
+                </div>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                  PNG, JPG up to 2MB
+                </p>
+              </div>
+            </div>
+
+            {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+            
+            {file && !uploading && (
+              <div className="mt-4 flex items-center justify-between p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
+                <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)'}}>
+                  {file.name}
+                </p>
+                <button
+                  onClick={handleUpload}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-white text-sm"
+                  style={{ backgroundColor: 'var(--accent-primary)' }}
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload
+                </button>
+              </div>
+            )}
+            
+            {uploading && (
+              <div className="mt-4">
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Uploading...</span>
+                  <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{progress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                  <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                </div>
+              </div>
+            )}
+            
+            <div className="mt-4 p-3 rounded-lg bg-indigo-50 border border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-500/30">
+              <div className="flex items-start gap-3">
+                <Info className="w-5 h-5 flex-shrink-0 mt-0.5 text-indigo-500" />
+                <div>
+                  <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                    The uploaded logo will be displayed across all dashboards, reports, and login pages to represent your institution.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // =============================================================================
 // TOGGLE SWITCH COMPONENT
@@ -1186,6 +1381,7 @@ const DEFAULT_SETTINGS = {
   defaultStudentLimit: 500,
   defaultWardenLimit: 10,
   defaultHostelLimit: 20,
+  logoUrl: null,
   features: {
     notifications: true,
     reports: true,
@@ -1558,6 +1754,19 @@ const GlobalSystemSettings = () => {
 
         {/* Settings Sections */}
         <div className="space-y-4">
+          {/* Branding Section */}
+          <CollapsibleSection 
+            title="Branding & Appearance" 
+            icon={ImageIcon} 
+            defaultOpen={true}
+          >
+            <BrandingSection 
+              settings={settings} 
+              onUpdate={handleSettingsUpdate} 
+              saving={saving || loading}
+            />
+          </CollapsibleSection>
+
           {/* Global Toggles */}
           <CollapsibleSection 
             title="Global Toggles" 

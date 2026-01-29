@@ -1,8 +1,21 @@
 import { LogOut } from "lucide-react";
 import Avatar from "../../../../components/OwnerServices/Avatar";
+import { useAuth } from "../../../../context/AuthContext";
+import { useNavigate } from "react-router";
 
-
-const ManagementHeader = ({ user, pendingCount = 0, handleLogout, collegeLogo }) => {
+const ManagementHeader = ({ user, pendingCount = 0, collegeLogo }) => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/", { replace: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
   return (
     <header className="management-header">
       <div className="header-content">

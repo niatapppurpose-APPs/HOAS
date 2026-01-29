@@ -25,6 +25,7 @@ import ErrorState from "./components/ErrorState";
 import LoadingState from "./components/LoadingState";
 
 import { Building2, CheckCircle, Clock, GraduationCap, Shield, LayoutDashboard  } from "lucide-react";
+import { signOut } from "firebase/auth";
 
 // Main Dashboard Component
 const OwnersDashboard = () => {
@@ -90,8 +91,10 @@ const OwnersDashboard = () => {
 
   useEffect(() => {
 
-    if (!loading && adminChecked) {
-      if (!user || !isAdmin) {
+    if (!loading) {
+      if (!user) {
+        navigate("/admin-login", { replace: true });
+      } else if (adminChecked && !isAdmin) {
         navigate("/admin-login", { replace: true });
       }
     }
@@ -159,14 +162,14 @@ const OwnersDashboard = () => {
   //---------------------------------- Handle logout--------------------------------------------------
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
       toast.success('Logged out successfully');
       navigate("/admin-login", { replace: true });
     } catch (error) {
       toast.error('Failed to logout. Please try again.');
       console.error("Logout error:", error);
-    }
-  };
+  }
+};
 
 
 

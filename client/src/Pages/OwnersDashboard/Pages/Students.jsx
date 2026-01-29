@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/firebaseConfig';
 import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
@@ -6,7 +6,9 @@ import Header from '../../../components/OwnerServices/header';
 import Avatar from '../../../components/OwnerServices/Avatar';
 import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmModal';
 import { HashLoader } from "react-spinners";
-import {Mail, GraduationCap, Eye, Edit2, UserMinus, Building2, Search } from 'lucide-react';
+import NotFound from './NOT-FOUND.mp4'
+import search from './Search.mp4'
+import { Mail, GraduationCap, Eye, Edit2, UserMinus, Building2, Search, X } from 'lucide-react';
 
 const Students = () => {
     const { isCollapsed } = useOutletContext();
@@ -19,6 +21,8 @@ const Students = () => {
     const [searchListStudent, setSearchListStudent] = useState('')
     const [searchOpen, setSearchOpen] = useState(false);
     const [error, setError] = useState(null);
+    const searchInputRef = useRef(null);
+    const clearSearch = () => { setSearchListStudent(''); searchInputRef.current?.focus(); }
 
     // TODO: Replace with actual college and hostel data from props/context
     const contextInfo = {
@@ -67,7 +71,7 @@ const Students = () => {
     const searchStudent = students.filter((studentlist) =>
         !searchListStudent.trim() || studentlist.fullName?.toLowerCase().includes(searchListStudent.toLowerCase())
     )
-    
+
     // Save page state before navigating away
     const savePageState = () => {
         const state = {
@@ -78,15 +82,15 @@ const Students = () => {
         sessionStorage.setItem('studentsPageState', JSON.stringify(state));
         return state;
     };
-    
+
     const handleRemove = (student) => {
         setDeleteModal({ isOpen: true, student });
     };
 
     return (
         <>
-            <Header 
-                title="Hostel Students" 
+            <Header
+                title="Hostel Students"
                 isCollapsed={isCollapsed}
                 onProfileClick={savePageState}
             />
@@ -105,36 +109,50 @@ const Students = () => {
                             {/* Search Icon Button */}
                             <button
                                 onClick={() => setSearchOpen(!searchOpen)}
-                                className={`p-2.5 rounded-lg border-2 hover:border-indigo-500/50 transition-all duration-300 z-10 ${
-                                    searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-                                }`}
+                                className={`p-2.5 rounded-lg border-2 hover:border-indigo-500/50 transition-all duration-300 z-10 ${searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                                    }`}
                                 style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
                                 aria-label="Toggle search"
                             >
                                 <Search className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
                             </button>
-                            
+
                             {/* Expandable Search Input */}
-                            <div 
-                                className={`absolute right-0 overflow-hidden transition-all duration-500 ease-in-out ${
-                                    searchOpen ? 'w-full sm:w-80 opacity-100' : 'w-0 opacity-0'
-                                }`}
+                            <div
+                                className={`absolute right-0 overflow-hidden transition-all duration-500 ease-in-out ${searchOpen ? 'w-full sm:w-80 opacity-100' : 'w-0 opacity-0'
+                                    }`}
                             >
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                         <Search className="w-5 h-5 text-slate-400" />
                                     </div>
                                     <input
+                                        ref={searchInputRef}
                                         type="search"
                                         value={searchListStudent}
                                         onChange={onSearchEventStudent}
                                         placeholder="Search students..."
-                                        className="w-full pl-10 pr-14 py-2.5 bg-slate-800/50 border-2 border-slate-900/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
-                                        style={{ 
+                                        className="w-full pl-10 pr-14 py-2.5 rounded-lg border-2 focus:outline-none transition-all"
+                                        style={{
+                                            backgroundColor: 'var(--bg-input)',
+                                            borderColor: 'var(--border-primary)',
+                                            color: 'var(--text-primary)',
                                             transform: searchOpen ? 'translateX(0)' : 'translateX(20px)',
                                             transition: 'transform 0.5s ease-in-out'
                                         }}
                                     />
+                                    {searchListStudent && (
+                                        <button
+                                            type="button"
+                                            aria-label="Clear search"
+                                            onClick={clearSearch}
+                                            className="absolute inset-y-0 right-3 flex items-center justify-center w-9 h-9 rounded-full z-1000 transition-colors focus:outline-none"
+                                            style={{ backgroundColor: 'var(--bg-card)' }}
+                                            title="Clear search"
+                                        >
+                                            <X className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -143,8 +161,22 @@ const Students = () => {
 
                 {/* This is for when Search student are not found this will display */}
                 {searchListStudent.trim() && students.length > 0 && searchStudent.length === 0 && !loading ? (
-                    <div className="rounded-xl p-8 text-center mb-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
-                        <Search className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
+                    <div className="rounded-xl p-8 text-center mb-4" >
+                        <div className="mx-auto mb-6 w-full max-w-md md:max-w-lg lg:max-w-xl rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--bg-card)' }}>
+                            {/* Video-only empty state */}
+                            <video
+                                src={search}
+                                autoPlay
+                                muted
+                                loop
+                                playsInline
+                                preload="auto"
+                                controls={false}
+                                aria-label="No wardens animation"
+                                className="mx-auto w-full block"
+                                style={{ borderRadius: '0.75rem', objectFit: 'contain', backgroundColor: 'var(--bg-card)' }}
+                            />
+                        </div>
                         <p className="text-lg font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>No students found</p>
                         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                             No matches for "<span className="text-indigo-400">{searchListStudent}</span>"
@@ -162,7 +194,20 @@ const Students = () => {
                         </div>
                     ) : (students.length === 0) ? (
                         <div className="rounded-xl p-12 text-center" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
-                            <GraduationCap className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
+                            <div className="mx-auto mb-6 w-full max-w-md">
+                                {/* Video-only empty state */}
+                                <video
+                                    src={NotFound}
+                                    autoPlay
+                                    muted
+                                    loop
+                                    playsInline
+                                    preload="auto"
+                                    controls={false}
+                                    aria-label="No wardens animation"
+                                    className="mx-auto w-full rounded-md"
+                                />
+                            </div>
                             <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>No Students Assigned</h3>
                             <p className="max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
                                 No students have been assigned to {contextInfo.hostelName} yet.
@@ -181,7 +226,7 @@ const Students = () => {
 
                                         {/* Left: Student Info */}
                                         <div className="flex items-center gap-4 flex-1 min-w-0">
-                                            
+
                                             <Avatar
                                                 image={student.photoURL}
                                                 name={student.fullName || student.displayName || student.email}

@@ -21,38 +21,38 @@ export const db = getFirestore(app);
 export const functions = getFunctions(app);
 export const storage = getStorage(app)
 // Track emulator status for other modules
+// Default to false to avoid accidentally using emulators in production
 export let isEmulatorConnected = false;
 
 // Enable persistence so user stays logged in after page reload
-setPersistence(auth, browserLocalPersistence);
+try {
+  // Await persistence so it's applied before auth state is restored
+  await setPersistence(auth, browserLocalPersistence);
+} catch (err) {
+  console.warn('⚠️ Failed to set auth persistence:', err);
+}
 
-// Auto-detect and connect to emulators
-// We use top-level await to ensure connection decision is made BEFORE app loads
-// This prevents the "logout on reload" race condition
-if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
-  const AUTH_URL = 'http://localhost:9099';
-  
+// Check for a debug override (e.g., via debugUtils.forceProductionMode())
+const forceProd = (typeof window !== 'undefined') && localStorage.getItem('forceProductionFirebase') === 'true';
+
+// Connect to emulators when explicitly requested via env var and not forced into production
+if (forceProd) {
+  console.log('🔒 Production mode forced via localStorage (forceProductionFirebase=true) - skipping emulator connections');
+  isEmulatorConnected = false;
+} else if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
   try {
-    // Check if Auth Emulator is running (with short timeout)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 500);
-    
-    await fetch(AUTH_URL, { 
-      method: 'GET', 
-      mode: 'no-cors',
-      signal: controller.signal 
-    });
-    
-    clearTimeout(timeoutId);
-    
-    console.log('🔧 Emulator detected! Connecting...');
+    console.log('🔧 Connecting to Firebase Emulators (VITE_USE_FIREBASE_EMULATOR=true)');
+    // Force-connect to configured emulator endpoints. These calls do not throw if the service is down,
+    // which prevents flipping back to production unexpectedly and causing sign-out.
     connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
     connectFirestoreEmulator(db, '127.0.0.1', 8080);
     connectFunctionsEmulator(functions, 'localhost', 5001);
+    connectStorageEmulator(storage, '127.0.0.1', 9199);
     isEmulatorConnected = true;
-    
+    console.log('🔧 Emulator connections configured (note: ensure emulators are started)');
   } catch (e) {
-    console.log('🌐 Emulator not found (or stopped). Using production services.');
+    // If we fail to connect to emulators, fall back to production mode to avoid breaking users
+    console.warn('⚠️ Error while configuring emulators - falling back to production mode:', e);
     isEmulatorConnected = false;
   }
 } else {
