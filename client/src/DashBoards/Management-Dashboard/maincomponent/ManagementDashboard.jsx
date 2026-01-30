@@ -64,7 +64,15 @@ const ManagementDashboard = () => {
   }, []);
 
   // Subscribe to college doc to get logo (if user has a collegeName)
+  // First check userData.collegeLogo (from profile registration), then colleges collection
   useEffect(() => {
+    // First priority: collegeLogo stored directly in userData (from profile registration)
+    if (userData?.collegeLogo) {
+      setCollegeLogo(userData.collegeLogo);
+      return;
+    }
+
+    // Second priority: fetch from colleges collection
     if (!userData?.collegeName) {
       setCollegeLogo(null);
       return;
@@ -90,8 +98,8 @@ const ManagementDashboard = () => {
     pendingWardens: wardens.filter(w => w.status === 'pending').length,
     totalStudents: students.length,
     pendingStudents: students.filter(s => s.status === 'pending').length,
-    totalPending: wardens.filter(w => w.status === 'pending').length + 
-                  students.filter(s => s.status === 'pending').length,
+    totalPending: wardens.filter(w => w.status === 'pending').length +
+      students.filter(s => s.status === 'pending').length,
     totalHostels: 2 // This would come from a hostels collection
   };
 
@@ -182,10 +190,10 @@ const ManagementDashboard = () => {
   return (
     <div className="management-dashboard">
       <ManagementSidebar />
-      
+
       <div className="dashboard-main">
-        <ManagementHeader 
-          user={user} 
+        <ManagementHeader
+          user={user}
           pendingCount={stats.totalPending}
           handleLogout={handleLogout}
 
@@ -200,7 +208,7 @@ const ManagementDashboard = () => {
               <KPICards stats={stats} />
             </div>
             <div className="quick-approval-section">
-              <QuickApproval 
+              <QuickApproval
                 pendingUser={firstPendingUser}
                 onApprove={() => handleApprove(firstPendingUser?.id)}
                 onViewDetails={handleViewDetails}
@@ -210,7 +218,7 @@ const ManagementDashboard = () => {
           </div>
 
           {/* Recent Activity */}
-          <RecentActivity 
+          <RecentActivity
             recentUsers={recentUsers}
             onApprove={handleApprove}
             approvingUserId={approvingUserId}
@@ -219,7 +227,7 @@ const ManagementDashboard = () => {
           {/* Bottom Row: Status Table + Visualization */}
           <div className="dashboard-bottom-row">
             <div className="status-table-wrapper">
-              <StatusTable 
+              <StatusTable
                 users={paginatedUsers}
                 currentPage={currentPage}
                 totalPages={Math.ceil(allUsers.length / itemsPerPage)}
@@ -227,7 +235,7 @@ const ManagementDashboard = () => {
               />
             </div>
             <div className="status-viz-wrapper">
-              <StatusVisualization 
+              <StatusVisualization
                 wardens={wardensViz}
                 students={studentsViz}
               />

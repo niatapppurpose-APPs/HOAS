@@ -5,11 +5,11 @@ import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../components/Toast';
 import Header from '../../../components/OwnerServices/header';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
-import { 
-  Settings, 
-  Shield, 
-  Users, 
-  Building2, 
+import {
+  Settings,
+  Shield,
+  Users,
+  Building2,
   AlertTriangle,
   Save,
   RefreshCw,
@@ -118,16 +118,16 @@ const BrandingSection = ({ settings, onUpdate, saving }) => {
       setUploading(false);
     }
   };
-  
+
   const currentLogoUrl = settings?.logoUrl;
 
   return (
     <div className="space-y-6">
-      <div 
+      <div
         className="p-4 rounded-lg border"
-        style={{ 
-          backgroundColor: 'var(--bg-tertiary)', 
-          borderColor: 'var(--border-secondary)' 
+        style={{
+          backgroundColor: 'var(--bg-tertiary)',
+          borderColor: 'var(--border-secondary)'
         }}
       >
         <div className="flex flex-col md:flex-row items-start gap-6">
@@ -136,7 +136,7 @@ const BrandingSection = ({ settings, onUpdate, saving }) => {
             <p className="font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
               College Logo
             </p>
-            <div 
+            <div
               className="aspect-square w-full max-w-[200px] md:max-w-none bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center border-2 border-dashed"
               style={{ borderColor: 'var(--border-primary)' }}
             >
@@ -147,7 +147,7 @@ const BrandingSection = ({ settings, onUpdate, saving }) => {
               ) : (
                 <div className="text-center p-4">
                   <ImageIcon className="w-10 h-10 mx-auto text-gray-400" />
-                  <p className="text-xs mt-2" style={{ color: 'var(--text-muted)'}}>No logo uploaded</p>
+                  <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>No logo uploaded</p>
                 </div>
               )}
             </div>
@@ -155,14 +155,14 @@ const BrandingSection = ({ settings, onUpdate, saving }) => {
 
           {/* Upload Controls */}
           <div className="w-full md:w-2/3">
-            <label 
-              htmlFor="logo-upload" 
+            <label
+              htmlFor="logo-upload"
               className="block text-sm font-medium mb-2"
               style={{ color: 'var(--text-primary)' }}
             >
               Upload new logo
             </label>
-            <div 
+            <div
               className="flex items-center justify-center w-full px-4 py-6 border-2 border-dashed rounded-lg"
               style={{ borderColor: 'var(--border-primary)' }}
             >
@@ -185,10 +185,10 @@ const BrandingSection = ({ settings, onUpdate, saving }) => {
             </div>
 
             {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
-            
+
             {file && !uploading && (
               <div className="mt-4 flex items-center justify-between p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
-                <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)'}}>
+                <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
                   {file.name}
                 </p>
                 <button
@@ -202,7 +202,7 @@ const BrandingSection = ({ settings, onUpdate, saving }) => {
                 </button>
               </div>
             )}
-            
+
             {uploading && (
               <div className="mt-4">
                 <div className="flex justify-between mb-1">
@@ -214,7 +214,7 @@ const BrandingSection = ({ settings, onUpdate, saving }) => {
                 </div>
               </div>
             )}
-            
+
             <div className="mt-4 p-3 rounded-lg bg-indigo-50 border border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-500/30">
               <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 flex-shrink-0 mt-0.5 text-indigo-500" />
@@ -248,14 +248,12 @@ const ToggleSwitch = ({ enabled, onChange, disabled = false, size = 'md' }) => {
       type="button"
       onClick={() => !disabled && onChange(!enabled)}
       disabled={disabled}
-      className={`${s.width} ${s.height} rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-      } ${enabled ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+      className={`${s.width} ${s.height} rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+        } ${enabled ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'}`}
     >
       <span
-        className={`${s.dot} rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out flex items-center justify-center ${
-          enabled ? s.translate : 'translate-x-0.5'
-        }`}
+        className={`${s.dot} rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out flex items-center justify-center ${enabled ? s.translate : 'translate-x-0.5'
+          }`}
       >
         {enabled ? (
           <CheckCircle className="w-3 h-3 text-indigo-600" />
@@ -272,13 +270,13 @@ const ToggleSwitch = ({ enabled, onChange, disabled = false, size = 'md' }) => {
 // =============================================================================
 const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = false, badge = null }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  
+
   return (
-    <div 
+    <div
       className="rounded-xl border overflow-hidden mb-4"
-      style={{ 
-        backgroundColor: 'var(--bg-card)', 
-        borderColor: 'var(--border-primary)' 
+      style={{
+        backgroundColor: 'var(--bg-card)',
+        borderColor: 'var(--border-primary)'
       }}
     >
       <button
@@ -287,7 +285,7 @@ const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = false, 
         style={{ backgroundColor: isOpen ? 'var(--bg-tertiary)' : 'transparent' }}
       >
         <div className="flex items-center gap-3">
-          <div 
+          <div
             className="p-2 rounded-lg"
             style={{ backgroundColor: 'var(--accent-primary)', opacity: 0.2 }}
           >
@@ -295,7 +293,7 @@ const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = false, 
           </div>
           <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</span>
           {badge && (
-            <span 
+            <span
               className="px-2 py-0.5 text-xs rounded-full"
               style={{ backgroundColor: 'var(--accent-primary)', color: 'white' }}
             >
@@ -361,22 +359,21 @@ const GlobalTogglesSection = ({ settings, onUpdate, saving }) => {
           const Icon = toggle.icon;
           const isEnabled = settings[toggle.key];
           const showWarning = (toggle.dangerWhenOn && isEnabled) || (toggle.dangerWhenOff && !isEnabled);
-          
+
           return (
-            <div 
+            <div
               key={toggle.key}
-              className={`flex items-center justify-between p-4 rounded-lg border ${
-                showWarning ? 'border-amber-500/50' : ''
-              }`}
-              style={{ 
+              className={`flex items-center justify-between p-4 rounded-lg border ${showWarning ? 'border-amber-500/50' : ''
+                }`}
+              style={{
                 backgroundColor: showWarning ? 'rgba(245, 158, 11, 0.1)' : 'var(--bg-tertiary)',
                 borderColor: showWarning ? undefined : 'var(--border-secondary)'
               }}
             >
               <div className="flex items-center gap-3">
-                <Icon 
-                  className={`w-5 h-5 ${showWarning ? 'text-amber-500' : ''}`} 
-                  style={{ color: showWarning ? undefined : 'var(--text-secondary)' }} 
+                <Icon
+                  className={`w-5 h-5 ${showWarning ? 'text-amber-500' : ''}`}
+                  style={{ color: showWarning ? undefined : 'var(--text-secondary)' }}
                 />
                 <div>
                   <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -407,8 +404,8 @@ const GlobalTogglesSection = ({ settings, onUpdate, saving }) => {
             value={settings.maintenanceMessage || ''}
             onChange={(e) => onUpdate({ maintenanceMessage: e.target.value })}
             className="w-full p-3 rounded-lg border resize-none"
-            style={{ 
-              backgroundColor: 'var(--bg-primary)', 
+            style={{
+              backgroundColor: 'var(--bg-primary)',
               borderColor: 'var(--border-primary)',
               color: 'var(--text-primary)'
             }}
@@ -427,14 +424,14 @@ const GlobalTogglesSection = ({ settings, onUpdate, saving }) => {
           {featureToggles.map((feature) => {
             const Icon = feature.icon;
             const isEnabled = settings.features?.[feature.key] !== false;
-            
+
             return (
               <div
                 key={feature.key}
                 className="flex items-center justify-between p-3 rounded-lg border"
-                style={{ 
-                  backgroundColor: 'var(--bg-tertiary)', 
-                  borderColor: 'var(--border-secondary)' 
+                style={{
+                  backgroundColor: 'var(--bg-tertiary)',
+                  borderColor: 'var(--border-secondary)'
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -445,8 +442,8 @@ const GlobalTogglesSection = ({ settings, onUpdate, saving }) => {
                 </div>
                 <ToggleSwitch
                   enabled={isEnabled}
-                  onChange={(value) => onUpdate({ 
-                    features: { ...settings.features, [feature.key]: value } 
+                  onChange={(value) => onUpdate({
+                    features: { ...settings.features, [feature.key]: value }
                   })}
                   disabled={saving}
                   size="sm"
@@ -465,25 +462,25 @@ const GlobalTogglesSection = ({ settings, onUpdate, saving }) => {
 // =============================================================================
 const UserLimitsSection = ({ settings, onUpdate, saving }) => {
   const limits = [
-    { 
-      key: 'defaultStudentLimit', 
-      title: 'Default Student Limit', 
+    {
+      key: 'defaultStudentLimit',
+      title: 'Default Student Limit',
       description: 'Maximum students per hostel',
       icon: GraduationCap,
       min: 0,
       max: 10000,
     },
-    { 
-      key: 'defaultWardenLimit', 
-      title: 'Default Warden Limit', 
+    {
+      key: 'defaultWardenLimit',
+      title: 'Default Warden Limit',
       description: 'Maximum wardens per hostel',
       icon: Shield,
       min: 0,
       max: 100,
     },
-    { 
-      key: 'defaultHostelLimit', 
-      title: 'Default Hostel Limit', 
+    {
+      key: 'defaultHostelLimit',
+      title: 'Default Hostel Limit',
       description: 'Maximum hostels per college',
       icon: Home,
       min: 0,
@@ -499,9 +496,9 @@ const UserLimitsSection = ({ settings, onUpdate, saving }) => {
           <div
             key={limit.key}
             className="flex items-center justify-between p-4 rounded-lg border"
-            style={{ 
-              backgroundColor: 'var(--bg-tertiary)', 
-              borderColor: 'var(--border-secondary)' 
+            style={{
+              backgroundColor: 'var(--bg-tertiary)',
+              borderColor: 'var(--border-secondary)'
             }}
           >
             <div className="flex items-center gap-3">
@@ -523,8 +520,8 @@ const UserLimitsSection = ({ settings, onUpdate, saving }) => {
               max={limit.max}
               disabled={saving}
               className="w-24 p-2 rounded-lg border text-center"
-              style={{ 
-                backgroundColor: 'var(--bg-primary)', 
+              style={{
+                backgroundColor: 'var(--bg-primary)',
                 borderColor: 'var(--border-primary)',
                 color: 'var(--text-primary)'
               }}
@@ -621,8 +618,8 @@ const RolePermissionsSection = ({ templates, onSave, onDelete, loading }) => {
               value={editData.name}
               onChange={(e) => setEditData({ ...editData, name: e.target.value })}
               className="w-full p-2 rounded-lg border"
-              style={{ 
-                backgroundColor: 'var(--bg-primary)', 
+              style={{
+                backgroundColor: 'var(--bg-primary)',
                 borderColor: 'var(--border-primary)',
                 color: 'var(--text-primary)'
               }}
@@ -637,8 +634,8 @@ const RolePermissionsSection = ({ templates, onSave, onDelete, loading }) => {
               value={editData.role}
               onChange={(e) => setEditData({ ...editData, role: e.target.value })}
               className="w-full p-2 rounded-lg border"
-              style={{ 
-                backgroundColor: 'var(--bg-primary)', 
+              style={{
+                backgroundColor: 'var(--bg-primary)',
                 borderColor: 'var(--border-primary)',
                 color: 'var(--text-primary)'
               }}
@@ -659,8 +656,8 @@ const RolePermissionsSection = ({ templates, onSave, onDelete, loading }) => {
             value={editData.description}
             onChange={(e) => setEditData({ ...editData, description: e.target.value })}
             className="w-full p-2 rounded-lg border resize-none"
-            style={{ 
-              backgroundColor: 'var(--bg-primary)', 
+            style={{
+              backgroundColor: 'var(--bg-primary)',
               borderColor: 'var(--border-primary)',
               color: 'var(--text-primary)'
             }}
@@ -678,8 +675,8 @@ const RolePermissionsSection = ({ templates, onSave, onDelete, loading }) => {
               <label
                 key={key}
                 className="flex items-center gap-2 p-2 rounded-lg border cursor-pointer hover:bg-opacity-50"
-                style={{ 
-                  backgroundColor: editData.permissions[key] ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-tertiary)', 
+                style={{
+                  backgroundColor: editData.permissions[key] ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-tertiary)',
                   borderColor: editData.permissions[key] ? 'var(--accent-primary)' : 'var(--border-secondary)'
                 }}
               >
@@ -745,9 +742,9 @@ const RolePermissionsSection = ({ templates, onSave, onDelete, loading }) => {
           <div
             key={template.id}
             className="p-4 rounded-lg border"
-            style={{ 
-              backgroundColor: 'var(--bg-tertiary)', 
-              borderColor: 'var(--border-secondary)' 
+            style={{
+              backgroundColor: 'var(--bg-tertiary)',
+              borderColor: 'var(--border-secondary)'
             }}
           >
             <div className="flex items-start justify-between mb-2">
@@ -907,8 +904,8 @@ const ApprovalWorkflowsSection = ({ workflows, onSave, onDelete, loading }) => {
               value={editData.name}
               onChange={(e) => setEditData({ ...editData, name: e.target.value })}
               className="w-full p-2 rounded-lg border"
-              style={{ 
-                backgroundColor: 'var(--bg-primary)', 
+              style={{
+                backgroundColor: 'var(--bg-primary)',
                 borderColor: 'var(--border-primary)',
                 color: 'var(--text-primary)'
               }}
@@ -923,8 +920,8 @@ const ApprovalWorkflowsSection = ({ workflows, onSave, onDelete, loading }) => {
               value={editData.targetRole}
               onChange={(e) => setEditData({ ...editData, targetRole: e.target.value })}
               className="w-full p-2 rounded-lg border"
-              style={{ 
-                backgroundColor: 'var(--bg-primary)', 
+              style={{
+                backgroundColor: 'var(--bg-primary)',
                 borderColor: 'var(--border-primary)',
                 color: 'var(--text-primary)'
               }}
@@ -944,8 +941,8 @@ const ApprovalWorkflowsSection = ({ workflows, onSave, onDelete, loading }) => {
             value={editData.description}
             onChange={(e) => setEditData({ ...editData, description: e.target.value })}
             className="w-full p-2 rounded-lg border resize-none"
-            style={{ 
-              backgroundColor: 'var(--bg-primary)', 
+            style={{
+              backgroundColor: 'var(--bg-primary)',
               borderColor: 'var(--border-primary)',
               color: 'var(--text-primary)'
             }}
@@ -974,9 +971,9 @@ const ApprovalWorkflowsSection = ({ workflows, onSave, onDelete, loading }) => {
               <div
                 key={index}
                 className="p-3 rounded-lg border"
-                style={{ 
-                  backgroundColor: 'var(--bg-tertiary)', 
-                  borderColor: 'var(--border-secondary)' 
+                style={{
+                  backgroundColor: 'var(--bg-tertiary)',
+                  borderColor: 'var(--border-secondary)'
                 }}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -1000,8 +997,8 @@ const ApprovalWorkflowsSection = ({ workflows, onSave, onDelete, loading }) => {
                       value={step.approverRole}
                       onChange={(e) => updateStep(index, 'approverRole', e.target.value)}
                       className="w-full p-1.5 rounded border text-sm"
-                      style={{ 
-                        backgroundColor: 'var(--bg-primary)', 
+                      style={{
+                        backgroundColor: 'var(--bg-primary)',
                         borderColor: 'var(--border-primary)',
                         color: 'var(--text-primary)'
                       }}
@@ -1020,8 +1017,8 @@ const ApprovalWorkflowsSection = ({ workflows, onSave, onDelete, loading }) => {
                       onChange={(e) => updateStep(index, 'timeoutHours', parseInt(e.target.value) || 48)}
                       min={1}
                       className="w-full p-1.5 rounded border text-sm"
-                      style={{ 
-                        backgroundColor: 'var(--bg-primary)', 
+                      style={{
+                        backgroundColor: 'var(--bg-primary)',
                         borderColor: 'var(--border-primary)',
                         color: 'var(--text-primary)'
                       }}
@@ -1033,8 +1030,8 @@ const ApprovalWorkflowsSection = ({ workflows, onSave, onDelete, loading }) => {
                       value={step.timeoutAction}
                       onChange={(e) => updateStep(index, 'timeoutAction', e.target.value)}
                       className="w-full p-1.5 rounded border text-sm"
-                      style={{ 
-                        backgroundColor: 'var(--bg-primary)', 
+                      style={{
+                        backgroundColor: 'var(--bg-primary)',
                         borderColor: 'var(--border-primary)',
                         color: 'var(--text-primary)'
                       }}
@@ -1113,11 +1110,11 @@ const ApprovalWorkflowsSection = ({ workflows, onSave, onDelete, loading }) => {
       </div>
 
       {workflows.length === 0 ? (
-        <div 
+        <div
           className="p-8 rounded-lg border text-center"
-          style={{ 
-            backgroundColor: 'var(--bg-tertiary)', 
-            borderColor: 'var(--border-secondary)' 
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            borderColor: 'var(--border-secondary)'
           }}
         >
           <Clock className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
@@ -1132,9 +1129,9 @@ const ApprovalWorkflowsSection = ({ workflows, onSave, onDelete, loading }) => {
             <div
               key={workflow.id}
               className="p-4 rounded-lg border"
-              style={{ 
-                backgroundColor: 'var(--bg-tertiary)', 
-                borderColor: 'var(--border-secondary)' 
+              style={{
+                backgroundColor: 'var(--bg-tertiary)',
+                borderColor: 'var(--border-secondary)'
               }}
             >
               <div className="flex items-start justify-between mb-3">
@@ -1143,9 +1140,8 @@ const ApprovalWorkflowsSection = ({ workflows, onSave, onDelete, loading }) => {
                     <h5 className="font-medium" style={{ color: 'var(--text-primary)' }}>
                       {workflow.name}
                     </h5>
-                    <span className={`px-2 py-0.5 text-xs rounded-full ${
-                      workflow.isActive ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-500'
-                    }`}>
+                    <span className={`px-2 py-0.5 text-xs rounded-full ${workflow.isActive ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-500'
+                      }`}>
                       {workflow.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
@@ -1174,9 +1170,9 @@ const ApprovalWorkflowsSection = ({ workflows, onSave, onDelete, loading }) => {
               <div className="flex items-center gap-2 overflow-x-auto pb-2">
                 {workflow.steps?.map((step, index) => (
                   <div key={index} className="flex items-center">
-                    <div 
+                    <div
                       className="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap"
-                      style={{ 
+                      style={{
                         backgroundColor: 'var(--bg-secondary)',
                         color: 'var(--text-primary)'
                       }}
@@ -1239,11 +1235,11 @@ const CollegeLimitsSection = ({ limits, colleges, onSave, loading }) => {
       </p>
 
       {limits.length === 0 && colleges.length === 0 ? (
-        <div 
+        <div
           className="p-8 rounded-lg border text-center"
-          style={{ 
-            backgroundColor: 'var(--bg-tertiary)', 
-            borderColor: 'var(--border-secondary)' 
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            borderColor: 'var(--border-secondary)'
           }}
         >
           <Building2 className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
@@ -1257,14 +1253,14 @@ const CollegeLimitsSection = ({ limits, colleges, onSave, loading }) => {
           {(colleges.length > 0 ? colleges : limits).map((item) => {
             const collegeId = item.id || item.collegeId;
             const collegeLimits = getCollegeLimits(collegeId);
-            
+
             return (
               <div
                 key={collegeId}
                 className="p-4 rounded-lg border"
-                style={{ 
-                  backgroundColor: 'var(--bg-tertiary)', 
-                  borderColor: 'var(--border-secondary)' 
+                style={{
+                  backgroundColor: 'var(--bg-tertiary)',
+                  borderColor: 'var(--border-secondary)'
                 }}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -1299,8 +1295,8 @@ const CollegeLimitsSection = ({ limits, colleges, onSave, loading }) => {
                         onChange={(e) => updateCollegeLimits(collegeId, 'maxStudents', e.target.value)}
                         placeholder="Default"
                         className="w-full p-2 rounded border text-sm"
-                        style={{ 
-                          backgroundColor: 'var(--bg-primary)', 
+                        style={{
+                          backgroundColor: 'var(--bg-primary)',
                           borderColor: 'var(--border-primary)',
                           color: 'var(--text-primary)'
                         }}
@@ -1323,8 +1319,8 @@ const CollegeLimitsSection = ({ limits, colleges, onSave, loading }) => {
                         onChange={(e) => updateCollegeLimits(collegeId, 'maxWardens', e.target.value)}
                         placeholder="Default"
                         className="w-full p-2 rounded border text-sm"
-                        style={{ 
-                          backgroundColor: 'var(--bg-primary)', 
+                        style={{
+                          backgroundColor: 'var(--bg-primary)',
                           borderColor: 'var(--border-primary)',
                           color: 'var(--text-primary)'
                         }}
@@ -1347,8 +1343,8 @@ const CollegeLimitsSection = ({ limits, colleges, onSave, loading }) => {
                         onChange={(e) => updateCollegeLimits(collegeId, 'maxHostels', e.target.value)}
                         placeholder="Default"
                         className="w-full p-2 rounded border text-sm"
-                        style={{ 
-                          backgroundColor: 'var(--bg-primary)', 
+                        style={{
+                          backgroundColor: 'var(--bg-primary)',
                           borderColor: 'var(--border-primary)',
                           color: 'var(--text-primary)'
                         }}
@@ -1483,12 +1479,12 @@ const GlobalSystemSettings = () => {
         setLoading(true);
       }
       setLoadError(null);
-      
+
       // Helper function to add timeout to promises (shorter timeout - 8 seconds)
       const withTimeout = (promise, timeoutMs = 8000) => {
         return Promise.race([
           promise,
-          new Promise((_, reject) => 
+          new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
           )
         ]);
@@ -1536,7 +1532,7 @@ const GlobalSystemSettings = () => {
 
       // Track if at least one request succeeded
       const anySucceeded = results.some(r => r.status === 'fulfilled');
-      
+
       // Check if all failed
       const allFailed = results.every(r => r.status === 'rejected');
       if (allFailed) {
@@ -1553,9 +1549,9 @@ const GlobalSystemSettings = () => {
           toast.warning('Some settings could not be loaded');
         }
       }
-      
+
       setInitialLoad(false);
-      
+
     } catch (error) {
       console.error('Error loading system settings:', error);
       setDataSource('local');
@@ -1657,7 +1653,7 @@ const GlobalSystemSettings = () => {
   return (
     <>
       <Header title="Global System Settings" isCollapsed={isCollapsed} />
-      <div 
+      <div
         className="pt-24 p-6 min-h-screen"
         style={{ backgroundColor: 'var(--bg-primary)' }}
       >
@@ -1696,8 +1692,8 @@ const GlobalSystemSettings = () => {
                 onClick={() => loadData(true)}
                 disabled={loading}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg border"
-                style={{ 
-                  backgroundColor: 'var(--bg-card)', 
+                style={{
+                  backgroundColor: 'var(--bg-card)',
                   borderColor: 'var(--border-primary)',
                   color: 'var(--text-primary)'
                 }}
@@ -1754,51 +1750,39 @@ const GlobalSystemSettings = () => {
 
         {/* Settings Sections */}
         <div className="space-y-4">
-          {/* Branding Section */}
-          <CollapsibleSection 
-            title="Branding & Appearance" 
-            icon={ImageIcon} 
-            defaultOpen={true}
-          >
-            <BrandingSection 
-              settings={settings} 
-              onUpdate={handleSettingsUpdate} 
-              saving={saving || loading}
-            />
-          </CollapsibleSection>
 
           {/* Global Toggles */}
-          <CollapsibleSection 
-            title="Global Toggles" 
-            icon={Settings} 
+          <CollapsibleSection
+            title="Global Toggles"
+            icon={Settings}
             defaultOpen={true}
           >
-            <GlobalTogglesSection 
-              settings={settings} 
-              onUpdate={handleSettingsUpdate} 
+            <GlobalTogglesSection
+              settings={settings}
+              onUpdate={handleSettingsUpdate}
               saving={saving}
             />
           </CollapsibleSection>
 
           {/* User Limits */}
-          <CollapsibleSection 
-            title="Default User Limits" 
+          <CollapsibleSection
+            title="Default User Limits"
             icon={Users}
           >
-            <UserLimitsSection 
-              settings={settings} 
-              onUpdate={handleSettingsUpdate} 
+            <UserLimitsSection
+              settings={settings}
+              onUpdate={handleSettingsUpdate}
               saving={saving}
             />
           </CollapsibleSection>
 
           {/* Role Permission Templates */}
-          <CollapsibleSection 
-            title="Role Permission Templates" 
+          <CollapsibleSection
+            title="Role Permission Templates"
             icon={Shield}
             badge={templates.length}
           >
-            <RolePermissionsSection 
+            <RolePermissionsSection
               templates={templates}
               onSave={handleSaveTemplate}
               onDelete={handleDeleteTemplate}
@@ -1807,12 +1791,12 @@ const GlobalSystemSettings = () => {
           </CollapsibleSection>
 
           {/* Approval Workflows */}
-          <CollapsibleSection 
-            title="Approval Workflows" 
+          <CollapsibleSection
+            title="Approval Workflows"
             icon={CheckCircle}
             badge={workflows.length}
           >
-            <ApprovalWorkflowsSection 
+            <ApprovalWorkflowsSection
               workflows={workflows}
               onSave={handleSaveWorkflow}
               onDelete={handleDeleteWorkflow}
@@ -1821,12 +1805,12 @@ const GlobalSystemSettings = () => {
           </CollapsibleSection>
 
           {/* College/Hostel Limits */}
-          <CollapsibleSection 
-            title="College/Hostel User Limits" 
+          <CollapsibleSection
+            title="College/Hostel User Limits"
             icon={Building2}
             badge={collegeLimits.length}
           >
-            <CollegeLimitsSection 
+            <CollegeLimitsSection
               limits={collegeLimits}
               colleges={colleges}
               onSave={handleSaveCollegeLimits}
@@ -1836,11 +1820,11 @@ const GlobalSystemSettings = () => {
         </div>
 
         {/* Info Footer */}
-        <div 
+        <div
           className="mt-8 p-4 rounded-lg border flex items-start gap-3"
-          style={{ 
-            backgroundColor: 'var(--bg-card)', 
-            borderColor: 'var(--border-primary)' 
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: 'var(--border-primary)'
           }}
         >
           <Info className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--accent-primary)' }} />

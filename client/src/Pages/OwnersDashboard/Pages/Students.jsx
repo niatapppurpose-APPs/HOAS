@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, deleteDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase/firebaseConfig';
 import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
@@ -8,7 +8,9 @@ import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmM
 import { HashLoader } from "react-spinners";
 import NotFound from './NOT-FOUND.mp4'
 import search from './Search.mp4'
-import { Mail, GraduationCap, Eye, Edit2, UserMinus, Building2, Search, X } from 'lucide-react';
+import { Mail, GraduationCap, UserMinus, Building2, Search, X, RefreshCw } from 'lucide-react';
+import { useTheme } from '../../../context/ThemeContext';
+import EmptyState from '../../../components/OwnerServices/EmptyState';
 
 const Students = () => {
     const { isCollapsed } = useOutletContext();
@@ -21,8 +23,12 @@ const Students = () => {
     const [searchListStudent, setSearchListStudent] = useState('')
     const [searchOpen, setSearchOpen] = useState(false);
     const [error, setError] = useState(null);
+    const [simulateError, setSimulateError] = useState(false);
     const searchInputRef = useRef(null);
     const clearSearch = () => { setSearchListStudent(''); searchInputRef.current?.focus(); }
+
+    // Theme (for dark/light mode adjustments)
+    const { isDark } = useTheme();
 
     // TODO: Replace with actual college and hostel data from props/context
     const contextInfo = {
@@ -68,6 +74,30 @@ const Students = () => {
         setSearchListStudent(event.target.value)
     }
 
+    // When the expandable search opens, ensure the input is focused so it stays visible
+    useEffect(() => {
+        if (searchOpen) {
+            const id = setTimeout(() => searchInputRef.current?.focus(), 40);
+            return () => clearTimeout(id);
+        }
+    }, [searchOpen]);
+
+    const handleRefresh = async () => {
+        setLoading(true);
+        try {
+            const q = query(collection(db, 'users'), where('role', '==', 'student'));
+            const snapshot = await getDocs(q);
+            const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            setStudents(list);
+            setError(null);
+        } catch (err) {
+            console.error('Failed to refresh students:', err);
+            setError(err.message || 'Refresh failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const searchStudent = students.filter((studentlist) =>
         !searchListStudent.trim() || studentlist.fullName?.toLowerCase().includes(searchListStudent.toLowerCase())
     )
@@ -87,6 +117,10 @@ const Students = () => {
         setDeleteModal({ isOpen: true, student });
     };
 
+    if (simulateError) {
+        throw new Error('Demo error: Simulated crash for testing ErrorBoundary');
+    }
+
     return (
         <>
             <Header
@@ -102,26 +136,83 @@ const Students = () => {
                 <section className="mb-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Assigned List :-</h2>
-                            <p className="mt-1" style={{ color: 'var(--text-muted)' }}>Active students for the selected hostel</p>
+                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Student Directory</h2>
+                            <p className="mt-2 text-sm md:text-base" style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>Manage and view all students assigned to this hostel</p>
                         </div>
-                        <div className="relative flex items-center justify-end">
+                        <div className="relative flex items-center justify-end gap-2">
                             {/* Search Icon Button */}
                             <button
                                 onClick={() => setSearchOpen(!searchOpen)}
-                                className={`p-2.5 rounded-lg border-2 hover:border-indigo-500/50 transition-all duration-300 z-10 ${searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-                                    }`}
-                                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
+                                className={`p-2.5 rounded-xl border transition-all duration-300 z-10 group ${searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                                style={{
+                                    backgroundColor: 'var(--bg-card)',
+                                    borderColor: 'var(--border-primary)',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.15)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.borderColor = 'var(--border-primary)';
+                                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
+                                }}
                                 aria-label="Toggle search"
                             >
-                                <Search className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+                                <Search className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" style={{ color: 'var(--text-muted)' }} />
                             </button>
+
+                            {/* Refresh button visible when search is closed */}
+                            {!searchOpen && (
+                                <button
+                                    onClick={handleRefresh}
+                                    className="p-2.5 rounded-xl border transition-all duration-300 group"
+                                    style={{
+                                        backgroundColor: 'var(--bg-card)',
+                                        borderColor: 'var(--border-primary)',
+                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.15)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = 'var(--border-primary)';
+                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
+                                    }}
+                                    aria-label="Refresh"
+                                    title="Refresh list"
+                                >
+                                    <RefreshCw className="w-5 h-5 transition-transform duration-300 group-hover:rotate-180" style={{ color: 'var(--text-muted)' }} />
+                                </button>
+                            )}
+
+
+
+                            {/* {import.meta.env.DEV && (
+                                <button
+                                    onClick={() => setSimulateError(true)}
+                                    className="ml-2 p-2.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                    title="Simulate error"
+                                >
+                                    Simulate Error
+                                </button>
+                            )} */}
 
                             {/* Expandable Search Input */}
                             <div
-                                className={`absolute right-0 overflow-hidden transition-all duration-500 ease-in-out ${searchOpen ? 'w-full sm:w-80 opacity-100' : 'w-0 opacity-0'
+                                className={`flex justify-around gap-5 py-5 absolute  right-10 overflow-hidden transition-all duration-500 ease-in-out ${searchOpen ? 'w-full sm:w-80 opacity-100' : 'w-0 opacity-0'
                                     }`}
                             >
+                                <button
+                                    onClick={handleRefresh}
+                                    className="ml-2 p-2.5 rounded-lg border-2 hover:border-indigo-500/50 transition-all duration-300"
+                                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
+                                    aria-label="Refresh"
+                                    title="Refresh list"
+                                >
+                                    <RefreshCw className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+                                </button>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                         <Search className="w-5 h-5 text-slate-400" />
@@ -154,33 +245,28 @@ const Students = () => {
                                         </button>
                                     )}
                                 </div>
+
                             </div>
+
                         </div>
+
+                    </div>
+                    <div className='flex justify-end items-center'>
+
                     </div>
                 </section>
 
                 {/* This is for when Search student are not found this will display */}
                 {searchListStudent.trim() && students.length > 0 && searchStudent.length === 0 && !loading ? (
-                    <div className="rounded-xl p-8 text-center mb-4" >
-                        <div className="mx-auto mb-6 w-full max-w-md md:max-w-lg lg:max-w-xl rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--bg-card)' }}>
-                            {/* Video-only empty state */}
-                            <video
-                                src={search}
-                                autoPlay
-                                muted
-                                loop
-                                playsInline
-                                preload="auto"
-                                controls={false}
-                                aria-label="No wardens animation"
-                                className="mx-auto w-full block"
-                                style={{ borderRadius: '0.75rem', objectFit: 'contain', backgroundColor: 'var(--bg-card)' }}
-                            />
-                        </div>
-                        <p className="text-lg font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>No students found</p>
-                        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                            No matches for "<span className="text-indigo-400">{searchListStudent}</span>"
-                        </p>
+                    <div className="mb-4">
+                        <EmptyState
+                            title={`No matches for "${searchListStudent}"`}
+                            description={"Try a different name, or clear the search to see all students."}
+                            ctaLabel="Clear search"
+                            onCta={clearSearch}
+                            videoSrc={search}
+                            className="max-w-5xl mx-auto"
+                        />
                     </div>
                 ) : null}
                 {/* Students List */}
@@ -193,26 +279,16 @@ const Students = () => {
                             </div>
                         </div>
                     ) : (students.length === 0) ? (
-                        <div className="rounded-xl p-12 text-center" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
-                            <div className="mx-auto mb-6 w-full max-w-md">
-                                {/* Video-only empty state */}
-                                <video
-                                    src={NotFound}
-                                    autoPlay
-                                    muted
-                                    loop
-                                    playsInline
-                                    preload="auto"
-                                    controls={false}
-                                    aria-label="No wardens animation"
-                                    className="mx-auto w-full rounded-md"
-                                />
-                            </div>
-                            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>No Students Assigned</h3>
-                            <p className="max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
-                                No students have been assigned to {contextInfo.hostelName} yet.
-                            </p>
-
+                        <div className="mb-8">
+                            <EmptyState
+                                title="No Students Assigned"
+                                subtitle="This hostel is awaiting student assignments"
+                                description={`No students have been linked to ${contextInfo.hostelName} yet. Students will appear here once they are assigned to this hostel through the admin portal or registration process.`}
+                                ctaLabel="Open Search"
+                                onCta={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
+                                videoSrc={NotFound}
+                                className="max-w-5xl mx-auto"
+                            />
                         </div>
                     ) : (
                         <div className="space-y-3">

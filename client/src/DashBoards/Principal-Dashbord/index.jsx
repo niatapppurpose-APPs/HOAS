@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, setDoc } from "firebase/firestore";
-import { storage, db } from "../../firebase/firebaseConfig";
-import { Building2, Loader2, CheckCircle, UploadIcon } from "lucide-react";
-import {HashLoader} from 'react-spinners'
+import { Building2, Loader2, CheckCircle, UploadIcon, MapPin, Home, Sparkles, ArrowRight } from "lucide-react";
+import { HashLoader } from 'react-spinners'
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { storage } from "../../firebase/firebaseConfig";
 
 const ManagementProfile = () => {
   const { user, userData, userDataLoading, loading, createUserProfile } = useAuth();
@@ -18,18 +17,21 @@ const ManagementProfile = () => {
   const [logoFile, setLogoFile] = useState(null)
   const [preview, setPreview] = useState(null)
   const [isLogoUploaded, setIsUploaded] = useState(true)
-  // Track when the file-picker dialog is open or an upload is in progress
   const [isUploading, setIsUploading] = useState(false)
+
+  // New states for success animation
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [uploadedLogoUrl, setUploadedLogoUrl] = useState(null);
+  const [countdown, setCountdown] = useState(3);
+  const [profileData, setProfileData] = useState(null);
+
   useEffect(() => {
-    // If not logged in, redirect to login
     if (!loading && !user) {
       navigate("/login", { replace: true });
       return;
     }
 
-    // If user already has profile filled, redirect based on status
     if (!userDataLoading && userData && userData.role === "management") {
-      // Only redirect if profile details are already filled (has collegeName)
       if (userData.collegeName) {
         if (userData.status === "approved") {
           navigate("/dashboard/management", { replace: true });
@@ -40,7 +42,6 @@ const ManagementProfile = () => {
     }
   }, [user, userData, userDataLoading, loading, navigate]);
 
-  // Revoke preview object URL when it changes or component unmounts to avoid memory leaks
   useEffect(() => {
     return () => {
       if (preview) {
@@ -49,13 +50,11 @@ const ManagementProfile = () => {
     };
   }, [preview]);
 
-  // If user clicks the upload label but cancels the file picker, detect it and reset the uploading state.
   useEffect(() => {
     if (!isUploading) return undefined;
 
     const onWindowFocus = () => {
       const input = document.getElementById('logoInput');
-      // If the picker closed with no file selected, clear uploading state
       if (!input || !input.files || input.files.length === 0) {
         setIsUploading(false);
       }
@@ -64,6 +63,42 @@ const ManagementProfile = () => {
     window.addEventListener('focus', onWindowFocus);
     return () => window.removeEventListener('focus', onWindowFocus);
   }, [isUploading]);
+
+  // Countdown timer for redirect
+  useEffect(() => {
+    if (showSuccess && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (showSuccess && countdown === 0) {
+      navigate("/waiting-approval", { replace: true });
+    }
+  }, [showSuccess, countdown, navigate]);
+
+  // Upload file to Firebase Storage and return download URL
+  const uploadToStorage = (file) => {
+    return new Promise((resolve, reject) => {
+      const fileName = `college-logos/${user.uid}-${Date.now()}.${file.name.split('.').pop()}`;
+      const storageRef = ref(storage, fileName);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          console.log('Upload progress:', progress + '%');
+        },
+        (error) => {
+          console.error('Upload error:', error);
+          reject(error);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          console.log('File uploaded successfully. URL:', downloadURL);
+          resolve(downloadURL);
+        }
+      );
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -77,14 +112,35 @@ const ManagementProfile = () => {
     }
 
     try {
+      // Upload logo to Firebase Storage
+      let logoUrl = null;
+      if (logoFile) {
+        logoUrl = await uploadToStorage(logoFile);
+        setUploadedLogoUrl(logoUrl);
+      }
+
+      // Create user profile with logo URL
       const success = await createUserProfile("management", {
         collegeName: collegeName.trim(),
         collegeLocation: collegeLocation.trim(),
         hostelCount: hostelCount,
+        collegeLogo: logoUrl,
       });
 
       if (success) {
-        navigate("/waiting-approval", { replace: true });
+        // Store profile data for success animation
+        setProfileData({
+          collegeName: collegeName.trim(),
+          collegeLocation: collegeLocation.trim(),
+          hostelCount: hostelCount,
+          collegeLogo: logoUrl || preview,
+          userName: user?.displayName,
+          userEmail: user?.email,
+          userPhoto: user?.photoURL,
+        });
+
+        // Show success animation
+        setShowSuccess(true);
       } else {
         setError("Failed to create profile. Please try again.");
       }
@@ -100,6 +156,193 @@ const ManagementProfile = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+      </div>
+    );
+  }
+
+  // Success Animation Screen
+  if (showSuccess && profileData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 flex items-center justify-center p-4 overflow-hidden">
+        {/* Background animated elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-3xl" />
+        </div>
+
+        <div
+          className="relative z-10 w-full max-w-xl"
+          style={{
+            animation: 'fadeSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+          }}
+        >
+          {/* Success checkmark */}
+          <div className="text-center mb-8">
+            <div
+              className="inline-flex p-5 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 mb-6 shadow-2xl shadow-emerald-500/30"
+              style={{
+                animation: 'scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards',
+                opacity: 0,
+                transform: 'scale(0)',
+              }}
+            >
+              <CheckCircle className="w-16 h-16 text-white" />
+            </div>
+            <h1
+              className="text-3xl md:text-4xl font-bold text-white mb-2"
+              style={{
+                animation: 'fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards',
+                opacity: 0,
+              }}
+            >
+              Profile Created Successfully!
+            </h1>
+            <p
+              className="text-slate-400"
+              style={{
+                animation: 'fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards',
+                opacity: 0,
+              }}
+            >
+              Your college has been registered
+            </p>
+          </div>
+
+          {/* College Profile Card */}
+          <div
+            className="bg-slate-800/70 border border-slate-700/50 rounded-3xl p-8 backdrop-blur-xl shadow-2xl"
+            style={{
+              animation: 'fadeSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards',
+              opacity: 0,
+              boxShadow: '0 25px 80px -12px rgba(16, 185, 129, 0.25), 0 0 60px rgba(139, 92, 246, 0.1)',
+            }}
+          >
+            {/* College Header with Logo */}
+            <div className="flex items-center gap-5 mb-6 pb-6 border-b border-slate-700/50">
+              {profileData.collegeLogo ? (
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-emerald-500/30 shadow-xl">
+                    <img
+                      src={profileData.collegeLogo}
+                      alt="College Logo"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center ring-4 ring-emerald-500/30">
+                  <Building2 className="w-10 h-10 text-white" />
+                </div>
+              )}
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-white mb-1">{profileData.collegeName}</h2>
+                {profileData.collegeLocation && (
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <MapPin className="w-4 h-4" />
+                    <span>{profileData.collegeLocation}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-slate-700/30 rounded-xl p-4 border border-slate-600/30">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-500/20">
+                    <Home className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-white">{profileData.hostelCount}</p>
+                    <p className="text-xs text-slate-400">Hostels</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-slate-700/30 rounded-xl p-4 border border-slate-600/30">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-emerald-500/20">
+                    <Sparkles className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-400">Pending</p>
+                    <p className="text-xs text-slate-400">Approval</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Admin Info */}
+            <div className="flex items-center gap-4 p-4 bg-slate-700/20 rounded-xl border border-slate-600/20">
+              {profileData.userPhoto ? (
+                <img
+                  src={profileData.userPhoto}
+                  alt={profileData.userName}
+                  className="w-12 h-12 rounded-full ring-2 ring-emerald-500/50"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center text-white text-lg font-bold">
+                  {profileData.userName?.charAt(0) || "M"}
+                </div>
+              )}
+              <div className="flex-1">
+                <p className="text-white font-medium">{profileData.userName}</p>
+                <p className="text-slate-400 text-sm">{profileData.userEmail}</p>
+              </div>
+              <div className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium">
+                Management
+              </div>
+            </div>
+          </div>
+
+          {/* Redirect countdown */}
+          <div
+            className="text-center mt-8"
+            style={{
+              animation: 'fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1s forwards',
+              opacity: 0,
+            }}
+          >
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-slate-800/50 border border-slate-700/50">
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
+                <span className="text-slate-300">Redirecting in</span>
+              </div>
+              <span className="text-2xl font-bold text-emerald-400">{countdown}</span>
+              <ArrowRight className="w-4 h-4 text-slate-400" />
+            </div>
+            <p className="text-slate-500 text-sm mt-3">
+              Taking you to the approval waiting page...
+            </p>
+          </div>
+        </div>
+
+        {/* CSS Keyframes */}
+        <style>{`
+          @keyframes fadeSlideUp {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          @keyframes scaleIn {
+            from {
+              opacity: 0;
+              transform: scale(0);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+        `}</style>
       </div>
     );
   }
@@ -175,74 +418,78 @@ const ManagementProfile = () => {
               <input
                 type="number"
                 min="1"
-                max="50" 
+                max="50"
                 value={hostelCount}
                 onChange={(e) => setHostelCount(parseInt(e.target.value))}
                 className="w-full px-4 py-3 rounded-xl bg-slate-700/50 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
               />
             </div>
+
             {/* Upload College Logo */}
-            <p>Upload Logo (Optional)</p>
-            <div className="flex gap-3 items-center flex-wrap mt-2">
-              <input
-                id="logoInput"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files && e.target.files[0];
-                  if (file) {
-                    if (preview) URL.revokeObjectURL(preview);
-                    setLogoFile(file);
-                    setPreview(URL.createObjectURL(file));
-                    // Hide the upload button once a file is selected
-                    setIsUploaded(false);
-                    setIsUploading(false)
-                  }
-                }}
-              />
+            <div>
+              <label className="block text-slate-300 text-sm font-medium mb-2">
+                Upload Logo (Optional)
+              </label>
+              <div className="flex gap-3 items-center flex-wrap">
+                <input
+                  id="logoInput"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files && e.target.files[0];
+                    if (file) {
+                      if (preview) URL.revokeObjectURL(preview);
+                      setLogoFile(file);
+                      setPreview(URL.createObjectURL(file));
+                      setIsUploaded(false);
+                      setIsUploading(false)
+                    }
+                  }}
+                />
 
-              {isLogoUploaded ? (
-                <label
-                  htmlFor="logoInput"
-                  onClick={() => setIsUploading(true)}
-                  className="flex justify-around items-center gap-5 px-3 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg cursor-pointer font-semibold shadow-md hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-                >
-                  {isUploading ? (
-                    <div className="flex items-center gap-2">
-                      <HashLoader size={18} color="#ffffff" loading={true} />
-                      <span className="text-white">Adding Logo...</span>
+                {isLogoUploaded ? (
+                  <label
+                    htmlFor="logoInput"
+                    onClick={() => setIsUploading(true)}
+                    className="flex justify-around items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl cursor-pointer font-semibold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:scale-[1.02] transition-all duration-300"
+                  >
+                    {isUploading ? (
+                      <div className="flex items-center gap-2">
+                        <HashLoader size={18} color="#ffffff" loading={true} />
+                        <span className="text-white">Adding Logo...</span>
+                      </div>
+                    ) : (
+                      <><UploadIcon className="w-5 h-5" />Add College Logo</>
+                    )}
+                  </label>
+                ) : (
+                  preview && (
+                    <div className="flex items-center gap-4 bg-slate-700/30 border border-slate-600/50 p-3 rounded-xl w-full">
+                      <img src={preview} alt="Logo preview" className="w-14 h-14 object-cover rounded-xl border-2 border-emerald-500/30" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-medium truncate">{logoFile?.name}</p>
+                        <p className="text-slate-400 text-xs">Ready to upload</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg text-sm font-medium hover:bg-red-500/20 transition-colors"
+                        onClick={() => {
+                          setLogoFile(null);
+                          if (preview) URL.revokeObjectURL(preview);
+                          setPreview(null);
+                          setIsUploaded(true);
+                          setIsUploading(false)
+                          const input = document.getElementById('logoInput');
+                          if (input) input.value = '';
+                        }}
+                      >
+                        Remove
+                      </button>
                     </div>
-                  ) : (
-                    <><UploadIcon />Add College logo</>
-                  )}
-                </label>
-              ) : (
-                preview && (
-                  <div className="flex justify-around items-center gap-3 bg-white/5 border border-slate-700/50 p-1 rounded-md">
-                    <img src={preview} alt="Logo preview" className="w-12 h-12 object-cover rounded-full border border-white/5" />
-                    <div className="text-slate-300 text-sm max-w-[180px] truncate">{logoFile?.name}</div>
-                    <button
-                      type="button"
-                      className="text-red-400 bg-transparent px-2 py-1 rounded-md font-bold hover:bg-red-600/10"
-                      onClick={() => {
-                        setLogoFile(null);
-                        if (preview) URL.revokeObjectURL(preview);
-                        setPreview(null);
-                        // Show the upload button again after removal
-                        setIsUploaded(true);
-                        setIsUploading(false)
-                        const input = document.getElementById('logoInput');
-                        if (input) input.value = '';
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )
-              )}
-
-              
+                  )
+                )}
+              </div>
             </div>
 
             {/* Error Message */}
@@ -256,7 +503,7 @@ const ManagementProfile = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:scale-[1.01]"
             >
               {isSubmitting ? (
                 <>

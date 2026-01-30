@@ -5,10 +5,11 @@ import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
 import Avatar from '../../../components/OwnerServices/Avatar';
 import { HashLoader } from "react-spinners";
-import { User, Mail, Shield, Eye, Edit2, UserMinus, Building2, Search, X } from 'lucide-react';
+import { User, Mail, Shield, Eye, Edit2, UserMinus, Building2, Search, X, RefreshCw } from 'lucide-react';
 import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmModal';
 import NotFound from './NOT-FOUND.mp4'
 import search from './Search.mp4'
+import EmptyState from '../../../components/OwnerServices/EmptyState';
 const Wardens = () => {
     const { isCollapsed } = useOutletContext();
     const location = useLocation();
@@ -20,7 +21,7 @@ const Wardens = () => {
     const [searchListWarden, setSearchListWarden] = useState('')
     const [searchOpen, setSearchOpen] = useState(false);
     const [error, setError] = useState(null);
-    const videoRef = useRef(null);
+    const [simulateError, setSimulateError] = useState(false);
     const searchInputRef = useRef(null);
 
     // Refresh wardens list (manual) and Assign Warden navigation
@@ -91,34 +92,7 @@ const Wardens = () => {
         };
     }, []);
 
-    // Video autoplay: attempt to play the empty-state video; show controls if blocked
-    useEffect(() => {
-        if (!loading && wardens.length === 0 && videoRef?.current) {
-            const v = videoRef.current;
-            // ensure muted for autoplay policy
-            v.muted = true;
-            v.playsInline = true;
-            const tryPlay = async () => {
-                try {
-                    const p = v.play();
-                    if (p !== undefined) await p;
-                } catch (err) {
-                    console.warn('Video autoplay prevented:', err);
-                    v.controls = true;
-                } finally {
-                    // fallback: if still paused after 700ms, show controls
-                    setTimeout(() => {
-                        if (v.paused) v.controls = true;
-                    }, 700);
-                }
-            };
-            tryPlay();
 
-            const onError = (e) => { console.error('Video error event:', e); v.controls = true; };
-            v.addEventListener('error', onError);
-            return () => v.removeEventListener('error', onError);
-        }
-    }, [loading, wardens.length]);
 
     const onSearchEventWarden = (event) => {
         setSearchListWarden(event.target.value)
@@ -160,6 +134,10 @@ const Wardens = () => {
         return 'Warden'; // Default
     };
 
+    if (simulateError) {
+        throw new Error('Demo error: Simulated crash for testing ErrorBoundary');
+    }
+
     return (
         <>
             <Header
@@ -175,30 +153,89 @@ const Wardens = () => {
                 <section className="mb-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Assigned List :-</h2>
-                            <p className="mt-1" style={{ color: 'var(--text-muted)' }}>Active wardens for the selected hostel</p>
+                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Warden Directory</h2>
+                            <p className="mt-2 text-sm md:text-base" style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>Manage and view all wardens assigned to this hostel</p>
                         </div>
                         {/* <div className="flex items-center gap-2 text-sm">
                             <span className="text-slate-400">Total Wardens:</span>
                             <span className="text-white font-semibold">{wardens.length}</span>
                         </div> */}
-                        <div className="relative flex items-center justify-end">
+
+
+                        {/* {import.meta.env.DEV && (
+                                <button
+                                    onClick={() => setSimulateError(true)}
+                                    className="ml-2 p-2.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                    title="Simulate error"
+                                >
+                                    Simulate Error
+                                </button>
+                            )}    */}
+                        <div className="relative flex items-center justify-end gap-2">
+                            {/* Refresh button visible when search is closed */}
+
+
                             {/* Search Icon Button */}
                             <button
                                 onClick={() => setSearchOpen(!searchOpen)}
-                                className={`p-2.5 rounded-lg border-2 hover:border-indigo-500/50 transition-all duration-300 z-10 ${searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-                                    }`}
-                                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
+                                className={`p-2.5 rounded-xl border transition-all duration-300 z-10 group ${searchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                                style={{
+                                    backgroundColor: 'var(--bg-card)',
+                                    borderColor: 'var(--border-primary)',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.15)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.borderColor = 'var(--border-primary)';
+                                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
+                                }}
                                 aria-label="Toggle search"
                             >
-                                <Search className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+                                <Search className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" style={{ color: 'var(--text-muted)' }} />
                             </button>
+
+                            {/* Refresh button visible when search is closed */}
+                            {!searchOpen && (
+                                <button
+                                    onClick={handleRefresh}
+                                    className="p-2.5 rounded-xl border transition-all duration-300 group"
+                                    style={{
+                                        backgroundColor: 'var(--bg-card)',
+                                        borderColor: 'var(--border-primary)',
+                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.15)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = 'var(--border-primary)';
+                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
+                                    }}
+                                    aria-label="Refresh"
+                                    title="Refresh list"
+                                >
+                                    <RefreshCw className="w-5 h-5 transition-transform duration-300 group-hover:rotate-180" style={{ color: 'var(--text-muted)' }} />
+                                </button>
+                            )}
 
                             {/* Expandable Search Input */}
                             <div
-                                className={`absolute right-0 overflow-hidden transition-all duration-500 ease-in-out ${searchOpen ? 'w-full sm:w-80 opacity-100' : 'w-0 opacity-0'
-                                    }`}
+                                className={`flex justify-around gap-5 py-5 absolute right-10 overflow-hidden transition-all duration-500 ease-in-out ${searchOpen ? 'w-full sm:w-80 opacity-100' : 'w-0 opacity-0'}`}
                             >
+                                {/* Refresh button inside expandable search area */}
+                                <button
+                                    onClick={handleRefresh}
+                                    className="p-2.5 rounded-lg border-2 hover:border-indigo-500/50 transition-all duration-300"
+                                    style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
+                                    aria-label="Refresh"
+                                    title="Refresh list"
+                                >
+                                    <RefreshCw className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+                                </button>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                         <Search className="w-5 h-5 text-slate-400" />
@@ -209,7 +246,7 @@ const Wardens = () => {
                                         value={searchListWarden}
                                         onChange={onSearchEventWarden}
                                         placeholder="Search wardens..."
-                                        className="w-full pl-10 pr-10 py-2.5 rounded-lg border-2 focus:outline-none transition-all"
+                                        className="w-full pl-10 pr-14 py-2.5 rounded-lg border-2 focus:outline-none transition-all"
                                         style={{
                                             backgroundColor: 'var(--bg-input)',
                                             borderColor: 'var(--border-primary)',
@@ -223,10 +260,10 @@ const Wardens = () => {
                                             type="button"
                                             aria-label="Clear search"
                                             onClick={clearSearchWarden}
-                                            className="absolute inset-y-0 right-3 flex items-center cursor-pointer rounded-md p-2 border transition-colors"
-                                            style={{ borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-card)' }}
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center cursor-pointer rounded-full p-2 z-20 transition-colors"
+                                            style={{ border: '1px solid #E1251B', backgroundColor: 'var(--bg-card)' }}
                                         >
-                                            <X className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                                            <X className="w-4 h-4 text-[#E1251B]" stroke="#E1251B" />
                                         </button>
                                     )}
                                 </div>
@@ -236,28 +273,15 @@ const Wardens = () => {
                 </section>
                 {/* This is for when Search student are not found this will display */}
                 {searchListWarden.trim() && wardens.length > 0 && searchWarden.length === 0 && !loading ? (
-                    <div className="mx-auto w-full max-w-4xl rounded-xl p-8 text-center mb-4" >
-                       <div className="mx-auto mb-6 w-full max-w-md md:max-w-lg lg:max-w-xl rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--bg-card)' }}>
-                                {/* Video-only empty state */}
-                                <video
-                                    ref={videoRef}
-                                    src={search}
-                                    autoPlay
-                                    muted
-                                    loop
-                                    playsInline
-                                    preload="auto"
-                                    controls={false}
-                                    aria-label="No wardens animation"
-                                    className="mx-auto w-full block"
-                                    style={{ borderRadius: '0.75rem', objectFit: 'contain', backgroundColor: 'var(--bg-card)' }}
-                                />
-                            </div>
-
-                        <p className="text-lg font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>No Wardens found</p>
-                        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                            No matches for "<span className="text-indigo-400">{searchListWarden}</span>"
-                        </p>
+                    <div className="mb-4">
+                        <EmptyState
+                            title={`No matches for "${searchListWarden}"`}
+                            description={'Try a different name, or clear the search to see all wardens.'}
+                            ctaLabel="Clear search"
+                            onCta={clearSearchWarden}
+                            videoSrc={search}
+                            className="max-w-5xl mx-auto"
+                        />
                     </div>
                 ) : null}
                 {/* Wardens List */}
@@ -270,28 +294,16 @@ const Wardens = () => {
                             </div>
                         </div>
                     ) : (wardens.length === 0) ? (
-                        <div className="rounded-xl p-12 text-center" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
-                            <div className="mx-auto mb-6 w-full max-w-md md:max-w-lg rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--bg-card)' }}>
-                                {/* Video-only empty state */}
-                                <video
-                                    ref={videoRef}
-                                    src={NotFound}
-                                    autoPlay
-                                    muted
-                                    loop
-                                    playsInline
-                                    preload="auto"
-                                    controls={false}
-                                    aria-label="No wardens animation"
-                                    className="mx-auto w-full block"
-                                    style={{ borderRadius: '0.75rem', objectFit: 'contain', backgroundColor: 'var(--bg-card)' }}
-                                />
-                            </div>
-                            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>No Students Assigned</h3>
-                            <p className="max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
-                                No students have been assigned to {contextInfo.hostelName} yet.
-                            </p>
-
+                        <div className="mb-8">
+                            <EmptyState
+                                title="No Wardens Assigned"
+                                subtitle="This hostel needs warden supervision"
+                                description={`No wardens have been assigned to ${contextInfo.hostelName} yet. Assign a warden to help manage students, handle daily operations, and maintain hostel discipline.`}
+                                ctaLabel="Assign Warden"
+                                onCta={assignWarden}
+                                videoSrc={NotFound}
+                                className="max-w-5xl mx-auto"
+                            />
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -305,7 +317,7 @@ const Wardens = () => {
 
                                         {/* Left: Student Info */}
                                         <div className="flex items-center gap-4 flex-1 min-w-0">
-                                            
+
                                             <Avatar
                                                 image={warden.photoURL}
                                                 name={warden.fullName || warden.displayName || warden.email}
@@ -316,18 +328,17 @@ const Wardens = () => {
                                                 {/* Name and Badge */}
                                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                                                     <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
-                                                        {warden.fullName || warden.displayName || 'Unknown Student'}
+                                                        {warden.fullName || warden.displayName || 'Unknown Warden'}
                                                     </h3>
 
-                                                    {/* Student Badge */}
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-xs font-medium">
-                                                       
-                                                        Warden
+                                                    {/* Warden Badge */}
+                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r ${getRoleBadgeColor(getRoleLabel(warden))} text-white text-xs font-medium`}>
+                                                        {getRoleLabel(warden)}
                                                     </span>
                                                 </div>
 
                                                 {/* Email */}
-                                                {wardens.email && (
+                                                {warden.email && (
                                                     <div className="flex items-center gap-1.5 text-sm mb-2" style={{ color: 'var(--text-muted)' }}>
                                                         <Mail className="w-3.5 h-3.5" />
                                                         <span className="truncate">{warden.email}</span>
@@ -363,10 +374,11 @@ const Wardens = () => {
                                         <div className="flex items-center gap-2 flex-shrink-0">
                                             {/* Remove Button */}
                                             <button
-                                                onClick={() => handleRemove(wardens)}
+                                                onClick={() => handleRemove(warden)}
                                                 className="p-2 rounded-lg transition-all border border-1 border-[#E1251B]"
                                                 style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}
-                                                title="Remove Student"
+                                                title="Remove Warden"
+                                                aria-label={`Remove ${warden.fullName || warden.displayName || warden.email || 'warden'}`}
                                             >
                                                 <UserMinus className="text-[#E1251B] w-6 h-6" />
                                             </button>
