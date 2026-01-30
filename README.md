@@ -43,6 +43,12 @@ Built with cutting-edge web technologies including **React 19**, **Firebase Clou
 - Real-time statistics and KPI cards
 - Profile management with organization details
 - Bulk operations and pagination support
+- **Global System Settings** - Configure system-wide settings including:
+  - Global toggles (registration, approvals, maintenance mode)
+  - Role permission templates with customizable permissions
+  - Approval workflow configuration
+  - User limits per college/hostel with capacity management
+  - Maintenance mode with custom messages
 
 #### 🔷 Management Dashboard (Principal/Co-Admin)
 - View and manage Wardens and Students linked to specific college
@@ -165,6 +171,7 @@ HOAS/
 │   │   │   └── firebaseConfig.js
 │   │   ├── hooks/
 │   │   │   ├── useServerStatus.js
+│   │   │   ├── useSystemSettings.js # System settings enforcement hooks
 │   │   │   └── useTranslation.js
 │   │   ├── Pages/
 │   │   │   ├── Dashboard/
@@ -191,6 +198,7 @@ HOAS/
 │   │   │   ├── config.js            # Configuration
 │   │   │   ├── helpers.js           # Utility functions
 │   │   │   ├── reports.js           # Report generation
+│   │   │   ├── systemSettings.js    # Global system settings APIs
 │   │   │   ├── triggers.js          # Firestore triggers
 │   │   │   ├── userManagement.js    # User CRUD operations
 │   │   │   └── utility.js           # Utility endpoints
@@ -575,19 +583,48 @@ The HOAS project has evolved through systematic development iterations. Below is
   - `5cae3cf` - "fix: resolve Firebase hosting deployment error"
   - `848e52b` - "Update OwnersDashboard responsiveness and fix .gitignore"
 
+**PR #19: Documentation Consolidation** (`15ecb17`)
+- Merged all README files into comprehensive root documentation
+- Created unified documentation structure
+
+**PR #20: Empty States Enhancement** (`591867e`)
+- Added Empty State components in OwnersDashboard
+- Implemented Empty State for Wardens List page
+
+**PR #21: Global System Settings Module** (`c85afd5`)
+- Created a comprehensive Global System Settings module for Owner-only admin panel
+- Added global toggles for registration, approvals, and maintenance mode
+- Implemented role permission templates with customizable permissions
+- Created approval workflow configuration system
+- Added user limits per college/hostel with capacity management
+- Implemented complete DB schema with Firestore collections
+- Built 15+ Cloud Functions APIs for settings management
+- Added enforcement logic with React hooks (FeatureGate, MaintenanceGate, RegistrationGate)
+- Created useSystemSettings hook for real-time settings enforcement across the app
+
+**PR #22: UI/UX Improvements** (`99dbc07`)
+- Added perfect themes with consistent styling
+- Implemented animated videos/graphics for empty states
+- Enhanced "Not Found" page visuals
+
+**PR #23: Minor Fixes** (`4c001d0`)
+- Small UI/UX refinements
+- Bug fixes and code cleanup
+
 ### Summary Statistics
 
 - **Total Commits**: 100+
 - **Active Development Period**: December 2024 - January 2026
-- **Major Features**: 18+
+- **Major Features**: 23+
 - **Documentation Files**: 20+
-- **Lines of Code**: 10,000+ (estimated)
+- **Lines of Code**: 12,000+ (estimated)
 
 ### Notable Refactoring Events
 
 1. **Component Modularization** (`d302b66`): Refactored OwnersDashboard into reusable components (Avatar, StatsCard, StatusBadge)
 2. **Analytics Removal**: Removed analytics page as per requirements, focusing on core management features
 3. **Cloud Functions Migration**: Moved from client-side Firestore writes to secure Cloud Functions architecture
+4. **Global System Settings** (`c85afd5`): Added comprehensive admin settings module with enforcement hooks
 
 ---
 
