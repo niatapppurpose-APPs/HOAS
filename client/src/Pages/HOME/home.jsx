@@ -31,23 +31,23 @@ const Home = () => {
     const [activeTeamMember, setActiveTeamMember] = useState(null);
 
     const teamData = {
-        'hq': {
-            name: 'Hemanth Atthuluri',
-            role: 'BACK-END DEVELOPER',
-            location: 'Andhra Pradesh, India',
-            desc: 'The visionary behind HOAS. Specialized in scalable enterprise architecture and intuitive user adaptability.',
-            initials: 'HA',
-            image: BackendDeveloper,
-            gradient: 'from-indigo-500 to-purple-600'
-        },
         'it': {
-            name: 'Frontend Developer',
+            name: 'Shaik Faziya Tasneem',
             role: 'FRONT-END DEVELOPER',
-            location: 'Cloud Region: Asia-South',
-            desc: 'Ensuring seamless user experience, responsive design, and intuitive interfaces across all platforms.',
+            location: 'AndhraPradesh: India',
+            desc: 'Responsible for crafting a seamless and engaging user experience across the application. Focused on responsive design, intuitive user interfaces, and consistent visual behavior across devices, ensuring the product is both user friendly and visually professional.',
             initials: 'FD',
             image: FrontendDeveloper,
             gradient: 'from-slate-700 to-slate-500'
+        },
+         'hq': {
+            name: 'Hemanth Atthuluri',
+            role: 'BACK-END DEVELOPER',
+            location: 'Andhra Pradesh, India',
+            desc: 'Responsible for designing and implementing the core system architecture of HOAS. Specialized in building scalable, secure, and efficient backend services, managing data flow, authentication, and ensuring smooth coordination between system logic and user facing features.',
+            initials: 'HA',
+            image: BackendDeveloper,
+            gradient: 'from-indigo-500 to-purple-600'
         }
     };
 
