@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../Context/AuthContext';
 import { motion, useScroll, useTransform, AnimatePresence, useSpring } from 'framer-motion';
 import {
     ShieldCheck,
@@ -24,6 +25,27 @@ const Home = () => {
     const targetRef = useRef(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isAboutOpen, setIsAboutOpen] = useState(false);
+    const { user, logout } = useAuth();
+    const [activeTeamMember, setActiveTeamMember] = useState(null);
+
+    const teamData = {
+        'hq': {
+            name: 'Hemanth Kumar',
+            role: 'Lead Architect',
+            location: 'Bangalore, India',
+            desc: 'The visionary behind HOAS. specialized in scalable enterprise architecture and intuitive user adaptability.',
+            initials: 'HK',
+            gradient: 'from-indigo-500 to-purple-600'
+        },
+        'it': {
+            name: 'System Ops',
+            role: 'Infrastructure Team',
+            location: 'Cloud Region: Asia-South',
+            desc: 'Ensuring 99.9% uptime, end-to-end encryption, and seamless data replication across all availability zones.',
+            initials: 'OP',
+            gradient: 'from-slate-700 to-slate-500'
+        }
+    };
 
     // Lock body scroll when mobile menu is open
     useEffect(() => {
@@ -139,34 +161,35 @@ const Home = () => {
                         <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="hidden md:flex items-center gap-8"
+                            className="hidden md:flex justify-between relative left-20 items-center gap-8"
                         >
                             <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-slate-300 hover:text-white hover:scale-105 transition-all">Features</button>
                             <button onClick={() => scrollToSection('roles')} className="text-sm font-medium text-slate-300 hover:text-white hover:scale-105 transition-all">Roles</button>
                             <button onClick={() => scrollToSection('workflow')} className="text-sm font-medium text-slate-300 hover:text-white hover:scale-105 transition-all">Workflow</button>
 
-                            <button
-                                onClick={() => setIsAboutOpen(true)}
-                                className="p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-full transition-all"
-                                title="About App"
-                            >
-                                <Info className="w-5 h-5" />
-                            </button>
+
 
                             <div className="flex items-center gap-4">
-                                <button
+                                {!user ? (<button
                                     onClick={() => navigate('/login')}
                                     className="px-5 py-2.5 text-sm font-semibold text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
                                 >
                                     Sign In
-                                </button>
+                                </button>) : null}
                                 <button
                                     onClick={() => navigate('/login')}
                                     className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-full shadow-[0_0_20px_-5px_rgba(79,70,229,0.5)] hover:shadow-[0_0_25px_-5px_rgba(79,70,229,0.7)] transition-all duration-300 flex items-center gap-2 group hover:scale-105 active:scale-95"
                                 >
-                                    Get Started <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    {!user ? 'Get Started' : 'Dashboard'} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </div>
+                            <button
+                                onClick={() => setIsAboutOpen(true)}
+                                className="relative left-35 p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                                title="About App"
+                            >
+                                <Info className="w-8 h-8" />
+                            </button>
                         </motion.div>
 
                         {/* Mobile Menu Toggle */}
@@ -226,19 +249,18 @@ const Home = () => {
                                 animate="visible"
                                 className="flex flex-col gap-4 mt-4"
                             >
-                                <motion.button
-                                    variants={itemVariants}
-                                    onClick={() => { setIsMobileMenuOpen(false); navigate('/login'); }}
-                                    className="w-full py-4 text-base font-semibold text-white bg-white/5 border border-white/10 rounded-xl active:scale-95 transition-transform"
+                                {!user ? (<motion.button
+                                    onClick={() => navigate('/login')}
+                                    className="px-5 py-2.5 text-sm font-semibold text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
                                 >
                                     Sign In
-                                </motion.button>
+                                </motion.button>) : null}
                                 <motion.button
                                     variants={itemVariants}
                                     onClick={() => { setIsMobileMenuOpen(false); navigate('/login'); }}
                                     className="w-full py-4 text-base font-semibold text-white bg-indigo-600 rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-transform flex items-center justify-center gap-2"
                                 >
-                                    Get Started <ChevronRight className="w-4 h-4" />
+                                    {!user ? 'Get Started' : 'Dashboard'} <ChevronRight className="w-4 h-4" />
                                 </motion.button>
                             </motion.div>
                         </motion.div>
@@ -557,7 +579,7 @@ const Home = () => {
                         onClick={() => navigate('/login')}
                         className="w-full sm:w-auto px-10 py-4 bg-white text-indigo-900 rounded-lg font-bold text-xl hover:bg-slate-100 transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95"
                     >
-                        Login to Portal
+                        {!user ? 'Login to Portal' : 'Go To Dashbaord'}
                     </motion.button>
                 </div>
             </section>
@@ -645,6 +667,7 @@ const Home = () => {
                 </div>
             </footer>
             {/* About App Modal */}
+            {/* About App Modal */}
             <AnimatePresence>
                 {isAboutOpen && (
                     <>
@@ -652,29 +675,41 @@ const Home = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            onClick={() => setIsAboutOpen(false)}
+                            onClick={() => { setIsAboutOpen(false); setActiveTeamMember(null); }}
                             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
                         />
                         <motion.div
+                            layout
                             initial={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
-                            animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
+                            animate={{
+                                opacity: 1,
+                                scale: 1,
+                                y: "-50%",
+                                x: "-50%",
+                                width: activeTeamMember ? "90%" : "90%",
+                                maxWidth: activeTeamMember ? "900px" : "448px"
+                            }}
                             exit={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
-                            className="fixed top-1/2 left-1/2 z-[70] w-[90%] max-w-md bg-slate-900 border border-white/10 rounded-2xl p-0 overflow-hidden shadow-2xl"
+                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                            className="fixed top-1/2 left-1/2 z-[70] bg-slate-900 border border-white/10 rounded-3xl shadow-2xl flex flex-col md:flex-row max-h-[85vh] w-[90%] md:w-auto overflow-hidden"
                         >
-                            <div className="relative p-6 md:p-8">
-                                <button
-                                    onClick={() => setIsAboutOpen(false)}
-                                    className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-all"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
+                            {/* Close Button - Moved to Main Container */}
+                            <button
+                                onClick={() => { setIsAboutOpen(false); setActiveTeamMember(null); }}
+                                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full transition-all z-50"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+
+                            {/* Main Info Section */}
+                            <div className={`relative p-6 md:p-8 flex-shrink-0 w-full ${activeTeamMember ? 'md:w-1/2 border-b md:border-b-0 md:border-r border-white/10' : ''} overflow-y-auto custom-scrollbar max-h-[85vh]`}>
 
                                 <div className="flex flex-col items-center text-center">
-                                    <div className="w-20 h-20 bg-indigo-600 rounded-2xl p-2 flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-5">
+                                    <motion.div layoutId="app-logo" className="w-20 h-20 bg-indigo-600 rounded-2xl p-2 flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-5">
                                         <div className="w-full h-full bg-white rounded-xl overflow-hidden flex items-center justify-center">
                                             <img src={AppLogo} alt="HOAS Logo" className="w-full h-full object-contain" />
                                         </div>
-                                    </div>
+                                    </motion.div>
 
                                     <h3 className="text-3xl font-bold text-white mb-2 tracking-tight">HOAS</h3>
                                     <p className="text-indigo-400 text-xs font-bold tracking-[0.2em] uppercase mb-8">Hostel Operations Accountability System</p>
@@ -726,13 +761,22 @@ const Home = () => {
                                         </div>
 
                                         {/* Creator / Team Card */}
-                                        <div className="bg-white/5 rounded-2xl p-5 border border-white/5 hover:bg-white/10 transition-colors">
-                                            <h4 className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Developed By</h4>
+                                        <div className="col-span-1 sm:col-span-2 bg-white/5 rounded-2xl p-5 border border-white/5 transition-all">
+                                            <h4 className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-4">Developed By</h4>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-white font-medium text-sm">Admin Team</span>
-                                                <div className="flex -space-x-2">
-                                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 border border-slate-900 flex items-center justify-center text-[10px] font-bold text-white">HQ</div>
-                                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-700 to-slate-600 border border-slate-900 flex items-center justify-center text-[10px] text-slate-300">IT</div>
+                                                <div className="flex gap-3">
+                                                    {['hq', 'it'].map((key) => (
+                                                        <motion.button
+                                                            key={key}
+                                                            whileHover={{ scale: 1.1, y: -2 }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                            onClick={() => setActiveTeamMember(activeTeamMember === key ? null : key)}
+                                                            className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg border-2 transition-all ${activeTeamMember === key ? 'border-white ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 scale-110' : 'border-slate-800 opacity-80 hover:opacity-100'} bg-gradient-to-br ${teamData[key].gradient}`}
+                                                        >
+                                                            {teamData[key].initials}
+                                                        </motion.button>
+                                                    ))}
                                                 </div>
                                             </div>
                                         </div>
@@ -750,6 +794,79 @@ const Home = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Detail Panel */}
+                            <AnimatePresence mode="popLayout">
+                                {activeTeamMember && (
+                                    <motion.div
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 20 }}
+                                        transition={{ duration: 0.4, ease: "easeOut" }}
+                                        className="w-full md:w-1/2 bg-slate-900/50 backdrop-blur-xl p-8 pt-20 md:pt-16 flex flex-col justify-start relative overflow-y-auto custom-scrollbar max-h-[85vh]"
+                                    >
+                                        <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-slate-900/5 pointer-events-none" />
+
+                                        <div className="relative z-10 flex flex-col h-full md:h-auto">
+                                            <motion.div
+                                                initial={{ scale: 0.8, opacity: 0 }}
+                                                animate={{ scale: 1, opacity: 1 }}
+                                                transition={{ delay: 0.2 }}
+                                                className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${teamData[activeTeamMember].gradient} flex items-center justify-center shadow-2xl mb-6`}
+                                            >
+                                                <span className="text-3xl font-bold text-white tracking-widest">{teamData[activeTeamMember].initials}</span>
+                                            </motion.div>
+
+                                            <motion.h2
+                                                initial={{ y: 20, opacity: 0 }}
+                                                animate={{ y: 0, opacity: 1 }}
+                                                transition={{ delay: 0.3 }}
+                                                className="text-3xl font-bold text-white mb-2"
+                                            >
+                                                {teamData[activeTeamMember].name}
+                                            </motion.h2>
+
+                                            <motion.div
+                                                initial={{ y: 20, opacity: 0 }}
+                                                animate={{ y: 0, opacity: 1 }}
+                                                transition={{ delay: 0.4 }}
+                                                className="flex items-center gap-3 mb-6"
+                                            >
+                                                <span className="px-3 py-1 rounded-full bg-white/10 text-indigo-300 text-xs font-semibold uppercase tracking-wider">
+                                                    {teamData[activeTeamMember].role}
+                                                </span>
+                                                <span className="text-slate-500 text-sm flex items-center gap-1">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    {teamData[activeTeamMember].location}
+                                                </span>
+                                            </motion.div>
+
+                                            <motion.p
+                                                initial={{ y: 20, opacity: 0 }}
+                                                animate={{ y: 0, opacity: 1 }}
+                                                transition={{ delay: 0.5 }}
+                                                className="text-slate-300 text-lg leading-relaxed mb-8"
+                                            >
+                                                {teamData[activeTeamMember].desc}
+                                            </motion.p>
+
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ delay: 0.6 }}
+                                                className="flex gap-4"
+                                            >
+                                                <button className="px-6 py-2.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-indigo-50 transition-colors shadow-lg shadow-white/5 active:scale-95 duration-200">
+                                                    View Profile
+                                                </button>
+                                                <button className="px-6 py-2.5 bg-white/5 text-white border border-white/10 rounded-xl font-medium text-sm hover:bg-white/10 transition-colors active:scale-95 duration-200">
+                                                    Contact
+                                                </button>
+                                            </motion.div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </motion.div>
                     </>
                 )}
