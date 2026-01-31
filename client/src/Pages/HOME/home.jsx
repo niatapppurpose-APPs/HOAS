@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../Context/AuthContext';
 import { motion, useScroll, useTransform, AnimatePresence, useSpring } from 'framer-motion';
 import {
@@ -31,7 +31,7 @@ const Home = () => {
     const [activeTeamMember, setActiveTeamMember] = useState(null);
 
     const teamData = {
-        'it': {
+        'faziya': {
             name: 'Shaik Faziya Tasneem',
             role: 'FRONT-END DEVELOPER',
             location: 'AndhraPradesh: India',
@@ -40,7 +40,7 @@ const Home = () => {
             image: FrontendDeveloper,
             gradient: 'from-slate-700 to-slate-500'
         },
-         'hq': {
+        'hemanth': {
             name: 'Hemanth Atthuluri',
             role: 'BACK-END DEVELOPER',
             location: 'Andhra Pradesh, India',
@@ -48,7 +48,8 @@ const Home = () => {
             initials: 'HA',
             image: BackendDeveloper,
             gradient: 'from-indigo-500 to-purple-600'
-        }
+        },
+
     };
 
     // Lock body scroll when mobile menu is open
@@ -795,7 +796,7 @@ const Home = () => {
                                             <div className="flex items-center justify-between">
                                                 <span className="text-white font-medium text-sm">Admin Team</span>
                                                 <div className="flex gap-3">
-                                                    {['hq', 'it'].map((key) => (
+                                                    {['faziya', 'hemanth'].map((key) => (
                                                         <motion.button
                                                             key={key}
                                                             whileHover={{ scale: 1.1, y: -2 }}
@@ -893,12 +894,23 @@ const Home = () => {
                                                 transition={{ delay: 0.6 }}
                                                 className="flex gap-4"
                                             >
-                                                <button className="px-6 py-2.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-indigo-50 transition-colors shadow-lg shadow-white/5 active:scale-95 duration-200">
+                                                <button className="px-6 py-2.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-indigo-50 transition-colors shadow-lg shadow-white/5 active:scale-95 duration-200" onClick={() => {
+                                                    if (activeTeamMember === 'faziya') {
+                                                        window.open('https://www.linkedin.com/in/faziya-tasneem-shaik/', '_blank');
+                                                    } else if (activeTeamMember === 'hemanth') {
+                                                        window.open('https://www.linkedin.com/in/hemanth-atthuluri/', '_blank');
+                                                    }
+                                                }}>
                                                     View Profile
                                                 </button>
-                                                <button className="px-6 py-2.5 bg-white/5 text-white border border-white/10 rounded-xl font-medium text-sm hover:bg-white/10 transition-colors active:scale-95 duration-200">
+                                                <a
+                                                    href={`https://mail.google.com/mail/?view=cm&fs=1&to=niatapppurpose@gmail.com&su=${encodeURIComponent(activeTeamMember === 'faziya' ? 'Contact - Frontend Developer (Shaik Faziya Tasneem)' : 'Contact - Backend Developer (Hemanth Atthuluri)')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="px-6 py-2.5 bg-white/5 text-white border border-white/10 rounded-xl font-medium text-sm hover:bg-white/10 transition-colors active:scale-95 duration-200 text-center"
+                                                >
                                                     Contact
-                                                </button>
+                                                </a>
                                             </motion.div>
                                         </div>
                                     </motion.div>
