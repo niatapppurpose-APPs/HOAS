@@ -8,7 +8,7 @@ import WardenProfile from '../../DashBoards/Warden-Dashboard/index'
 import ManagementProfile from '../../DashBoards/Principal-Dashbord/index'
 import StudentDashboard from "../../DashBoards/Student-DashBoard/StudentDashboard";
 import WardenDashboard from "../../DashBoards/Warden-Dashboard/WardenDashboard";
-import { ManagementDashboard } from "../../DashBoards/Management-Dashboard";
+import { ManagementDashboard, ManagementLayout } from "../../DashBoards/Management-Dashboard";
 import ManagementWardens from "../../DashBoards/Management-Dashboard/maincomponent/pages/Wardens";
 import ManagementStudents from "../../DashBoards/Management-Dashboard/maincomponent/pages/Students";
 import ManagementHostels from "../../DashBoards/Management-Dashboard/maincomponent/pages/Hostels";
@@ -45,11 +45,14 @@ const Routes_path = () => {
                 {/* ------------------------------ Dashboards ---------------------------------------------*/}
                 <Route path="/dashboard/student" element={<StudentDashboard />} />
                 <Route path="/dashboard/warden" element={<WardenDashboard />} />
-                <Route path="/dashboard/management" element={<ManagementDashboard />} />
-                <Route path="/dashboard/management/wardens" element={<ManagementWardens />} />
-                <Route path="/dashboard/management/students" element={<ManagementStudents />} />
-                <Route path="/dashboard/management/hostels" element={<ManagementHostels />} />
-                <Route path="/dashboard/management/reports" element={<ManagementReports />} />
+                {/* Management Dashboard with Layout (similar to Owner Dashboard structure) */}
+                <Route path="/dashboard/management" element={<ManagementLayout />}>
+                    <Route index element={<ManagementDashboard />} />
+                    <Route path="wardens" element={<ManagementWardens />} />
+                    <Route path="students" element={<ManagementStudents />} />
+                    <Route path="hostels" element={<ManagementHostels />} />
+                    <Route path="reports" element={<ManagementReports />} />
+                </Route>
                 {/* --------------------------------------- Owners Page ------------------------------------- */}
                 <Route path="/admin-login" element={<AdminLogin />} />
                 <Route path="/OwnersDashboard" element={<OwnersLayout />}>

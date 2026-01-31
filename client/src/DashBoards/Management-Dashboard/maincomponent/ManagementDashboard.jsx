@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 
 import { collection, query, where, onSnapshot, doc } from "firebase/firestore";
 
@@ -9,7 +9,6 @@ import * as cloudFunctions from "../../../firebase/cloudFunctions";
 import { useToast } from "../../../components/Toast";
 
 // Import components
-import ManagementSidebar from '../components/layout/ManagementSidebar';
 import ManagementHeader from "../components/layout/ManagementHeader";
 import KPICards from "../components/dashboard/KPICards";
 import QuickApproval from "../components/dashboard/QuickApproval";
@@ -24,6 +23,7 @@ const ManagementDashboard = () => {
   const { user, userData, logout } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
+  const { isCollapsed } = useOutletContext();
 
   // State
   const [wardens, setWardens] = useState([]);
@@ -181,69 +181,65 @@ const ManagementDashboard = () => {
 
   if (loading) {
     return (
-      <div className="management-dashboard loading">
-        <div className="loader">Loading...</div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="management-dashboard">
-      <ManagementSidebar />
+    <>
+      {/* Header */}
+      <ManagementHeader
+        pendingCount={stats.totalPending}
+        title="Dashboard · Management Overview"
+        isCollapsed={isCollapsed}
+        collegeLogo={collegeLogo}
+      />
 
-      <div className="dashboard-main">
-        <ManagementHeader
-          user={user}
-          pendingCount={stats.totalPending}
-          handleLogout={handleLogout}
+      {/* Main Content */}
+      <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
+        {/* Top Row: KPI Cards + Quick Approval */}
+        <div className="management-top-row">
+          <div className="kpi-section">
+            <KPICards stats={stats} />
+          </div>
+          <div className="quick-approval-section">
+            <QuickApproval
+              pendingUser={firstPendingUser}
+              onApprove={() => handleApprove(firstPendingUser?.id)}
+              onViewDetails={handleViewDetails}
+              isApproving={approvingUserId === firstPendingUser?.id}
+            />
+          </div>
+        </div>
 
-          collegeLogo={collegeLogo}
-
+        {/* Recent Activity */}
+        <RecentActivity
+          recentUsers={recentUsers}
+          onApprove={handleApprove}
+          approvingUserId={approvingUserId}
         />
 
-        <div className="dashboard-content">
-          {/* Top Row: KPI Cards + Quick Approval */}
-          <div className="dashboard-top-row">
-            <div className="kpi-section">
-              <KPICards stats={stats} />
-            </div>
-            <div className="quick-approval-section">
-              <QuickApproval
-                pendingUser={firstPendingUser}
-                onApprove={() => handleApprove(firstPendingUser?.id)}
-                onViewDetails={handleViewDetails}
-                isApproving={approvingUserId === firstPendingUser?.id}
-              />
-            </div>
+        {/* Bottom Row: Status Table + Visualization */}
+        <div className="management-bottom-row">
+          <div className="management-table-wrapper">
+            <StatusTable
+              users={paginatedUsers}
+              currentPage={currentPage}
+              totalPages={Math.ceil(allUsers.length / itemsPerPage)}
+              onPageChange={setCurrentPage}
+            />
           </div>
-
-          {/* Recent Activity */}
-          <RecentActivity
-            recentUsers={recentUsers}
-            onApprove={handleApprove}
-            approvingUserId={approvingUserId}
-          />
-
-          {/* Bottom Row: Status Table + Visualization */}
-          <div className="dashboard-bottom-row">
-            <div className="status-table-wrapper">
-              <StatusTable
-                users={paginatedUsers}
-                currentPage={currentPage}
-                totalPages={Math.ceil(allUsers.length / itemsPerPage)}
-                onPageChange={setCurrentPage}
-              />
-            </div>
-            <div className="status-viz-wrapper">
-              <StatusVisualization
-                wardens={wardensViz}
-                students={studentsViz}
-              />
-            </div>
+          <div className="management-viz-wrapper">
+            <StatusVisualization
+              wardens={wardensViz}
+              students={studentsViz}
+            />
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
