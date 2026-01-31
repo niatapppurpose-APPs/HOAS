@@ -7,10 +7,13 @@ import Avatar from '../../../components/OwnerServices/Avatar';
 import { HashLoader } from "react-spinners";
 import { User, Mail, Shield, Eye, Edit2, UserMinus, Building2, Search, X, RefreshCw } from 'lucide-react';
 import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmModal';
-import NotFound from './NOT-FOUND.mp4'
 import search from './Search.mp4'
 import EmptyState from '../../../components/OwnerServices/EmptyState';
+import { useTheme } from '../../../context/ThemeContext';
+import NoDataLight from '../../../assets/No-Data.avif';
+import NoDataDark from '../../../assets/NoDataDark.png';
 const Wardens = () => {
+    const { isDark } = useTheme();
     const { isCollapsed } = useOutletContext();
     const location = useLocation();
     const navigate = useNavigate();
@@ -279,7 +282,7 @@ const Wardens = () => {
                             description={'Try a different name, or clear the search to see all wardens.'}
                             ctaLabel="Clear search"
                             onCta={clearSearchWarden}
-                            videoSrc={search}
+                            videoSrc={!isDark ? NoDataLight : NoDataDark}
                             className="max-w-5xl mx-auto"
                         />
                     </div>
@@ -301,7 +304,7 @@ const Wardens = () => {
                                 description={`No wardens have been assigned to ${contextInfo.hostelName} yet. Assign a warden to help manage students, handle daily operations, and maintain hostel discipline.`}
                                 ctaLabel="Assign Warden"
                                 onCta={assignWarden}
-                                videoSrc={NotFound}
+                                videoSrc={!isDark ? NoDataLight : NoDataDark}
                                 className="max-w-5xl mx-auto"
                             />
                         </div>

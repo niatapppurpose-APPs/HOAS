@@ -6,11 +6,13 @@ import Header from '../../../components/OwnerServices/header';
 import Avatar from '../../../components/OwnerServices/Avatar';
 import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmModal';
 import { HashLoader } from "react-spinners";
-import NotFound from './NOT-FOUND.mp4'
+
 import search from './Search.mp4'
 import { Mail, GraduationCap, UserMinus, Building2, Search, X, RefreshCw } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import EmptyState from '../../../components/OwnerServices/EmptyState';
+import NoDataLight from '../../../assets/No-Data.avif';
+import NoDataDark from '../../../assets/NoDataDark.png';
 
 const Students = () => {
     const { isCollapsed } = useOutletContext();
@@ -264,7 +266,7 @@ const Students = () => {
                             description={"Try a different name, or clear the search to see all students."}
                             ctaLabel="Clear search"
                             onCta={clearSearch}
-                            videoSrc={search}
+                            videoSrc={!isDark ? NoDataLight : NoDataDark}
                             className="max-w-5xl mx-auto"
                         />
                     </div>
@@ -286,7 +288,7 @@ const Students = () => {
                                 description={`No students have been linked to ${contextInfo.hostelName} yet. Students will appear here once they are assigned to this hostel through the admin portal or registration process.`}
                                 ctaLabel="Open Search"
                                 onCta={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
-                                videoSrc={NotFound}
+                                videoSrc={!isDark ? NoDataLight : NoDataDark}
                                 className="max-w-5xl mx-auto"
                             />
                         </div>

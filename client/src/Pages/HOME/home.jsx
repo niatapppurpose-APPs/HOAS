@@ -19,30 +19,34 @@ import {
     Search,
     Info
 } from 'lucide-react';
-import AppLogo from '../../assets/AppLogo4k.png';
+import FrontendDeveloper from '../../assets/DeveploersImages/FrontendDevloper.jpeg'
+import BackendDeveloper from '../../assets/DeveploersImages/BackendDeveloper.jpg'
+import AppLogo from '../../assets/AppLogo4k.png'
 const Home = () => {
     const navigate = useNavigate();
     const targetRef = useRef(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isAboutOpen, setIsAboutOpen] = useState(false);
-    const { user, logout } = useAuth();
+    const { user, isAdmin, loading, adminChecked } = useAuth();
     const [activeTeamMember, setActiveTeamMember] = useState(null);
 
     const teamData = {
         'hq': {
-            name: 'Hemanth Kumar',
-            role: 'Lead Architect',
-            location: 'Bangalore, India',
-            desc: 'The visionary behind HOAS. specialized in scalable enterprise architecture and intuitive user adaptability.',
-            initials: 'HK',
+            name: 'Hemanth Atthuluri',
+            role: 'BACK-END DEVELOPER',
+            location: 'Andhra Pradesh, India',
+            desc: 'The visionary behind HOAS. Specialized in scalable enterprise architecture and intuitive user adaptability.',
+            initials: 'HA',
+            image: BackendDeveloper,
             gradient: 'from-indigo-500 to-purple-600'
         },
         'it': {
-            name: 'System Ops',
-            role: 'Infrastructure Team',
+            name: 'Frontend Developer',
+            role: 'FRONT-END DEVELOPER',
             location: 'Cloud Region: Asia-South',
-            desc: 'Ensuring 99.9% uptime, end-to-end encryption, and seamless data replication across all availability zones.',
-            initials: 'OP',
+            desc: 'Ensuring seamless user experience, responsive design, and intuitive interfaces across all platforms.',
+            initials: 'FD',
+            image: FrontendDeveloper,
             gradient: 'from-slate-700 to-slate-500'
         }
     };
@@ -170,22 +174,47 @@ const Home = () => {
 
 
                             <div className="flex items-center gap-4">
-                                {!user ? (<button
+
+                                {!user ? <button
                                     onClick={() => navigate('/login')}
                                     className="px-5 py-2.5 text-sm font-semibold text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
                                 >
                                     Sign In
-                                </button>) : null}
-                                <button
-                                    onClick={() => navigate('/login')}
-                                    className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-full shadow-[0_0_20px_-5px_rgba(79,70,229,0.5)] hover:shadow-[0_0_25px_-5px_rgba(79,70,229,0.7)] transition-all duration-300 flex items-center gap-2 group hover:scale-105 active:scale-95"
+                                </button> : null}
+
+
+
+
+
+                                {!loading && adminChecked && !isAdmin ? (<button
+                                    onClick={() => navigate('/admin-login')}
+                                    className="px-5 py-2.5 text-sm font-semibold text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
                                 >
-                                    {!user ? 'Get Started' : 'Dashboard'} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                </button>
+                                    Admin
+                                </button>) : null}
+
+
+                                {/* Get Started / Dashboard button */}
+                                {!loading && adminChecked && (
+                                    <button
+                                        onClick={() => {
+                                            if (isAdmin) {
+                                                navigate('/OwnersDashboard');
+                                            } else if (user) {
+                                                navigate('/dashboard');
+                                            } else {
+                                                navigate('/login');
+                                            }
+                                        }}
+                                        className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-full shadow-[0_0_20px_-5px_rgba(79,70,229,0.5)] hover:shadow-[0_0_25px_-5px_rgba(79,70,229,0.7)] transition-all duration-300 flex items-center gap-2 group hover:scale-105 active:scale-95"
+                                    >
+                                        {isAdmin ? 'Dashboard' : user ? 'Dashboard' : 'Get Started'} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                )}
                             </div>
                             <button
                                 onClick={() => setIsAboutOpen(true)}
-                                className="relative left-35 p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                                className="relative left-5 p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-full transition-all"
                                 title="About App"
                             >
                                 <Info className="w-8 h-8" />
@@ -772,9 +801,13 @@ const Home = () => {
                                                             whileHover={{ scale: 1.1, y: -2 }}
                                                             whileTap={{ scale: 0.95 }}
                                                             onClick={() => setActiveTeamMember(activeTeamMember === key ? null : key)}
-                                                            className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg border-2 transition-all ${activeTeamMember === key ? 'border-white ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 scale-110' : 'border-slate-800 opacity-80 hover:opacity-100'} bg-gradient-to-br ${teamData[key].gradient}`}
+                                                            className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg border-2 transition-all overflow-hidden ${activeTeamMember === key ? 'border-white ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 scale-110' : 'border-slate-800 opacity-80 hover:opacity-100'}`}
                                                         >
-                                                            {teamData[key].initials}
+                                                            {teamData[key].image ? (
+                                                                <img src={teamData[key].image} alt={teamData[key].name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <span className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${teamData[key].gradient}`}>{teamData[key].initials}</span>
+                                                            )}
                                                         </motion.button>
                                                     ))}
                                                 </div>
@@ -812,9 +845,13 @@ const Home = () => {
                                                 initial={{ scale: 0.8, opacity: 0 }}
                                                 animate={{ scale: 1, opacity: 1 }}
                                                 transition={{ delay: 0.2 }}
-                                                className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${teamData[activeTeamMember].gradient} flex items-center justify-center shadow-2xl mb-6`}
+                                                className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${teamData[activeTeamMember].gradient} flex items-center justify-center shadow-2xl mb-6 overflow-hidden`}
                                             >
-                                                <span className="text-3xl font-bold text-white tracking-widest">{teamData[activeTeamMember].initials}</span>
+                                                {teamData[activeTeamMember].image ? (
+                                                    <img src={teamData[activeTeamMember].image} alt={teamData[activeTeamMember].name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-3xl font-bold text-white tracking-widest">{teamData[activeTeamMember].initials}</span>
+                                                )}
                                             </motion.div>
 
                                             <motion.h2

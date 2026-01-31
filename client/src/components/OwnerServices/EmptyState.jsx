@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { Search, UserPlus, ArrowRight } from 'lucide-react';
 
@@ -9,7 +9,7 @@ const EmptyState = ({
   ctaLabel,
   onCta,
   videoSrc,
-  videoAlt = 'Empty state animation',
+  videoAlt = 'Empty state illustration',
   ctaVariant = 'primary',
   secondaryCta,
   icon: CustomIcon,
@@ -17,39 +17,12 @@ const EmptyState = ({
 }) => {
   const { isDark } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const videoRef = useRef(null);
 
   useEffect(() => {
     // Entrance animation trigger
     const id = setTimeout(() => setMounted(true), 30);
     return () => clearTimeout(id);
   }, []);
-
-  useEffect(() => {
-    // Try autoplay and show controls if blocked
-    const v = videoRef.current;
-    if (!v) return;
-    v.muted = true;
-    v.playsInline = true;
-
-    const tryPlay = async () => {
-      try {
-        const p = v.play();
-        if (p !== undefined) await p;
-      } catch (err) {
-        // if blocked, show controls so user can play
-        v.controls = true;
-      } finally {
-        setTimeout(() => { if (v.paused) v.controls = true; }, 700);
-      }
-    };
-
-    tryPlay();
-
-    const onError = () => { v.controls = true; };
-    v.addEventListener('error', onError);
-    return () => v.removeEventListener('error', onError);
-  }, [videoSrc]);
 
   // Determine icon based on CTA label
   const getCtaIcon = () => {
@@ -76,7 +49,7 @@ const EmptyState = ({
                 filter: isDark ? 'none' : 'saturate(1.1)',
               }}
             >
-              {/* Subtle glow effect behind video */}
+              {/* Subtle glow effect behind image */}
               <div
                 className="absolute inset-0 rounded-2xl"
                 style={{
@@ -88,28 +61,26 @@ const EmptyState = ({
                 }}
               />
 
-              {/* Video container */}
+              {/* Image container */}
               <div
                 className="relative rounded-2xl overflow-hidden"
                 style={{
+                    height:'30vh',
                   boxShadow: isDark
                     ? '0 8px 32px rgba(0, 0, 0, 0.3)'
                     : '0 8px 32px rgba(99, 102, 241, 0.12)',
+                  width: '100%',
+                  aspectRatio: '1 / 1'
                 }}
               >
-                <video
-                  ref={videoRef}
+                <img
                   src={videoSrc}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                  aria-label={videoAlt}
-                  className="w-full h-auto block"
+                  alt={videoAlt}
+                  className="w-full h-full block"
                   style={{
+                  
                     display: 'block',
-                    objectFit: 'contain',
+                    objectFit: 'cover',
                     borderRadius: 16,
                   }}
                 />
@@ -148,7 +119,7 @@ const EmptyState = ({
             className={`flex-1 flex flex-col items-center lg:items-start text-center lg:text-left ${mounted ? 'empty-state-anim-right' : 'opacity-0'}`}
           >
             {/* Eyebrow text */}
-           
+
 
             {/* Title */}
             <h3
