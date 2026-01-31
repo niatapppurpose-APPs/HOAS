@@ -19,7 +19,7 @@ import {
     Search,
     Info
 } from 'lucide-react';
-import AppLogo from '../../assets/AppLogo.png';
+import AppLogo from '../../assets/AppLogo4k.png';
 const Home = () => {
     const navigate = useNavigate();
     const targetRef = useRef(null);
