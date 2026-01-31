@@ -8,24 +8,27 @@
   --bg-primary: #ffffff;
   --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
-  --bg-card: rgba(255, 255, 255, 0.7); /* Translucent for glassmorphism */
-  --bg-sidebar: rgba(255, 255, 255, 0.7); /* Translucent sidebar */
-  --bg-header: rgba(255, 255, 255, 0.8); /* Translucent header */
+  --bg-card: rgba(255, 255, 255, 0.7);
+  /* Translucent for glassmorphism */
+  --bg-sidebar: rgba(255, 255, 255, 0.7);
+  /* Translucent sidebar */
+  --bg-header: rgba(255, 255, 255, 0.8);
+  /* Translucent header */
   --bg-input: rgba(255, 255, 255, 0.6);
   --bg-hover: rgba(241, 245, 249, 0.8);
   --bg-modal: #ffffff;
   --bg-overlay: rgba(0, 0, 0, 0.5);
-  
+
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-tertiary: #64748b;
   --text-muted: #94a3b8;
   --text-inverse: #ffffff;
-  
+
   --border-primary: #e2e8f0;
   --border-secondary: #cbd5e1;
   --border-focus: #6366f1;
-  
+
   --accent-primary: #6366f1;
   --accent-primary-hover: #4f46e5;
   --accent-secondary: #8b5cf6;
@@ -33,18 +36,18 @@
   --accent-warning: #f59e0b;
   --accent-danger: #ef4444;
   --accent-info: #3b82f6;
-  
+
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  
+
   --scrollbar-track: #f1f5f9;
   --scrollbar-thumb: #cbd5e1;
   --scrollbar-thumb-hover: #94a3b8;
-  
+
   /* Premium Mesh Gradient Background - Light */
-  --app-background: 
+  --app-background:
     radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.15) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
@@ -60,24 +63,25 @@
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
   --bg-tertiary: #334155;
-  --bg-card: rgba(30, 41, 59, 0.7); /* More transparent for glassmorphism */
+  --bg-card: rgba(30, 41, 59, 0.7);
+  /* More transparent for glassmorphism */
   --bg-sidebar: rgba(15, 23, 42, 0.8);
   --bg-header: rgba(30, 41, 59, 0.8);
   --bg-input: rgba(30, 41, 59, 0.5);
   --bg-hover: rgba(51, 65, 85, 0.5);
   --bg-modal: #1e293b;
   --bg-overlay: rgba(0, 0, 0, 0.7);
-  
+
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-tertiary: #94a3b8;
   --text-muted: #64748b;
   --text-inverse: #0f172a;
-  
+
   --border-primary: rgba(51, 65, 85, 0.5);
   --border-secondary: #475569;
   --border-focus: #818cf8;
-  
+
   --accent-primary: #818cf8;
   --accent-primary-hover: #6366f1;
   --accent-secondary: #a78bfa;
@@ -85,18 +89,18 @@
   --accent-warning: #fbbf24;
   --accent-danger: #f87171;
   --accent-info: #60a5fa;
-  
+
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-  
+
   --scrollbar-track: #1e293b;
   --scrollbar-thumb: #475569;
   --scrollbar-thumb-hover: #64748b;
-  
+
   /* Premium Mesh Gradient Background - Dark */
-  --app-background: 
+  --app-background:
     radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.25) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.25) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
@@ -114,7 +118,8 @@ html {
 
 body {
   background: var(--app-background);
-  background-attachment: fixed; /* Ensures gradient stays in place while scrolling */
+  background-attachment: fixed;
+  /* Ensures gradient stays in place while scrolling */
   background-size: cover;
   color: var(--text-primary);
   transition: background 0.3s ease, color 0.3s ease;
@@ -122,8 +127,10 @@ body {
 
 /* Custom Scrollbar Styles - Completely Hidden */
 * {
-  -ms-overflow-style: none !important;  /* IE and Edge */
-  scrollbar-width: none !important;  /* Firefox */
+  -ms-overflow-style: none !important;
+  /* IE and Edge */
+  scrollbar-width: none !important;
+  /* Firefox */
 }
 
 /* Chrome, Safari, Opera */
@@ -134,7 +141,8 @@ body {
 }
 
 /* Firefox Scrollbar Support */
-html, body {
+html,
+body {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
@@ -148,16 +156,27 @@ input[type="search"] {
   color: var(--text-primary);
   transition: box-shadow .15s, border-color .15s, background-color .15s;
 }
-input[type="search"]::placeholder { color: var(--text-muted); }
+
+input[type="search"]::placeholder {
+  color: var(--text-muted);
+}
+
 input[type="search"]:focus {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(99,102,241,0.12);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
   border-color: var(--border-focus);
 }
+
 /* Hide browser built-in clear button and search decoration to use custom icon */
 input[type="search"]::-webkit-search-cancel-button,
-input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
-input[type="search"]::-ms-clear { display:none; }
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="search"]::-ms-clear {
+  display: none;
+}
 
 /* Clear button for custom search inputs */
 button[aria-label="Clear search"] {
@@ -170,6 +189,7 @@ button[aria-label="Clear search"] {
   cursor: pointer;
   color: var(--text-muted);
 }
+
 button[aria-label="Clear search"]:hover {
   color: var(--text-primary);
   transform: scale(1.05);
@@ -180,6 +200,7 @@ button[aria-label="Clear search"]:hover {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -190,6 +211,7 @@ button[aria-label="Clear search"]:hover {
     opacity: 0;
     transform: scale(0.95) translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -225,14 +247,16 @@ button[aria-label="Clear search"]:hover {
 .dist-blur-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.18);
+  background: rgba(0, 0, 0, 0.18);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   pointer-events: none;
 }
 
 /* Prefer Open Sans on dist-lean pages */
-.dist-font { font-family: 'Open Sans', Roboto, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial; }
+.dist-font {
+  font-family: 'Open Sans', Roboto, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial;
+}
 
 /* ===== ENHANCED EMPTY STATE ANIMATIONS ===== */
 @keyframes slideInLeft {
@@ -240,6 +264,7 @@ button[aria-label="Clear search"]:hover {
     opacity: 0;
     transform: translateX(-40px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -251,6 +276,7 @@ button[aria-label="Clear search"]:hover {
     opacity: 0;
     transform: translateX(40px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -262,6 +288,7 @@ button[aria-label="Clear search"]:hover {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -269,10 +296,13 @@ button[aria-label="Clear search"]:hover {
 }
 
 @keyframes subtlePulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.85;
     transform: scale(1.02);
@@ -283,24 +313,31 @@ button[aria-label="Clear search"]:hover {
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
 }
 
 @keyframes glowPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(99, 102, 241, 0.2), 0 0 40px rgba(139, 92, 246, 0.1);
   }
+
   50% {
     box-shadow: 0 0 30px rgba(99, 102, 241, 0.35), 0 0 60px rgba(139, 92, 246, 0.2);
   }
 }
 
 @keyframes iconFloat {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-3px);
   }
@@ -310,6 +347,7 @@ button[aria-label="Clear search"]:hover {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -331,31 +369,27 @@ button[aria-label="Clear search"]:hover {
 
 /* Premium Glassmorphism Card */
 .glass-card-premium {
-  background: linear-gradient(
-    135deg,
-    rgba(15, 23, 42, 0.85) 0%,
-    rgba(30, 20, 50, 0.75) 50%,
-    rgba(45, 25, 75, 0.65) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(15, 23, 42, 0.85) 0%,
+      rgba(30, 20, 50, 0.75) 50%,
+      rgba(45, 25, 75, 0.65) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
-              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .glass-card-premium-light {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.9) 0%,
-    rgba(248, 250, 252, 0.85) 50%,
-    rgba(241, 245, 249, 0.8) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(248, 250, 252, 0.85) 50%,
+      rgba(241, 245, 249, 0.8) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(99, 102, 241, 0.12);
   box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08),
-              inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 /* Premium CTA Button */
@@ -372,7 +406,7 @@ button[aria-label="Clear search"]:hover {
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3),
-              0 1px 3px rgba(0, 0, 0, 0.1);
+    0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .btn-cta-premium::before {
@@ -382,19 +416,17 @@ button[aria-label="Clear search"]:hover {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent);
   transition: left 0.5s ease;
 }
 
 .btn-cta-premium:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4),
-              0 4px 10px rgba(0, 0, 0, 0.15);
+    0 4px 10px rgba(0, 0, 0, 0.15);
   background-position: 100% 0;
 }
 
@@ -419,14 +451,12 @@ button[aria-label="Clear search"]:hover {
 /* Vertical Divider */
 .divider-vertical-gradient {
   width: 1px;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(139, 92, 246, 0.3) 20%,
-    rgba(99, 102, 241, 0.5) 50%,
-    rgba(139, 92, 246, 0.3) 80%,
-    transparent 100%
-  );
+  background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(139, 92, 246, 0.3) 20%,
+      rgba(99, 102, 241, 0.5) 50%,
+      rgba(139, 92, 246, 0.3) 80%,
+      transparent 100%);
 }
 
 /* Video Container with Glow */
@@ -440,12 +470,10 @@ button[aria-label="Clear search"]:hover {
   content: '';
   position: absolute;
   inset: -2px;
-  background: linear-gradient(
-    135deg,
-    rgba(99, 102, 241, 0.3) 0%,
-    rgba(139, 92, 246, 0.2) 50%,
-    rgba(168, 85, 247, 0.3) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(99, 102, 241, 0.3) 0%,
+      rgba(139, 92, 246, 0.2) 50%,
+      rgba(168, 85, 247, 0.3) 100%);
   border-radius: 18px;
   z-index: -1;
   animation: glowPulse 3s ease-in-out infinite;
@@ -475,4 +503,37 @@ button[aria-label="Clear search"]:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(139, 92, 246, 0.3);
   transform: translateY(-1px);
+}
+
+/* Text Shine Animation */
+.animate-text {
+  background-size: 200% auto;
+  animation: textShine 5s linear infinite;
+}
+
+@keyframes textShine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* Logo Glow Animation */
+@keyframes logo-glow {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.7));
+  }
+}
+
+.animate-logo-glow {
+  animation: logo-glow 3s ease-in-out infinite;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
 }

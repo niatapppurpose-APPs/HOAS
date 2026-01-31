@@ -21,13 +21,16 @@ try {
 }
 
 // Set global options
-setGlobalOptions({ region: 'us-central1' });
+setGlobalOptions({
+  region: 'us-central1',
+  cors: true // Enable CORS for all functions
+});
 
 export const db = getFirestore();
 export const auth = getAuth();
 
 // Configure CORS
-export const corsHandler = cors({ 
+export const corsHandler = cors({
   origin: true, // Allow all origins in development
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],

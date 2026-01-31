@@ -112,12 +112,12 @@ const DEFAULT_SYSTEM_SETTINGS = {
   approvalsEnabled: true,
   maintenanceMode: false,
   maintenanceMessage: 'System is under maintenance. Please try again later.',
-  
+
   // User Limits
   defaultStudentLimit: 500,
   defaultWardenLimit: 10,
   defaultHostelLimit: 20,
-  
+
   // Feature Flags
   features: {
     notifications: true,
@@ -125,7 +125,7 @@ const DEFAULT_SYSTEM_SETTINGS = {
     analytics: true,
     bulkOperations: true,
   },
-  
+
   // Metadata
   version: 1,
 };
@@ -185,35 +185,31 @@ const DEFAULT_ROLE_PERMISSIONS = {
 // SYSTEM SETTINGS FUNCTIONS
 // =============================================================================
 
-// CORS configuration - matches other functions
-const corsConfig = { 
-  cors: ['http://localhost:5173', 'https://hoas-65dee.web.app', 'https://hoas-65dee.firebaseapp.com']
-};
 
 /**
  * Get global system settings
  */
-export const getSystemSettings = onCall(corsConfig, async (request) => {
+export const getSystemSettings = onCall(async (request) => {
   try {
     logger.info('📋 getSystemSettings called');
 
     // Settings can be read by any authenticated user (for enforcement)
     // But some fields may be filtered based on role
     const isAuthenticated = !!request.auth;
-    
+
     const settingsDoc = await db.collection('systemSettings').doc('global').get();
-    
+
     if (!settingsDoc.exists) {
       // Return defaults if no settings exist
-      return { 
-        success: true, 
+      return {
+        success: true,
         settings: DEFAULT_SYSTEM_SETTINGS,
         isDefault: true
       };
     }
 
     const settings = settingsDoc.data();
-    
+
     // If not admin, return only public settings
     if (!isAuthenticated) {
       return {
@@ -227,14 +223,14 @@ export const getSystemSettings = onCall(corsConfig, async (request) => {
       };
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       settings: {
         ...DEFAULT_SYSTEM_SETTINGS,
         ...settings
       }
     };
-    
+
   } catch (error) {
     logger.error('❌ Error in getSystemSettings:', error);
     throw new HttpsError('internal', `Failed to get settings: ${error.message}`);
@@ -247,12 +243,12 @@ export const getSystemSettings = onCall(corsConfig, async (request) => {
 export const updateSystemSettings = onCall(async (request) => {
   try {
     logger.info('⚙️ updateSystemSettings called with:', request.data);
-    
+
     // Verify admin/owner access
     await verifyAdmin(request);
-    
+
     const { settings } = request.data;
-    
+
     if (!settings || typeof settings !== 'object') {
       throw new HttpsError('invalid-argument', 'Settings object is required');
     }
@@ -277,16 +273,16 @@ export const updateSystemSettings = onCall(async (request) => {
     }
 
     // Validate numeric limits
-    if (updateData.defaultStudentLimit !== undefined && 
-        (typeof updateData.defaultStudentLimit !== 'number' || updateData.defaultStudentLimit < 0)) {
+    if (updateData.defaultStudentLimit !== undefined &&
+      (typeof updateData.defaultStudentLimit !== 'number' || updateData.defaultStudentLimit < 0)) {
       throw new HttpsError('invalid-argument', 'defaultStudentLimit must be a positive number');
     }
-    if (updateData.defaultWardenLimit !== undefined && 
-        (typeof updateData.defaultWardenLimit !== 'number' || updateData.defaultWardenLimit < 0)) {
+    if (updateData.defaultWardenLimit !== undefined &&
+      (typeof updateData.defaultWardenLimit !== 'number' || updateData.defaultWardenLimit < 0)) {
       throw new HttpsError('invalid-argument', 'defaultWardenLimit must be a positive number');
     }
-    if (updateData.defaultHostelLimit !== undefined && 
-        (typeof updateData.defaultHostelLimit !== 'number' || updateData.defaultHostelLimit < 0)) {
+    if (updateData.defaultHostelLimit !== undefined &&
+      (typeof updateData.defaultHostelLimit !== 'number' || updateData.defaultHostelLimit < 0)) {
       throw new HttpsError('invalid-argument', 'defaultHostelLimit must be a positive number');
     }
 
@@ -312,12 +308,12 @@ export const updateSystemSettings = onCall(async (request) => {
     });
 
     logger.info('✅ System settings updated successfully');
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: 'System settings updated successfully',
       version: updateData.version
     };
-    
+
   } catch (error) {
     logger.error('❌ Error in updateSystemSettings:', error);
     if (error instanceof HttpsError) throw error;
@@ -335,13 +331,13 @@ export const updateSystemSettings = onCall(async (request) => {
 export const getRolePermissionTemplates = onCall(async (request) => {
   try {
     logger.info('📋 getRolePermissionTemplates called');
-    
+
     await verifyAdmin(request);
-    
+
     const templatesSnapshot = await db.collection('rolePermissionTemplates')
       .orderBy('createdAt', 'desc')
       .get();
-    
+
     const templates = [];
     templatesSnapshot.forEach(doc => {
       templates.push({ id: doc.id, ...doc.data() });
@@ -362,7 +358,7 @@ export const getRolePermissionTemplates = onCall(async (request) => {
     }
 
     return { success: true, templates };
-    
+
   } catch (error) {
     logger.error('❌ Error in getRolePermissionTemplates:', error);
     if (error instanceof HttpsError) throw error;
@@ -376,11 +372,11 @@ export const getRolePermissionTemplates = onCall(async (request) => {
 export const saveRolePermissionTemplate = onCall(async (request) => {
   try {
     logger.info('💾 saveRolePermissionTemplate called with:', request.data);
-    
+
     await verifyAdmin(request);
-    
+
     const { templateId, template } = request.data;
-    
+
     if (!template || !template.name || !template.role || !template.permissions) {
       throw new HttpsError('invalid-argument', 'Template must include name, role, and permissions');
     }
@@ -401,7 +397,7 @@ export const saveRolePermissionTemplate = onCall(async (request) => {
     };
 
     let docId = templateId;
-    
+
     if (templateId) {
       // Update existing
       await db.collection('rolePermissionTemplates').doc(templateId).update(templateData);
@@ -409,32 +405,32 @@ export const saveRolePermissionTemplate = onCall(async (request) => {
       // Create new
       templateData.createdAt = new Date().toISOString();
       templateData.createdBy = request.auth.uid;
-      
+
       // If setting as default, unset other defaults for this role
       if (templateData.isDefault) {
         const existingDefaults = await db.collection('rolePermissionTemplates')
           .where('role', '==', template.role)
           .where('isDefault', '==', true)
           .get();
-        
+
         const batch = db.batch();
         existingDefaults.forEach(doc => {
           batch.update(doc.ref, { isDefault: false });
         });
         await batch.commit();
       }
-      
+
       const docRef = await db.collection('rolePermissionTemplates').add(templateData);
       docId = docRef.id;
     }
 
     logger.info('✅ Role permission template saved:', docId);
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: 'Template saved successfully',
       templateId: docId
     };
-    
+
   } catch (error) {
     logger.error('❌ Error in saveRolePermissionTemplate:', error);
     if (error instanceof HttpsError) throw error;
@@ -448,11 +444,11 @@ export const saveRolePermissionTemplate = onCall(async (request) => {
 export const deleteRolePermissionTemplate = onCall(async (request) => {
   try {
     logger.info('🗑️ deleteRolePermissionTemplate called with:', request.data);
-    
+
     await verifyAdmin(request);
-    
+
     const { templateId } = request.data;
-    
+
     if (!templateId) {
       throw new HttpsError('invalid-argument', 'templateId is required');
     }
@@ -472,7 +468,7 @@ export const deleteRolePermissionTemplate = onCall(async (request) => {
 
     logger.info('✅ Role permission template deleted:', templateId);
     return { success: true, message: 'Template deleted successfully' };
-    
+
   } catch (error) {
     logger.error('❌ Error in deleteRolePermissionTemplate:', error);
     if (error instanceof HttpsError) throw error;
@@ -490,20 +486,20 @@ export const deleteRolePermissionTemplate = onCall(async (request) => {
 export const getApprovalWorkflows = onCall(async (request) => {
   try {
     logger.info('📋 getApprovalWorkflows called');
-    
+
     await verifyAdmin(request);
-    
+
     const workflowsSnapshot = await db.collection('approvalWorkflows')
       .orderBy('createdAt', 'desc')
       .get();
-    
+
     const workflows = [];
     workflowsSnapshot.forEach(doc => {
       workflows.push({ id: doc.id, ...doc.data() });
     });
 
     return { success: true, workflows };
-    
+
   } catch (error) {
     logger.error('❌ Error in getApprovalWorkflows:', error);
     if (error instanceof HttpsError) throw error;
@@ -517,11 +513,11 @@ export const getApprovalWorkflows = onCall(async (request) => {
 export const saveApprovalWorkflow = onCall(async (request) => {
   try {
     logger.info('💾 saveApprovalWorkflow called with:', request.data);
-    
+
     await verifyAdmin(request);
-    
+
     const { workflowId, workflow } = request.data;
-    
+
     if (!workflow || !workflow.name || !workflow.targetRole || !workflow.steps) {
       throw new HttpsError('invalid-argument', 'Workflow must include name, targetRole, and steps');
     }
@@ -561,7 +557,7 @@ export const saveApprovalWorkflow = onCall(async (request) => {
     };
 
     let docId = workflowId;
-    
+
     if (workflowId) {
       await db.collection('approvalWorkflows').doc(workflowId).update(workflowData);
     } else {
@@ -572,12 +568,12 @@ export const saveApprovalWorkflow = onCall(async (request) => {
     }
 
     logger.info('✅ Approval workflow saved:', docId);
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: 'Workflow saved successfully',
       workflowId: docId
     };
-    
+
   } catch (error) {
     logger.error('❌ Error in saveApprovalWorkflow:', error);
     if (error instanceof HttpsError) throw error;
@@ -591,11 +587,11 @@ export const saveApprovalWorkflow = onCall(async (request) => {
 export const deleteApprovalWorkflow = onCall(async (request) => {
   try {
     logger.info('🗑️ deleteApprovalWorkflow called with:', request.data);
-    
+
     await verifyAdmin(request);
-    
+
     const { workflowId } = request.data;
-    
+
     if (!workflowId) {
       throw new HttpsError('invalid-argument', 'workflowId is required');
     }
@@ -609,7 +605,7 @@ export const deleteApprovalWorkflow = onCall(async (request) => {
 
     logger.info('✅ Approval workflow deleted:', workflowId);
     return { success: true, message: 'Workflow deleted successfully' };
-    
+
   } catch (error) {
     logger.error('❌ Error in deleteApprovalWorkflow:', error);
     if (error instanceof HttpsError) throw error;
@@ -627,18 +623,18 @@ export const deleteApprovalWorkflow = onCall(async (request) => {
 export const getCollegeLimits = onCall(async (request) => {
   try {
     logger.info('📋 getCollegeLimits called');
-    
+
     await verifyAdmin(request);
-    
+
     const limitsSnapshot = await db.collection('collegeLimits').get();
-    
+
     const limits = [];
     limitsSnapshot.forEach(doc => {
       limits.push({ id: doc.id, ...doc.data() });
     });
 
     return { success: true, limits };
-    
+
   } catch (error) {
     logger.error('❌ Error in getCollegeLimits:', error);
     if (error instanceof HttpsError) throw error;
@@ -652,11 +648,11 @@ export const getCollegeLimits = onCall(async (request) => {
 export const setCollegeLimits = onCall(async (request) => {
   try {
     logger.info('⚙️ setCollegeLimits called with:', request.data);
-    
+
     await verifyAdmin(request);
-    
+
     const { collegeId, limits } = request.data;
-    
+
     if (!collegeId) {
       throw new HttpsError('invalid-argument', 'collegeId is required');
     }
@@ -668,7 +664,7 @@ export const setCollegeLimits = onCall(async (request) => {
     // Validate limits
     const allowedLimits = ['maxStudents', 'maxWardens', 'maxHostels', 'customSettings'];
     const updateData = {};
-    
+
     for (const field of allowedLimits) {
       if (limits[field] !== undefined) {
         if (field !== 'customSettings' && (typeof limits[field] !== 'number' || limits[field] < 0)) {
@@ -691,11 +687,11 @@ export const setCollegeLimits = onCall(async (request) => {
     await db.collection('collegeLimits').doc(collegeId).set(updateData, { merge: true });
 
     logger.info('✅ College limits updated:', collegeId);
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: 'College limits updated successfully'
     };
-    
+
   } catch (error) {
     logger.error('❌ Error in setCollegeLimits:', error);
     if (error instanceof HttpsError) throw error;
@@ -761,31 +757,31 @@ export const updateCollegeCounts = async (collegeId) => {
 export const checkRegistrationAllowed = onCall(async () => {
   try {
     const settingsDoc = await db.collection('systemSettings').doc('global').get();
-    
+
     if (!settingsDoc.exists) {
       return { allowed: true };
     }
 
     const settings = settingsDoc.data();
-    
+
     if (settings.maintenanceMode) {
-      return { 
-        allowed: false, 
+      return {
+        allowed: false,
         reason: 'maintenance',
         message: settings.maintenanceMessage || 'System is under maintenance'
       };
     }
 
     if (!settings.registrationEnabled) {
-      return { 
-        allowed: false, 
+      return {
+        allowed: false,
         reason: 'disabled',
         message: 'New registrations are currently disabled'
       };
     }
 
     return { allowed: true };
-    
+
   } catch (error) {
     logger.error('Error checking registration:', error);
     // Allow registration if we can't check (fail open for registration)
@@ -799,20 +795,20 @@ export const checkRegistrationAllowed = onCall(async () => {
 export const checkCollegeCapacity = onCall(async (request) => {
   try {
     const { collegeId, role } = request.data;
-    
+
     if (!collegeId || !role) {
       throw new HttpsError('invalid-argument', 'collegeId and role are required');
     }
 
     // Get college limits
     const limitsDoc = await db.collection('collegeLimits').doc(collegeId).get();
-    
+
     // Get global settings for defaults
     const settingsDoc = await db.collection('systemSettings').doc('global').get();
     const globalSettings = settingsDoc.exists ? settingsDoc.data() : DEFAULT_SYSTEM_SETTINGS;
 
     let maxLimit, currentCount;
-    
+
     if (!limitsDoc.exists) {
       // Use defaults
       if (role === 'student') {
@@ -822,7 +818,7 @@ export const checkCollegeCapacity = onCall(async (request) => {
       } else {
         return { allowed: true };
       }
-      
+
       // Count current users
       const usersSnapshot = await db.collection('users')
         .where('managementId', '==', collegeId)
@@ -844,7 +840,7 @@ export const checkCollegeCapacity = onCall(async (request) => {
     }
 
     const allowed = currentCount < maxLimit;
-    
+
     return {
       allowed,
       currentCount,
@@ -852,7 +848,7 @@ export const checkCollegeCapacity = onCall(async (request) => {
       remaining: Math.max(0, maxLimit - currentCount),
       message: allowed ? null : `${role} limit reached (${currentCount}/${maxLimit})`
     };
-    
+
   } catch (error) {
     logger.error('Error checking college capacity:', error);
     if (error instanceof HttpsError) throw error;
@@ -866,9 +862,9 @@ export const checkCollegeCapacity = onCall(async (request) => {
 export const getSystemStatus = onCall(async () => {
   try {
     const settingsDoc = await db.collection('systemSettings').doc('global').get();
-    
+
     if (!settingsDoc.exists) {
-      return { 
+      return {
         maintenanceMode: false,
         registrationEnabled: true,
         approvalsEnabled: true,
@@ -876,7 +872,7 @@ export const getSystemStatus = onCall(async () => {
     }
 
     const settings = settingsDoc.data();
-    
+
     return {
       maintenanceMode: settings.maintenanceMode || false,
       maintenanceMessage: settings.maintenanceMessage || '',
@@ -884,10 +880,10 @@ export const getSystemStatus = onCall(async () => {
       approvalsEnabled: settings.approvalsEnabled !== false,
       features: settings.features || {},
     };
-    
+
   } catch (error) {
     logger.error('Error getting system status:', error);
-    return { 
+    return {
       maintenanceMode: false,
       registrationEnabled: true,
       approvalsEnabled: true,
@@ -901,14 +897,14 @@ export const getSystemStatus = onCall(async () => {
 export const initializeSystemSettings = onCall(async (request) => {
   try {
     logger.info('🚀 initializeSystemSettings called');
-    
+
     await verifyAdmin(request);
-    
+
     const settingsDoc = await db.collection('systemSettings').doc('global').get();
-    
+
     if (settingsDoc.exists) {
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: 'Settings already initialized',
         alreadyExists: true
       };
@@ -942,11 +938,11 @@ export const initializeSystemSettings = onCall(async (request) => {
     await batch.commit();
 
     logger.info('✅ System settings initialized successfully');
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: 'System settings initialized successfully'
     };
-    
+
   } catch (error) {
     logger.error('❌ Error in initializeSystemSettings:', error);
     if (error instanceof HttpsError) throw error;

@@ -162,7 +162,7 @@ const OwnersDashboard = () => {
 //---------------------------------- Handle logout--------------------------------------------------
   const handleLogout = async () => {
     try {
-      await signOut();
+      await logout();
       toast.success('Logged out successfully');
       navigate("/admin-login", { replace: true });
     } catch (error) {
