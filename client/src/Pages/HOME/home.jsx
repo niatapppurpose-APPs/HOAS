@@ -20,7 +20,7 @@ import {
     Info
 } from 'lucide-react';
 import FrontendDeveloper from '../../assets/DeveploersImages/FrontendDevloper.jpeg'
-import BackendDeveloper from '../../assets/DeveploersImages/BackendDeveloper.jpg'
+import BackendDeveloper from '../../assets/DeveploersImages/Backenddeveloper.png'
 import AppLogo from '../../assets/AppLogo4k.png'
 const Home = () => {
     const navigate = useNavigate();
