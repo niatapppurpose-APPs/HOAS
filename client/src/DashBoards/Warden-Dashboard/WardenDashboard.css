@@ -1,0 +1,392 @@
+/* Warden Dashboard CSS - Theme Variables & Dark Mode Support */
+
+/* ============================================
+   Base Theme Variables
+   ============================================ */
+
+:root {
+  /* Light Mode Variables */
+  --warden-bg-primary: #f8fafc;
+  --warden-bg-secondary: #f1f5f9;
+  --warden-bg-card: #ffffff;
+  --warden-bg-sidebar: rgba(255, 255, 255, 0.95);
+  --warden-bg-header: rgba(255, 255, 255, 0.8);
+  --warden-bg-tertiary: #f1f5f9;
+  --warden-text-primary: #0f172a;
+  --warden-text-secondary: #475569;
+  --warden-text-muted: #94a3b8;
+  --warden-border-primary: rgba(226, 232, 240, 0.8);
+  --warden-accent-primary: #f97316;
+  --warden-accent-secondary: #f59e0b;
+  --warden-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --warden-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --warden-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Mode Variables */
+.dark {
+  --warden-bg-primary: #0f172a;
+  --warden-bg-secondary: #1e293b;
+  --warden-bg-card: #1e293b;
+  --warden-bg-sidebar: rgba(15, 23, 42, 0.95);
+  --warden-bg-header: rgba(15, 23, 42, 0.8);
+  --warden-bg-tertiary: #334155;
+  --warden-text-primary: #f8fafc;
+  --warden-text-secondary: #cbd5e1;
+  --warden-text-muted: #64748b;
+  --warden-border-primary: rgba(51, 65, 85, 0.8);
+  --warden-accent-primary: #f97316;
+  --warden-accent-secondary: #f59e0b;
+  --warden-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --warden-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --warden-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================
+   Warden Dashboard Main Styles
+   ============================================ */
+
+.warden-dashboard {
+  min-height: 100vh;
+  padding-top: 5rem; /* Account for fixed header */
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-bottom: 2rem;
+}
+
+@media (min-width: 640px) {
+  .warden-dashboard {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .warden-dashboard {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* ============================================
+   Stats Cards with Gradients
+   ============================================ */
+
+.warden-stat-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.warden-stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.warden-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  filter: blur(2rem);
+  margin-top: -1rem;
+  margin-right: -1rem;
+}
+
+/* Gradient variants */
+.warden-stat-pending {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.warden-stat-approved {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.warden-stat-denied {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.warden-stat-total {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+.warden-stat-purple {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+/* ============================================
+   Content Cards
+   ============================================ */
+
+.warden-card {
+  background-color: var(--bg-card);
+  border-radius: 1rem;
+  border: 1px solid var(--border-primary);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.warden-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.warden-card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.warden-card-body {
+  padding: 1.5rem;
+}
+
+/* ============================================
+   Tabs
+   ============================================ */
+
+.warden-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.warden-tab {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.warden-tab:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-tertiary);
+}
+
+.warden-tab.active {
+  color: #f97316;
+  background-color: rgba(249, 115, 22, 0.1);
+}
+
+.warden-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #f97316, #f59e0b);
+}
+
+/* ============================================
+   Student List Items
+   ============================================ */
+
+.warden-student-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: var(--bg-tertiary);
+  border-radius: 0.75rem;
+  transition: background-color 0.2s ease;
+}
+
+.warden-student-item:hover {
+  background-color: var(--bg-secondary);
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+
+.warden-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  background: linear-gradient(90deg, #f97316, #f59e0b);
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.warden-btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.warden-btn-approve {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.warden-btn-deny {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.warden-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.warden-btn-outline:hover {
+  background: var(--bg-secondary);
+  border-color: var(--text-muted);
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+
+.warden-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.warden-empty-icon {
+  width: 3rem;
+  height: 3rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+/* ============================================
+   Profile Card
+   ============================================ */
+
+.warden-profile-card {
+  background-color: var(--bg-card);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border-primary);
+}
+
+.warden-profile-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.warden-profile-icon {
+  color: #f97316;
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ============================================
+   Loading Overlay
+   ============================================ */
+
+.warden-loading-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.warden-loading-content {
+  background-color: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: var(--shadow-lg);
+}
+
+/* ============================================
+   Responsive Grid
+   ============================================ */
+
+.warden-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .warden-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.warden-content-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .warden-content-grid {
+    grid-template-columns: 1fr 2fr;
+  }
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes warden-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.warden-pulse {
+  animation: warden-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+
+.warden-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.warden-scrollbar::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+}
+
+.warden-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 3px;
+}
+
+.warden-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}

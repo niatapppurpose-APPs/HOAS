@@ -8,6 +8,7 @@ import WardenProfile from '../../DashBoards/Warden-Dashboard/index'
 import ManagementProfile from '../../DashBoards/Principal-Dashbord/index'
 import StudentDashboard from "../../DashBoards/Student-DashBoard/StudentDashboard";
 import WardenDashboard from "../../DashBoards/Warden-Dashboard/WardenDashboard";
+import WardenLayout from "../../DashBoards/Warden-Dashboard/components/layout/WardenLayout";
 import { ManagementDashboard, ManagementLayout } from "../../DashBoards/Management-Dashboard";
 import ManagementWardens from "../../DashBoards/Management-Dashboard/maincomponent/pages/Wardens";
 import ManagementStudents from "../../DashBoards/Management-Dashboard/maincomponent/pages/Students";
@@ -44,7 +45,10 @@ const Routes_path = () => {
                 <Route path="/profile/management-profile" element={<ManagementProfile />} />
                 {/* ------------------------------ Dashboards ---------------------------------------------*/}
                 <Route path="/dashboard/student" element={<StudentDashboard />} />
-                <Route path="/dashboard/warden" element={<WardenDashboard />} />
+                {/* Warden Dashboard with Layout (similar to Owner Dashboard structure) */}
+                <Route path="/dashboard/warden" element={<WardenLayout />}>
+                    <Route index element={<WardenDashboard />} />
+                </Route>
                 {/* Management Dashboard with Layout (similar to Owner Dashboard structure) */}
                 <Route path="/dashboard/management" element={<ManagementLayout />}>
                     <Route index element={<ManagementDashboard />} />

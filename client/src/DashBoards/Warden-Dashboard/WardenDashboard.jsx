@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { db } from '../../firebase/firebaseConfig';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import * as cloudFunctions from '../../firebase/cloudFunctions';
 import { useToast } from '../../components/Toast';
+import WardenHeader from './components/layout/WardenHeader';
+import StatsCard from '../../components/OwnerServices/StatsCard';
+import './WardenDashboard.css';
 import { 
     Shield, 
     Building2, 
     User, 
     Phone, 
     Briefcase, 
-    LogOut, 
     Loader2,
     Users,
     Bell,
@@ -21,13 +23,13 @@ import {
     XCircle,
     Clock,
     GraduationCap,
-    Languages
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 
 const WardenDashboard = () => {
     const { user, userData, userDataLoading, logout } = useAuth();
     const navigate = useNavigate();
+    const { isCollapsed, setIsCollapsed } = useOutletContext();
     const toast = useToast();
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -104,7 +106,7 @@ const WardenDashboard = () => {
 
     if (userDataLoading || !userData) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
                 <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
             </div>
         );
@@ -125,86 +127,67 @@ const WardenDashboard = () => {
     ];
 
     return (
-        <div className="relative min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50">
+        <>
             {/* Translation Loader Overlay */}
             {translating && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
-                    <div className="bg-white p-6 rounded-lg shadow-lg flex items-center gap-3">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+                    <div className="p-6 rounded-lg shadow-lg flex items-center gap-3" style={{ backgroundColor: 'var(--bg-card)' }}>
                         <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
-                        <span className="text-gray-700">Translating page...</span>
+                        <span style={{ color: 'var(--text-primary)' }}>Translating page...</span>
                     </div>
                 </div>
             )}
-            {/* Header */}
-            <header className="bg-white shadow-sm border-b border-gray-100">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl flex items-center justify-center">
-                                <Shield className="w-5 h-5 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-lg font-bold text-gray-900">HOAS</h1>
-                                <p className="text-xs text-gray-500">Warden Portal</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <button className="p-2 text-gray-500 hover:text-gray-700 relative">
-                                <Bell className="w-5 h-5" />
-                                {stats.pending > 0 && (
-                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
-                                        {stats.pending}
-                                    </span>
-                                )}
-                            </button>
-                            {/* Language Selector */}
-                            <select
-                                value={currentLanguage}
-                                onChange={(e) => handleLanguageChange(e.target.value)}
-                                className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm bg-white"
-                            >
-                                {languages.map(lang => (
-                                    <option key={lang.code} value={lang.code}>
-                                        {lang.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <div className="flex items-center gap-3">
-                                <img
-                                    src={user?.photoURL || '/default-avatar.png'}
-                                    alt="Profile"
-                                    className="w-8 h-8 rounded-full object-cover"
-                                />
-                                <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                                    {userData.fullName}
-                                </span>
-                            </div>
-                            <button
-                                onClick={handleLogout}
-                                className="p-2 text-gray-500 hover:text-red-600 transition-colors"
-                            >
-                                <LogOut className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid lg:grid-cols-4 gap-8">
-                    {/* Sidebar */}
+            {/* Header */}
+            <WardenHeader 
+                pendingCount={stats.pending} 
+                title="Dashboard · Warden Portal" 
+                isCollapsed={isCollapsed}
+                setIsCollapsed={setIsCollapsed}
+            />
+
+            {/* Main Content */}
+            <div className="pt-24 px-4 sm:px-6 lg:px-8 pb-8">
+                {/* Stats Section */}
+                <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
+                    <StatsCard
+                        icon={Clock}
+                        title="Pending Students"
+                        value={stats.pending}
+                        gradient="bg-gradient-to-br from-amber-500 to-orange-600"
+                    />
+                    <StatsCard
+                        icon={CheckCircle}
+                        title="Approved Students"
+                        value={stats.approved}
+                        gradient="bg-gradient-to-br from-emerald-500 to-green-600"
+                    />
+                    <StatsCard
+                        icon={XCircle}
+                        title="Denied Students"
+                        value={stats.denied}
+                        gradient="bg-gradient-to-br from-red-500 to-rose-600"
+                    />
+                </section>
+
+                <div className="grid lg:grid-cols-4 gap-6">
+                    {/* Sidebar Navigation & Profile */}
                     <div className="lg:col-span-1 space-y-6">
-                        <div className="bg-white rounded-2xl shadow-lg p-4">
+                        {/* Quick Navigation */}
+                        <div className="rounded-2xl border p-4" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
                             <nav className="space-y-1">
                                 {menuItems.map((item, index) => (
                                     <button
                                         key={index}
                                         onClick={() => setActiveMenu(item.key)}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                                            activeMenu === item.key
-                                                ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white'
-                                                : 'text-gray-600 hover:bg-gray-50'
+                                            activeMenu === item.key ? 'text-white' : ''
                                         }`}
+                                        style={
+                                            activeMenu === item.key
+                                                ? { background: 'linear-gradient(90deg, #f97316, #f59e0b)' }
+                                                : { color: 'var(--text-secondary)', backgroundColor: 'transparent' }
+                                        }
                                     >
                                         <item.icon className="w-5 h-5" />
                                         <span className="font-medium">{item.label}</span>
@@ -214,125 +197,94 @@ const WardenDashboard = () => {
                         </div>
 
                         {/* Profile Card */}
-                        <div className="bg-white rounded-2xl shadow-lg p-4">
-                            <h3 className="text-sm font-semibold text-gray-900 mb-3">Your Profile</h3>
+                        <div className="rounded-2xl border p-4" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                            <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Your Profile</h3>
                             <div className="space-y-3">
-                                <div className="flex items-center gap-2 text-sm">
-                                    <User className="w-4 h-4 text-orange-600" />
-                                    <span className="text-gray-600">{userData.fullName}</span>
+                                <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                                    <User className="w-4 h-4 text-orange-500" />
+                                    <span>{userData.fullName}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm">
-                                    <Phone className="w-4 h-4 text-orange-600" />
-                                    <span className="text-gray-600">{userData.phone}</span>
+                                <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                                    <Phone className="w-4 h-4 text-orange-500" />
+                                    <span>{userData.phone}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm">
-                                    <Briefcase className="w-4 h-4 text-orange-600" />
-                                    <span className="text-gray-600">{userData.designation}</span>
+                                <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                                    <Briefcase className="w-4 h-4 text-orange-500" />
+                                    <span>{userData.designation}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm">
-                                    <Building2 className="w-4 h-4 text-orange-600" />
-                                    <span className="text-gray-600">{userData.collegeName}</span>
+                                <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                                    <Building2 className="w-4 h-4 text-orange-500" />
+                                    <span>{userData.collegeName}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Main Content */}
+                    {/* Main Content Area */}
                     <div className="lg:col-span-3 space-y-6">
                         {activeMenu === 'students' && (
                             <>
-                                {/* Stats Cards */}
-                                <div className="grid sm:grid-cols-3 gap-4">
-                                    <div className="bg-white rounded-2xl shadow-lg p-5">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm text-gray-500">Pending</p>
-                                                <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
-                                            </div>
-                                            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                                                <Clock className="w-6 h-6 text-amber-600" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="bg-white rounded-2xl shadow-lg p-5">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm text-gray-500">Approved</p>
-                                                <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
-                                            </div>
-                                            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                                <CheckCircle className="w-6 h-6 text-green-600" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="bg-white rounded-2xl shadow-lg p-5">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm text-gray-500">Denied</p>
-                                                <p className="text-2xl font-bold text-red-600">{stats.denied}</p>
-                                            </div>
-                                            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                                                <XCircle className="w-6 h-6 text-red-600" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Student Management */}
-                                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                                    <div className="p-6 border-b border-gray-100">
-                                        <h3 className="text-lg font-semibold text-gray-900">Student Management</h3>
-                                        <p className="text-sm text-gray-500 mt-1">Manage student registrations for {userData.collegeName}</p>
+                                {/* Student Management Card */}
+                                <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                                    <div className="p-6 border-b" style={{ borderColor: 'var(--border-primary)' }}>
+                                        <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Student Management</h3>
+                                        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                                            Manage student registrations for {userData.collegeName}
+                                        </p>
                                     </div>
 
                                     {/* Tabs */}
-                                    <div className="flex border-b border-gray-100">
+                                    <div className="flex border-b" style={{ borderColor: 'var(--border-primary)' }}>
                                         {['pending', 'approved', 'denied'].map((tab) => (
                                             <button
                                                 key={tab}
                                                 onClick={() => setActiveTab(tab)}
-                                                className={`flex-1 py-3 text-sm font-medium transition-all ${
-                                                    activeTab === tab
-                                                        ? 'text-orange-600 border-b-2 border-orange-600 bg-orange-50'
-                                                        : 'text-gray-500 hover:text-gray-700'
+                                                className={`flex-1 py-3 text-sm font-medium transition-all relative ${
+                                                    activeTab === tab ? 'text-orange-500' : ''
                                                 }`}
+                                                style={activeTab !== tab ? { color: 'var(--text-secondary)' } : {}}
                                             >
                                                 {tab.charAt(0).toUpperCase() + tab.slice(1)} ({
                                                     tab === 'pending' ? stats.pending :
                                                     tab === 'approved' ? stats.approved : stats.denied
                                                 })
+                                                {activeTab === tab && (
+                                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-amber-500" />
+                                                )}
                                             </button>
                                         ))}
                                     </div>
 
                                     {/* Student List */}
-                                    <div className="p-6">
+                                    <div className="p-6 max-h-[500px] overflow-y-auto">
                                         {loading ? (
                                             <div className="flex items-center justify-center py-12">
                                                 <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
                                             </div>
                                         ) : filteredStudents.length === 0 ? (
                                             <div className="text-center py-12">
-                                                <GraduationCap className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                                                <p className="text-gray-500">No {activeTab} students</p>
+                                                <GraduationCap className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
+                                                <p style={{ color: 'var(--text-muted)' }}>No {activeTab} students</p>
                                             </div>
                                         ) : (
                                             <div className="space-y-4">
                                                 {filteredStudents.map((student) => (
                                                     <div
                                                         key={student.id}
-                                                        className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
+                                                        className="flex items-center justify-between p-4 rounded-xl"
+                                                        style={{ backgroundColor: 'var(--bg-tertiary)' }}
                                                     >
                                                         <div className="flex items-center gap-4">
                                                             <img
                                                                 src={student.photoURL || '/default-avatar.png'}
                                                                 alt={student.fullName}
-                                                                className="w-12 h-12 rounded-full object-cover"
+                                                                className="w-12 h-12 rounded-full object-cover border-2"
+                                                                style={{ borderColor: 'var(--border-primary)' }}
                                                             />
                                                             <div>
-                                                                <p className="font-medium text-gray-900">{student.fullName}</p>
-                                                                <p className="text-sm text-gray-500">{student.email}</p>
-                                                                <div className="flex gap-4 mt-1 text-xs text-gray-500">
+                                                                <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{student.fullName}</p>
+                                                                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{student.email}</p>
+                                                                <div className="flex gap-4 mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
                                                                     <span>Roll: {student.rollNumber}</span>
                                                                     <span>Room: {student.roomNumber}</span>
                                                                 </div>
@@ -342,14 +294,14 @@ const WardenDashboard = () => {
                                                             <div className="flex gap-2">
                                                                 <button
                                                                     onClick={() => handleStatusChange(student.id, 'approved')}
-                                                                    className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
+                                                                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-sm rounded-lg hover:opacity-90 transition-all flex items-center gap-1"
                                                                 >
                                                                     <CheckCircle className="w-4 h-4" />
                                                                     Approve
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleStatusChange(student.id, 'denied')}
-                                                                    className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1"
+                                                                    className="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white text-sm rounded-lg hover:opacity-90 transition-all flex items-center gap-1"
                                                                 >
                                                                     <XCircle className="w-4 h-4" />
                                                                     Deny
@@ -357,14 +309,15 @@ const WardenDashboard = () => {
                                                             </div>
                                                         )}
                                                         {activeTab === 'approved' && (
-                                                            <span className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
+                                                            <span className="px-3 py-1 bg-green-500/20 text-green-400 text-sm rounded-full border border-green-500/30">
                                                                 Active
                                                             </span>
                                                         )}
                                                         {activeTab === 'denied' && (
                                                             <button
                                                                 onClick={() => handleStatusChange(student.id, 'approved')}
-                                                                className="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+                                                                className="px-4 py-2 text-sm rounded-lg transition-colors border"
+                                                                style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
                                                             >
                                                                 Restore
                                                             </button>
@@ -378,21 +331,24 @@ const WardenDashboard = () => {
                             </>
                         )}
 
-                        {activeMenu === 'translator' && <Translator />}
-
-                        {activeMenu !== 'students' && activeMenu !== 'translator' && (
-                            <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Settings className="w-8 h-8 text-gray-400" />
+                        {activeMenu !== 'students' && (
+                            <div className="rounded-2xl border p-12 text-center" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                                <div 
+                                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                                    style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                                >
+                                    <Settings className="w-8 h-8" style={{ color: 'var(--text-muted)' }} />
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">{menuItems.find(item => item.key === activeMenu)?.label}</h3>
-                                <p className="text-gray-500">This feature is coming soon.</p>
+                                <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+                                    {menuItems.find(item => item.key === activeMenu)?.label}
+                                </h3>
+                                <p style={{ color: 'var(--text-muted)' }}>This feature is coming soon.</p>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 
