@@ -3,25 +3,25 @@ import { useLocation, useOutletContext } from 'react-router-dom';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from "../../../../firebase/firebaseConfig";
 import ManagementHeader from "../../components/layout/ManagementHeader";
-import { Users, Search, Filter, Plus, GraduationCap, CheckCircle, Building2 } from "lucide-react";
+import { Users,Mail,  Search, Filter, Plus, GraduationCap, CheckCircle, Building2, CircleX } from "lucide-react";
 import "../ManagementDashboard.css";
 import { HashLoader } from "react-spinners";
 import { useAuth } from "../../../../context/AuthContext";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 
 const Students = () => {
-    const location = useLocation();
-    const { isCollapsed } = useOutletContext();
-    const [searchTerm, setSearchTerm] = useState("");
-    const [students, setStudents] = useState([]);
-    const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const { isCollapsed } = useOutletContext();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    // Read optional collegeId from URL query params (e.g. ?collegeId=COL123)
-    const searchParams = new URLSearchParams(location.search);
-    const initialCollegeId = searchParams.get('collegeId') ?? null; 
+  // Read optional collegeId from URL query params (e.g. ?collegeId=COL123)
+  const searchParams = new URLSearchParams(location.search);
+  const initialCollegeId = searchParams.get('collegeId') ?? null;
 
   // Use Auth context to get user's college if provided (management user assigned to a college)
-  const { userData } = useAuth();
+  const { userData, user } = useAuth();
 
   // Determine college filter: URL param takes precedence, otherwise use user's collegeId/collegeName
   const getCollegeFilter = () => {
@@ -59,10 +59,34 @@ const Students = () => {
     };
   }, [initialCollegeId, userData]);
 
+
+
+
+  const getRoleBadgeColor = (role) => {
+    if (role?.toLowerCase().includes('chief')) {
+      return;
+    }
+    return 'from-yellow-600';
+  };
+  const getRoleLabel = (warden) => {
+    // Check if there's a specific warden role field
+    if (warden.wardenRole) return warden.wardenRole;
+    if (warden.position) return warden.position;
+    return 'Warden'; // Default
+  };
+
+
+
+
+
+
+  const serachStudentList = students.filter((student) => (
+    student.fullName.includes(searchTerm)
+  ))
   return (
     <>
       {/* Header */}
-      <ManagementHeader 
+      <ManagementHeader
         title="Students · Management"
         pendingCount={0}
         isCollapsed={isCollapsed}
@@ -98,10 +122,7 @@ const Students = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="btn-secondary">
-            <Filter size={20} />
-            Filter
-          </button>
+       
         </div>
 
         {/* Results / Empty / Loading */}
@@ -119,51 +140,67 @@ const Students = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {students.map((student) => (
-              <div 
-                key={student.id} 
-                className="rounded-xl p-4 transition-all" 
-                style={{ 
-                  backgroundColor: 'var(--bg-card)', 
+            {serachStudentList.map((student) => (
+              <div
+                key={student.id}
+                className="flex items-center gap-3 rounded-xl p-4 transition-all"
+                style={{
+                  backgroundColor: 'var(--bg-card)',
                   border: '1px solid var(--border-primary)'
                 }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Avatar user={student} size="md" />
-                    <div>
-                      <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
-                        {student.fullName || student.displayName || student.email || 'Unknown Student'}
-                      </h3>
-                      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{student.email || ''}</p>
-                      {/* Professional Experience Badge */}
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-blue-600/80 to-cyan-600/80 text-white text-xs font-medium">
-                          <GraduationCap className="w-3 h-3" />
-                          Student
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-green-600/80 to-emerald-600/80 text-white text-xs font-medium">
-                          <CheckCircle className="w-3 h-3" />
-                          Active
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {/* Professional Institution Badge */}
-                    <div className="mb-2">
+              ><Avatar
+                  image={student.photoURL}
+                  name={student.fullName || student.email}
+                  size="lg"
+                />
+                 
+                <div className="flex-1 min-w-0">
+                  
+                  {/* Name and Badge */}
+                  <div className="flex items-center gap-8 mb-1 flex-wrap">
+                    <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+                      {student.fullName || 'Unknown Warden'}
+                    </h3>
+                    {/* College and Hostel Badges */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Professional Institution Badge */}
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-600/90 to-indigo-600/90 text-white text-xs font-semibold shadow-lg border border-purple-500/30">
                         <Building2 className="w-3.5 h-3.5" />
-                        {student.collegeName || 'Professional Institution'}
-                        <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold">
-                          PRO
-                        </span>
+                        {student.collegeName || contextInfo.collegeName}
+
                       </span>
-                    </div>
-                    <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                      {student.hostelBlock || 'Premium Hostel'}
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-t ${getRoleBadgeColor(getRoleLabel(student))} text-white text-xs font-medium`}>
+                        {getRoleLabel(student)}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-white text-xs font-medium ${student.isOnline ? 'bg-gradient-to-r from-green-600/80 to-emerald-600/80' : 'bg-gradient-to-r from-red-600/80 to-rose-600/80'}`}>
+                        {student.isOnline ? (
+                          <><CheckCircle className="w-3 h-3" /> Active</>
+                        ) : (
+                          <><CircleX className="w-3 h-3" /> Inactive</>
+                        )}
+                      </span>
+                      {/* Premium Hostel Badge */}
+                      {/* <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white text-xs font-semibold shadow-lg border border-emerald-500/30">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
+                      {warden.hostelBlock || contextInfo.hostelName}
+                      <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold">
+                        ★
+                      </span>
+                    </span> */}
                     </div>
                   </div>
+
+                  {/* Email */}
+                  {student.email && (
+                    <div className="flex items-center gap-1.5 text-sm mb-2" style={{ color: 'var(--text-muted)' }}>
+                      <Mail className="w-3.5 h-3.5" />
+                      <span className="truncate">{student.email}</span>
+                    </div>
+                  )}
+
+
                 </div>
               </div>
             ))}

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { ThemeToggle } from "../../../../components/ThemeToggle";
 import { useAuth } from "../../../../context/AuthContext";
 
-const ManagementHeader = ({ pendingCount = 0, title = "Dashboard · Management", isCollapsed = true, collegeLogo }) => {
+const ManagementHeader = ({ pendingCount = 0, title = "Dashboard · Management", isCollapsed = true }) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -25,14 +25,7 @@ const ManagementHeader = ({ pendingCount = 0, title = "Dashboard · Management",
       <div className="mx-auto px-4 pl-14 sm:pl-6 lg:px-8 h-full">
         <div className="flex items-center justify-between h-full">
           <div className="flex items-center gap-3">
-            {collegeLogo && (
-              <img 
-                src={collegeLogo} 
-                alt="College logo" 
-                className="w-10 h-10 object-contain rounded-lg border"
-                style={{ borderColor: 'var(--border-primary)' }}
-              />
-            )}
+            
             <LayoutDashboard size={28} style={{ color: 'var(--text-primary)' }} />
             <h1 style={{ color: 'var(--text-primary)' }} className="text-lg sm:text-xl font-bold truncate">{title}</h1>
           </div>

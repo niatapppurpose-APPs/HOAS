@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [claims, setClaims] = useState(null);
   const [adminChecked, setAdminChecked] = useState(false);
-  
+
   // User data from Firestore
   const [userData, setUserData] = useState(null);
   const [userDataLoading, setUserDataLoading] = useState(true);
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       setAdminChecked(false);
-      
+
       if (currentUser) {
         // Get the ID token result to check custom claims
         try {
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
           try {
             const userDocRef = doc(db, "users", currentUser.uid);
             const userSnapshot = await getDoc(userDocRef);
-            
+
             if (!userSnapshot.exists()) {
               if (adminStatus) {
                 // If the user is an admin and doesn't have a doc, create one
@@ -62,6 +62,7 @@ export const AuthProvider = ({ children }) => {
                   photoURL: currentUser.photoURL,
                   role: 'admin',
                   status: 'approved',
+                  isOnline: true,
                   createdAt: new Date().toISOString(),
                   updatedAt: new Date().toISOString(),
                 };
@@ -71,6 +72,9 @@ export const AuthProvider = ({ children }) => {
                 // For non-admins, let the user role page handle it
                 console.log("New user detected, waiting for role selection...");
               }
+            } else {
+              // User exists - update isOnline to true
+              await setDoc(userDocRef, { isOnline: true, updatedAt: new Date().toISOString() }, { merge: true });
             }
           } catch (firestoreError) {
             console.error("Error checking/creating user document:", firestoreError);
@@ -89,7 +93,7 @@ export const AuthProvider = ({ children }) => {
         setUserData(null);
         setUserDataLoading(false);
       }
-      
+
       setLoading(false);
     });
 
@@ -105,7 +109,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     setUserDataLoading(true);
-    
+
     // Real-time listener for user document
     const userDocRef = doc(db, "users", user.uid);
     const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
@@ -175,6 +179,12 @@ export const AuthProvider = ({ children }) => {
   // Function to logout
   const logout = async () => {
     try {
+      // Set isOnline to false before logging out
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        await setDoc(userDocRef, { isOnline: false, updatedAt: new Date().toISOString() }, { merge: true });
+      }
+
       // Clear state first to ensure UI updates immediately
       setUserData(null);
       setIsAdmin(false);

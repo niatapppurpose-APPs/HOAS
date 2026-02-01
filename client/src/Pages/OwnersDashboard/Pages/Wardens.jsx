@@ -7,7 +7,6 @@ import Avatar from '../../../components/OwnerServices/Avatar';
 import { HashLoader } from "react-spinners";
 import { User, Mail, Shield, Eye, Edit2, UserMinus, Building2, Search, X, RefreshCw } from 'lucide-react';
 import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmModal';
-import search from './Search.mp4'
 import EmptyState from '../../../components/OwnerServices/EmptyState';
 import { useTheme } from '../../../context/ThemeContext';
 import NoDataLight from '../../../assets/No-Data.avif';

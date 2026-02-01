@@ -15,9 +15,9 @@ import {
 import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from '../../../../components/OwnerServices/Avatar';
-import Applogo from '../../../../assets/Applogo.png';
+import AppLogo4k from '../../../../assets/AppLogo4k.png';
 
-const WardenSidebar = ({ isCollapsed, setIsCollapsed }) => {
+const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
   const { user } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
@@ -131,15 +131,17 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed }) => {
             >
               <div className="absolute inset-0 bg-orange-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <img
-                src={Applogo}
+                src={collegeLogo ? collegeLogo : AppLogo4k}
                 className="relative w-full h-full rounded-full object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-orange-500/50 transition-all duration-300 group-hover:scale-105"
-                alt="HOAS Logo"
+                alt={collegeLogo ? "College Logo" : "HOAS Logo"}
               />
             </button>
 
             <div className={`flex flex-col transition-all duration-300 origin-left ${!showContent ? "lg:hidden opacity-0 w-0 scale-95" : "opacity-100 w-auto scale-100"}`}>
               <h1 className="text-xl font-bold leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>HOAS</h1>
-              <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>Warden Portal</p>
+              <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
+                {collegeLogo ? 'College Portal' : 'Warden Portal'}
+              </p>
             </div>
           </div>
 
@@ -316,9 +318,9 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed }) => {
             </button>
             <div className="flex flex-col items-center">
               <img
-                src={Applogo}
+                src={collegeLogo ? collegeLogo : AppLogo4k}
                 className="w-32 h-32 rounded-full object-cover border-4 border-orange-500/30 shadow-lg"
-                alt="HOAS Logo"
+                alt={collegeLogo ? "College Logo" : "HOAS Logo"}
               />
               <h2 className="mt-4 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>HOAS</h2>
               <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>Hostel Accommodation System</p>

@@ -16,10 +16,10 @@ import {
 import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from '../../../../components/OwnerServices/Avatar';
-import Applogo from '../../../../assets/Applogo.png';
+import AppLogo4k from '../../../../assets/AppLogo4k.png';
 
-const ManagementSidebar = ({ isCollapsed, setIsCollapsed }) => {
-  const { user } = useAuth();
+const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
+  const { user, userData } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -134,15 +134,17 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed }) => {
             >
               <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <img
-                src={Applogo}
+                src={collegeLogo ? collegeLogo : AppLogo4k}
                 className="relative w-full h-full rounded-full object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-indigo-500/50 transition-all duration-300 group-hover:scale-105"
-                alt="HOAS Logo"
+                alt={collegeLogo ? "College Logo" : "HOAS Logo"}
               />
             </button>
 
             <div className={`flex flex-col transition-all duration-300 origin-left ${!showContent ? "lg:hidden opacity-0 w-0 scale-95" : "opacity-100 w-auto scale-100"}`}>
-              <h1 className="text-xl font-bold leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>HOAS</h1>
-              <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>Management Portal</p>
+              <h1 className="text-xl font-bold leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>{userData?.collegeName || 'HOAS'}</h1>
+              <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
+                {collegeLogo ? 'College Portal' : 'Management Portal'}
+              </p>
             </div>
           </div>
 
@@ -358,8 +360,8 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed }) => {
                 <div className="inline-block relative">
                   <div className="absolute inset-0 bg-indigo-500/30 rounded-full blur-2xl animate-pulse" />
                   <img
-                    src={Applogo}
-                    alt="HOAS Logo"
+                    src={collegeLogo ? collegeLogo : AppLogo4k}
+                    alt={collegeLogo ? "College Logo" : "HOAS Logo"}
                     className="relative w-48 h-48 mx-auto rounded-full object-cover border-4 border-indigo-500/50 shadow-2xl"
                   />
                 </div>

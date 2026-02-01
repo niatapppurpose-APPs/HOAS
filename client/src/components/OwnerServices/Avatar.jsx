@@ -6,7 +6,7 @@ const Avatar = ({ image, name, size = "md", rounded = "xl", user }) => {
   const avatarImage = image || user?.photoURL || user?.image;
   const avatarName = name || user?.displayName || user?.name;
   const [imageError, setImageError] = useState(false);
-  const [randomSeed] = useState(() => Math.random().toString(36).substring(7));
+
 
   const sizeClasses = {
     sm: "w-8 h-8 text-xs",
@@ -40,18 +40,13 @@ const Avatar = ({ image, name, size = "md", rounded = "xl", user }) => {
   };
 
   const getInitials = (name) => {
-    if (!name) return null; // Return null to show random image instead
+    if (!name) return "?"; // Show question mark if no name
     return name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
       .slice(0, 3);
-  };
-
-  // Generate random avatar image when no name is provided
-  const getRandomAvatar = () => {
-    return `https://api.dicebear.com/5.x/avataaars/svg?seed=${randomSeed}`;
   };
   const getHighQualityImage = (url) => {
     if (!url) return url;
@@ -70,23 +65,13 @@ const Avatar = ({ image, name, size = "md", rounded = "xl", user }) => {
   return (
     <>
       {shouldShowInitials ? (
-        initials ? (
-          <div
-            className={`${sizeClasses[size]} ${getColorFromName(
-              avatarName
-            )} ${roundedClasses[rounded]} flex items-center justify-center font-semibold p-8 text-white ring-2 ring-white/50`}
-          >
-            {initials}
-          </div>
-        ) : (
-          <img
-            src={getRandomAvatar()}
-            alt="Random Avatar"
-            width={100}
-            height={100}
-            className={`${sizeClasses[size]} ${roundedClasses[rounded]} object-cover ring-2 ring-white/50`}
-          />
-        )
+        <div
+          className={`${sizeClasses[size]} ${getColorFromName(
+            avatarName
+          )} ${roundedClasses[rounded]} flex items-center justify-center font-semibold p-8 text-white ring-2 ring-white/50`}
+        >
+          {initials}
+        </div>
       ) : (
         <img
           src={getHighQualityImage(avatarImage)}

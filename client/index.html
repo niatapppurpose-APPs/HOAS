@@ -2,14 +2,49 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-
-    <link rel="icon" href="/Applogo.png" />
-
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0f172a" />
+    
+    <!-- Primary Meta Tags -->
     <title>HOAS - Hostel Accommodation System</title>
+    <meta name="title" content="HOAS - Hostel Accommodation System" />
+    <meta name="description" content="HOAS is a comprehensive hostel management system for colleges. Manage students, wardens, rooms, and more with our modern dashboard." />
+    <meta name="keywords" content="hostel management, college hostel, student accommodation, warden dashboard, HOAS" />
+    <meta name="author" content="HOAS Team" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Viewport & Mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta name="theme-color" content="#6366F1" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- Favicons -->
+    <link rel="icon" href="/Applogo.png" />
+    <link rel="apple-touch-icon" href="/Applogo.png" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://hoas.app/" />
+    <meta property="og:title" content="HOAS - Hostel Accommodation System" />
+    <meta property="og:description" content="HOAS is a comprehensive hostel management system for colleges. Manage students, wardens, rooms, and more." />
+    <meta property="og:image" content="/Applogo.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://hoas.app/" />
+    <meta property="twitter:title" content="HOAS - Hostel Accommodation System" />
+    <meta property="twitter:description" content="HOAS is a comprehensive hostel management system for colleges." />
+    <meta property="twitter:image" content="/Applogo.png" />
+    
+    <!-- Preconnect to external resources for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://firestore.googleapis.com" />
+    
+    <!-- DNS Prefetch -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
+    
     <!-- Prevent flash of wrong theme -->
     <script>
       (function() {
@@ -34,6 +69,14 @@
     </script>
   </head>
   <body>
+    <!-- Noscript fallback -->
+    <noscript>
+      <div style="padding: 20px; text-align: center; background: #1e293b; color: white; min-height: 100vh;">
+        <h1>JavaScript Required</h1>
+        <p>Please enable JavaScript to use HOAS - Hostel Accommodation System.</p>
+      </div>
+    </noscript>
+    
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

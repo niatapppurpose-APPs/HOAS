@@ -1,38 +1,58 @@
-import { Routes, Route } from "react-router-dom";
-import Home from '../../Pages/HOME/home'
-import Login from '../../Pages/LoginPage/Login'
-import Dashboard from '../../Pages/Dashboard/Dashboard'
+import { Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { HashLoader } from "react-spinners";
+
+// Loading component for lazy loaded routes
+const PageLoader = () => (
+    <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+        <HashLoader color="var(--accent-primary, #6366F1)" size={50} />
+    </div>
+);
+
+// Core pages - loaded immediately for better UX
+import Home from '../../Pages/HOME/home';
+import Login from '../../Pages/LoginPage/Login';
+import Dashboard from '../../Pages/Dashboard/Dashboard';
 import UserRole from "../UserServices/userrole";
-import StudentProfile from '../../DashBoards/Student-DashBoard/index'
-import WardenProfile from '../../DashBoards/Warden-Dashboard/index'
-import ManagementProfile from '../../DashBoards/Principal-Dashbord/index'
-import StudentDashboard from "../../DashBoards/Student-DashBoard/StudentDashboard";
-import StudentLayout from "../../DashBoards/Student-DashBoard/components/layout/StudentLayout";
-import WardenDashboard from "../../DashBoards/Warden-Dashboard/WardenDashboard";
-import WardenLayout from "../../DashBoards/Warden-Dashboard/components/layout/WardenLayout";
-import { ManagementDashboard, ManagementLayout } from "../../DashBoards/Management-Dashboard";
-import ManagementWardens from "../../DashBoards/Management-Dashboard/maincomponent/pages/Wardens";
-import ManagementStudents from "../../DashBoards/Management-Dashboard/maincomponent/pages/Students";
-import ManagementHostels from "../../DashBoards/Management-Dashboard/maincomponent/pages/Hostels";
-import ManagementReports from "../../DashBoards/Management-Dashboard/maincomponent/pages/Reports";
-import OwnersDashboard from "../../Pages/OwnersDashboard/ownersdashbord"
-import OwnersLayout from "../../Pages/OwnersDashboard/OwnersLayout"
-import Wardens from "../../Pages/OwnersDashboard/Pages/Wardens"
-import Students from "../../Pages/OwnersDashboard/Pages/Students"
-import Analytics from "../../Pages/OwnersDashboard/Pages/Analytics"
-import Reports from "../../Pages/OwnersDashboard/Pages/Reports"
-import Notifications from "../../Pages/OwnersDashboard/Pages/Notifications"
-import Settings from "../../Pages/OwnersDashboard/Pages/Settings"
-import GlobalSystemSettings from "../../Pages/OwnersDashboard/Pages/GlobalSystemSettings"
-import Help from "../../Pages/OwnersDashboard/Pages/Help"
-import OwnerProfile from "../OwnerServices/OwnerProfile"
-import AdminLogin from '../OwnerServices/AdminLogin'
-import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval"
-import NotFound from "../../Pages/NotFound"
+import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval";
+import NotFound from "../../Pages/NotFound";
+import AdminLogin from '../OwnerServices/AdminLogin';
+
+// Lazy loaded pages - loaded on demand for better performance
+const StudentProfile = lazy(() => import('../../DashBoards/Student-DashBoard/index'));
+const WardenProfile = lazy(() => import('../../DashBoards/Warden-Dashboard/index'));
+const ManagementProfile = lazy(() => import('../../DashBoards/Principal-Dashbord/index'));
+
+// Lazy loaded dashboards
+const StudentDashboard = lazy(() => import("../../DashBoards/Student-DashBoard/StudentDashboard"));
+const StudentLayout = lazy(() => import("../../DashBoards/Student-DashBoard/components/layout/StudentLayout"));
+const WardenDashboard = lazy(() => import("../../DashBoards/Warden-Dashboard/WardenDashboard"));
+const WardenLayout = lazy(() => import("../../DashBoards/Warden-Dashboard/components/layout/WardenLayout"));
+
+// Management Dashboard - lazy loaded
+const ManagementDashboard = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/ManagementDashboard"));
+const ManagementLayout = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/ManagementLayout"));
+const ManagementWardens = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Wardens"));
+const ManagementStudents = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Students"));
+const ManagementHostels = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Hostels"));
+const ManagementReports = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Reports"));
+
+// Owner Dashboard - lazy loaded
+const OwnersDashboard = lazy(() => import("../../Pages/OwnersDashboard/ownersdashbord"));
+const OwnersLayout = lazy(() => import("../../Pages/OwnersDashboard/OwnersLayout"));
+const Wardens = lazy(() => import("../../Pages/OwnersDashboard/Pages/Wardens"));
+const Students = lazy(() => import("../../Pages/OwnersDashboard/Pages/Students"));
+const Analytics = lazy(() => import("../../Pages/OwnersDashboard/Pages/Analytics"));
+const Reports = lazy(() => import("../../Pages/OwnersDashboard/Pages/Reports"));
+const Notifications = lazy(() => import("../../Pages/OwnersDashboard/Pages/Notifications"));
+const Settings = lazy(() => import("../../Pages/OwnersDashboard/Pages/Settings"));
+const GlobalSystemSettings = lazy(() => import("../../Pages/OwnersDashboard/Pages/GlobalSystemSettings"));
+const SupportTickets = lazy(() => import("../../Pages/OwnersDashboard/Pages/SupportTickets"));
+const OwnerProfile = lazy(() => import("../OwnerServices/OwnerProfile"));
 
 const Routes_path = () => {
     return (
-        <>
+        <Suspense fallback={<PageLoader />}>
             <Routes>
                 {/* ------------------------------ Home Page to User role page --------------------------- */}
                 <Route path="/" element={<Home />} />
@@ -40,20 +60,24 @@ const Routes_path = () => {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/role" element={<UserRole />} />
                 <Route path="/waiting-approval" element={<WaitingApproval />} />
+
                 {/* ------------------------------ Profile Pages ----------------------------------------- */}
                 <Route path="/profile/student-profile" element={<StudentProfile />} />
                 <Route path="/profile/warden-profile" element={<WardenProfile />} />
                 <Route path="/profile/management-profile" element={<ManagementProfile />} />
+
                 {/* ------------------------------ Dashboards ---------------------------------------------*/}
-                {/* Student Dashboard with Layout (similar to Owner Dashboard structure) */}
+                {/* Student Dashboard with Layout */}
                 <Route path="/dashboard/student" element={<StudentLayout />}>
                     <Route index element={<StudentDashboard />} />
                 </Route>
-                {/* Warden Dashboard with Layout (similar to Owner Dashboard structure) */}
+
+                {/* Warden Dashboard with Layout */}
                 <Route path="/dashboard/warden" element={<WardenLayout />}>
                     <Route index element={<WardenDashboard />} />
                 </Route>
-                {/* Management Dashboard with Layout (similar to Owner Dashboard structure) */}
+
+                {/* Management Dashboard with Layout */}
                 <Route path="/dashboard/management" element={<ManagementLayout />}>
                     <Route index element={<ManagementDashboard />} />
                     <Route path="wardens" element={<ManagementWardens />} />
@@ -61,6 +85,7 @@ const Routes_path = () => {
                     <Route path="hostels" element={<ManagementHostels />} />
                     <Route path="reports" element={<ManagementReports />} />
                 </Route>
+
                 {/* --------------------------------------- Owners Page ------------------------------------- */}
                 <Route path="/admin-login" element={<AdminLogin />} />
                 <Route path="/OwnersDashboard" element={<OwnersLayout />}>
@@ -72,14 +97,14 @@ const Routes_path = () => {
                     <Route path="notifications" element={<Notifications />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="system-settings" element={<GlobalSystemSettings />} />
-                    <Route path="help" element={<Help />} />
+                    <Route path="support-tickets" element={<SupportTickets />} />
                 </Route>
                 <Route path="/owner-profile" element={<OwnerProfile />} />
 
                 {/* 404 Not Found - Catch all unmatched routes */}
                 <Route path="*" element={<NotFound />} />
             </Routes>
-        </>
+        </Suspense>
     )
 }
 

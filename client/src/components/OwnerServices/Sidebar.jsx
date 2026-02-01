@@ -5,7 +5,6 @@ import {
   Building2,
   Users,
   Settings,
-  HelpCircle,
   ChevronLeft,
   ChevronRight,
   Bell,
@@ -14,6 +13,7 @@ import {
   Pin,
   X,
   Cog,
+  Ticket,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -38,7 +38,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     if (path.includes('/notifications')) return 'notifications';
     if (path.includes('/system-settings')) return 'system-settings';
     if (path.includes('/settings')) return 'settings';
-    if (path.includes('/help')) return 'help';
+    if (path.includes('/support-tickets')) return 'support-tickets';
     return 'dashboard';
   };
 
@@ -83,9 +83,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   ];
 
   const bottomMenuItems = [
+    { id: "support-tickets", label: "Support Tickets", icon: Ticket, path: "/OwnersDashboard/support-tickets", tourId: "tour-nav-support" },
     { id: "system-settings", label: "System Settings", icon: Cog, path: "/OwnersDashboard/system-settings", tourId: "tour-nav-system-settings" },
     { id: "settings", label: "Settings", icon: Settings, path: "/OwnersDashboard/settings", tourId: "tour-nav-settings" },
-    { id: "help", label: "Help & Support", icon: HelpCircle, path: "/OwnersDashboard/help", tourId: "tour-nav-help" },
   ];
 
   const handleMouseEnter = () => {
@@ -408,7 +408,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       >
         <ChevronRight className="w-5 h-5" />
       </button>
-         
+
       {/* Logo Popup Modal */}
       {showLogoPopup && (
         <div
@@ -480,7 +480,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               </div>
 
               <div className="mt-6 text-xs" style={{ color: 'var(--text-muted)' }}>
-                © { handleDateYear()} HOAS. All rights reserved.
+                © {handleDateYear()} HOAS. All rights reserved.
               </div>
             </div>
           </div>
