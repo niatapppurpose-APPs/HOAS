@@ -1,0 +1,353 @@
+/* Student Dashboard CSS - Theme Variables & Dark Mode Support */
+
+/* ============================================
+   Base Theme Variables
+   ============================================ */
+
+:root {
+  /* Light Mode Variables */
+  --student-bg-primary: #f8fafc;
+  --student-bg-secondary: #f1f5f9;
+  --student-bg-card: #ffffff;
+  --student-bg-sidebar: rgba(255, 255, 255, 0.95);
+  --student-bg-header: rgba(255, 255, 255, 0.8);
+  --student-bg-tertiary: #f1f5f9;
+  --student-text-primary: #0f172a;
+  --student-text-secondary: #475569;
+  --student-text-muted: #94a3b8;
+  --student-border-primary: rgba(226, 232, 240, 0.8);
+  --student-accent-primary: #3b82f6;
+  --student-accent-secondary: #6366f1;
+  --student-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --student-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --student-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Mode Variables */
+.dark {
+  --student-bg-primary: #0f172a;
+  --student-bg-secondary: #1e293b;
+  --student-bg-card: #1e293b;
+  --student-bg-sidebar: rgba(15, 23, 42, 0.95);
+  --student-bg-header: rgba(15, 23, 42, 0.8);
+  --student-bg-tertiary: #334155;
+  --student-text-primary: #f8fafc;
+  --student-text-secondary: #cbd5e1;
+  --student-text-muted: #64748b;
+  --student-border-primary: rgba(51, 65, 85, 0.8);
+  --student-accent-primary: #3b82f6;
+  --student-accent-secondary: #6366f1;
+  --student-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --student-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --student-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================
+   Student Dashboard Main Styles
+   ============================================ */
+
+.student-dashboard {
+  min-height: 100vh;
+  padding-top: 5rem; /* Account for fixed header */
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-bottom: 2rem;
+}
+
+@media (min-width: 640px) {
+  .student-dashboard {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .student-dashboard {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* ============================================
+   Welcome Card with Gradient
+   ============================================ */
+
+.student-welcome-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: white;
+}
+
+.student-welcome-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ============================================
+   Stats Cards with Gradients
+   ============================================ */
+
+.student-stat-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.student-stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.student-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  filter: blur(2rem);
+  margin-top: -1rem;
+  margin-right: -1rem;
+}
+
+/* Gradient variants */
+.student-stat-blue {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.student-stat-indigo {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+.student-stat-purple {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.student-stat-green {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+/* ============================================
+   Content Cards
+   ============================================ */
+
+.student-card {
+  background-color: var(--bg-card);
+  border-radius: 1rem;
+  border: 1px solid var(--border-primary);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.student-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.student-card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.student-card-body {
+  padding: 1.5rem;
+}
+
+/* ============================================
+   Profile Info Items
+   ============================================ */
+
+.student-profile-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background-color: var(--bg-tertiary);
+}
+
+.student-profile-icon {
+  color: #3b82f6;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* ============================================
+   Quick Action Cards
+   ============================================ */
+
+.student-action-card {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-primary);
+  background-color: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.student-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.student-action-blue {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.student-action-green {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.student-action-purple {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+
+.student-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.student-btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.student-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.student-btn-outline:hover {
+  background: var(--bg-secondary);
+  border-color: var(--text-muted);
+}
+
+/* ============================================
+   Loading Overlay
+   ============================================ */
+
+.student-loading-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.student-loading-content {
+  background-color: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: var(--shadow-lg);
+}
+
+/* ============================================
+   Responsive Grid
+   ============================================ */
+
+.student-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .student-profile-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.student-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .student-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes student-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.student-pulse {
+  animation: student-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+
+.student-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.student-scrollbar::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+}
+
+.student-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 3px;
+}
+
+.student-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}

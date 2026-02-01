@@ -1,29 +1,30 @@
 import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
 import { useTranslation } from '../../hooks/useTranslation';
+import StudentHeader from './components/layout/StudentHeader';
+import StatsCard from '../../components/OwnerServices/StatsCard';
+import './StudentDashboard.css';
 import { 
     GraduationCap, 
     Building2, 
     User, 
     Phone, 
     Hash, 
-    LogOut, 
     Loader2,
     Home,
     Calendar,
     Bell,
     FileText,
-    Settings,
-    Languages
 } from 'lucide-react';
 
 const StudentDashboard = () => {
-    const { user, userData, userDataLoading, logout } = useAuth();
+    const { user, userData, userDataLoading } = useAuth();
     const navigate = useNavigate();
     const toast = useToast();
-    const { currentLanguage, languages, translatePage, translating } = useTranslation(toast);
+    const { isCollapsed, setIsCollapsed } = useOutletContext();
+    const { translatePage, translating } = useTranslation(toast);
 
     useEffect(() => {
         if (!userDataLoading) {
@@ -37,191 +38,106 @@ const StudentDashboard = () => {
         }
     }, [userData, userDataLoading, navigate]);
 
-    const handleLogout = async () => {
-        await logout();
-        navigate('/');
-    };
-
-    const handleLanguageChange = async (language) => {
-        await translatePage(language);
-    };
-
     if (userDataLoading || !userData) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
                 <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
             </div>
         );
     }
 
-    const menuItems = [
-        { icon: Home, label: 'Dashboard', active: true },
-        { icon: FileText, label: 'Complaints', active: false },
-        { icon: Calendar, label: 'Leave Requests', active: false },
-        { icon: Bell, label: 'Announcements', active: false },
-        { icon: Settings, label: 'Settings', active: false },
-    ];
-
     return (
-        <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <>
             {/* Translation Loader Overlay */}
             {translating && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
-                    <div className="bg-white p-6 rounded-lg shadow-lg flex items-center gap-3">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+                    <div className="p-6 rounded-lg shadow-lg flex items-center gap-3" style={{ backgroundColor: 'var(--bg-card)' }}>
                         <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                        <span className="text-gray-700">Translating page...</span>
+                        <span style={{ color: 'var(--text-primary)' }}>Translating page...</span>
                     </div>
                 </div>
             )}
+
             {/* Header */}
-            <header className="bg-white shadow-sm border-b border-gray-100">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                                <GraduationCap className="w-5 h-5 text-white" />
-                            </div>
+            <StudentHeader 
+                title="Dashboard · Student Portal" 
+                isCollapsed={isCollapsed}
+                setIsCollapsed={setIsCollapsed}
+            />
+
+            {/* Main Content */}
+            <div className="pt-24 px-4 sm:px-6 lg:px-8 pb-8">
+                {/* Welcome Card */}
+                <div className="student-welcome-card mb-8">
+                    <h2 className="text-2xl font-bold mb-2 relative z-10">Welcome back, {userData.fullName?.split(' ')[0]}! 👋</h2>
+                    <p className="text-blue-100 relative z-10">Here's what's happening in your hostel today.</p>
+                </div>
+
+                {/* Profile Info Card */}
+                <div className="rounded-2xl border p-6 mb-8" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                    <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Your Profile</h3>
+                    <div className="student-profile-grid">
+                        <div className="student-profile-item">
+                            <User className="student-profile-icon" />
                             <div>
-                                <h1 className="text-lg font-bold text-gray-900">HOAS</h1>
-                                <p className="text-xs text-gray-500">Student Portal</p>
+                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Full Name</p>
+                                <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{userData.fullName}</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <button className="p-2 text-gray-500 hover:text-gray-700 relative">
-                                <Bell className="w-5 h-5" />
-                                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                            </button>
-                            {/* Language Selector */}
-                            <select
-                                value={currentLanguage}
-                                onChange={(e) => handleLanguageChange(e.target.value)}
-                                className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-                            >
-                                {languages.map(lang => (
-                                    <option key={lang.code} value={lang.code}>
-                                        {lang.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <div className="flex items-center gap-3">
-                                <img
-                                    src={user?.photoURL || '/default-avatar.png'}
-                                    alt="Profile"
-                                    className="w-8 h-8 rounded-full object-cover"
-                                />
-                                <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                                    {userData.fullName}
-                                </span>
+                        <div className="student-profile-item">
+                            <Phone className="student-profile-icon" />
+                            <div>
+                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Phone</p>
+                                <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{userData.phone}</p>
                             </div>
-                            <button
-                                onClick={handleLogout}
-                                className="p-2 text-gray-500 hover:text-red-600 transition-colors"
-                            >
-                                <LogOut className="w-5 h-5" />
-                            </button>
+                        </div>
+                        <div className="student-profile-item">
+                            <Hash className="student-profile-icon" />
+                            <div>
+                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Roll Number</p>
+                                <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{userData.rollNumber}</p>
+                            </div>
+                        </div>
+                        <div className="student-profile-item">
+                            <Home className="student-profile-icon" />
+                            <div>
+                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Room Number</p>
+                                <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{userData.roomNumber}</p>
+                            </div>
+                        </div>
+                        <div className="student-profile-item sm:col-span-2">
+                            <Building2 className="student-profile-icon" />
+                            <div>
+                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>College</p>
+                                <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{userData.collegeName}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </header>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid lg:grid-cols-4 gap-8">
-                    {/* Sidebar */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-2xl shadow-lg p-4">
-                            <nav className="space-y-1">
-                                {menuItems.map((item, index) => (
-                                    <button
-                                        key={index}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                                            item.active
-                                                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
-                                                : 'text-gray-600 hover:bg-gray-50'
-                                        }`}
-                                    >
-                                        <item.icon className="w-5 h-5" />
-                                        <span className="font-medium">{item.label}</span>
-                                    </button>
-                                ))}
-                            </nav>
-                        </div>
-                    </div>
-
-                    {/* Main Content */}
-                    <div className="lg:col-span-3 space-y-6">
-                        {/* Welcome Card */}
-                        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 text-white">
-                            <h2 className="text-2xl font-bold mb-2">Welcome back, {userData.fullName?.split(' ')[0]}! 👋</h2>
-                            <p className="text-blue-100">Here's what's happening in your hostel today.</p>
-                        </div>
-
-                        {/* Profile Info Card */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Profile</h3>
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                    <User className="w-5 h-5 text-blue-600" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">Full Name</p>
-                                        <p className="font-medium text-gray-900">{userData.fullName}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                    <Phone className="w-5 h-5 text-blue-600" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">Phone</p>
-                                        <p className="font-medium text-gray-900">{userData.phone}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                    <Hash className="w-5 h-5 text-blue-600" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">Roll Number</p>
-                                        <p className="font-medium text-gray-900">{userData.rollNumber}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                    <Home className="w-5 h-5 text-blue-600" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">Room Number</p>
-                                        <p className="font-medium text-gray-900">{userData.roomNumber}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl sm:col-span-2">
-                                    <Building2 className="w-5 h-5 text-blue-600" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">College</p>
-                                        <p className="font-medium text-gray-900">{userData.collegeName}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Quick Actions */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                            <div className="grid sm:grid-cols-3 gap-4">
-                                <button className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:shadow-md transition-all text-left">
-                                    <FileText className="w-8 h-8 text-blue-600 mb-2" />
-                                    <p className="font-medium text-gray-900">File Complaint</p>
-                                    <p className="text-xs text-gray-500 mt-1">Report issues or problems</p>
-                                </button>
-                                <button className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100 hover:shadow-md transition-all text-left">
-                                    <Calendar className="w-8 h-8 text-green-600 mb-2" />
-                                    <p className="font-medium text-gray-900">Apply for Leave</p>
-                                    <p className="text-xs text-gray-500 mt-1">Request hostel leave</p>
-                                </button>
-                                <button className="p-4 bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl border border-purple-100 hover:shadow-md transition-all text-left">
-                                    <Bell className="w-8 h-8 text-purple-600 mb-2" />
-                                    <p className="font-medium text-gray-900">View Notices</p>
-                                    <p className="text-xs text-gray-500 mt-1">Check announcements</p>
-                                </button>
-                            </div>
-                        </div>
+                {/* Quick Actions */}
+                <div className="rounded-2xl border p-6" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                    <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Quick Actions</h3>
+                    <div className="student-actions-grid">
+                        <button className="student-action-card student-action-blue">
+                            <FileText className="w-8 h-8 text-blue-500 mb-2" />
+                            <p className="font-medium" style={{ color: 'var(--text-primary)' }}>File Complaint</p>
+                            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Report issues or problems</p>
+                        </button>
+                        <button className="student-action-card student-action-green">
+                            <Calendar className="w-8 h-8 text-green-500 mb-2" />
+                            <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Apply for Leave</p>
+                            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Request hostel leave</p>
+                        </button>
+                        <button className="student-action-card student-action-purple">
+                            <Bell className="w-8 h-8 text-purple-500 mb-2" />
+                            <p className="font-medium" style={{ color: 'var(--text-primary)' }}>View Notices</p>
+                            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Check announcements</p>
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 
