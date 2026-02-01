@@ -32,16 +32,22 @@ try {
   console.warn('⚠️ Failed to set auth persistence:', err);
 }
 
+// Check for emulator mode from localStorage (user toggle) or environment variable
+const localStorageEmulatorFlag = localStorage.getItem('VITE_USE_FIREBASE_EMULATOR');
+const useEmulator = localStorageEmulatorFlag !== null
+  ? localStorageEmulatorFlag === 'true'
+  : import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
+
 // Check for a debug override (e.g., via debugUtils.forceProductionMode())
 const forceProd = (typeof window !== 'undefined') && localStorage.getItem('forceProductionFirebase') === 'true';
 
-// Connect to emulators when explicitly requested via env var and not forced into production
+// Connect to emulators when explicitly requested and not forced into production
 if (forceProd) {
   console.log('🔒 Production mode forced via localStorage (forceProductionFirebase=true) - skipping emulator connections');
   isEmulatorConnected = false;
-} else if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
+} else if (import.meta.env.DEV && useEmulator) {
   try {
-    console.log('🔧 Connecting to Firebase Emulators (VITE_USE_FIREBASE_EMULATOR=true)');
+    console.log(`🔧 Connecting to Firebase Emulators (${localStorageEmulatorFlag !== null ? 'localStorage' : 'VITE_USE_FIREBASE_EMULATOR'}=true)`);
     // Force-connect to configured emulator endpoints. These calls do not throw if the service is down,
     // which prevents flipping back to production unexpectedly and causing sign-out.
     connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
