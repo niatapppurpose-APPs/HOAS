@@ -262,7 +262,7 @@ export const downloadReportPdf = onRequest({ cors: true }, async (req, res) => {
       return;
     }
 
-    // Prepare report data
+    // Prepare report data - FETCH ALL DATA FIRST BEFORE CREATING PDF
     let reportTitle, reportData;
     
     if (userData.role === 'admin') {
@@ -329,13 +329,15 @@ export const downloadReportPdf = onRequest({ cors: true }, async (req, res) => {
       };
     }
 
-    // Create PDF with proper settings
-    const doc = new PDFDocument({
-      size: 'A4',
-      margins: { top: 50, bottom: 50, left: 50, right: 50 },
-      bufferPages: true
+    // Log the data to verify it's loaded
+    console.log('Report data prepared:', {
+      title: reportTitle,
+      totalStudents: reportData.students || reportData.totalStudents,
+      totalWardens: reportData.wardens || reportData.totalWardens,
+      hasStudentsList: !!(reportData.studentsList || reportData.students),
+      hasWardensList: !!(reportData.wardensList || reportData.wardens)
     });
-    
+
     // Generate random code for filename
     const randomCode = generateRandomCode();
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
@@ -343,21 +345,20 @@ export const downloadReportPdf = onRequest({ cors: true }, async (req, res) => {
     
     console.log('Generated PDF report with filename:', filename);
     
-    // Set headers for download
+    // Set headers for download BEFORE creating PDF
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
+
+    // NOW create PDF with proper settings AFTER all data is ready
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 50, bottom: 50, left: 50, right: 50 },
+      bufferPages: true
+    });
     
     // Pipe PDF to response
     doc.pipe(res);
-    
-    // Add watermark to the first page
-    addWatermark(doc, 'HOAS');
-
-    // Add watermark to any new pages that are created
-    doc.on('pageAdded', () => {
-      addWatermark(doc, 'HOAS');
-    });
     
     // Define colors
     const primaryColor = '#4F46E5'; // Indigo
@@ -401,16 +402,24 @@ export const downloadReportPdf = onRequest({ cors: true }, async (req, res) => {
       if (reportData.colleges && reportData.colleges.length > 0) {
         doc.fontSize(16).fillColor(primaryColor).text('Registered Colleges', { underline: true });
         doc.moveDown(0.5);
+        
+        // Validate data before rendering
+        console.log(`Rendering ${reportData.colleges.length} colleges to PDF`);
+        
         reportData.colleges.forEach((college, index) => {
           if (doc.y > 700) { doc.addPage(); }
           doc.fontSize(11).fillColor(textColor)
-            .text(`${index + 1}. ${college.name}`, { continued: false })
+            .text(`${index + 1}. ${college.name || 'N/A'}`, { continued: false })
             .fontSize(9).fillColor(grayColor)
-            .text(`   College ID: ${college.collegeId}`, { indent: 20 })
-            .text(`   Email: ${college.email}`, { indent: 20 })
+            .text(`   College ID: ${college.collegeId || 'N/A'}`, { indent: 20 })
+            .text(`   Email: ${college.email || 'N/A'}`, { indent: 20 })
             .text(`   Status: ${college.status || 'Active'}`, { indent: 20 });
           doc.moveDown(0.5);
         });
+        doc.moveDown(1);
+      } else {
+        console.log('No colleges data to render in PDF');
+        doc.fontSize(11).fillColor(grayColor).text('No colleges found.');
         doc.moveDown(1);
       }
       
@@ -419,16 +428,24 @@ export const downloadReportPdf = onRequest({ cors: true }, async (req, res) => {
         if (doc.y > 650) { doc.addPage(); }
         doc.fontSize(16).fillColor(primaryColor).text('All Students', { underline: true });
         doc.moveDown(0.5);
+        
+        // Validate data before rendering
+        console.log(`Rendering ${reportData.students.length} students to PDF`);
+        
         reportData.students.forEach((student, index) => {
           if (doc.y > 700) { doc.addPage(); }
           doc.fontSize(11).fillColor(textColor)
             .text(`${index + 1}. ${student.name || 'N/A'}`, { continued: false })
             .fontSize(9).fillColor(grayColor)
-            .text(`   Email: ${student.email}`, { indent: 20 })
+            .text(`   Email: ${student.email || 'N/A'}`, { indent: 20 })
             .text(`   Status: ${student.status || 'N/A'}`, { indent: 20 })
             .text(`   College ID: ${student.collegeId || 'N/A'}`, { indent: 20 });
           doc.moveDown(0.5);
         });
+        doc.moveDown(1);
+      } else {
+        console.log('No students data to render in PDF');
+        doc.fontSize(11).fillColor(grayColor).text('No students found.');
         doc.moveDown(1);
       }
       
@@ -437,16 +454,23 @@ export const downloadReportPdf = onRequest({ cors: true }, async (req, res) => {
         if (doc.y > 650) { doc.addPage(); }
         doc.fontSize(16).fillColor(primaryColor).text('All Wardens', { underline: true });
         doc.moveDown(0.5);
+        
+        // Validate data before rendering
+        console.log(`Rendering ${reportData.wardens.length} wardens to PDF`);
+        
         reportData.wardens.forEach((warden, index) => {
           if (doc.y > 700) { doc.addPage(); }
           doc.fontSize(11).fillColor(textColor)
             .text(`${index + 1}. ${warden.name || 'N/A'}`, { continued: false })
             .fontSize(9).fillColor(grayColor)
-            .text(`   Email: ${warden.email}`, { indent: 20 })
+            .text(`   Email: ${warden.email || 'N/A'}`, { indent: 20 })
             .text(`   Status: ${warden.status || 'N/A'}`, { indent: 20 })
             .text(`   College ID: ${warden.collegeId || 'N/A'}`, { indent: 20 });
           doc.moveDown(0.5);
         });
+      } else {
+        console.log('No wardens data to render in PDF');
+        doc.fontSize(11).fillColor(grayColor).text('No wardens found.');
       }
     } else {
       // Management Report
@@ -471,17 +495,25 @@ export const downloadReportPdf = onRequest({ cors: true }, async (req, res) => {
         if (doc.y > 650) { doc.addPage(); }
         doc.fontSize(16).fillColor(primaryColor).text('Students List', { underline: true });
         doc.moveDown(0.5);
+        
+        // Validate data before rendering
+        console.log(`Rendering ${reportData.studentsList.length} students to PDF`);
+        
         reportData.studentsList.forEach((student, index) => {
           if (doc.y > 700) { doc.addPage(); }
           doc.fontSize(11).fillColor(textColor)
             .text(`${index + 1}. ${student.name || 'N/A'}`, { continued: false })
             .fontSize(9).fillColor(grayColor)
-            .text(`   Email: ${student.email}`, { indent: 20 })
+            .text(`   Email: ${student.email || 'N/A'}`, { indent: 20 })
             .text(`   Phone: ${student.phoneNumber || 'N/A'}`, { indent: 20 })
             .text(`   Room: ${student.roomNumber || 'N/A'}`, { indent: 20 })
             .text(`   Status: ${student.status || 'N/A'}`, { indent: 20 });
           doc.moveDown(0.5);
         });
+        doc.moveDown(1);
+      } else {
+        console.log('No students data to render in PDF');
+        doc.fontSize(11).fillColor(grayColor).text('No students found.');
         doc.moveDown(1);
       }
       
@@ -490,16 +522,23 @@ export const downloadReportPdf = onRequest({ cors: true }, async (req, res) => {
         if (doc.y > 650) { doc.addPage(); }
         doc.fontSize(16).fillColor(primaryColor).text('Wardens List', { underline: true });
         doc.moveDown(0.5);
+        
+        // Validate data before rendering
+        console.log(`Rendering ${reportData.wardensList.length} wardens to PDF`);
+        
         reportData.wardensList.forEach((warden, index) => {
           if (doc.y > 700) { doc.addPage(); }
           doc.fontSize(11).fillColor(textColor)
             .text(`${index + 1}. ${warden.name || 'N/A'}`, { continued: false })
             .fontSize(9).fillColor(grayColor)
-            .text(`   Email: ${warden.email}`, { indent: 20 })
+            .text(`   Email: ${warden.email || 'N/A'}`, { indent: 20 })
             .text(`   Phone: ${warden.phoneNumber || 'N/A'}`, { indent: 20 })
             .text(`   Status: ${warden.status || 'N/A'}`, { indent: 20 });
           doc.moveDown(0.5);
         });
+      } else {
+        console.log('No wardens data to render in PDF');
+        doc.fontSize(11).fillColor(grayColor).text('No wardens found.');
       }
     }
     

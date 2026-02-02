@@ -100,7 +100,7 @@ const ManagementDashboard = () => {
     pendingStudents: students.filter(s => s.status === 'pending').length,
     totalPending: wardens.filter(w => w.status === 'pending').length +
       students.filter(s => s.status === 'pending').length,
-    totalHostels: 2 // This would come from a hostels collection
+    totalHostels: userData?.hostelCount || 0
   };
 
   // Get pending users for recent activity
