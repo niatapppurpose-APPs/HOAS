@@ -369,7 +369,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               } : undefined}
             >
               <div className={`flex items-center ${showContent ? "gap-3" : "justify-center"}`}>
-                <Avatar image={user?.photoURL} name={user?.displayName} size="md" />
+                <Avatar image={user?.photoURL} name={user?.displayName} size="md" objectFit="fill" />
 
                 {showContent && (
                   <div className="flex-1 min-w-0 text-left">

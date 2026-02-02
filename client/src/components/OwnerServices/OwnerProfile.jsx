@@ -167,6 +167,7 @@ const OwnerProfile = () => {
               name={profileData.displayName || user?.displayName}
               size={20}
               rounded="full"
+              objectFit="fill"
             />
 
             <div className="flex-1">

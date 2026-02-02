@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 // Reusable Avatar Component with fallback to initials
-const Avatar = ({ image, name, size = "md", rounded = "xl", user }) => {
+const Avatar = ({ image, name, size = "md", rounded = "xl", user, objectFit = "cover" }) => {
   // If user prop is provided, extract image and name from it
   const avatarImage = image || user?.photoURL || user?.image;
   const avatarName = name || user?.displayName || user?.name;
@@ -80,7 +80,7 @@ const Avatar = ({ image, name, size = "md", rounded = "xl", user }) => {
           onError={() => setImageError(true)}
           width={100}
           height={100}
-          className={`${sizeClasses[size]} ${roundedClasses[rounded]} object-cover ring-2 ring-white/50`}
+          className={`${sizeClasses[size]} ${roundedClasses[rounded]} object-${objectFit} ring-2 ring-white/50`}
         />
       )}
     </>
