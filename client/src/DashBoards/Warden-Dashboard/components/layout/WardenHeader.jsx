@@ -43,17 +43,6 @@ const WardenHeader = ({ pendingCount = 0, title = "Dashboard · Warden Portal", 
                 <span className="sm:hidden">{pendingCount}</span>
               </span>
             )}
-
-            {/* College Name Badge */}
-            {userData?.collegeName && (
-              <span 
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium"
-                style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
-              >
-                {userData.collegeName}
-              </span>
-            )}
-
             {/* Theme Toggle Button */}
             <ThemeToggle size="md" />
 

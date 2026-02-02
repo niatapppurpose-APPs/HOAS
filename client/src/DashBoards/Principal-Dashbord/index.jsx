@@ -430,6 +430,9 @@ const ManagementProfile = () => {
               <label className="block text-slate-300 text-sm font-medium mb-2">
                 Upload Logo (Optional)
               </label>
+              <p className="text-xs text-slate-400 mb-3">
+                Recommended size: <span className="text-emerald-400 font-medium">400×400 pixels</span> for best results
+              </p>
               <div className="flex gap-3 items-center flex-wrap">
                 <input
                   id="logoInput"

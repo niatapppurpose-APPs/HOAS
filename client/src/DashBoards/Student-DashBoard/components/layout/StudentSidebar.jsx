@@ -10,16 +10,16 @@ import {
   HelpCircle,
   Pin,
   ChevronLeft,
-  X,
+  X, 
   GraduationCap,
 } from "lucide-react";
 import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from '../../../../components/OwnerServices/Avatar';
-import Applogo from '../../../../assets/Applogo.png';
+import Applogo from '../../../../assets/AppLogo4k.png';
 
-const StudentSidebar = ({ isCollapsed, setIsCollapsed }) => {
-  const { user } = useAuth();
+const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
+  const { user, userData } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -132,15 +132,17 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed }) => {
             >
               <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <img
-                src={Applogo}
-                className="relative w-full h-full rounded-full object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-blue-500/50 transition-all duration-300 group-hover:scale-105"
-                alt="HOAS Logo"
+                src={collegeLogo ? collegeLogo : Applogo}
+                className="relative w-full h-full rounded-full object-contain border-2 border-slate-600/50 shadow-lg group-hover:border-blue-500/50 transition-all duration-300 group-hover:scale-105"
+                alt={collegeLogo ? "College Logo" : "HOAS Logo"}
               />
             </button>
 
             <div className={`flex flex-col transition-all duration-300 origin-left ${!showContent ? "lg:hidden opacity-0 w-0 scale-95" : "opacity-100 w-auto scale-100"}`}>
-              <h1 className="text-xl font-bold leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>HOAS</h1>
-              <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>Student Portal</p>
+              <h1 className="text-xl font-bold leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>{userData?.collegeName || 'HOAS'}</h1>
+              <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
+                {collegeLogo ? 'College Portal' : 'Student Portal'}
+              </p>
             </div>
           </div>
 
@@ -317,12 +319,16 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed }) => {
             </button>
             <div className="flex flex-col items-center">
               <img
-                src={Applogo}
-                className="w-32 h-32 rounded-full object-cover border-4 border-blue-500/30 shadow-lg"
-                alt="HOAS Logo"
+                src={collegeLogo ? collegeLogo : Applogo}
+                className="w-full h-32 rounded-lg object-cover border-4 border-blue-500/30 shadow-lg"
+                alt={collegeLogo ? "College Logo" : "HOAS Logo"}
               />
-              <h2 className="mt-4 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>HOAS</h2>
-              <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>Hostel Accommodation System</p>
+              <h2 className="mt-4 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                {userData?.collegeName || 'HOAS'}
+              </h2>
+              <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+                {collegeLogo ? 'College Portal' : 'Hostel Accommodation System'}
+              </p>
               <div className="mt-4 flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                 <GraduationCap className="w-4 h-4 text-blue-500" />
                 <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Student Portal</span>

@@ -131,7 +131,7 @@ const Wardens = () => {
 
                       </span>
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-t ${getRoleBadgeColor(getRoleLabel(warden))} text-white text-xs font-medium`}>
-                        {getRoleLbel(warden)}
+                        {getRoleLabel(warden)}
                       </span>
                       <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-white text-xs font-medium ${warden.isOnline ? 'bg-gradient-to-r from-green-600/80 to-emerald-600/80' : 'bg-gradient-to-r from-red-600/80 to-rose-600/80'}`}>
                         {warden.isOnline ? (

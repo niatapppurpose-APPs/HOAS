@@ -37,15 +37,6 @@ const StudentHeader = ({ title = "Dashboard · Student Portal", isCollapsed = tr
             <h1 style={{ color: 'var(--text-primary)' }} className="text-lg sm:text-xl font-bold truncate">{title}</h1>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* College Name Badge */}
-            {userData?.collegeName && (
-              <span 
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium"
-                style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
-              >
-                {userData.collegeName}
-              </span>
-            )}
 
             {/* Room Number Badge */}
             {userData?.roomNumber && (

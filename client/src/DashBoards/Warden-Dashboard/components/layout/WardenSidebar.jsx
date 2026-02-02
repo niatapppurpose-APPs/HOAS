@@ -8,7 +8,7 @@ import {
   Settings,
   HelpCircle,
   Pin,
-  ChevronLeft,
+  ChevronLeft, 
   X,
   Shield,
 } from "lucide-react";
@@ -18,7 +18,7 @@ import Avatar from '../../../../components/OwnerServices/Avatar';
 import AppLogo4k from '../../../../assets/AppLogo4k.png';
 
 const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -129,16 +129,16 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
               className={`relative transition-all duration-300 group cursor-pointer ${!showContent ? "w-12 h-12" : "w-14 h-14"}`}
               title="Click to view logo"
             >
-              <div className="absolute inset-0 bg-orange-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-10 bg-orange-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <img
                 src={collegeLogo ? collegeLogo : AppLogo4k}
-                className="relative w-full h-full rounded-full object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-orange-500/50 transition-all duration-300 group-hover:scale-105"
+                className="relative w-full h-full rounded-full object-contain border-2 border-slate-600/50 shadow-lg group-hover:border-orange-500/50 transition-all duration-300 group-hover:scale-105"
                 alt={collegeLogo ? "College Logo" : "HOAS Logo"}
               />
             </button>
 
             <div className={`flex flex-col transition-all duration-300 origin-left ${!showContent ? "lg:hidden opacity-0 w-0 scale-95" : "opacity-100 w-auto scale-100"}`}>
-              <h1 className="text-xl font-bold leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>HOAS</h1>
+              <h1 className="text-xl font-bold leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>{userData?.collegeName}</h1>
               <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
                 {collegeLogo ? 'College Portal' : 'Warden Portal'}
               </p>
@@ -311,7 +311,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
           >
             <button
               onClick={() => setShowLogoPopup(false)}
-              className="absolute top-4 right-4 p-2 rounded-full transition-colors"
+              className="absolute top-3 right-2 p-2 rounded-full transition-colors"
               style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
             >
               <X className="w-5 h-5" />
@@ -319,11 +319,11 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
             <div className="flex flex-col items-center">
               <img
                 src={collegeLogo ? collegeLogo : AppLogo4k}
-                className="w-32 h-32 rounded-full object-cover border-4 border-orange-500/30 shadow-lg"
+                className="w-full h-32 rounded-xl object-cover border-4 border-orange-500/30 shadow-lg"
                 alt={collegeLogo ? "College Logo" : "HOAS Logo"}
               />
-              <h2 className="mt-4 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>HOAS</h2>
-              <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>Hostel Accommodation System</p>
+              <h2 className="mt-4 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{userData?.collegeName}</h2>
+              <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>Hostel Operations Accountability System</p>
               <div className="mt-4 flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                 <Shield className="w-4 h-4 text-orange-500" />
                 <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Warden Portal</span>
