@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import ManagementHeader from "../../components/layout/ManagementHeader";
 import { collection, query, where, onSnapshot, doc, deleteDoc, getDocs } from 'firebase/firestore';
@@ -7,12 +7,38 @@ import { db } from '../../../../firebase/firebaseConfig';
 import Avatar from "../../../../components/OwnerServices/Avatar";
 import { Building2, Mail, Search, Filter, Plus } from "lucide-react";
 import "../ManagementDashboard.css";
+import { HashLoader } from 'react-spinners'
+import EmptyState from "../../../../components/OwnerServices/EmptyState";
+import { useTheme } from "../../../../context/ThemeContext";
+import NoDataLight from '../../../../assets/No-Data.avif';
+import NoDataDark from '../../../../assets/NoDataDark.png';
 
 const Wardens = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { isCollapsed } = useOutletContext();
   const [getwarden, setGetAllwarden] = useState([])
   const [loading, setLoading] = useState(null)
+  const [error, setError] = useState(null)
+  const searchInputRef = useRef(null);
+  const { isDark } = useTheme()
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      const q = query(collection(db, 'users'), where('role', '==', 'warden'));
+      const snapshot = await getDocs(q);
+      const wardenList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setGetAllwarden(wardenList)
+      setError(null);
+    } catch (err) {
+      console.error('Failed to refresh wardens:', err);
+      setError(err.message || 'Refresh failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
 
   const contextInfo = {
     collegeName: "Professional Institution",
@@ -34,7 +60,10 @@ const Wardens = () => {
       if (timer) clearTimeout(timer);
     };
   }, []);
-
+  const clearSearchWarden = () => {
+    setSearchTerm('');
+    searchInputRef.current?.focus();
+  }
   // Helper function to get role badge color
   const getRoleBadgeColor = (role) => {
     if (role?.toLowerCase().includes('warden')) {
@@ -49,7 +78,12 @@ const Wardens = () => {
     if (warden.position) return warden.position;
     return 'Warden'; // Default
   };
- 
+
+  const handleRemove = (warden) => {
+    // TODO: Implement remove functionality
+    console.log('Remove warden:', warden);
+  };
+
 
 
 
@@ -89,16 +123,66 @@ const Wardens = () => {
           <div className="search-box">
             <Search size={20} />
             <input
+              ref={searchInputRef}
               type="text"
               placeholder="Search wardens..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+
           </div>
-
+          <button
+            onClick={handleRefresh}
+            className="p-2.5 rounded-xl cursor-pointer border transition-all duration-300 group"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-primary)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-primary)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
+            }}
+            aria-label="Refresh"
+            title="Refresh list"
+          >
+            <RefreshCw className="w-5 h-5 transition-transform duration-300 cursor-pointer group-hover:rotate-180" style={{ color: 'var(--text-muted)' }} />
+          </button>
         </div>
-
-        {searchWardenList.map(warden => (
+        {searchTerm.trim() && getwarden.length > 0 && searchWardenList.length === 0 && !loading ? (
+          <div className="mb-4">
+            <EmptyState
+              title={`No matches for "${searchTerm}"`}
+              description={'Try a different name, or clear the search to see all wardens.'}
+              ctaLabel="Clear search"
+              onCta={clearSearchWarden}
+              videoSrc={!isDark ? NoDataLight : NoDataDark}
+              className="max-w-5xl mx-auto"
+            />
+          </div>
+        ) : null}
+        {loading ? (
+          <div className="flex items-center justify-center w-full min-h-[calc(60vh)]">
+            <div className="text-center">
+              <HashLoader loading={loading} color="#6366f1" size={80} />
+            </div>
+          </div>
+        ) : (getwarden.length === 0 ? (
+          <div className="mb-4">
+            <EmptyState
+              title={`No matches for "${searchTerm}"`}
+              description={'Try a different name, or clear the search to see all wardens.'}
+              ctaLabel="Clear search"
+              onCta={clearSearchWarden}
+              videoSrc={isDark ? NoDataLight : NoDataDark}
+              className="max-w-5xl mx-auto"
+            />
+          </div>
+        ) : (searchWardenList.map(warden => (
           <div
             key={warden.id}
             className="rounded-xl p-4 hover:border-slate-600/50 transition-all"
@@ -106,7 +190,7 @@ const Wardens = () => {
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
 
-              {/* Left: Student Info */}
+              {/* Left: Warden Info */}
               <div className="flex items-center gap-4 flex-1 min-w-0">
 
                 <Avatar
@@ -180,7 +264,7 @@ const Wardens = () => {
               </div>
             </div>
           </div>
-        ))}
+        ))))}
       </div>
     </>
   );

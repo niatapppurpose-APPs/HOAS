@@ -178,20 +178,33 @@ const OwnersDashboard = () => {
   const handleStatusChange = async (userId, newStatus) => {
     if (newStatus === 'approved') setIsApproving(userId);
     if (newStatus === 'denied') setIsDenying(userId);
+    
     try {
-      if (newStatus === 'approved') {
-        await cloudFunctions.approveUser(userId, 'owner');
-      } else if (newStatus === 'denied') {
-        await cloudFunctions.denyUser(userId, 'Denied by owner');
-      }
+      // Add timeout for faster user feedback
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Operation timed out')), 15000)
+      );
+      
+      const operationPromise = newStatus === 'approved' 
+        ? cloudFunctions.approveUser(userId, 'owner')
+        : cloudFunctions.denyUser(userId, 'Denied by owner');
+      
+      await Promise.race([operationPromise, timeoutPromise]);
+      
       // Remove from selection after action
       setSelectedUsers(prev => {
         const newSet = new Set(prev);
         newSet.delete(userId);
         return newSet;
       });
+      
+      toast.success(`User ${newStatus} successfully!`);
     } catch (error) {
-      toast.error(`Failed to ${newStatus} user: ${error.message}`);
+      if (error.message === 'Operation timed out') {
+        toast.error(`${newStatus} operation is taking longer than expected. Please check the result manually.`);
+      } else {
+        toast.error(`Failed to ${newStatus} user: ${error.message}`);
+      }
     } finally {
       if (newStatus === 'approved') setIsApproving(null);
       if (newStatus === 'denied') setIsDenying(null);
@@ -289,14 +302,11 @@ const OwnersDashboard = () => {
   const handleOpenDeleteModal = async (college) => {
     setIsDeleteLoading(college.id);
     try {
-      // Get college stats using Cloud Function
-      const { stats } = await cloudFunctions.getCollegeStats(college.id);
-
-      // Use context to open modal
+      // Use context to open modal without fetching stats (for speed)
       openDeleteModal({
         college: college,
-        wardenCount: stats.wardens.total,
-        studentCount: stats.students.total,
+        wardenCount: 'Loading...', // Show loading text instead of waiting for stats
+        studentCount: 'Loading...',
         onConfirm: async () => {
           const collegeId = college.id;
           await cloudFunctions.deleteCollege(collegeId);
@@ -304,16 +314,8 @@ const OwnersDashboard = () => {
         }
       });
     } catch (error) {
-      openDeleteModal({
-        college: college,
-        wardenCount: 0,
-        studentCount: 0,
-        onConfirm: async () => {
-          const collegeId = college.id;
-          await cloudFunctions.deleteCollege(collegeId);
-          toast.success('College deleted successfully!');
-        }
-      });
+      toast.error('Failed to open delete modal');
+      console.error('Delete modal error:', error);
     } finally {
       setIsDeleteLoading(null);
     }

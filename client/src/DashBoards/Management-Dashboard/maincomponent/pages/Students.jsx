@@ -1,21 +1,27 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useOutletContext } from 'react-router-dom';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from "../../../../firebase/firebaseConfig";
 import ManagementHeader from "../../components/layout/ManagementHeader";
-import { Users,Mail,  Search, Filter, Plus, GraduationCap, CheckCircle, Building2, CircleX } from "lucide-react";
+import { Users, Mail, Search, Filter, Plus, GraduationCap, CheckCircle, Building2,RefreshCw,  CircleX } from "lucide-react";
 import "../ManagementDashboard.css";
 import { HashLoader } from "react-spinners";
 import { useAuth } from "../../../../context/AuthContext";
 import Avatar from "../../../../components/OwnerServices/Avatar";
-
+import { useTheme } from "../../../../context/ThemeContext";
+import EmptyState from "../../../../components/OwnerServices/EmptyState";
+import { toast } from "../../../../components/Toast";
+import NoDataLight from '../../../../assets/No-Data.avif';
+import NoDataDark from '../../../../assets/NoDataDark.png';
 const Students = () => {
   const location = useLocation();
   const { isCollapsed } = useOutletContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [error, setError] = useState(null)
+  const searchInputRef = useRef(null);
+  const { isDark } = useTheme()
   // Read optional collegeId from URL query params (e.g. ?collegeId=COL123)
   const searchParams = new URLSearchParams(location.search);
   const initialCollegeId = searchParams.get('collegeId') ?? null;
@@ -70,6 +76,39 @@ const Students = () => {
   const serachStudentList = students.filter((student) => (
     student.fullName.includes(searchTerm)
   ))
+
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      const collegeFilter = getCollegeFilter();
+      const q = collegeFilter
+        ? query(collection(db, 'users'), where('role', '==', 'student'), where(collegeFilter.field, '==', collegeFilter.value))
+        : query(collection(db, 'users'), where('role', '==', 'student'));
+      
+      const snapshot = await getDocs(q);
+      const studentList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setStudents(studentList);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to refresh students:', err);
+      setError(err.message || 'Refresh failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+  const clearSearchStudent = () => {
+    setSearchTerm('');
+    searchInputRef.current?.focus();
+  }
+
+  const contextInfo = {
+    collegeName: "Professional Institution",
+    hostelName: "Premium Hostel – Block A"
+  };
   return (
     <>
       {/* Header */}
@@ -103,27 +142,64 @@ const Students = () => {
           <div className="search-box">
             <Search size={20} />
             <input
+              ref={searchInputRef}
               type="text"
               placeholder="Search students..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-       
+          <button
+            onClick={handleRefresh}
+            className="p-2.5 rounded-xl border cursor-pointer transition-all duration-300 group"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderColor: 'var(--border-primary)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-primary)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
+            }}
+            aria-label="Refresh"
+            title="Refresh list"
+          >
+            <RefreshCw className="w-5 h-5 transition-transform cursor-pointer duration-300 group-hover:rotate-180" style={{ color: 'var(--text-muted)' }} />
+          </button>
         </div>
 
+        {/* This is for when Search student are not found this will display */}
+        {searchTerm.trim() && students.length > 0 && serachStudentList.length === 0 && !loading ? (
+          <div className="mb-4">
+            <EmptyState
+              title={`No matches for "${searchTerm}"`}
+              description={"Try a different name, or clear the search to see all students."}
+              ctaLabel="Clear search"
+              onCta={clearSearchStudent}
+              videoSrc={!isDark ? NoDataLight : NoDataDark}
+              className="max-w-5xl mx-auto"
+            />
+          </div>
+        ) : null}
         {/* Results / Empty / Loading */}
         {loading ? (
           <div className="flex items-center justify-center w-full min-h-[calc(40vh)]">
-            <HashLoader color="var(--accent-primary)" />
+            <HashLoader loading={loading} color="#6366f1" size={80} />
           </div>
         ) : (students.length === 0 ? (
-          <div className="content-card">
-            <div className="empty-state">
-              <Users size={64} className="empty-icon" />
-              <h3>No Students Found</h3>
-              <p>Start by adding your first student to the system</p>
-            </div>
+          <div className="mb-4">
+            <EmptyState
+              title={`No matches for "${searchTerm}"`}
+              description={"Try a different name, or clear the search to see all students."}
+              ctaLabel="Clear search"
+              onCta={clearSearchStudent}
+              videoSrc={!isDark ? NoDataLight : NoDataDark}
+              className="max-w-5xl mx-auto"
+            />
           </div>
         ) : (
           <div className="space-y-3">
@@ -140,13 +216,13 @@ const Students = () => {
                   name={student.fullName || student.email}
                   size="lg"
                 />
-                 
+
                 <div className="flex-1 min-w-0">
-                  
+
                   {/* Name and Badge */}
                   <div className="flex items-center gap-8 mb-1 flex-wrap">
                     <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
-                      {student.fullName || 'Unknown Warden'}
+                      {student.fullName || 'Unknown Student'}
                     </h3>
                     {/* College and Hostel Badges */}
                     <div className="flex flex-wrap items-center gap-2">

@@ -26,8 +26,18 @@ const ManagementProfile = lazy(() => import('../../DashBoards/Principal-Dashbord
 // Lazy loaded dashboards
 const StudentDashboard = lazy(() => import("../../DashBoards/Student-DashBoard/StudentDashboard"));
 const StudentLayout = lazy(() => import("../../DashBoards/Student-DashBoard/components/layout/StudentLayout"));
+const StudentComplaints = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentComplaints"));
+const StudentLeaveRequests = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentLeaveRequests"));
+const StudentAnnouncements = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentAnnouncements"));
+const StudentSettings = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentSettings"));
+const StudentHelpSupport = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentHelpSupport"));
 const WardenDashboard = lazy(() => import("../../DashBoards/Warden-Dashboard/WardenDashboard"));
 const WardenLayout = lazy(() => import("../../DashBoards/Warden-Dashboard/components/layout/WardenLayout"));
+const WardenStudents = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenStudents"));
+const WardenComplaints = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenComplaints"));
+const WardenAnnouncements = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenAnnouncements"));
+const WardenSettings = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenSettings"));
+const WardenHelpSupport = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenHelpSupport"));
 
 // Management Dashboard - lazy loaded
 const ManagementDashboard = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/ManagementDashboard"));
@@ -70,11 +80,21 @@ const Routes_path = () => {
                 {/* Student Dashboard with Layout */}
                 <Route path="/dashboard/student" element={<StudentLayout />}>
                     <Route index element={<StudentDashboard />} />
+                    <Route path="complaints" element={<StudentComplaints />} />
+                    <Route path="leave" element={<StudentLeaveRequests />} />
+                    <Route path="announcements" element={<StudentAnnouncements />} />
+                    <Route path="settings" element={<StudentSettings />} />
+                    <Route path="help" element={<StudentHelpSupport />} />
                 </Route>
 
                 {/* Warden Dashboard with Layout */}
                 <Route path="/dashboard/warden" element={<WardenLayout />}>
                     <Route index element={<WardenDashboard />} />
+                    <Route path="students" element={<WardenStudents />} />
+                    <Route path="complaints" element={<WardenComplaints />} />
+                    <Route path="announcements" element={<WardenAnnouncements />} />
+                    <Route path="settings" element={<WardenSettings />} />
+                    <Route path="help" element={<WardenHelpSupport />} />
                 </Route>
 
                 {/* Management Dashboard with Layout */}
