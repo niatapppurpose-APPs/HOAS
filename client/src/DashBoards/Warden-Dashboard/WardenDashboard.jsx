@@ -15,10 +15,6 @@ import {
     Phone, 
     Briefcase, 
     Loader2,
-    Users,
-    Bell,
-    FileText,
-    Settings,
     CheckCircle,
     XCircle,
     Clock,
@@ -34,7 +30,6 @@ const WardenDashboard = () => {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('pending');
-    const [activeMenu, setActiveMenu] = useState('students');
     const { currentLanguage, languages, translatePage, translating } = useTranslation(toast);
 
 
@@ -119,13 +114,6 @@ const WardenDashboard = () => {
         denied: students.filter(s => s.status === 'denied').length
     };
 
-    const menuItems = [
-        { icon: Users, label: 'Students', key: 'students' },
-        { icon: FileText, label: 'Complaints', key: 'complaints' },
-        { icon: Bell, label: 'Announcements', key: 'announcements' },
-        { icon: Settings, label: 'Settings', key: 'settings' },
-    ];
-
     return (
         <>
             {/* Translation Loader Overlay */}
@@ -171,32 +159,8 @@ const WardenDashboard = () => {
                 </section>
 
                 <div className="grid lg:grid-cols-4 gap-6">
-                    {/* Sidebar Navigation & Profile */}
-                    <div className="lg:col-span-1 space-y-6">
-                        {/* Quick Navigation */}
-                        <div className="rounded-2xl border p-4" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-                            <nav className="space-y-1">
-                                {menuItems.map((item, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => setActiveMenu(item.key)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                                            activeMenu === item.key ? 'text-white' : ''
-                                        }`}
-                                        style={
-                                            activeMenu === item.key
-                                                ? { background: 'linear-gradient(90deg, #f97316, #f59e0b)' }
-                                                : { color: 'var(--text-secondary)', backgroundColor: 'transparent' }
-                                        }
-                                    >
-                                        <item.icon className="w-5 h-5" />
-                                        <span className="font-medium">{item.label}</span>
-                                    </button>
-                                ))}
-                            </nav>
-                        </div>
-
-                        {/* Profile Card */}
+                    {/* Profile Card */}
+                    <div className="lg:col-span-1">
                         <div className="rounded-2xl border p-4" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
                             <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Your Profile</h3>
                             <div className="space-y-3">
@@ -222,20 +186,18 @@ const WardenDashboard = () => {
 
                     {/* Main Content Area */}
                     <div className="lg:col-span-3 space-y-6">
-                        {activeMenu === 'students' && (
-                            <>
-                                {/* Student Management Card */}
-                                <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-                                    <div className="p-6 border-b" style={{ borderColor: 'var(--border-primary)' }}>
-                                        <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Student Management</h3>
-                                        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-                                            Manage student registrations for {userData.collegeName}
-                                        </p>
-                                    </div>
+                        {/* Student Management Card */}
+                        <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                            <div className="p-6 border-b" style={{ borderColor: 'var(--border-primary)' }}>
+                                <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Student Management</h3>
+                                <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                                    Manage student registrations for {userData.collegeName}
+                                </p>
+                            </div>
 
-                                    {/* Tabs */}
-                                    <div className="flex border-b" style={{ borderColor: 'var(--border-primary)' }}>
-                                        {['pending', 'approved', 'denied'].map((tab) => (
+                            {/* Tabs */}
+                            <div className="flex border-b" style={{ borderColor: 'var(--border-primary)' }}>
+                                {['pending', 'approved', 'denied'].map((tab) => (
                                             <button
                                                 key={tab}
                                                 onClick={() => setActiveTab(tab)}
@@ -328,23 +290,6 @@ const WardenDashboard = () => {
                                         )}
                                     </div>
                                 </div>
-                            </>
-                        )}
-
-                        {activeMenu !== 'students' && (
-                            <div className="rounded-2xl border p-12 text-center" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-                                <div 
-                                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                                    style={{ backgroundColor: 'var(--bg-tertiary)' }}
-                                >
-                                    <Settings className="w-8 h-8" style={{ color: 'var(--text-muted)' }} />
-                                </div>
-                                <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                                    {menuItems.find(item => item.key === activeMenu)?.label}
-                                </h3>
-                                <p style={{ color: 'var(--text-muted)' }}>This feature is coming soon.</p>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
