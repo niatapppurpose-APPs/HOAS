@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Pin,
+  Shield,
   X,
 } from "lucide-react";
 import { useAuth } from "../../../../context/AuthContext";
@@ -355,47 +356,28 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
             </button>
 
             {/* Modal Content */}
-            <div className="text-center">
+            <div className="flex flex-col items-center text-center">
               <div className="mb-6">
                 <div className="inline-block relative">
                   <div className="absolute inset-0 bg-indigo-500/30 rounded-full blur-2xl animate-pulse" />
                   <img
                     src={collegeLogo ? collegeLogo : AppLogo4k}
                     alt={collegeLogo ? "College Logo" : "HOAS Logo"}
-                    className="relative w-48 h-48 mx-auto rounded-full object-cover border-4 border-indigo-500/50 shadow-2xl"
+                    className="relative w-118  h-38 mx-auto rounded-xl object-cover border-4 border-red-700/50 shadow-2xl"
                   />
                 </div>
               </div>
 
-              <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                HOAS
+              <h2 className="text-3xl font-bold cursive mb-2 bg-gradient-to-r from-red-400 to-red-400 bg-clip-text text-transparent">
+                {userData?.collegeName}
               </h2>
               <p className="text-lg mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Hostel Operation Accountability System
               </p>
-              <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
-                Management Portal
-              </p>
 
-              <div className="border-t pt-6" style={{ borderColor: 'var(--border-primary)' }}>
-                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                  <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                    <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Platform</p>
-                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Web Application</p>
-                  </div>
-                  <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                    <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Version</p>
-                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>2.0.0</p>
-                  </div>
-                  <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                    <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Status</p>
-                    <p className="text-sm font-semibold text-green-400">Active</p>
-                  </div>
-                  <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                    <p className="text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Year</p>
-                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{handleDateYear()}</p>
-                  </div>
-                </div>
+              <div className="mt-4 flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                <Shield className="w-4 h-4 text-orange-500" />
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Management Portal</span>
               </div>
 
               <div className="mt-6 text-xs" style={{ color: 'var(--text-muted)' }}>

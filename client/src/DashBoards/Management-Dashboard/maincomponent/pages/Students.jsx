@@ -59,26 +59,13 @@ const Students = () => {
     };
   }, [initialCollegeId, userData]);
 
-
-
-
-  const getRoleBadgeColor = (role) => {
-    if (role?.toLowerCase().includes('chief')) {
-      return;
+  // Helper function to get role badge color
+  const getRoleBadgeColor = (user) => {
+    if (user.role === 'student') {
+      return 'from-blue-400/90 to-cyan-400/90 border border-blue-300/30'; // Blue gradient for students
     }
-    return 'from-yellow-600';
+    return 'from-gray-500/90 to-gray-600/90'; // Default
   };
-  const getRoleLabel = (warden) => {
-    // Check if there's a specific warden role field
-    if (warden.wardenRole) return warden.wardenRole;
-    if (warden.position) return warden.position;
-    return 'Warden'; // Default
-  };
-
-
-
-
-
 
   const serachStudentList = students.filter((student) => (
     student.fullName.includes(searchTerm)
@@ -169,8 +156,9 @@ const Students = () => {
                         {student.collegeName || contextInfo.collegeName}
 
                       </span>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-t ${getRoleBadgeColor(getRoleLabel(student))} text-white text-xs font-medium`}>
-                        {getRoleLabel(student)}
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r ${getRoleBadgeColor(student)} text-white text-xs font-medium shadow-md`}>
+                        <GraduationCap className="w-3.5 h-3.5" />
+                        {student.role || 'Student'}
                       </span>
                       <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-white text-xs font-medium ${student.isOnline ? 'bg-gradient-to-r from-green-600/80 to-emerald-600/80' : 'bg-gradient-to-r from-red-600/80 to-rose-600/80'}`}>
                         {student.isOnline ? (

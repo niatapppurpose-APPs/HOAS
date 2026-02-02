@@ -1,10 +1,34 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+
+// Random name generator for users without names
+const generateRandomName = () => {
+  const firstNames = [
+    "Alex", "Jordan", "Taylor", "Morgan", "Casey", "Riley", "Avery", "Skylar",
+    "Quinn", "Reese", "Sage", "Rowan", "Phoenix", "River", "Dakota", "Harper",
+    "Emerson", "Finley", "Kai", "Eden", "Charlie", "Drew", "Blair", "Cameron"
+  ];
+  
+  const lastNames = [
+    "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
+    "Rodriguez", "Martinez", "Hernandez", "Lopez", "Wilson", "Anderson", "Thomas"
+  ];
+  
+  const randomFirst = firstNames[Math.floor(Math.random() * firstNames.length)];
+  const randomLast = lastNames[Math.floor(Math.random() * lastNames.length)];
+  
+  return `${randomFirst} ${randomLast}`;
+};
 
 // Reusable Avatar Component with fallback to initials
 const Avatar = ({ image, name, size = "md", rounded = "xl", user, objectFit = "cover" }) => {
   // If user prop is provided, extract image and name from it
   const avatarImage = image || user?.photoURL || user?.image;
-  const avatarName = name || user?.displayName || user?.name;
+  const providedName = name || user?.displayName || user?.name;
+  
+  // Generate a random name only once if no name is provided
+  const randomName = useMemo(() => generateRandomName(), []);
+  const avatarName = providedName || randomName;
+  
   const [imageError, setImageError] = useState(false);
 
 
@@ -40,7 +64,7 @@ const Avatar = ({ image, name, size = "md", rounded = "xl", user, objectFit = "c
   };
 
   const getInitials = (name) => {
-    if (!name) return "?"; // Show question mark if no name
+    if (!name) return "NA"; // Fallback to NA if somehow still no name
     return name
       .split(" ")
       .map((n) => n[0])

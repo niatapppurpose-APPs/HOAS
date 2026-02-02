@@ -3,6 +3,16 @@ import Avatar from "../../../../components/OwnerServices/Avatar";
 
 
 const QuickApproval = ({ pendingUser, onApprove, onViewDetails, isApproving }) => {
+  // Helper function to get role badge color
+  const getRoleBadgeColor = (role) => {
+    if (role === 'student') {
+      return 'from-blue-400/90 to-cyan-400/90 border border-blue-300/30'; // Light blue
+    } else if (role === 'warden') {
+      return 'from-amber-500/90 to-yellow-600/90 border border-amber-400/30'; // Light dark yellow
+    }
+    return 'from-gray-500/90 to-gray-600/90'; // Default
+  };
+
   if (!pendingUser) {
     return (
       <div className="quick-approval-card">
@@ -26,7 +36,9 @@ const QuickApproval = ({ pendingUser, onApprove, onViewDetails, isApproving }) =
 
       <div className="quick-approval-user">
         <div className="user-info-section">
-          <div className="user-badge">{pendingUser.role}</div>
+          <div className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gradient-to-r ${getRoleBadgeColor(pendingUser.role)} text-white text-xs font-medium shadow-md capitalize mb-3`}>
+            {pendingUser.role}
+          </div>
           <div className="user-avatar-container">
             <Avatar user={pendingUser} size="lg" />
           </div>

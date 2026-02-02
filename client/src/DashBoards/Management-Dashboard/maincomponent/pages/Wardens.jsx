@@ -35,22 +35,21 @@ const Wardens = () => {
     };
   }, []);
 
-
-
-
+  // Helper function to get role badge color
   const getRoleBadgeColor = (role) => {
-    if (role?.toLowerCase().includes('chief')) {
-      return;
+    if (role?.toLowerCase().includes('warden')) {
+      return 'from-amber-500/90 to-yellow-600/90 border border-amber-400/30'; // Yellow gradient for wardens
     }
-    return 'from-yellow-600';
+    return 'from-gray-500/90 to-gray-600/90'; // Default
   };
+
   const getRoleLabel = (warden) => {
     // Check if there's a specific warden role field
     if (warden.wardenRole) return warden.wardenRole;
     if (warden.position) return warden.position;
     return 'Warden'; // Default
   };
-
+ 
 
 
 
@@ -130,7 +129,8 @@ const Wardens = () => {
                         {warden.collegeName || contextInfo.collegeName}
 
                       </span>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-t ${getRoleBadgeColor(getRoleLabel(warden))} text-white text-xs font-medium`}>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r ${getRoleBadgeColor(getRoleLabel(warden))} text-white text-xs font-medium shadow-md`}>
+                        <Shield className="w-3.5 h-3.5" />
                         {getRoleLabel(warden)}
                       </span>
                       <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-white text-xs font-medium ${warden.isOnline ? 'bg-gradient-to-r from-green-600/80 to-emerald-600/80' : 'bg-gradient-to-r from-red-600/80 to-rose-600/80'}`}>
