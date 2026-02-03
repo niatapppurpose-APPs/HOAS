@@ -239,11 +239,10 @@ const Students = () => {
                                             type="button"
                                             aria-label="Clear search"
                                             onClick={clearSearch}
-                                            className="absolute inset-y-0 right-3 flex items-center justify-center w-9 h-9 rounded-full z-1000 transition-colors focus:outline-none"
-                                            style={{ backgroundColor: 'var(--bg-card)' }}
-                                            title="Clear search"
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center cursor-pointer rounded-full p-2 z-20 transition-colors"
+                                            style={{ border: '1px solid #E1251B', backgroundColor: 'var(--bg-card)' }}
                                         >
-                                            <X className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                                            <X className="w-4 h-4 text-[#E1251B]" stroke="#E1251B" />
                                         </button>
                                     )}
                                 </div>

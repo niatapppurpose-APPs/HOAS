@@ -5,7 +5,7 @@ import { verifyAdmin } from './helpers.js';
 /**
  * Set admin custom claim for a user
  */
-export const setRole = onCall(async (request) => {
+export const setRole = onCall({ cors: true }, async (request) => {
   const { email, role } = request.data;
 
   if (!email) {
@@ -32,7 +32,7 @@ export const setRole = onCall(async (request) => {
 /**
  * Get user profile with admin check
  */
-export const getUserProfile = onCall(async (request) => {
+export const getUserProfile = onCall({ cors: true }, async (request) => {
   const { userId } = request.data;
 
   if (!request.auth) {
@@ -64,7 +64,7 @@ export const getUserProfile = onCall(async (request) => {
 /**
  * Update user profile
  */
-export const updateUserProfile = onCall(async (request) => {
+export const updateUserProfile = onCall({ cors: true }, async (request) => {
   const { userId, profileData } = request.data;
 
   if (!request.auth) {

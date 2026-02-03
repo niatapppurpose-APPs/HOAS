@@ -189,7 +189,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
 /**
  * Get global system settings
  */
-export const getSystemSettings = onCall(async (request) => {
+export const getSystemSettings = onCall({ cors: true }, async (request) => {
   try {
     logger.info('📋 getSystemSettings called');
 
@@ -240,7 +240,7 @@ export const getSystemSettings = onCall(async (request) => {
 /**
  * Update global system settings (Owner only)
  */
-export const updateSystemSettings = onCall(async (request) => {
+export const updateSystemSettings = onCall({ cors: true }, async (request) => {
   try {
     logger.info('⚙️ updateSystemSettings called with:', request.data);
 
@@ -328,7 +328,7 @@ export const updateSystemSettings = onCall(async (request) => {
 /**
  * Get all role permission templates
  */
-export const getRolePermissionTemplates = onCall(async (request) => {
+export const getRolePermissionTemplates = onCall({ cors: true }, async (request) => {
   try {
     logger.info('📋 getRolePermissionTemplates called');
 
@@ -369,7 +369,7 @@ export const getRolePermissionTemplates = onCall(async (request) => {
 /**
  * Create or update a role permission template
  */
-export const saveRolePermissionTemplate = onCall(async (request) => {
+export const saveRolePermissionTemplate = onCall({ cors: true }, async (request) => {
   try {
     logger.info('💾 saveRolePermissionTemplate called with:', request.data);
 
@@ -441,7 +441,7 @@ export const saveRolePermissionTemplate = onCall(async (request) => {
 /**
  * Delete a role permission template
  */
-export const deleteRolePermissionTemplate = onCall(async (request) => {
+export const deleteRolePermissionTemplate = onCall({ cors: true }, async (request) => {
   try {
     logger.info('🗑️ deleteRolePermissionTemplate called with:', request.data);
 
@@ -483,7 +483,7 @@ export const deleteRolePermissionTemplate = onCall(async (request) => {
 /**
  * Get all approval workflows
  */
-export const getApprovalWorkflows = onCall(async (request) => {
+export const getApprovalWorkflows = onCall({ cors: true }, async (request) => {
   try {
     logger.info('📋 getApprovalWorkflows called');
 
@@ -510,7 +510,7 @@ export const getApprovalWorkflows = onCall(async (request) => {
 /**
  * Create or update an approval workflow
  */
-export const saveApprovalWorkflow = onCall(async (request) => {
+export const saveApprovalWorkflow = onCall({ cors: true }, async (request) => {
   try {
     logger.info('💾 saveApprovalWorkflow called with:', request.data);
 
@@ -584,7 +584,7 @@ export const saveApprovalWorkflow = onCall(async (request) => {
 /**
  * Delete an approval workflow
  */
-export const deleteApprovalWorkflow = onCall(async (request) => {
+export const deleteApprovalWorkflow = onCall({ cors: true }, async (request) => {
   try {
     logger.info('🗑️ deleteApprovalWorkflow called with:', request.data);
 
@@ -620,7 +620,7 @@ export const deleteApprovalWorkflow = onCall(async (request) => {
 /**
  * Get user limits for all colleges
  */
-export const getCollegeLimits = onCall(async (request) => {
+export const getCollegeLimits = onCall({ cors: true }, async (request) => {
   try {
     logger.info('📋 getCollegeLimits called');
 
@@ -645,7 +645,7 @@ export const getCollegeLimits = onCall(async (request) => {
 /**
  * Set user limits for a specific college
  */
-export const setCollegeLimits = onCall(async (request) => {
+export const setCollegeLimits = onCall({ cors: true }, async (request) => {
   try {
     logger.info('⚙️ setCollegeLimits called with:', request.data);
 
@@ -754,7 +754,7 @@ export const updateCollegeCounts = async (collegeId) => {
 /**
  * Check if registration is allowed
  */
-export const checkRegistrationAllowed = onCall(async () => {
+export const checkRegistrationAllowed = onCall({ cors: true }, async () => {
   try {
     const settingsDoc = await db.collection('systemSettings').doc('global').get();
 
@@ -792,7 +792,7 @@ export const checkRegistrationAllowed = onCall(async () => {
 /**
  * Check if a college has capacity for new users
  */
-export const checkCollegeCapacity = onCall(async (request) => {
+export const checkCollegeCapacity = onCall({ cors: true }, async (request) => {
   try {
     const { collegeId, role } = request.data;
 
@@ -859,7 +859,7 @@ export const checkCollegeCapacity = onCall(async (request) => {
 /**
  * Get system status (for maintenance mode check)
  */
-export const getSystemStatus = onCall(async () => {
+export const getSystemStatus = onCall({ cors: true }, async () => {
   try {
     const settingsDoc = await db.collection('systemSettings').doc('global').get();
 
@@ -894,7 +894,7 @@ export const getSystemStatus = onCall(async () => {
 /**
  * Initialize system settings with defaults (run once during setup)
  */
-export const initializeSystemSettings = onCall(async (request) => {
+export const initializeSystemSettings = onCall({ cors: true }, async (request) => {
   try {
     logger.info('🚀 initializeSystemSettings called');
 
