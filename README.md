@@ -841,3 +841,11 @@ Unauthorized copying, distribution, or use of this software is strictly prohibit
 [⬆ Back to Top](#hoas---hostel-operations-accountability-system)
 
 </div>
+
+............................................................................
+
+<div align="center">
+
+**Built with ❤️ for Educational Institutions**
+
+**HOAS - Simplifying Hostel Management, One Dashboard at a Time**
