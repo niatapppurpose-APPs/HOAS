@@ -1,16 +1,25 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useEffect, useState } from "react";
-import { signInWithPopup, signOut } from "firebase/auth";
+import { signInWithPopup, signInWithRedirect, signOut } from "firebase/auth";
 import { auth, provider } from "../../firebase/firebaseConfig";
+import { useToast } from "../Toast";
 import {LogIn, AlertCircle, Loader2, ShieldAlert, ArrowBigLeft } from "lucide-react";
 import GoogleImage from "../../assets/GoogleImage.png";
+
+// Detect if user is on mobile device
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+         (window.innerWidth <= 768);
+};
 
 const AdminLogin = () => {
   const { user, isAdmin, loading, adminChecked } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const isMobile = isMobileDevice();
+  const toast = useToast();
 
   useEffect(() => {
     if (!loading && adminChecked) {
@@ -28,12 +37,25 @@ const AdminLogin = () => {
     setIsLoggingIn(true);
 
     try {
-      // Use redirect instead of popup to avoid COOP warnings
-      await signInWithPopup(auth, provider);
+      // Use redirect for mobile, popup for desktop
+      if (isMobile) {
+        toast.info('Redirecting to Google Sign-In for admin login...', 3000);
+        await signInWithRedirect(auth, provider);
+        // Page will redirect, loading state will persist
+      } else {
+        toast.info('Opening admin sign-in popup...', 2000);
+        await signInWithPopup(auth, provider);
+        toast.success('Admin authentication successful!', 3000);
+      }
     } catch (e) {
-      console.log("Login Error:", e);
-      setError("Login failed. Please try again.");
-      setIsLoggingIn(false);
+      console.error("Admin Login Error:", e);
+      const errorMsg = "Admin login failed. Please try again.";
+      setError(errorMsg);
+      toast.error(errorMsg, 4000);
+      // Only reset loading for popup (desktop), redirect will navigate away
+      if (!isMobile) {
+        setIsLoggingIn(false);
+      }
     }
   };
   if (loading || (user && !adminChecked)) {

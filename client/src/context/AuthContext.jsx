@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, getRedirectResult, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
+import { useToast } from "../components/Toast";
 
 const AuthContext = createContext();
 
@@ -15,65 +16,71 @@ export const AuthProvider = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [claims, setClaims] = useState(null);
   const [adminChecked, setAdminChecked] = useState(false);
+  const toast = useToast();
 
   // User data from Firestore
   const [userData, setUserData] = useState(null);
   const [userDataLoading, setUserDataLoading] = useState(true);
 
   useEffect(() => {
-    // Handle redirect result from Google Sign-In
-    getRedirectResult(auth)
-      .then((result) => {
+    let unsubscribe;
+    
+    // Handle redirect result from Google Sign-In first
+    const handleAuth = async () => {
+      try {
+        const result = await getRedirectResult(auth);
         if (result?.user) {
-          console.log("Redirect result user:", result.user);
+          console.log("Redirect result user:", result.user.email);
+          toast.success('Welcome back! Signing you in...', 3000);
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Redirect error:", error);
-      });
+        toast.error('Sign-in failed. Please try again.', 4000);
+      }
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      setAdminChecked(false);
+      // Then set up auth state listener
+      unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        setUser(currentUser);
+        setAdminChecked(false);
 
-      if (currentUser) {
-        // Get the ID token result to check custom claims
-        try {
-          const tokenResult = await currentUser.getIdTokenResult(true); // Force refresh
-          const userClaims = tokenResult.claims;
-          setClaims(userClaims);
-          // Check both possible admin claim formats
-          const adminStatus = userClaims.admin === true || userClaims.role === 'admin';
-          setIsAdmin(adminStatus);
-          setAdminChecked(true);
-
-          // Check if user document exists, if not create it
+        if (currentUser) {
+          // Get the ID token result to check custom claims
           try {
-            const userDocRef = doc(db, "users", currentUser.uid);
-            const userSnapshot = await getDoc(userDocRef);
+            const tokenResult = await currentUser.getIdTokenResult(true); // Force refresh
+            const userClaims = tokenResult.claims;
+            setClaims(userClaims);
+            // Check both possible admin claim formats
+            const adminStatus = userClaims.admin === true || userClaims.role === 'admin';
+            setIsAdmin(adminStatus);
+            setAdminChecked(true);
 
-            if (!userSnapshot.exists()) {
-              if (adminStatus) {
-                // If the user is an admin and doesn't have a doc, create one
-                const adminProfileData = {
-                  uid: currentUser.uid,
-                  email: currentUser.email,
-                  displayName: currentUser.displayName,
-                  photoURL: currentUser.photoURL,
-                  role: 'admin',
-                  status: 'approved',
-                  isOnline: true,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                };
-                await setDoc(userDocRef, adminProfileData);
-                console.log("Admin user document created automatically.");
+            // Check if user document exists, if not create it
+            try {
+              const userDocRef = doc(db, "users", currentUser.uid);
+              const userSnapshot = await getDoc(userDocRef);
+
+              if (!userSnapshot.exists()) {
+                if (adminStatus) {
+                  // If the user is an admin and doesn't have a doc, create one
+                  const adminProfileData = {
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    displayName: currentUser.displayName,
+                    photoURL: currentUser.photoURL,
+                    role: 'admin',
+                    status: 'approved',
+                    isOnline: true,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  };
+                  await setDoc(userDocRef, adminProfileData);
+                  console.log("Admin user document created automatically.");
+                } else {
+                  // For non-admins, let the user role page handle it
+                  console.log("New user detected, waiting for role selection...");
+                }
               } else {
-                // For non-admins, let the user role page handle it
-                console.log("New user detected, waiting for role selection...");
-              }
-            } else {
-              // User exists - update isOnline to true
+                // User exists - update isOnline to true
               await setDoc(userDocRef, { isOnline: true, updatedAt: new Date().toISOString() }, { merge: true });
             }
           } catch (firestoreError) {
@@ -96,11 +103,16 @@ export const AuthProvider = ({ children }) => {
 
       setLoading(false);
     });
+    };
+    
+    handleAuth();
 
-    return unsubscribe;
-  }, []);
-
-  // Listen to user data from Firestore in real-time
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [toast]);
   useEffect(() => {
     if (!user) {
       setUserData(null);

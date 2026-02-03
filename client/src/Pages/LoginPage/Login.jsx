@@ -3,13 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import LoginButton from "./LoginButton";
 import { FcCheckmark } from "react-icons/fc";
+import { Loader2 } from 'lucide-react';
 import Applogo from '../../assets/Applogo.png'
 import { ChevronLeft, ArrowLeft } from 'lucide-react'
 const Login = () => {
-  const { user, userData, userDataLoading } = useAuth();
+  const { user, userData, userDataLoading, loading } = useAuth();
   const navigate = useNavigate();
 
   React.useEffect(() => {
+    // Don't navigate if still loading auth state
+    if (loading) return;
+    
     if (user && !userDataLoading) {
       if (userData) {
         const { role, status } = userData;
@@ -22,7 +26,19 @@ const Login = () => {
         navigate("/role", { replace: true });
       }
     }
-  }, [user, userData, userDataLoading, navigate]);
+  }, [user, userData, userDataLoading, loading, navigate]);
+
+  // Show loading state while checking auth after redirect
+  if (loading || (user && userDataLoading)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-slate-900 to-black">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-300 text-lg">Signing you in...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

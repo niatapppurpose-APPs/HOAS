@@ -1,32 +1,56 @@
-import React, { useState } from "react";
-import { signInWithPopup } from "firebase/auth";
+import React, { useState, useEffect } from "react";
+import { signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { auth, provider } from "../../firebase/firebaseConfig";
+import { useToast } from "../../components/Toast";
 import { FcGoogle } from "react-icons/fc";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ArrowBigRightDash } from "lucide-react";
+
+// Detect if user is on mobile device
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+         (window.innerWidth <= 768);
+};
+
 const LoginButton = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const reduceMotion = useReducedMotion();
+  const isMobile = isMobileDevice();
+  const toast = useToast();
 
   const login = async () => {
     setError(null);
     setLoading(true);
     try {
-      await signInWithPopup(auth, provider);
-    } catch (e) {
-      console.log("Login Error Please Try Again:", e);
-      // Handle popup closed or cancelled errors gracefully
-      const code = e?.code || "";
-      const message = e?.message || "";
-      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || message.toLowerCase().includes("popup")) {
-        setError("Sign-in popup was closed. Please try again.");
+      // Use redirect for mobile, popup for desktop
+      if (isMobile) {
+        toast.info('Redirecting to Google Sign-In...', 3000);
+        await signInWithRedirect(auth, provider);
+        // Page will redirect, loading state will persist
       } else {
-        setError("Login failed. Please try again.");
+        toast.info('Opening sign-in popup...', 2000);
+        await signInWithPopup(auth, provider);
+        toast.success('Successfully signed in!', 3000);
+      }
+    } catch (e) {
+      console.error("Login Error:", e);
+      const code = e?.code || "";
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        const errorMsg = "Sign-in popup was closed. Please try again.";
+        setError(errorMsg);
+        toast.warning(errorMsg, 4000);
+      } else {
+        const errorMsg = "Login failed. Please try again.";
+        setError(errorMsg);
+        toast.error(errorMsg, 4000);
       }
     } finally {
-      setLoading(false);
+      // Only set loading false for popup (desktop), redirect will navigate away
+      if (!isMobile) {
+        setLoading(false);
+      }
     }
   };
 

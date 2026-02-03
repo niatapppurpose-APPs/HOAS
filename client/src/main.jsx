@@ -14,19 +14,19 @@ import "./index.css";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <ThemeProvider>
-      <AuthProvider>
-        <ErrorProvider>
-          {/* Keep ErrorModal outside of ErrorBoundary so it can show even when children crash */}
-          <ErrorModal />
-          <ErrorBoundary>
-            <ModalProvider>
-              <ToastProvider position="top-right">
+      <ToastProvider position="top-right">
+        <AuthProvider>
+          <ErrorProvider>
+            {/* Keep ErrorModal outside of ErrorBoundary so it can show even when children crash */}
+            <ErrorModal />
+            <ErrorBoundary>
+              <ModalProvider>
                 <App />
-              </ToastProvider>
-            </ModalProvider>
-          </ErrorBoundary>
-        </ErrorProvider> 
-      </AuthProvider>
+              </ModalProvider>
+            </ErrorBoundary>
+          </ErrorProvider> 
+        </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   </BrowserRouter>
 );
