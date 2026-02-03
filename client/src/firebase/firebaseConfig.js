@@ -50,12 +50,14 @@ if (forceProd) {
     console.log(`🔧 Connecting to Firebase Emulators (${localStorageEmulatorFlag !== null ? 'localStorage' : 'VITE_USE_FIREBASE_EMULATOR'}=true)`);
     // Force-connect to configured emulator endpoints. These calls do not throw if the service is down,
     // which prevents flipping back to production unexpectedly and causing sign-out.
-    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-    connectFirestoreEmulator(db, '127.0.0.1', 8080);
-    connectFunctionsEmulator(functions, 'localhost', 5001);
-    connectStorageEmulator(storage, '127.0.0.1', 9199);
+    // Use VITE_EMULATOR_HOST environment variable for mobile access, fallback to localhost
+    const emulatorHost = import.meta.env.VITE_EMULATOR_HOST || 'localhost';
+    connectAuthEmulator(auth, `http://${emulatorHost}:9099`, { disableWarnings: true });
+    connectFirestoreEmulator(db, emulatorHost, 8080);
+    connectFunctionsEmulator(functions, emulatorHost, 5001);
+    connectStorageEmulator(storage, emulatorHost, 9199);
     isEmulatorConnected = true;
-    console.log('🔧 Emulator connections configured (note: ensure emulators are started)');
+    console.log(`🔧 Emulator connections configured at ${emulatorHost} (note: ensure emulators are started)`);
   } catch (e) {
     // If we fail to connect to emulators, fall back to production mode to avoid breaking users
     console.warn('⚠️ Error while configuring emulators - falling back to production mode:', e);
