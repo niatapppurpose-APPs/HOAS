@@ -60,7 +60,7 @@ const FirebaseModeIndicator = () => {
   const isUsingEmulator = mode.auth.isUsingEmulator;
 
   return (
-    <div className="fixed bottom-20 right-4 z-[9998]">
+    <div className="fixed bottom-5 right-4 z-[9998]">
       {/* Collapsed indicator */}
       <button
         onClick={() => setIsOpen(!isOpen)}

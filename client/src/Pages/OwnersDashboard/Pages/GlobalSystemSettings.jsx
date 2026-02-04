@@ -1455,7 +1455,7 @@ const DEFAULT_TEMPLATES = [
 // =============================================================================
 const GlobalSystemSettings = () => {
   const { isCollapsed } = useOutletContext();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const { isDark } = useTheme();
   const toast = useToast();
 
@@ -1649,10 +1649,21 @@ const GlobalSystemSettings = () => {
 
   // No more loading blocker - page renders immediately with defaults
   // Show sync status in the header instead
+//---------------------------------- Handle logout--------------------------------------------------
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success('Logged out successfully');
+      navigate("/", { replace: true });
+    } catch (error) {
+      toast.error('Failed to logout. Please try again.');
+      console.error("Logout error:", error);
+    }
+  };
 
   return (
     <>
-      <Header title="Global System Settings" isCollapsed={isCollapsed} />
+      <Header title="Global System Settings" handleLogout={handleLogout} isCollapsed={isCollapsed} />
       <div
         className="pt-24 p-6 min-h-screen"
         style={{ backgroundColor: 'var(--bg-primary)' }}

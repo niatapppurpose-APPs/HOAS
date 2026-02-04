@@ -46,6 +46,7 @@ const ManagementWardens = lazy(() => import("../../DashBoards/Management-Dashboa
 const ManagementStudents = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Students"));
 const ManagementHostels = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Hostels"));
 const ManagementReports = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Reports"));
+const ManagementHelp = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/HelpSupport"));
 
 // Owner Dashboard - lazy loaded
 const OwnersDashboard = lazy(() => import("../../Pages/OwnersDashboard/ownersdashbord"));
@@ -104,6 +105,7 @@ const Routes_path = () => {
                     <Route path="students" element={<ManagementStudents />} />
                     <Route path="hostels" element={<ManagementHostels />} />
                     <Route path="reports" element={<ManagementReports />} />
+                    <Route path="help" element={<ManagementHelp />} />
                 </Route>
 
                 {/* --------------------------------------- Owners Page ------------------------------------- */}

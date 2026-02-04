@@ -25,7 +25,6 @@ import ErrorState from "./components/ErrorState";
 import LoadingState from "./components/LoadingState";
 
 import { Building2, CheckCircle, Clock, GraduationCap, Shield, LayoutDashboard } from "lucide-react";
-import { signOut } from "firebase/auth";
 
 // Main Dashboard Component
 const OwnersDashboard = () => {

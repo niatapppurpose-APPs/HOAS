@@ -234,7 +234,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                     navigate(item.path);
                     if (window.innerWidth < 1024) setIsCollapsed(true);
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${!showContent ? "lg:justify-center" : ""}`}
+                  className={`w-full flex items-center gap-3 px-3 cursor-pointer py-2.5 rounded-xl transition-all duration-200 group ${!showContent ? "lg:justify-center" : ""}`}
                   style={isActive ? activeStyle : { color: 'var(--text-secondary)' }}
                 >
                   <Icon
@@ -287,7 +287,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                     navigate(item.path);
                     if (window.innerWidth < 1024) setIsCollapsed(true);
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
+                  className={`w-full flex items-center gap-3 px-3 cursor-pointer py-2.5 rounded-xl transition-all duration-200 group
                     ${!showContent ? "lg:justify-center" : ""}
                     ${isLogout ? "text-red-400 hover:text-red-300 hover:bg-red-500/10" : ""}
                   `}

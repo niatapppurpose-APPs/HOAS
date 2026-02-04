@@ -38,9 +38,9 @@ export const ThemeProvider = ({ children }) => {
         return savedTheme;
       }
       
-      return 'dark'; // Default to dark
+      return 'light'; // Default to light
     } catch {
-      return 'dark';
+      return 'light';
     }
   });
 
