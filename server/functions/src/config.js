@@ -30,16 +30,30 @@ export const allowedOrigins = [
   'https://hoas-65dee.firebaseapp.com'
 ];
 
-// CORS options for v2 callable functions - use true for SDK calls
-// Callable functions have built-in auth, so CORS=true is safe
+// CORS options for v2 callable functions
+// Using explicit origins list for better CORS handling
 export const corsOptions = {
-  cors: true
+  cors: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+    'https://hoas-65dee.web.app',
+    'https://hoas-65dee.firebaseapp.com'
+  ]
 };
 
 // Set global options for v2 functions
 setGlobalOptions({
   region: 'us-central1',
-  cors: true
+  cors: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+    'https://hoas-65dee.web.app',
+    'https://hoas-65dee.firebaseapp.com'
+  ]
 });
 
 export const db = getFirestore();

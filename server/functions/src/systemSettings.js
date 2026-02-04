@@ -207,7 +207,7 @@ export const getSystemSettings = onCall(corsOptions, async (request) => {
         isDefault: true
       };
     }
-
+ 
     const settings = settingsDoc.data();
 
     // If not admin, return only public settings
