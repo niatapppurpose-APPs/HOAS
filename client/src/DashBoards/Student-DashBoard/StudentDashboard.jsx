@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { useToast } from '../../components/Toast';
-import { useTranslation } from '../../hooks/useTranslation';
 import StudentHeader from './components/layout/StudentHeader';
 import StatsCard from '../../components/OwnerServices/StatsCard';
 import './StudentDashboard.css';
@@ -22,9 +20,7 @@ import {
 const StudentDashboard = () => {
     const { user, userData, userDataLoading } = useAuth();
     const navigate = useNavigate();
-    const toast = useToast();
     const { isCollapsed, setIsCollapsed } = useOutletContext();
-    const { translatePage, translating } = useTranslation(toast);
 
     useEffect(() => {
         if (!userDataLoading) {
@@ -48,16 +44,6 @@ const StudentDashboard = () => {
 
     return (
         <>
-            {/* Translation Loader Overlay */}
-            {translating && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-                    <div className="p-6 rounded-lg shadow-lg flex items-center gap-3" style={{ backgroundColor: 'var(--bg-card)' }}>
-                        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                        <span style={{ color: 'var(--text-primary)' }}>Translating page...</span>
-                    </div>
-                </div>
-            )}
-
             {/* Header */}
             <StudentHeader 
                 title="Dashboard · Student Portal" 

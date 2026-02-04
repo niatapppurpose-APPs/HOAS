@@ -20,18 +20,6 @@ import {
     Clock,
     GraduationCap,
 } from 'lucide-react';
-import { useTranslation } from '../../hooks/useTranslation';
-
-const WardenDashboard = () => {
-    const { user, userData, userDataLoading, logout } = useAuth();
-    const navigate = useNavigate();
-    const { isCollapsed, setIsCollapsed } = useOutletContext();
-    const toast = useToast();
-    const [students, setStudents] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('pending');
-    const { currentLanguage, languages, translatePage, translating } = useTranslation(toast);
-
 
 
 
@@ -68,10 +56,6 @@ const WardenDashboard = () => {
 
         return () => unsubscribe();
     }, [userData?.collegeId]);
-
-    const handleLanguageChange = async (language) => {
-        await translatePage(language);
-    };
 
     const handleLogout = async () => {
         await logout();
@@ -116,16 +100,6 @@ const WardenDashboard = () => {
 
     return (
         <>
-            {/* Translation Loader Overlay */}
-            {translating && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-                    <div className="p-6 rounded-lg shadow-lg flex items-center gap-3" style={{ backgroundColor: 'var(--bg-card)' }}>
-                        <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
-                        <span style={{ color: 'var(--text-primary)' }}>Translating page...</span>
-                    </div>
-                </div>
-            )}
-
             {/* Header */}
             <WardenHeader 
                 pendingCount={stats.pending} 
