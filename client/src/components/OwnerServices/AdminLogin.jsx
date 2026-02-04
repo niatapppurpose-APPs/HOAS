@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { signInWithPopup, signInWithRedirect, signOut } from "firebase/auth";
 import { auth, provider } from "../../firebase/firebaseConfig";
 import { useToast } from "../Toast";
-import {LogIn, AlertCircle, Loader2, ShieldAlert, ArrowBigLeft } from "lucide-react";
+import { LogIn, AlertCircle, Loader2, ShieldAlert, ArrowBigLeft } from "lucide-react";
 import GoogleImage from "../../assets/GoogleImage.png";
-
+import AddmingImage from '../../assets/AddminloginImage.jpg'
 // Detect if user is on mobile device
 const isMobileDevice = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-         (window.innerWidth <= 768);
+    (window.innerWidth <= 768);
 };
 
 const AdminLogin = () => {
@@ -27,7 +27,7 @@ const AdminLogin = () => {
         navigate("/OwnersDashboard", { replace: true });
       } else if (user && !isAdmin) {
         setError("Access Denied: You are not authorized as an admin you can't login without proper access. Please contact the system administrator.");
-        
+
       }
     }
   }, [user, isAdmin, loading, adminChecked, navigate]);
@@ -72,38 +72,40 @@ const AdminLogin = () => {
   }
 
   return (
-    
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
- {/* Back to Home */}
-        <div className="flex items-center justify-space-evently text-center mb-5">
+
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-full border border-white">
+        {/* Back to Home */}
+        <div className="flex items-center justify-space-evently text-center relative border border-white rounded-lg w-fit px-1 py-1 md:left-5 md:bottom-45 cursor-pointer">
           <ArrowBigLeft className="flex items-center justify-center text-white m-2" />
           <button
             onClick={() => navigate("/")}
-            className="text-slate-400 hover:text-white text-sm transition-colors"
+            className="cursor-pointer text-slate-400 hover:text-white text-sm transition-colors"
           >
-             Back to Home
+            Back to Home
           </button>
         </div>
+
+
         {/* Login Card */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-8 backdrop-blur-sm">
-          <div className="text-center mb-6">
-            <div className="inline-flex p-3 rounded-xl bg-amber-500/20 mb-4">
-              <ShieldAlert className="w-20 h-20 text-amber-400" />
+        <div className="flex flex-row  justify-around items-center rounded-2xl p-10 relative lg:left-20 relative bottom-10 ">
+
+          <div className="text-center mb-6 relative lg:left-20">
+            <div className="inline-flex p-3 rounded-xl mb-4">
+              <img src={AddmingImage} className="w-80 h-80 " />
             </div>
+
+          </div>
+
+
+          <div className="flex flex-col justify-center text-center  items-center relative lg:right-70">
+            <div className="flex flex-col p-2">
             <h2 className="text-xl font-semibold text-white">Admin Access Only</h2>
             <p className="text-slate-400 text-sm mt-2">
               This portal is restricted to authorized administrators only.
             </p>
           </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-500/20 border border-red-500/30 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-red-300 text-sm">{error}</p>
-            </div>
-          )}
+         
 
           {/* Login Button */}
           <button
@@ -129,13 +131,21 @@ const AdminLogin = () => {
           {/* Footer */}
           <p className="text-slate-500 text-xs text-center mt-6">
             Only users with admin privileges can access this dashboard.
-          </p>
+          </p>  
+          </div>
         </div>
 
-       
+
       </div>
     </div>
   );
 };
 
 export default AdminLogin;
+ {/* Error Message */}
+          {/* {error && (
+            <div className="mb-6 p-4 rounded-xl bg-red-500/20 border border-red-500/30 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-red-300 text-sm">{error}</p>
+            </div>
+          )} */}

@@ -20,21 +20,50 @@ try {
   initializeApp();
 }
 
-// Set global options
+// Allowed origins for CORS
+export const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+  'https://hoas-65dee.web.app',
+  'https://hoas-65dee.firebaseapp.com'
+];
+
+// CORS options for v2 callable and request functions
+export const corsOptions = {
+  cors: allowedOrigins
+};
+
+// Set global options for v2 functions
 setGlobalOptions({
   region: 'us-central1',
-  cors: true // Enable CORS for all functions
+  cors: allowedOrigins
 });
 
 export const db = getFirestore();
 export const auth = getAuth();
 
-// Configure CORS
+// Configure CORS handler for Express middleware
 export const corsHandler = cors({
-  origin: true, // Allow all origins in development
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is in the allowed list
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else if (isEmulator) {
+      // In emulator mode, allow all origins for testing
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+  optionsSuccessStatus: 200
 });
 
 // Check if running in emulator
