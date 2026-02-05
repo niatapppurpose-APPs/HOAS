@@ -3,6 +3,7 @@ import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence, c
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
+import { getMessaging, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -19,7 +20,18 @@ export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 export const functions = getFunctions(app);
-export const storage = getStorage(app)
+export const storage = getStorage(app);
+
+// Initialize Cloud Messaging (only if supported by browser)
+let messaging = null;
+try {
+  if (await isSupported()) {
+    messaging = getMessaging(app);
+  }
+} catch (err) {
+  console.warn('⚠️ Firebase Messaging not supported in this browser:', err);
+}
+export { messaging };
 // Track emulator status for other modules
 // Default to false to avoid accidentally using emulators in production
 export let isEmulatorConnected = false;

@@ -18,7 +18,7 @@ const GlobalDeleteModal = () => {
         </div>
 
         <p className="text-slate-300 mb-4">
-          Are you sure you want to delete{' '}
+          Are you sure you want to delete 
           <span className="font-semibold text-white">
             {deleteModal.college?.displayName || deleteModal.college?.collegeName || "this college"}
           </span>?

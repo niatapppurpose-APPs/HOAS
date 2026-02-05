@@ -171,19 +171,20 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ">
             {/* Pin Button - Desktop Only (visible when expanded) */}
-            <button
+            <button  
               id="tour-pin-sidebar"
               onClick={handlePinClick}
-              className={`hidden lg:flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 ${!showContent ? "opacity-0 pointer-events-none" : "opacity-100"
+              className={`hidden lg:flex items-center justify-center cursor-pointer w-8 h-8 rounded-lg border-2 transition-all duration-200 ${!showContent ? "opacity-0 pointer-events-none" : "opacity-100"
                 } ${isPinned
                   ? "bg-indigo-600 text-white"
                   : "hover:text-white"
                 }`}
               style={{
                 backgroundColor: isPinned ? undefined : 'var(--bg-tertiary)',
-                color: isPinned ? undefined : 'var(--text-muted)'
+                color: isPinned ? undefined : 'var(--text-muted)',
+                borderColor: isDark ? '#ffffff' : '#000000'
               }}
               title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
             >

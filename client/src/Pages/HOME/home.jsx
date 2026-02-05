@@ -196,25 +196,27 @@ const Home = () => {
                                 {/* Theme Toggle */}
                                 <ThemeToggle size="sm" className="bg-white/5 hover:bg-white/10 border border-white/10" />
 
-                                {!user ? <button
-                                    onClick={() => navigate('/login')}
-                                    className="px-5 py-2.5 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
-                                    style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                                >
-                                    Sign In
-                                </button> : null}
+                                {/* Sign In button - show only for non-admin users who are not logged in */}
+                                {!loading && adminChecked && !user && !isAdmin && (
+                                    <button
+                                        onClick={() => navigate('/login')}
+                                        className="px-5 py-2.5 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
+                                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                                    >
+                                        Sign In
+                                    </button>
+                                )}
 
-
-
-
-
-                                {!loading && adminChecked && !isAdmin ? (<button
-                                    onClick={() => navigate('/admin-login')}
-                                    className="px-5 py-2.5 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
-                                    style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                                >
-                                    Admin
-                                </button>) : null}
+                                {/* Admin button - show only for admin users */}
+                                {!loading && adminChecked && isAdmin && (
+                                    <button
+                                        onClick={() => navigate('/OwnersDashboard')}
+                                        className="px-5 py-2.5 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
+                                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                                    >
+                                        Admin
+                                    </button>
+                                )}
 
 
                                 {/* Get Started / Dashboard button */}
@@ -333,16 +335,40 @@ const Home = () => {
                                     <ThemeToggle size="md" className="bg-white/5 hover:bg-white/10 border border-white/10" />
                                 </div>
                                 
-                                {!user ? (<motion.button
-                                    onClick={() => navigate('/login')}
-                                    className="px-5 py-2.5 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
-                                    style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                                >
-                                    Sign In
-                                </motion.button>) : null}
+                                {/* Sign In button - show only for non-admin users who are not logged in */}
+                                {!loading && adminChecked && !user && !isAdmin && (
+                                    <motion.button
+                                        onClick={() => navigate('/login')}
+                                        className="px-5 py-2.5 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
+                                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                                    >
+                                        Sign In
+                                    </motion.button>
+                                )}
+
+                                {/* Admin button - show only for admin users */}
+                                {!loading && adminChecked && isAdmin && (
+                                    <motion.button
+                                        onClick={() => navigate('/OwnersDashboard')}
+                                        className="px-5 py-2.5 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
+                                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                                    >
+                                        Admin
+                                    </motion.button>
+                                )}
+                                
                                 <motion.button
                                     variants={itemVariants}
-                                    onClick={() => { setIsMobileMenuOpen(false); navigate('/login'); }}
+                                    onClick={() => { 
+                                        setIsMobileMenuOpen(false); 
+                                        if (isAdmin) {
+                                            navigate('/OwnersDashboard');
+                                        } else if (user) {
+                                            navigate('/dashboard');
+                                        } else {
+                                            navigate('/login');
+                                        }
+                                    }}
                                     className="w-full py-4 text-base font-semibold rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
                                     style={{
                                         backgroundColor: '#6366f1',
@@ -350,7 +376,7 @@ const Home = () => {
                                         boxShadow: '0 10px 25px -3px rgba(99, 102, 241, 0.3)'
                                     }}
                                 >
-                                    {!user ? 'Get Started' : 'Dashboard'} <ChevronRight className="w-4 h-4" />
+                                    {isAdmin ? 'Dashboard' : user ? 'Dashboard' : 'Get Started'} <ChevronRight className="w-4 h-4" />
                                 </motion.button>
                             </motion.div>
                         </motion.div>
@@ -417,7 +443,15 @@ const Home = () => {
                         <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => navigate('/login')}
+                            onClick={() => {
+                                if (isAdmin) {
+                                    navigate('/OwnersDashboard');
+                                } else if (user) {
+                                    navigate('/dashboard');
+                                } else {
+                                    navigate('/login');
+                                }
+                            }}
                             className="w-full sm:w-auto px-8 py-4 rounded-full font-bold text-lg transition-colors shadow-xl"
                             style={{
                                 backgroundColor: isDark ? '#ffffff' : '#0f172a',

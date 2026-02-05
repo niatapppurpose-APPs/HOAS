@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useOutletContext, useLocation } from "react-router-dom";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -301,11 +301,31 @@ const OwnersDashboard = () => {
   const handleOpenDeleteModal = async (college) => {
     setIsDeleteLoading(college.id);
     try {
-      // Use context to open modal without fetching stats (for speed)
+      // Fetch actual counts first (using managementId as the field name)
+      const wardensQuery = query(
+        collection(db, "users"),
+        where("role", "==", "warden"),
+        where("managementId", "==", college.id)
+      );
+      const studentsQuery = query(
+        collection(db, "users"),
+        where("role", "==", "student"),
+        where("managementId", "==", college.id)
+      );
+
+      const [wardensSnapshot, studentsSnapshot] = await Promise.all([
+        getDocs(wardensQuery),
+        getDocs(studentsQuery)
+      ]);
+
+      const wardenCount = wardensSnapshot.size;
+      const studentCount = studentsSnapshot.size;
+
+      // Open modal with actual counts
       openDeleteModal({
         college: college,
-        wardenCount: 'Loading...', // Show loading text instead of waiting for stats
-        studentCount: 'Loading...',
+        wardenCount: wardenCount,
+        studentCount: studentCount,
         onConfirm: async () => {
           const collegeId = college.id;
           await cloudFunctions.deleteCollege(collegeId);
@@ -313,7 +333,7 @@ const OwnersDashboard = () => {
         }
       });
     } catch (error) {
-      toast.error('Failed to open delete modal');
+      toast.error('Failed to load college data');
       console.error('Delete modal error:', error);
     } finally {
       setIsDeleteLoading(null);
