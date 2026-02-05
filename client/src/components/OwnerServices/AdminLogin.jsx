@@ -72,80 +72,77 @@ const AdminLogin = () => {
   }
 
   return (
-
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-full border border-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-5xl">
         {/* Back to Home */}
-        <div className="flex items-center justify-space-evently text-center relative border border-white rounded-lg w-fit px-1 py-1 md:left-5 md:bottom-45 cursor-pointer">
-          <ArrowBigLeft className="flex items-center justify-center text-white m-2" />
+        <div className="flex items-center mb-6">
           <button
             onClick={() => navigate("/")}
-            className="cursor-pointer text-slate-400 hover:text-white text-sm transition-colors"
+            className="flex items-center gap-2 px-3 py-2 border border-slate-600 rounded-lg cursor-pointer text-slate-400 hover:text-white hover:border-slate-500 text-sm transition-colors"
           >
-            Back to Home
+            <ArrowBigLeft className="w-5 h-5" />
+            <span>Back to Home</span>
           </button>
         </div>
-
 
         {/* Login Card */}
-        <div className="flex flex-row  justify-around items-center rounded-2xl p-10 relative lg:left-20 relative bottom-10 ">
+        <div className="flex flex-col lg:flex-row justify-center items-center gap-8 lg:gap-16 rounded-2xl p-6 lg:p-10">
 
-          <div className="text-center mb-6 relative lg:left-20">
-            <div className="inline-flex p-3 rounded-xl mb-4">
-              <img src={AddmingImage} className="w-80 h-80 " />
+          {/* Image Section - Hidden on small mobile, visible on larger screens */}
+          <div className="hidden sm:block text-center">
+            <div className="inline-flex p-3 rounded-xl">
+              <img src={AddmingImage} className="w-48 h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 rounded-xl object-cover" alt="Admin" />
+            </div>
+          </div>
+
+          {/* Login Form Section */}
+          <div className="flex flex-col justify-center text-center items-center w-full max-w-md">
+            <div className="flex flex-col p-2 mb-6">
+              <h2 className="text-xl md:text-2xl font-semibold text-white">Admin Access Only</h2>
+              <p className="text-slate-400 text-sm mt-2">
+                This portal is restricted to authorized administrators only.
+              </p>
             </div>
 
-          </div>
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 rounded-xl bg-red-500/20 border border-red-500/30 flex items-start gap-3 w-full">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-red-300 text-sm text-left">{error}</p>
+              </div>
+            )}
 
+            {/* Login Button */}
+            <button
+              onClick={handleAdminLogin}
+              disabled={isLoggingIn}
+              className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  <div className="bg-white rounded p-0.5 flex items-center justify-center">
+                    <img src={GoogleImage} alt="Google" className="w-6 h-6" />
+                  </div>
+                  Continue with Google
+                  <LogIn className="w-5 h-5" />
+                </>
+              )}
+            </button>
 
-          <div className="flex flex-col justify-center text-center  items-center relative lg:right-70">
-            <div className="flex flex-col p-2">
-            <h2 className="text-xl font-semibold text-white">Admin Access Only</h2>
-            <p className="text-slate-400 text-sm mt-2">
-              This portal is restricted to authorized administrators only.
+            {/* Footer */}
+            <p className="text-slate-500 text-xs text-center mt-6">
+              Only users with admin privileges can access this dashboard.
             </p>
           </div>
-         
-
-          {/* Login Button */}
-          <button
-            onClick={handleAdminLogin}
-            disabled={isLoggingIn}
-            className="w-full flex items-center justify-center gap-5 px-6 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoggingIn ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              <>
-                <div className="bg-white rounded p-0.5 flex items-center justify-center">
-                  <img src={GoogleImage} alt="Google" className="w-6 h-6" />
-                </div>
-                Continue with Google<LogIn className="flex items-center justify-center" />
-              </>
-            )}
-          </button>
-
-          {/* Footer */}
-          <p className="text-slate-500 text-xs text-center mt-6">
-            Only users with admin privileges can access this dashboard.
-          </p>  
-          </div>
         </div>
-
-
       </div>
     </div>
   );
 };
 
 export default AdminLogin;
- {/* Error Message */}
-          {/* {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-500/20 border border-red-500/30 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-red-300 text-sm">{error}</p>
-            </div>
-          )} */}

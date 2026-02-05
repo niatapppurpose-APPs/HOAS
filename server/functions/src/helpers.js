@@ -30,6 +30,7 @@ export async function verifyAuthToken(token) {
 
 /**
  * Verify if user is an admin
+ * Handles potential Identity Toolkit API errors gracefully
  */
 export async function verifyAdmin(context) {
   if (!context.auth) {
@@ -47,10 +48,39 @@ export async function verifyAdmin(context) {
     return userRecord;
   } catch (error) {
     console.error('Error verifying admin status:', error);
+
+    // Check for specific Firebase Auth/Identity Toolkit errors
+    if (error.code === 'auth/user-not-found') {
+      throw new HttpsError('not-found', 'User account not found');
+    }
+
+    // Check for Identity Toolkit API errors (common on mobile)
+    if (error.message?.includes('PERMISSION_DENIED') ||
+      error.message?.includes('identitytoolkit') ||
+      error.message?.includes('SERVICE_DISABLED') ||
+      error.code === 'permission-denied') {
+      console.error('⚠️ Identity Toolkit API error - ensure API is enabled in GCP Console:', error.message);
+      throw new HttpsError(
+        'unavailable',
+        'Authentication service temporarily unavailable. Please ensure Identity Toolkit API is enabled.'
+      );
+    }
+
+    // Check for service account permission errors
+    if (error.message?.includes('insufficient permissions') ||
+      error.message?.includes('INSUFFICIENT_PERMISSIONS')) {
+      console.error('⚠️ Service account permission error - check IAM roles');
+      throw new HttpsError(
+        'permission-denied',
+        'Server configuration error. Please contact support.'
+      );
+    }
+
     if (error instanceof HttpsError) {
       throw error;
     }
-    // Wrap auth errors
+
+    // Wrap auth errors with more context
     throw new HttpsError('internal', `Failed to verify admin status: ${error.message}`);
   }
 }
@@ -73,7 +103,7 @@ export async function verifyManagementAccess(context, collegeId) {
 
     const userData = userDoc.data();
     console.log('Current user data:', { role: userData.role, uid: userData.uid });
-    
+
     // Check if user is admin
     let isAdmin = false;
     try {
@@ -84,7 +114,7 @@ export async function verifyManagementAccess(context, collegeId) {
       console.warn('Could not fetch user record for admin check:', error.message);
       // Don't throw here, just assume not admin if we can't check
     }
-  
+
     // Check if user is management for this college
     const isManagement = userData.role === 'management' && userData.uid === collegeId;
     console.log('Is management for this college?', isManagement);

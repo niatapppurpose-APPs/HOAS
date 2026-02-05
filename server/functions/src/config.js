@@ -21,39 +21,34 @@ try {
 }
 
 // Allowed origins for CORS
+// Note: Mobile apps send requests without origin headers, which are handled separately
 export const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:3000',
   'https://hoas-65dee.web.app',
-  'https://hoas-65dee.firebaseapp.com'
+  'https://hoas-65dee.firebaseapp.com',
+  // Allow any localhost port for development
+  /^http:\/\/localhost:\d+$/,
+  /^http:\/\/127\.0\.0\.1:\d+$/,
+  // Allow local network IPs for mobile testing
+  /^http:\/\/192\.168\.\d+\.\d+:\d+$/,
+  /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,
 ];
 
 // CORS options for v2 callable functions
-// Using explicit origins list for better CORS handling
+// Using 'true' allows all origins - Firebase callable functions handle auth via tokens, not CORS
+// This is safe because authentication is verified via Firebase Auth tokens, not origin
 export const corsOptions = {
-  cors: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:3000',
-    'https://hoas-65dee.web.app',
-    'https://hoas-65dee.firebaseapp.com'
-  ]
+  cors: true,  // Allow all origins for callable functions - auth is handled via tokens
 };
 
 // Set global options for v2 functions
+// Using 'true' for CORS to allow mobile apps which don't send origin headers
 setGlobalOptions({
   region: 'us-central1',
-  cors: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:3000',
-    'https://hoas-65dee.web.app',
-    'https://hoas-65dee.firebaseapp.com'
-  ]
+  cors: true,  // Allow all origins - mobile apps don't send origin headers
 });
 
 export const db = getFirestore();
@@ -64,7 +59,7 @@ export const corsHandler = cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     // Check if the origin is in the allowed list
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
