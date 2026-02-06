@@ -1,6 +1,7 @@
 import { Building2, LogOut, LayoutDashboard  } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "../ThemeToggle";
+import NotificationBell from "./NotificationBell";
 
 
 const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = true }) => {
@@ -36,6 +37,11 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
             {/* Theme Toggle Button */}
             <div id="tour-theme-toggle">
               <ThemeToggle size="md" />
+            </div>
+
+            {/* Notification Bell */}
+            <div id="tour-notifications">
+              <NotificationBell />
             </div>
 
             {/* Logout Button */}
