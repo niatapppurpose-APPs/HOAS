@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useOutletContext, useLocation } from "react-router-dom";
-import { collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
+import { collection, query, where, onSnapshot, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
+import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useModal } from "../../context/ModalContext";
@@ -24,7 +25,7 @@ import EmptyState from "./components/EmptyState";
 import ErrorState from "./components/ErrorState";
 import LoadingState from "./components/LoadingState";
 
-import { Building2, CheckCircle, Clock, GraduationCap, Shield, LayoutDashboard } from "lucide-react";
+import { Building2, CheckCircle, Clock, GraduationCap, Shield, LayoutDashboard, X, Plus, Eye, EyeOff, Lock } from "lucide-react";
 
 // Main Dashboard Component
 const OwnersDashboard = () => {
@@ -52,6 +53,136 @@ const OwnersDashboard = () => {
   const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [isBulkApproving, setIsBulkApproving] = useState(false);
 
+  // Add Management Modal state
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newManagement, setNewManagement] = useState({
+    collegeName: '',
+    principalName: '',
+    email: '',
+    phone: '',
+    password: ''
+  });
+  const [formError, setFormError] = useState('');
+
+  // View Password Modal state
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [selectedManagementForPassword, setSelectedManagementForPassword] = useState(null);
+  const [ownerPassword, setOwnerPassword] = useState('');
+  const [managementPassword, setManagementPassword] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+
+  // Open password view modal
+  const handleViewPassword = (management) => {
+    setSelectedManagementForPassword(management);
+    setOwnerPassword('');
+    setManagementPassword('');
+    setPasswordError('');
+    setIsPasswordVisible(false);
+    setIsPasswordModalOpen(true);
+  };
+
+  // Verify owner password and fetch management password
+  const handleVerifyAndShowPassword = async (e) => {
+    e.preventDefault();
+    if (!ownerPassword) {
+      setPasswordError('Please enter your password');
+      return;
+    }
+
+    setIsVerifying(true);
+    setPasswordError('');
+
+    try {
+      // Re-authenticate owner
+      const credential = EmailAuthProvider.credential(user.email, ownerPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // Fetch password from Firestore
+      const credDoc = await getDoc(doc(db, 'managementCredentials', selectedManagementForPassword.id));
+      
+      if (credDoc.exists()) {
+        setManagementPassword(credDoc.data().password);
+        setIsPasswordVisible(true);
+      } else {
+        setPasswordError('Password not found. It may have been created before this feature.');
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        setPasswordError('Incorrect credentials. Please try again.');
+      } else {
+        setPasswordError('Verification failed. Please try again.');
+      }
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // Close password modal
+  const closePasswordModal = () => {
+    setIsPasswordModalOpen(false);
+    setSelectedManagementForPassword(null);
+    setOwnerPassword('');
+    setManagementPassword('');
+    setPasswordError('');
+    setIsPasswordVisible(false);
+  };
+
+  // Generate password when college name changes
+  const generatePassword = (collegeName) => {
+    const cleanName = collegeName.replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase();
+    const randomPart = Math.random().toString(36).slice(-6);
+    const specialChars = '!@#$%';
+    const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)];
+    const randomNum = Math.floor(Math.random() * 100);
+    return `${cleanName}${randomSpecial}${randomPart}${randomNum}`;
+  };
+
+  // Update password when college name changes
+  const handleCollegeNameChange = (value) => {
+    const password = value ? generatePassword(value) : '';
+    setNewManagement(prev => ({ ...prev, collegeName: value, password }));
+  };
+
+  const NewManagement = async (event) => {
+    event.preventDefault()
+    // Clear previous error
+    setFormError('');
+    
+    if (!newManagement.collegeName || !newManagement.principalName || !newManagement.email) {
+      toast.warning('Please fill all required fields');
+      return;
+    }
+    
+    // Validate official college email (must end with .edu, .ac.in, etc.)
+    const emailPattern = /\.(edu|ac\.in|co\.in|edu\.in|org|com)$/i;
+    if (!emailPattern.test(newManagement.email)) {
+      setFormError('Please enter the college official E-mail Address (e.g., .edu, .ac.in)');
+      return;
+    }
+
+
+    try {
+      await cloudFunctions.createManagement({
+        collegeName: newManagement.collegeName,
+        principalName: newManagement.principalName,
+        email: newManagement.email,
+        phone: newManagement.phone || '',
+        password: newManagement.password
+      })
+      toast.success('Management added Successfully 🎉')
+
+      setNewManagement({ collegeName: '', principalName: '', email: '', phone: '', password: '' });
+      setIsAddModalOpen(false);
+    } catch (error) {
+      toast.error(`Failed to add management: ${error.message}`);
+    }
+
+
+
+  }
   // Tour Driver Effect
   useEffect(() => {
     if (location.state?.startTour) {
@@ -177,26 +308,26 @@ const OwnersDashboard = () => {
   const handleStatusChange = async (userId, newStatus) => {
     if (newStatus === 'approved') setIsApproving(userId);
     if (newStatus === 'denied') setIsDenying(userId);
-    
+
     try {
       // Add timeout for faster user feedback
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Operation timed out')), 15000)
       );
-      
-      const operationPromise = newStatus === 'approved' 
+
+      const operationPromise = newStatus === 'approved'
         ? cloudFunctions.approveUser(userId, 'owner')
         : cloudFunctions.denyUser(userId, 'Denied by owner');
-      
+
       await Promise.race([operationPromise, timeoutPromise]);
-      
+
       // Remove from selection after action
       setSelectedUsers(prev => {
         const newSet = new Set(prev);
         newSet.delete(userId);
         return newSet;
       });
-      
+
       toast.success(`User ${newStatus} successfully!`);
     } catch (error) {
       if (error.message === 'Operation timed out') {
@@ -445,10 +576,19 @@ const OwnersDashboard = () => {
               <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Approval Board</h2>
               <p className="mt-1" style={{ color: 'var(--text-muted)' }}>Approve or deny 'CO-ADMIN' registrations</p>
             </div>
-            <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-              <span className="w-2 h-2 rounded-full bg-green-500" /> Approved: {approvedCount}
-              <span className="w-2 h-2 rounded-full bg-yellow-500 ml-2" /> Pending: {pendingCount}
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(true)}
+              className="border border-1 p-2 px-4 rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity"
+              style={{
+                backgroundColor: isDark ? '#fff' : '#000',
+                color: isDark ? '#000' : '#fff',
+                borderColor: isDark ? '#374151' : '#9ca3af'
+              }}
+            >
+              <Plus size={18} />
+              Add Management
+            </button>
           </div>
 
           <UserListTabs
@@ -492,6 +632,7 @@ const OwnersDashboard = () => {
                   onToggleSelection={toggleUserSelection}
                   onStatusChange={handleStatusChange}
                   onDelete={handleOpenDeleteModal}
+                  onViewPassword={handleViewPassword}
                 />
               ))}
             </div>
@@ -507,6 +648,288 @@ const OwnersDashboard = () => {
           />
         </section>
       </div>
+
+      {/* Add Management Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsAddModalOpen(false)}
+          />
+
+          {/* Modal */}
+          <div
+            className="relative w-full max-w-md mx-4 rounded-xl shadow-2xl p-6"
+            style={{
+              backgroundColor: isDark ? '#1f2937' : '#ffffff',
+              border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
+                  <Building2 size={20} className="text-white" />
+                </div>
+                <h3 className="text-xl font-bold" style={{ color: isDark ? '#fff' : '#000' }}>
+                  Add Management
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X size={20} style={{ color: isDark ? '#9ca3af' : '#6b7280' }} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={NewManagement} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+                  College Name *
+                </label>
+                <input
+                  type="text"
+                  value={newManagement.collegeName}
+                  onChange={(e) => handleCollegeNameChange(e.target.value)}
+                  placeholder="Enter college name"
+                  className="w-full px-4 py-2.5 rounded-lg border outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                  style={{
+                    backgroundColor: isDark ? '#374151' : '#f9fafb',
+                    borderColor: isDark ? '#4b5563' : '#d1d5db',
+                    color: isDark ? '#fff' : '#000'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+                  Principal Name *
+                </label>
+                <input
+                  type="text"
+                  value={newManagement.principalName}
+                  onChange={(e) => setNewManagement(prev => ({ ...prev, principalName: e.target.value }))}
+                  placeholder="Enter principal name"
+                  className="w-full px-4 py-2.5 rounded-lg border outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                  style={{
+                    backgroundColor: isDark ? '#374151' : '#f9fafb',
+                    borderColor: isDark ? '#4b5563' : '#d1d5db',
+                    color: isDark ? '#fff' : '#000'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  value={newManagement.email}
+                  onChange={(e) => {
+                    setNewManagement(prev => ({ ...prev, email: e.target.value }));
+                    if (formError) setFormError('');
+                  }}
+                  placeholder="principal@college.edu"
+                  className="w-full px-4 py-2.5 rounded-lg border outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                  style={{
+                    backgroundColor: isDark ? '#374151' : '#f9fafb',
+                    borderColor: formError ? '#ef4444' : (isDark ? '#4b5563' : '#d1d5db'),
+                    color: isDark ? '#fff' : '#000'
+                  }}
+                />
+                {formError && <p className="text-red-500 text-sm mt-1">{formError}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={newManagement.phone}
+                  onChange={(e) => setNewManagement(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="+91 9876543210"
+                  className="w-full px-4 py-2.5 rounded-lg border outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                  style={{
+                    backgroundColor: isDark ? '#374151' : '#f9fafb',
+                    borderColor: isDark ? '#4b5563' : '#d1d5db',
+                    color: isDark ? '#fff' : '#000'
+                  }}
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="flex-1 px-4 py-2.5 rounded-lg border font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                  style={{
+                    borderColor: isDark ? '#4b5563' : '#d1d5db',
+                    color: isDark ? '#d1d5db' : '#374151'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 transition-all"
+                >
+                  Add Management
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Password Modal */}
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={closePasswordModal}
+          />
+          
+          {/* Modal */}
+          <div 
+            className="relative w-full max-w-md mx-4 rounded-xl shadow-2xl p-6"
+            style={{ 
+              backgroundColor: isDark ? '#1f2937' : '#ffffff',
+              border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600">
+                  <Lock size={20} className="text-white" />
+                </div>
+                <h3 className="text-xl font-bold" style={{ color: isDark ? '#fff' : '#000' }}>
+                  View Password
+                </h3>
+              </div>
+              <button 
+                onClick={closePasswordModal}
+                className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X size={20} style={{ color: isDark ? '#9ca3af' : '#6b7280' }} />
+              </button>
+            </div>
+
+            {/* College Info */}
+            {selectedManagementForPassword && (
+              <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: isDark ? '#374151' : '#f3f4f6' }}>
+                <p className="text-sm" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>College</p>
+                <p className="font-medium" style={{ color: isDark ? '#fff' : '#000' }}>
+                  {selectedManagementForPassword.collegeName || selectedManagementForPassword.displayName}
+                </p>
+                <p className="text-sm mt-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+                  {selectedManagementForPassword.email}
+                </p>
+              </div>
+            )}
+
+            {!isPasswordVisible ? (
+              /* Password Verification Form */
+              <form onSubmit={handleVerifyAndShowPassword} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+                    Enter Your Password to Continue
+                  </label>
+                  <input
+                    type="password"
+                    value={ownerPassword}
+                    onChange={(e) => {
+                      setOwnerPassword(e.target.value);
+                      if (passwordError) setPasswordError('');
+                    }}
+                    placeholder="Your admin password"
+                    className="w-full px-4 py-2.5 rounded-lg border outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+                    style={{
+                      backgroundColor: isDark ? '#374151' : '#f9fafb',
+                      borderColor: passwordError ? '#ef4444' : (isDark ? '#4b5563' : '#d1d5db'),
+                      color: isDark ? '#fff' : '#000'
+                    }}
+                    autoFocus
+                  />
+                  {passwordError && (
+                    <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={closePasswordModal}
+                    className="flex-1 px-4 py-2.5 rounded-lg border font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                    style={{
+                      borderColor: isDark ? '#4b5563' : '#d1d5db',
+                      color: isDark ? '#d1d5db' : '#374151'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isVerifying}
+                    className="flex-1 px-4 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 transition-all disabled:opacity-50"
+                  >
+                    {isVerifying ? 'Verifying...' : 'Verify & Show'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* Password Display */
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+                    Management Password
+                  </label>
+                  <div 
+                    className="flex items-center gap-2 p-3 rounded-lg border"
+                    style={{
+                      backgroundColor: isDark ? '#374151' : '#f9fafb',
+                      borderColor: isDark ? '#4b5563' : '#d1d5db'
+                    }}
+                  >
+                    <code 
+                      className="flex-1 font-mono text-lg tracking-wider"
+                      style={{ color: isDark ? '#10b981' : '#059669' }}
+                    >
+                      {managementPassword}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(managementPassword);
+                        toast.success('Password copied to clipboard!');
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-sm font-medium bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <p className="text-xs mt-2" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+                    ⚠️ Share this password securely with the principal
+                  </p>
+                </div>
+
+                <button
+                  onClick={closePasswordModal}
+                  className="w-full px-4 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 transition-all"
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 };

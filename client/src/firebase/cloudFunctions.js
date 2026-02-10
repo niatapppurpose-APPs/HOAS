@@ -87,6 +87,21 @@ export const getAllManagementUsers = async () => {
   }
 };
 
+/**
+ * Create a new management user (Owner only)
+ */
+export const createManagement = async (managementData) => {
+  const callable = httpsCallable(functions, 'createManagement');
+  try {
+    const result = await callable(managementData);
+    return result.data;
+  } catch (error) {
+    console.error('Error creating management:', error);
+    const message = error.message || error.code || 'Unknown error';
+    throw new Error(message);
+  }
+};
+
 // =============================================================================
 // COLLEGE MANAGEMENT FUNCTIONS
 // =============================================================================
@@ -384,6 +399,7 @@ export const initializeSystemSettings = async () => {
     throw error;
   }
 };
+
 
 export default {
   approveUser,

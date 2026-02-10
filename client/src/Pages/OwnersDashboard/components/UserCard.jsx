@@ -1,4 +1,4 @@
-import { CheckCircle, XCircle, Trash2, CheckSquare, Square, GraduationCap, Shield, Building2 } from "lucide-react";
+import { CheckCircle, XCircle, Trash2, CheckSquare, Square, GraduationCap, Shield, Building2, Key } from "lucide-react";
 import { HashLoader } from "react-spinners";
 import Avatar from "../../../components/OwnerServices/Avatar";
 import StatusBadge from "../../../components/OwnerServices/StatusBadge";
@@ -15,7 +15,8 @@ const UserCard = ({
   isFirst,
   onToggleSelection,
   onStatusChange,
-  onDelete
+  onDelete,
+  onViewPassword
 }) => {
   const roleIcons = {
     student: GraduationCap,
@@ -123,6 +124,18 @@ const UserCard = ({
             </div>
           ) : (
             <StatusBadge status={userData.status} />
+          )}
+
+          {/* View Password Button - Only for approved management */}
+          {userData.status === 'approved' && onViewPassword && (
+            <button
+              onClick={() => onViewPassword(userData)}
+              className="p-2 rounded-lg hover:bg-amber-600/80 transition-colors"
+              style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}
+              title="View Password"
+            >
+              <Key className="w-4 h-4" />
+            </button>
           )}
 
           {/* Delete Button */}

@@ -53,6 +53,11 @@ const useEmulator = localStorageEmulatorFlag !== null
 // Check for a debug override (e.g., via debugUtils.forceProductionMode())
 const forceProd = (typeof window !== 'undefined') && localStorage.getItem('forceProductionFirebase') === 'true';
 
+// Track the last Firebase mode so we can detect emulator→production switches
+const LAST_MODE_KEY = 'HOAS_LAST_FIREBASE_MODE';
+const currentMode = (forceProd || !useEmulator || !import.meta.env.DEV) ? 'production' : 'emulator';
+const lastMode = localStorage.getItem(LAST_MODE_KEY);
+
 // Connect to emulators when explicitly requested and not forced into production
 if (forceProd) {
   console.log('🔒 Production mode forced via localStorage (forceProductionFirebase=true) - skipping emulator connections');
@@ -81,9 +86,28 @@ if (forceProd) {
   isEmulatorConnected = false;
 }
 
+// Detect emulator→production switch and clear stale auth state
+// When switching from emulator to production, any cached emulator credentials/tokens
+// are invalid against the real Firebase Auth backend, causing silent login failures.
+if (lastMode === 'emulator' && currentMode === 'production') {
+  console.warn('🔄 Detected switch from EMULATOR → PRODUCTION. Clearing stale auth session...');
+  try {
+    // Sign out the stale emulator user so a fresh login can happen against production
+    const { signOut } = await import('firebase/auth');
+    await signOut(auth);
+    console.log('✅ Stale emulator session cleared. You can now log in with production credentials.');
+  } catch (err) {
+    console.warn('⚠️ Failed to clear stale session (may already be signed out):', err);
+  }
+}
+
+// Persist the current mode for next reload
+localStorage.setItem(LAST_MODE_KEY, currentMode);
+
 // Import debug utilities in development
 if (import.meta.env.DEV) {
   import('./debugUtils.js').then((module) => {
     module.logFirebaseMode();
   });
 }
+

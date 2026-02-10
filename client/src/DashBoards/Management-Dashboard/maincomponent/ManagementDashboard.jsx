@@ -15,7 +15,7 @@ import QuickApproval from "../components/dashboard/QuickApproval";
 import RecentActivity from "../components/dashboard/RecentActivity";
 import StatusTable from "../components/dashboard/StatusTable";
 import StatusVisualization from "../components/dashboard/StatusVisualization";
-
+import AddWarden from './pages/AddWarden'
 // Import styles
 import "./ManagementDashboard.css";
 
@@ -211,7 +211,12 @@ const ManagementDashboard = () => {
               onViewDetails={handleViewDetails}
               isApproving={approvingUserId === firstPendingUser?.id}
             />
+            <div>
+              <AddWarden />
+
+            </div>
           </div>
+
         </div>
 
         {/* Recent Activity */}

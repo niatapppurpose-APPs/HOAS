@@ -3,7 +3,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase/firebaseConfig";
-import { Clock, Building2, CheckCircle, LogOut, Loader2 } from "lucide-react";
+import { Clock, Building2, CheckCircle, Loader2 } from "lucide-react";
+import AnimatedLogoutButton from "../../components/AnimatedLogoutButton";
 
 const WaitingApproval = () => {
   const { user, userData, userDataLoading, loading } = useAuth();
@@ -149,13 +150,13 @@ const WaitingApproval = () => {
           )}
 
           {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            className="w-full mt-8 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white font-medium transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out and try different account
-          </button>
+          <div className="mt-8 flex justify-center">
+            <AnimatedLogoutButton 
+              onLogout={handleLogout}
+              variant="dark"
+              text="Sign Out"
+            />
+          </div>
         </div>
 
         {/* Info Text */}
