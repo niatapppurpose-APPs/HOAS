@@ -3,6 +3,20 @@ import { db, auth, corsOptions } from './config.js';
 import * as logger from 'firebase-functions/logger';
 import { verifyManagementAccess } from './helpers.js';
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
+
+/**
+ * Generate a random password: 8 chars, mix of uppercase, lowercase, and digits
+ */
+function generatePassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let password = '';
+  const bytes = crypto.randomBytes(8);
+  for (let i = 0; i < 8; i++) {
+    password += chars[bytes[i] % chars.length];
+  }
+  return password;
+}
 
 /**
  * Bulk create students from Excel data
@@ -10,170 +24,170 @@ import nodemailer from 'nodemailer';
  * Sends email notification to naitapppurpose@gmail.com with summary
  */
 export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }, async (request) => {
-    try {
-        logger.info('📋 bulkCreateStudents called');
+  try {
+    logger.info('📋 bulkCreateStudents called');
 
-        // Check authentication
-        if (!request.auth) {
-            throw new HttpsError('unauthenticated', 'User must be authenticated');
-        }
-
-        const { students, collegeName, managementId, downloadUrl } = request.data;
-
-        if (!students || !Array.isArray(students) || students.length === 0) {
-            throw new HttpsError('invalid-argument', 'students array is required and must not be empty');
-        }
-
-        if (!collegeName) {
-            throw new HttpsError('invalid-argument', 'collegeName is required');
-        }
-
-        logger.info(`📋 Processing ${students.length} students for ${collegeName}`);
-
-        const results = {
-            total: students.length,
-            created: 0,
-            failed: 0,
-            skipped: 0,
-            errors: [],
-            createdStudents: []
-        };
-
-        // Process each student
-        for (let i = 0; i < students.length; i++) {
-            const student = students[i];
-            const { name, studentId, email } = student;
-
-            // Validate required fields
-            if (!name || !email) {
-                results.failed++;
-                results.errors.push({ index: i + 1, name: name || 'Unknown', reason: 'Missing name or email' });
-                continue;
-            }
-
-            // Use studentId as default password (students can change it later)
-            const defaultPassword = studentId || `HOAS${String(i + 1).padStart(4, '0')}`;
-
-            try {
-                // Check if user already exists
-                let existingUser = null;
-                try {
-                    existingUser = await auth.getUserByEmail(email);
-                } catch (e) {
-                    // User doesn't exist - good, we'll create them
-                    if (e.code !== 'auth/user-not-found') {
-                        throw e;
-                    }
-                }
-
-                if (existingUser) {
-                    results.skipped++;
-                    results.errors.push({ index: i + 1, name, reason: `Email ${email} already exists` });
-                    continue;
-                }
-
-                // Create Firebase Auth user
-                const userRecord = await auth.createUser({
-                    email: email,
-                    password: defaultPassword,
-                    displayName: name,
-                    emailVerified: false
-                });
-
-                // Create Firestore document
-                await db.collection('users').doc(userRecord.uid).set({
-                    uid: userRecord.uid,
-                    email: email,
-                    displayName: name,
-                    fullName: name,
-                    studentId: studentId || '',
-                    role: 'student',
-                    status: 'approved',
-                    collegeName: collegeName,
-                    managementId: managementId || request.auth.uid,
-                    isOnline: false,
-                    createdBy: request.auth.uid,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    bulkUploaded: true
-                });
-
-                results.created++;
-                results.createdStudents.push({
-                    name,
-                    email,
-                    studentId: studentId || '',
-                    defaultPassword: defaultPassword
-                });
-
-                logger.info(`✅ Created student ${i + 1}/${students.length}: ${name} (${email})`);
-
-            } catch (err) {
-                results.failed++;
-                results.errors.push({ index: i + 1, name, reason: err.message || 'Unknown error' });
-                logger.error(`❌ Failed to create student ${name}:`, err.message);
-            }
-        }
-
-        // Store bulk upload record in Firestore
-        const uploadRecord = {
-            uploadedBy: request.auth.uid,
-            uploadedByEmail: request.auth.token?.email || 'unknown',
-            collegeName: collegeName,
-            totalStudents: results.total,
-            createdCount: results.created,
-            failedCount: results.failed,
-            skippedCount: results.skipped,
-            downloadUrl: downloadUrl || '',
-            errors: results.errors,
-            createdAt: new Date().toISOString()
-        };
-
-        await db.collection('bulkUploads').add(uploadRecord);
-
-        // Send email notification
-        try {
-            await sendBulkUploadEmail(results, collegeName, downloadUrl, request.auth.token?.email);
-            logger.info('📧 Email notification sent successfully');
-        } catch (emailErr) {
-            logger.warn('⚠️ Failed to send email notification:', emailErr.message);
-            // Don't fail the entire operation just because email failed
-        }
-
-        logger.info(`📋 Bulk upload complete: ${results.created} created, ${results.failed} failed, ${results.skipped} skipped`);
-
-        return {
-            success: true,
-            message: `Successfully created ${results.created} out of ${results.total} students`,
-            results
-        };
-
-    } catch (error) {
-        logger.error('❌ Error in bulkCreateStudents:', error);
-        if (error instanceof HttpsError) {
-            throw error;
-        }
-        throw new HttpsError('internal', `Failed to bulk create students: ${error.message}`);
+    // Check authentication
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'User must be authenticated');
     }
+
+    const { students, collegeName, managementId, downloadUrl } = request.data;
+
+    if (!students || !Array.isArray(students) || students.length === 0) {
+      throw new HttpsError('invalid-argument', 'students array is required and must not be empty');
+    }
+
+    if (!collegeName) {
+      throw new HttpsError('invalid-argument', 'collegeName is required');
+    }
+
+    logger.info(`📋 Processing ${students.length} students for ${collegeName}`);
+
+    const results = {
+      total: students.length,
+      created: 0,
+      failed: 0,
+      skipped: 0,
+      errors: [],
+      createdStudents: []
+    };
+
+    // Process each student
+    for (let i = 0; i < students.length; i++) {
+      const student = students[i];
+      const { name, studentId, email } = student;
+
+      // Validate required fields
+      if (!name || !email) {
+        results.failed++;
+        results.errors.push({ index: i + 1, name: name || 'Unknown', reason: 'Missing name or email' });
+        continue;
+      }
+
+      // Generate random password for this student
+      const defaultPassword = generatePassword();
+
+      try {
+        // Check if user already exists
+        let existingUser = null;
+        try {
+          existingUser = await auth.getUserByEmail(email);
+        } catch (e) {
+          // User doesn't exist - good, we'll create them
+          if (e.code !== 'auth/user-not-found') {
+            throw e;
+          }
+        }
+
+        if (existingUser) {
+          results.skipped++;
+          results.errors.push({ index: i + 1, name, reason: `Email ${email} already exists` });
+          continue;
+        }
+
+        // Create Firebase Auth user
+        const userRecord = await auth.createUser({
+          email: email,
+          password: defaultPassword,
+          displayName: name,
+          emailVerified: false
+        });
+
+        // Create Firestore document
+        await db.collection('users').doc(userRecord.uid).set({
+          uid: userRecord.uid,
+          email: email,
+          displayName: name,
+          fullName: name,
+          studentId: studentId || '',
+          role: 'student',
+          status: 'approved',
+          collegeName: collegeName,
+          managementId: managementId || request.auth.uid,
+          isOnline: false,
+          createdBy: request.auth.uid,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          bulkUploaded: true
+        });
+
+        results.created++;
+        results.createdStudents.push({
+          name,
+          email,
+          studentId: studentId || '',
+          defaultPassword: defaultPassword
+        });
+
+        logger.info(`✅ Created student ${i + 1}/${students.length}: ${name} (${email})`);
+
+      } catch (err) {
+        results.failed++;
+        results.errors.push({ index: i + 1, name, reason: err.message || 'Unknown error' });
+        logger.error(`❌ Failed to create student ${name}:`, err.message);
+      }
+    }
+
+    // Store bulk upload record in Firestore
+    const uploadRecord = {
+      uploadedBy: request.auth.uid,
+      uploadedByEmail: request.auth.token?.email || 'unknown',
+      collegeName: collegeName,
+      totalStudents: results.total,
+      createdCount: results.created,
+      failedCount: results.failed,
+      skippedCount: results.skipped,
+      downloadUrl: downloadUrl || '',
+      errors: results.errors,
+      createdAt: new Date().toISOString()
+    };
+
+    await db.collection('bulkUploads').add(uploadRecord);
+
+    // Send email notification
+    try {
+      await sendBulkUploadEmail(results, collegeName, downloadUrl, request.auth.token?.email);
+      logger.info('📧 Email notification sent successfully');
+    } catch (emailErr) {
+      logger.warn('⚠️ Failed to send email notification:', emailErr.message);
+      // Don't fail the entire operation just because email failed
+    }
+
+    logger.info(`📋 Bulk upload complete: ${results.created} created, ${results.failed} failed, ${results.skipped} skipped`);
+
+    return {
+      success: true,
+      message: `Successfully created ${results.created} out of ${results.total} students`,
+      results
+    };
+
+  } catch (error) {
+    logger.error('❌ Error in bulkCreateStudents:', error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError('internal', `Failed to bulk create students: ${error.message}`);
+  }
 });
 
 /**
  * Send email notification about bulk upload
  */
 async function sendBulkUploadEmail(results, collegeName, downloadUrl, uploaderEmail) {
-    // Create a transporter using Gmail
-    // Note: For production, set up App Password in Firebase environment config
-    // firebase functions:config:set gmail.email="naitapppurpose@gmail.com" gmail.password="your-app-password"
+  // Create a transporter using Gmail
+  // Note: For production, set up App Password in Firebase environment config
+  // firebase functions:config:set gmail.email="naitapppurpose@gmail.com" gmail.password="your-app-password"
 
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.GMAIL_EMAIL || 'naitapppurpose@gmail.com',
-            pass: process.env.GMAIL_APP_PASSWORD || '' // App password required
-        }
-    });
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_EMAIL || 'naitapppurpose@gmail.com',
+      pass: process.env.GMAIL_APP_PASSWORD || '' // App password required
+    }
+  });
 
-    const studentListHtml = results.createdStudents.map((s, i) => `
+  const studentListHtml = results.createdStudents.map((s, i) => `
     <tr style="border-bottom: 1px solid #eee;">
       <td style="padding: 8px 12px;">${i + 1}</td>
       <td style="padding: 8px 12px;">${s.name}</td>
@@ -183,16 +197,16 @@ async function sendBulkUploadEmail(results, collegeName, downloadUrl, uploaderEm
     </tr>
   `).join('');
 
-    const errorListHtml = results.errors.length > 0
-        ? `<h3 style="color: #e53e3e;">⚠️ Errors (${results.errors.length})</h3>
+  const errorListHtml = results.errors.length > 0
+    ? `<h3 style="color: #e53e3e;">⚠️ Errors (${results.errors.length})</h3>
        <ul>${results.errors.map(e => `<li><strong>${e.name}</strong>: ${e.reason}</li>`).join('')}</ul>`
-        : '';
+    : '';
 
-    const mailOptions = {
-        from: `"HOAS System" <${process.env.GMAIL_EMAIL || 'naitapppurpose@gmail.com'}>`,
-        to: 'naitapppurpose@gmail.com',
-        subject: `📋 HOAS Bulk Upload - ${collegeName} (${results.created} students)`,
-        html: `
+  const mailOptions = {
+    from: `"HOAS System" <${process.env.GMAIL_EMAIL || 'naitapppurpose@gmail.com'}>`,
+    to: 'naitapppurpose@gmail.com',
+    subject: `📋 HOAS Bulk Upload - ${collegeName} (${results.created} students)`,
+    html: `
       <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 700px; margin: 0 auto; background: #f8fafc; padding: 20px;">
         <div style="background: linear-gradient(135deg, #4f46e5, #7c3aed); padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
           <h1 style="color: white; margin: 0; font-size: 24px;">📋 HOAS Bulk Student Upload</h1>
@@ -245,7 +259,7 @@ async function sendBulkUploadEmail(results, collegeName, downloadUrl, uploaderEm
           
           <div style="margin-top: 24px; padding: 16px; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
             <p style="margin: 0; color: #1e40af; font-size: 13px;">
-              <strong>ℹ️ Note:</strong> Students can log in using their email and the default password (Student ID). 
+              <strong>ℹ️ Note:</strong> Students can log in using their email and the randomly generated password shown above. 
               They should change their password after first login.
             </p>
           </div>
@@ -256,7 +270,7 @@ async function sendBulkUploadEmail(results, collegeName, downloadUrl, uploaderEm
         </p>
       </div>
     `
-    };
+  };
 
-    await transporter.sendMail(mailOptions);
+  await transporter.sendMail(mailOptions);
 }
