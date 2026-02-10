@@ -44,7 +44,7 @@ const QuickApproval = ({ pendingUser, onApprove, onViewDetails, isApproving }) =
           </div>
           <h4 className="user-name">{pendingUser.displayName}</h4>
           <p className="user-email">{pendingUser.email}</p>
-          <p className="user-date">{pendingUser.createdAt?.toDate().toLocaleDateString()}</p>
+          <p className="user-date">{(pendingUser.createdAt?.toDate ? pendingUser.createdAt.toDate() : pendingUser.createdAt ? new Date(pendingUser.createdAt) : new Date()).toLocaleDateString()}</p>
         </div>
 
         <div className="approval-progress">

@@ -63,22 +63,89 @@ const LoginButton = () => {
 
 
   return (
-    <form onSubmit={handleLogin} className="w-full">
-      <div className="flex flex-col gap-4">
-        {/* Email/ID Input and Toggle Button - unified width */}
-        <div className="flex flex-row items-center gap-2 w-full">
-          <div className="relative flex-grow">
-            {!changeToggle ? (
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: isDark ? '#6b7280' : '#9ca3af' }} />
-            ) : (
-              <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-7 h-7" style={{ color: isDark ? '#6b7280' : '#9ca3af' }} />
-            )}
+    <>
+      <div className="flex justify-center items-center gap-2 mb-4">
+        {/* Email Button */}
+        <button
+          className="flex-shrink-0 border-2 p-2 rounded-lg transition-all duration-200 w-24 h-12 flex items-center justify-center font-medium"
+          style={{
+            borderColor: !changeToggle
+              ? (isDark ? "#4f46e5" : "#6366f1")
+              : (isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)"),
+            backgroundColor: !changeToggle
+              ? (isDark ? "rgba(79, 70, 229, 0.2)" : "rgba(99, 102, 241, 0.1)")
+              : "transparent",
+            color: !changeToggle
+              ? (isDark ? "#818cf8" : "#4f46e5")
+              : (isDark ? "#9ca3af" : "#6b7280")
+          }}
+          type="button"
+          onClick={() => setChangeToggle(false)}
+          aria-label="Login with Email"
+          aria-pressed={!changeToggle}
+        >
+          Email
+        </button>
+
+        {/* ID Button */}
+        <button
+          className="flex-shrink-0 border-2 p-2 rounded-lg transition-all duration-200 w-24 h-12 flex items-center justify-center font-medium"
+          style={{
+            borderColor: changeToggle
+              ? (isDark ? "#4f46e5" : "#6366f1")
+              : (isDark ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.2)"),
+            backgroundColor: changeToggle
+              ? (isDark ? "rgba(79, 70, 229, 0.2)" : "rgba(99, 102, 241, 0.1)")
+              : "transparent",
+            color: changeToggle
+              ? (isDark ? "#818cf8" : "#4f46e5")
+              : (isDark ? "#9ca3af" : "#6b7280")
+          }}
+          type="button"
+          onClick={() => setChangeToggle(true)}
+          aria-label="Login with ID Number"
+          aria-pressed={changeToggle}
+        >
+          ID
+        </button>
+      </div>
+      <form onSubmit={handleLogin} className="w-full">
+        <div className="flex flex-col gap-4">
+          {/* Email/ID Input and Toggle Button - unified width */}
+          <div className="flex flex-row items-center gap-2 w-full">
+            <div className="relative flex-grow">
+              {!changeToggle ? (
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: isDark ? '#6b7280' : '#9ca3af' }} />
+              ) : (
+                <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-7 h-7" style={{ color: isDark ? '#6b7280' : '#9ca3af' }} />
+              )}
+              <input
+                type={changeToggle ? "number" : "email"}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={changeToggle ? 'ID Number' : 'Email'}
+                className="w-full h-12 pl-12 pr-4 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                style={{
+                  backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(243, 244, 246, 0.9)',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                  color: isDark ? '#ffffff' : '#1f2937',
+                  '--tw-ring-color': isDark ? '#4f46e5' : '#6366f1',
+                  '--tw-ring-offset-color': isDark ? '#111827' : '#f9fafb'
+                }}
+              />
+            </div>
+
+          </div>
+
+          {/* Password Input */}
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: isDark ? '#6b7280' : '#9ca3af' }} />
             <input
-              type={changeToggle ? "number" : "email"}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={changeToggle ? 'ID Number' : 'Email'}
-              className="w-full h-12 pl-10 pr-4 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-2 focus:outline-none"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full h-12 pl-10 pr-12 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-2 focus:outline-none"
               style={{
                 backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(243, 244, 246, 0.9)',
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
@@ -87,93 +154,61 @@ const LoginButton = () => {
                 '--tw-ring-offset-color': isDark ? '#111827' : '#f9fafb'
               }}
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/10 transition-colors"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOff className="w-5 h-5" style={{ color: isDark ? '#9ca3af' : '#6b7280' }} />
+              ) : (
+                <Eye className="w-5 h-5" style={{ color: isDark ? '#9ca3af' : '#6b7280' }} />
+              )}
+            </button>
           </div>
-          <button
-            className="flex-shrink-0 border p-2 rounded transition-colors w-16 h-12 flex items-center justify-center"
+
+          {/* Login Button */}
+          <motion.button
+            type="submit"
+            disabled={loading}
+            whileHover={{ scale: loading ? 1 : 1.02 }}
+            whileTap={{ scale: loading ? 1 : 0.98 }}
+            className="w-full h-12 rounded-lg font-semibold text-white transition-all duration-300 flex items-center justify-center relative overflow-hidden"
             style={{
-              borderColor: isDark ? "#fff" : "#000",
-              backgroundColor: isDark ? "#ffffff" : "#000",
-              color: isDark ? "#000" : "#fff"
+              background: 'linear-gradient(90deg, #4f46e5, #818cf8)',
+              boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)'
             }}
-            type="button"
-            onClick={() => setChangeToggle(prev => !prev)}
-            aria-label={changeToggle ? "Switch to Email" : "Switch to ID"}
           >
-            {!changeToggle ? 'ID' : 'Email'}
-          </button>
+            <AnimatePresence>
+              {loading ? (
+                <motion.div
+                  key="loader"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="flex items-center cursor-not-allowed"
+                >
+                  <HashLoader size={20} color="#ffffff" />
+                  <span>Logging in...</span>
+                </motion.div>
+              ) : (
+                <motion.span
+                  key="text"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="cursor-pointer"
+
+                >
+                  Login
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
         </div>
-
-        {/* Password Input */}
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: isDark ? '#6b7280' : '#9ca3af' }} />
-          <input
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="w-full h-12 pl-10 pr-12 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-2 focus:outline-none"
-            style={{
-              backgroundColor: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(243, 244, 246, 0.9)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-              color: isDark ? '#ffffff' : '#1f2937',
-              '--tw-ring-color': isDark ? '#4f46e5' : '#6366f1',
-              '--tw-ring-offset-color': isDark ? '#111827' : '#f9fafb'
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/10 transition-colors"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-            {showPassword ? (
-              <EyeOff className="w-5 h-5" style={{ color: isDark ? '#9ca3af' : '#6b7280' }} />
-            ) : (
-              <Eye className="w-5 h-5" style={{ color: isDark ? '#9ca3af' : '#6b7280' }} />
-            )}
-          </button>
-        </div>
-
-        {/* Login Button */}
-        <motion.button
-          type="submit"
-          disabled={loading}
-          whileHover={{ scale: loading ? 1 : 1.02 }}
-          whileTap={{ scale: loading ? 1 : 0.98 }}
-          className="w-full h-12 rounded-lg font-semibold text-white transition-all duration-300 flex items-center justify-center relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(90deg, #4f46e5, #818cf8)',
-            boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)'
-          }}
-        >
-          <AnimatePresence>
-            {loading ? (
-              <motion.div
-                key="loader"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="flex items-center cursor-not-allowed"
-              >
-                <HashLoader size={20} color="#ffffff" />
-                <span>Logging in...</span>
-              </motion.div>
-            ) : (
-              <motion.span
-                key="text"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="cursor-pointer"
-
-              >
-                Login
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </motion.button>
-      </div>
-    </form>
+      </form>
+    </>
   );
 };
 

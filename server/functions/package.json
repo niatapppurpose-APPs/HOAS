@@ -20,6 +20,7 @@
     "firebase-admin": "^13.6.0",
     "firebase-functions": "^7.0.5",
     "fs": "^0.0.1-security",
+    "nodemailer": "^8.0.1",
     "path": "^0.12.7",
     "pdfkit": "^0.15.0",
     "zip-lib": "^0.7.3"

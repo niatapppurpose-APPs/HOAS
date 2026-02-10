@@ -401,6 +401,40 @@ export const initializeSystemSettings = async () => {
 };
 
 
+// =============================================================================
+// BULK UPLOAD FUNCTIONS
+// =============================================================================
+
+/**
+ * Bulk create students from Excel data
+ */
+export const bulkCreateStudents = async (studentsData) => {
+  const callable = httpsCallable(functions, 'bulkCreateStudents', { timeout: 300000 });
+  try {
+    const result = await callable(studentsData);
+    return result.data;
+  } catch (error) {
+    console.error('Error bulk creating students:', error);
+    const message = error.message || error.code || 'Unknown error';
+    throw new Error(message);
+  }
+};
+
+/**
+ * Create a new warden (Management)
+ */
+export const createWarden = async (wardenData) => {
+  const callable = httpsCallable(functions, 'createWarden');
+  try {
+    const result = await callable(wardenData);
+    return result.data;
+  } catch (error) {
+    console.error('Error creating warden:', error);
+    const message = error.message || error.code || 'Unknown error';
+    throw new Error(message);
+  }
+};
+
 export default {
   approveUser,
   denyUser,
@@ -427,4 +461,7 @@ export default {
   checkCollegeCapacity,
   getSystemStatus,
   initializeSystemSettings,
+  // Bulk Upload
+  bulkCreateStudents,
+  createWarden,
 };

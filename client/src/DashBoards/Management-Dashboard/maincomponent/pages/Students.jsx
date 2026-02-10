@@ -3,14 +3,14 @@ import { useLocation, useOutletContext } from 'react-router-dom';
 import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from "../../../../firebase/firebaseConfig";
 import ManagementHeader from "../../components/layout/ManagementHeader";
-import { Users, Mail, Search, Filter, Plus, GraduationCap, CheckCircle, Building2,RefreshCw,  CircleX } from "lucide-react";
+import { Users, Mail, Search, Filter, Plus, GraduationCap, CheckCircle, Building2, RefreshCw, CircleX, FileSpreadsheet } from "lucide-react";
 import "../ManagementDashboard.css";
 import { HashLoader } from "react-spinners";
 import { useAuth } from "../../../../context/AuthContext";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 import { useTheme } from "../../../../context/ThemeContext";
 import EmptyState from "../../../../components/OwnerServices/EmptyState";
-// import { toast } from "../../../../components/Toast";
+import BulkUploadStudents from './BulkUploadStudents';
 import NoDataLight from '../../../../assets/No-Data.avif';
 import NoDataDark from '../../../../assets/NoDataDark.png';
 const Students = () => {
@@ -21,6 +21,7 @@ const Students = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null)
   const searchInputRef = useRef(null);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const { isDark } = useTheme()
   // Read optional collegeId from URL query params (e.g. ?collegeId=COL123)
   const searchParams = new URLSearchParams(location.search);
@@ -85,7 +86,7 @@ const Students = () => {
       const q = collegeFilter
         ? query(collection(db, 'users'), where('role', '==', 'student'), where(collegeFilter.field, '==', collegeFilter.value))
         : query(collection(db, 'users'), where('role', '==', 'student'));
-      
+
       const snapshot = await getDocs(q);
       const studentList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setStudents(studentList);
@@ -131,9 +132,9 @@ const Students = () => {
               <p className="page-subtitle">Manage and monitor all students</p>
             </div>
           </div>
-          <button className="btn-primary">
-            <Plus size={20} />
-            Add Student
+          <button className="btn-primary" onClick={() => setShowBulkUpload(true)}>
+            <FileSpreadsheet size={20} />
+            Bulk Upload
           </button>
         </div>
 
@@ -271,6 +272,13 @@ const Students = () => {
           </div>
         ))}
       </div>
+
+      {/* Bulk Upload Modal */}
+      <BulkUploadStudents
+        isOpen={showBulkUpload}
+        onClose={() => setShowBulkUpload(false)}
+        collegeName={userData?.collegeName}
+      />
     </>
   );
 };

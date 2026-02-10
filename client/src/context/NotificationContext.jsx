@@ -96,7 +96,7 @@ export const NotificationProvider = ({ children }) => {
             title: 'New Approval Request',
             body: `${userData.displayName || 'A college'} is requesting approval`,
             type: 'approval',
-            createdAt: userData.createdAt?.toDate() || new Date(),
+            createdAt: userData.createdAt?.toDate ? userData.createdAt.toDate() : (userData.createdAt ? new Date(userData.createdAt) : new Date()),
             read: false,
             data: {
               userId: change.doc.id,
@@ -145,7 +145,7 @@ export const NotificationProvider = ({ children }) => {
             title: 'New Support Ticket',
             body: ticketData.subject || 'A new support ticket has been created',
             type: 'support',
-            createdAt: ticketData.createdAt?.toDate() || new Date(),
+            createdAt: ticketData.createdAt?.toDate ? ticketData.createdAt.toDate() : (ticketData.createdAt ? new Date(ticketData.createdAt) : new Date()),
             read: false,
             data: {
               ticketId: change.doc.id,
