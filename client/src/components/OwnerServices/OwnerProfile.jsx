@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 import Avatar from "./Avatar";
+import AnimatedLogoutButton from "../AnimatedLogoutButton";
 import {
   Mail,
   Phone,
@@ -12,7 +13,6 @@ import {
   Save,
   ShieldCheck,
   Calendar,
-  LogOut,
 } from "lucide-react";
 import { HashLoader } from "react-spinners";
 
@@ -242,13 +242,11 @@ const OwnerProfile = () => {
               Save Changes
             </button>
 
-            <button
-              onClick={handleLogout}
-              className="px-6 py-3 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 flex items-center gap-2"
-            >
-              <LogOut size={18} />
-              Logout
-            </button>
+            <AnimatedLogoutButton 
+              onLogout={handleLogout}
+              variant="dark"
+              text="Log Out"
+            />
           </div>
 
           {saveMessage && (

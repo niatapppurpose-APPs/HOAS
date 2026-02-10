@@ -54,19 +54,28 @@ setGlobalOptions({
 export const db = getFirestore();
 export const auth = getAuth();
 
+// Check if running in emulator — MUST be defined before corsHandler references it
+export const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true';
+
 // Configure CORS handler for Express middleware
 export const corsHandler = cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
-    // Check if the origin is in the allowed list
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else if (isEmulator) {
-      // In emulator mode, allow all origins for testing
+    // In emulator mode, allow all origins for testing
+    if (isEmulator) return callback(null, true);
+
+    // Check if the origin matches any allowed origin (supports both strings and regex)
+    const isAllowed = allowedOrigins.some((allowed) => {
+      if (allowed instanceof RegExp) return allowed.test(origin);
+      return allowed === origin;
+    });
+
+    if (isAllowed) {
       callback(null, true);
     } else {
+      console.warn(`⛔ CORS blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -75,8 +84,5 @@ export const corsHandler = cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
   optionsSuccessStatus: 200
 });
-
-// Check if running in emulator
-export const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true';
 
 console.log('🚀 Functions initialized. Emulator mode:', isEmulator);

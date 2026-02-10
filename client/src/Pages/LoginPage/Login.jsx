@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import LoginButton from "./LoginButton";
+import RedirectingPage from "./RedirectingPage";
 import { FcCheckmark } from "react-icons/fc";
 import { Loader2 } from 'lucide-react';
 import Applogo from '../../assets/Applogo.png'
@@ -11,15 +12,42 @@ const Login = () => {
   const { user, userData, userDataLoading, loading } = useAuth();
   const navigate = useNavigate();
   const { isDark } = useTheme()
-  React.useEffect(() => {
+  const [showRedirecting, setShowRedirecting] = useState(false);
+  const [minDelayPassed, setMinDelayPassed] = useState(false);
+
+  const previousUserRef = useRef(null);
+
+  // Detect when user logs in (user changes from null to a value)
+  useEffect(() => {
+    if (!previousUserRef.current && user) {
+      // User just logged in - show redirecting page
+      setShowRedirecting(true);
+      setMinDelayPassed(false);
+
+      // Minimum 3 second delay before allowing navigation
+      const timer = setTimeout(() => {
+        setMinDelayPassed(true);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+    previousUserRef.current = user;
+  }, [user]);
+
+  useEffect(() => {
     // Don't navigate if still loading auth state
     if (loading) return;
 
-    if (user && !userDataLoading) {
+    // Wait for both: data loaded AND minimum delay passed
+    if (user && !userDataLoading && minDelayPassed) {
       if (userData) {
         const { role, status } = userData;
         if (status === "approved") {
-          navigate(`/dashboard/${role}`, { replace: true });
+          if (role === 'admin' || role === 'owner') {
+            navigate('/OwnersDashboard', { replace: true });
+          } else {
+            navigate(`/dashboard/${role}`, { replace: true });
+          }
         } else {
           navigate("/waiting-approval", { replace: true });
         }
@@ -27,20 +55,30 @@ const Login = () => {
         navigate("/role", { replace: true });
       }
     }
-  }, [user, userData, userDataLoading, loading, navigate]);
+  }, [user, userData, userDataLoading, loading, navigate, minDelayPassed]);
 
-  // Show loading state while checking auth after redirect
-  if (loading || (user && userDataLoading)) {
+  // Show redirecting page while user is logged in and either loading data or waiting for delay
+  if (showRedirecting && user && (userDataLoading || !minDelayPassed)) {
+    return (
+      <RedirectingPage
+        userName={user?.displayName?.split(' ')[0] || 'User'}
+        message="Please do not go back or reload the page"
+      />
+    );
+  }
+
+  // Show loading state while checking initial auth
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center"
-           style={{
-             background: isDark 
-               ? 'linear-gradient(135deg, #111827, #0f172a, #000000)'
-               : 'linear-gradient(135deg, #f8fafc, #e2e8f0, #f1f5f9)'
-           }}>
+        style={{
+          background: isDark
+            ? 'linear-gradient(135deg, #111827, #0f172a, #000000)'
+            : 'linear-gradient(135deg, #f8fafc, #e2e8f0, #f1f5f9)'
+        }}>
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mx-auto mb-4" />
-          <p className="text-lg" style={{ color: isDark ? '#d1d5db' : '#4b5563' }}>Signing you in...</p>
+          <p className="text-lg" style={{ color: isDark ? '#d1d5db' : '#4b5563' }}>Loading...</p>
         </div>
       </div>
     );
@@ -61,28 +99,28 @@ const Login = () => {
             <span className="text-sm">Go Home</span>
           </button>
         </div>
-        <div className="min-h-screen flex flex-col md:flex-row animate-gradient-move dist-bg dist-font"
-             style={{
-               background: isDark 
-                 ? 'linear-gradient(135deg, #111827, #0f172a, #000000)'
-                 : 'linear-gradient(135deg, #f8fafc, #e2e8f0, #f1f5f9)'
-             }}>
+        <div className="min-h-screen flex flex-col items-center justify-center md:flex-row animate-gradient-move dist-bg dist-font"
+          style={{
+            background: isDark
+              ? 'linear-gradient(135deg, #111827, #0f172a, #000000)'
+              : 'linear-gradient(135deg, #f8fafc, #e2e8f0, #f1f5f9)'
+          }}>
 
           {/* Left Section (responsive) */}
-          <div className="flex-1 flex flex-col justify-center items-center md:items-start p-6 md:p-20 relative font-sans text-center md:text-left">
+          <div className="md:flex-[5] flex flex-col justify-center items-center  p-6 md:pl-20 md:pr-8 md:py-20 relative font-sans text-center md:text-left">
             <div className="relative z-10 max-w-lg w-full">
               <img
                 src={Applogo}
                 alt="HOAS Logo"
                 className="w-20 sm:w-24 md:w-28 mb-4 sm:mb-6 animate-fade-in-up border rounded-md mx-auto md:mx-0"
-                style={{ 
+                style={{
                   animationDelay: '100ms',
                   borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
                 }}
               />
               <h1
                 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-2 md:mb-3 leading-tight animate-fade-in-up"
-                style={{ 
+                style={{
                   animationDelay: '200ms',
                   color: isDark ? '#ffffff' : '#0f172a'
                 }}
@@ -91,7 +129,7 @@ const Login = () => {
               </h1>
               <p
                 className="text-sm sm:text-base mb-4 md:mb-6 max-w-md mx-auto md:mx-0 animate-fade-in-up"
-                style={{ 
+                style={{
                   animationDelay: '300ms',
                   color: isDark ? '#d1d5db' : '#475569'
                 }}
@@ -101,7 +139,7 @@ const Login = () => {
 
               <ul
                 className="hidden md:block space-y-3 text-sm animate-fade-in-up"
-                style={{ 
+                style={{
                   animationDelay: '400ms',
                   color: isDark ? '#d1d5db' : '#475569'
                 }}
@@ -127,34 +165,34 @@ const Login = () => {
           </div>
 
           {/* Right Section */}
-          <div className="flex-1 flex items-center justify-center p-6 md:p-8">
+          <div className="md:flex-[6] flex items-center justify-center p-6 md:pl-4 md:pr-8 md:py-8">
             <div
-              className="w-full max-w-[420px] backdrop-blur-md px-6 sm:px-8 py-8 sm:py-10 rounded-2xl border transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-2xl animate-card-entrance mx-auto"
+              className="w-full max-w-[420px] backdrop-blur-xl px-6 sm:px-8 py-8 sm:py-10 rounded-2xl border transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-2xl animate-card-entrance mx-auto"
               role="region"
               aria-labelledby="signin-heading"
-              style={{ 
+              style={{
                 animationDelay: '500ms',
-                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.9)',
-                borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                boxShadow: isDark 
-                  ? '0 10px 30px rgba(2,6,23,0.6)' 
-                  : '0 10px 30px rgba(0,0,0,0.1)'
+                backgroundColor: isDark ? 'rgba(17, 24, 39, 0.6)' : 'rgba(255, 255, 255, 0.7)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                boxShadow: isDark
+                  ? '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)'
+                  : '0 10px 30px rgba(0, 0, 0, 0.1)'
               }}
             >
-              <h2 id="signin-heading" className="text-xl md:text-2xl font-semibold text-center mb-2"
-                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
+              <h2 id="signin-heading" className="text-2xl md:text-3xl font-bold text-center mb-2"
+                style={{ color: isDark ? '#ffffff' : '#111827' }}>
                 Sign in to HOAS
               </h2>
-              <p className="text-center mb-6"
-                 style={{ color: isDark ? '#d1d5db' : '#475569' }}>
+              <p className="text-center text-sm mb-8"
+                style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
                 Fast, secure access to your workspace.
               </p>
               <LoginButton />
             </div>
           </div>
         </div>
-         </div>
-        <style jsx>{`
+      </div>
+      <style jsx>{`
         @keyframes gradient-move {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
@@ -203,7 +241,7 @@ const Login = () => {
           }
         }
       `}</style>
-     
+
     </>
   );
 };

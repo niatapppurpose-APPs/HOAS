@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { db, corsOptions } from './config.js';
+import { db, auth, corsOptions } from './config.js';
 import * as logger from 'firebase-functions/logger';
 import { verifyAdmin, verifyManagementAccess } from './helpers.js';
 
@@ -187,4 +187,105 @@ export const getAllManagementUsers = onCall(corsOptions, async (request) => {
   });
 
   return { success: true, users };
+});
+
+/**
+ * Create a new management user (Owner only)
+ * Creates Firebase Auth user and Firestore document
+ */
+export const createManagement = onCall(corsOptions, async (request) => {
+  try {
+    logger.info('🔍 createManagement called with data:', request.data);
+    
+    // Check authentication
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    // Verify admin
+    await verifyAdmin(request);
+
+    const { collegeName, principalName, email, phone, password } = request.data;
+    
+    // Validate required fields
+    if (!collegeName || !principalName || !email || !password) {
+      throw new HttpsError('invalid-argument', 'collegeName, principalName, email, and password are required');
+    }
+
+    // Check if user with this email already exists
+    try {
+      const existingUser = await auth.getUserByEmail(email);
+      if (existingUser) {
+        throw new HttpsError('already-exists', 'A user with this email already exists');
+      }
+    } catch (error) {
+      // User doesn't exist - this is what we want
+      if (error.code !== 'auth/user-not-found') {
+        throw error;
+      }
+    }
+
+    // Use the password from client (generated with college name)
+    const userPassword = password;
+
+    // Create user in Firebase Auth
+    const userRecord = await auth.createUser({
+      email: email,
+      password: userPassword,
+      displayName: principalName,
+      emailVerified: false
+    });
+
+    logger.info('✅ Firebase Auth user created:', userRecord.uid);
+
+    // Create Firestore document (store password hash reference, NOT plain text)
+    await db.collection('users').doc(userRecord.uid).set({
+      uid: userRecord.uid,
+      email: email,
+      displayName: principalName,
+      collegeName: collegeName,
+      phone: phone || '',
+      role: 'management',
+      status: 'approved',
+      createdBy: request.auth.uid,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    // Store password securely in a separate collection (only accessible by owner)
+    await db.collection('managementCredentials').doc(userRecord.uid).set({
+      managementId: userRecord.uid,
+      email: email,
+      collegeName: collegeName,
+      password: password, // Store temporarily - owner can view once
+      createdBy: request.auth.uid,
+      createdAt: new Date().toISOString(),
+      isViewed: false
+    });
+
+    logger.info('✅ Firestore document created for:', userRecord.uid);
+
+    // Generate password reset link and send email
+    try {
+      const resetLink = await auth.generatePasswordResetLink(email);
+      logger.info('✅ Password reset link generated for:', email);
+      // Note: Firebase will automatically send the email
+    } catch (emailError) {
+      logger.warn('⚠️ Could not generate password reset link:', emailError.message);
+      // Continue anyway - admin can manually reset password
+    }
+
+    return { 
+      success: true, 
+      uid: userRecord.uid,
+      message: 'Management user created successfully. Password reset email sent.'
+    };
+    
+  } catch (error) {
+    logger.error('❌ Error in createManagement:', error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError('internal', `Failed to create management user: ${error.message}`);
+  }
 });

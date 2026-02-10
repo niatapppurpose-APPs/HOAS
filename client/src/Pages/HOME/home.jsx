@@ -196,27 +196,7 @@ const Home = () => {
                                 {/* Theme Toggle */}
                                 <ThemeToggle size="sm" className="bg-white/5 hover:bg-white/10 border border-white/10" />
 
-                                {/* Sign In button - show only for non-admin users who are not logged in */}
-                                {!loading && adminChecked && !user && !isAdmin && (
-                                    <button
-                                        onClick={() => navigate('/login')}
-                                        className="px-5 py-2.5 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
-                                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                                    >
-                                        Sign In
-                                    </button>
-                                )}
-
-                                {/* Admin button - show only for admin users */}
-                                {!loading && adminChecked && isAdmin && (
-                                    <button
-                                        onClick={() => navigate('/OwnersDashboard')}
-                                        className="px-5 py-2.5 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
-                                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                                    >
-                                        Admin
-                                    </button>
-                                )}
+                               
 
 
                                 {/* Get Started / Dashboard button */}
@@ -334,28 +314,6 @@ const Home = () => {
                                 <div className="flex justify-center">
                                     <ThemeToggle size="md" className="bg-white/5 hover:bg-white/10 border border-white/10" />
                                 </div>
-                                
-                                {/* Sign In button - show only for non-admin users who are not logged in */}
-                                {!loading && adminChecked && !user && !isAdmin && (
-                                    <motion.button
-                                        onClick={() => navigate('/login')}
-                                        className="px-5 py-2.5 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
-                                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                                    >
-                                        Sign In
-                                    </motion.button>
-                                )}
-
-                                {/* Admin button - show only for admin users */}
-                                {!loading && adminChecked && isAdmin && (
-                                    <motion.button
-                                        onClick={() => navigate('/OwnersDashboard')}
-                                        className="px-5 py-2.5 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all duration-300 backdrop-blur-sm hover:scale-105 active:scale-95"
-                                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                                    >
-                                        Admin
-                                    </motion.button>
-                                )}
                                 
                                 <motion.button
                                     variants={itemVariants}
@@ -663,7 +621,7 @@ const Home = () => {
 
                             <div className="space-y-4 md:space-y-6 text-left inline-block lg:block">
                                 <FeatureItem title="Real-time Approvals" desc="Instant notifications and status updates for all applications." delay={0.1} isDark={isDark} />
-                                <FeatureItem title="Role-Based Access Control" desc="Strict data security ensuring users only see what they need." delay={0.2} isDark={isDark} />
+                                <FeatureItem title="Access Control" desc="Strict data security ensuring users only see what they need." delay={0.2} isDark={isDark} />
                                 <FeatureItem title="Automated Analytics" desc="Visual insights into occupancy rates and administration performance." delay={0.3} isDark={isDark} />
                             </div>
                         </motion.div>
@@ -688,55 +646,8 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Workflow Section */}
-            <section id="workflow" className="py-16 md:py-24 relative">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <motion.div
-                        className="text-center mb-12 md:mb-20"
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true }}
-                        variants={itemVariants}
-                    >
-                        <h2 className="text-3xl font-bold"
-                            style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Streamlined Workflow</h2>
-                        <p className="mt-4"
-                           style={{ color: isDark ? '#94a3b8' : '#475569' }}>How approvals flow through the system</p>
-                    </motion.div>
-
-                    <div className="relative">
-                        {/* Connecting Lines with reveal animation */}
-                        <motion.div
-                            initial={{ scaleX: 0 }}
-                            whileInView={{ scaleX: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 1.5, ease: "easeInOut" }}
-                            className="absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent hidden lg:block -translate-y-1/2 origin-left"
-                        ></motion.div>
-
-                        <motion.div
-                            initial={{ scaleY: 0 }}
-                            whileInView={{ scaleY: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 1.5, ease: "easeInOut" }}
-                            className="absolute top-0 left-8 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500/10 via-indigo-500/30 to-indigo-500/10 lg:hidden block origin-top"
-                        ></motion.div>
-
-                        <motion.div
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ once: true, margin: "-50px" }}
-                            variants={containerVariants}
-                            className="grid grid-cols-1 lg:grid-cols-4 gap-8"
-                        >
-                            <WorkflowStep number="01" title="Registration" desc="Student creates profile & requests accommodation" role="Student" position="start" isDark={isDark} />
-                            <WorkflowStep number="02" title="Verification" desc="Warden verifies details & available rooms" role="Warden" isDark={isDark} />
-                            <WorkflowStep number="03" title="Approval" desc="Management reviews & grants final admission" role="Management" isDark={isDark} />
-                            <WorkflowStep number="04" title="Oversight" desc="Owner monitors global stats & compliance" role="Owner" position="end" isDark={isDark} />
-                        </motion.div>
-                    </div>
-                </div>
-            </section>
+            {/* Workflow Section - Scroll Locked Animation */}
+            <WorkflowSection isDark={isDark} itemVariants={itemVariants} />
 
             {/* Benefits / CTA */}
             <section className="py-16 md:py-24 bg-gradient-to-b from-slate-900 to-indigo-950/20 relative overflow-hidden">
@@ -771,7 +682,7 @@ const Home = () => {
                         onClick={() => navigate('/login')}
                         className="w-full sm:w-auto px-10 py-4 bg-white text-indigo-900 rounded-lg font-bold text-xl hover:bg-slate-100 transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95"
                     >
-                        {!user ? 'Login to Portal' : 'Go To Dashbaord'}
+                        {!user ? 'Get Started Here 👋' : 'Go To Dashbaord 👉'}
                     </motion.button>
                 </div>
             </section>
@@ -1215,29 +1126,270 @@ const FeatureItem = ({ title, desc, delay, isDark = true }) => (
     </motion.div>
 );
 
-const WorkflowStep = ({ number, title, desc, role, position, isDark = true }) => (
+// Workflow Section with Scroll-Locked Animation
+const WorkflowSection = ({ isDark, itemVariants }) => {
+    const containerRef = useRef(null);
+    const [visibleCards, setVisibleCards] = useState([]);
+
+    const workflowSteps = [
+        { number: "01", title: "Account Setup", desc: "Initializes system and creates management accounts.", role: "Super Admin", icon: ShieldCheck },
+        { number: "02", title: "Configuration", desc: "Creates warden accounts and uploads student data.", role: "Management", icon: Building2 },
+        { number: "03", title: "Verification & Action", desc: "Verifies students and reviews raised issues.", role: "Warden", icon: Users },
+        { number: "04", title: "Request & Tracking", desc: "Raises issues and tracks approval status.", role: "Student", icon: GraduationCap }
+    ];
+
+    return (
+        <section 
+            id="workflow" 
+            ref={containerRef} 
+            className="relative py-20 md:py-32"
+            style={{
+                background: isDark 
+                    ? 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)'
+                    : 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%)'
+            }}
+        >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+                {/* Title */}
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.6 }}
+                    className="text-center mb-16"
+                >
+                    <h2 
+                        className="text-3xl md:text-5xl font-bold mb-4"
+                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                    >
+                        Streamlined Workflow
+                    </h2>
+                    <p style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
+                        How approvals flow through the system
+                    </p>
+                </motion.div>
+
+                {/* Cards Grid */}
+                <div className="relative">
+                    {/* Connecting Line - Desktop only */}
+                    <motion.div 
+                        className="absolute top-1/2 left-[10%] right-[10%] h-1 hidden lg:block -translate-y-1/2 z-0"
+                        initial={{ scaleX: 0 }}
+                        whileInView={{ scaleX: 1 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ duration: 1.5, delay: 0.3, ease: "easeOut" }}
+                        style={{ transformOrigin: 'left' }}
+                    >
+                        <div 
+                            className="w-full h-full rounded-full bg-gradient-to-r from-indigo-600 via-purple-500 to-indigo-600"
+                        />
+                    </motion.div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4 relative z-10">
+                        {workflowSteps.map((step, index) => (
+                            <ScrollWorkflowCard
+                                key={step.number}
+                                {...step}
+                                isDark={isDark}
+                                index={index}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// Individual workflow card with staggered animation
+const ScrollWorkflowCard = ({ number, title, desc, role, icon: Icon, isDark, index }) => {
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 60, scale: 0.9 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ 
+                duration: 0.6, 
+                delay: index * 0.15,
+                ease: [0.25, 0.46, 0.45, 0.94]
+            }}
+            whileHover={{ 
+                y: -8, 
+                scale: 1.03,
+                transition: { duration: 0.2 } 
+            }}
+            className="relative p-6 rounded-2xl border text-center backdrop-blur-sm"
+            style={{
+                backgroundColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.98)',
+                borderColor: isDark ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.2)',
+                boxShadow: isDark 
+                    ? '0 20px 40px -15px rgba(99, 102, 241, 0.2), 0 0 0 1px rgba(99, 102, 241, 0.1)' 
+                    : '0 20px 40px -15px rgba(0, 0, 0, 0.1)'
+            }}
+        >
+            {/* Glow effect */}
+            <div
+                className="absolute inset-0 rounded-2xl pointer-events-none"
+                style={{
+                    background: isDark 
+                        ? 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.08) 0%, transparent 70%)'
+                        : 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.05) 0%, transparent 70%)'
+                }}
+            />
+
+            {/* Icon with number badge */}
+            <motion.div 
+                className="mx-auto w-16 h-16 rounded-xl flex items-center justify-center mb-4 relative"
+                initial={{ scale: 0.5, rotate: -10 }}
+                whileInView={{ scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.15 + 0.2, type: "spring", stiffness: 200 }}
+                style={{ 
+                    backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
+                    border: '2px solid rgba(99, 102, 241, 0.4)'
+                }}
+            >
+                <Icon size={28} style={{ color: '#6366f1' }} />
+                {/* Step number */}
+                <motion.div 
+                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                    initial={{ scale: 0 }}
+                    whileInView={{ scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.15 + 0.4, type: "spring" }}
+                    style={{
+                        backgroundColor: '#6366f1',
+                        color: '#ffffff'
+                    }}
+                >
+                    {number}
+                </motion.div>
+            </motion.div>
+
+            {/* Title */}
+            <h3 
+                className="font-bold text-lg mb-2"
+                style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+            >
+                {title}
+            </h3>
+
+            {/* Role badge */}
+            <div 
+                className="inline-block px-3 py-1 rounded-full text-xs font-semibold mb-3"
+                style={{ 
+                    backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
+                    color: '#818cf8',
+                    border: '1px solid rgba(99, 102, 241, 0.3)'
+                }}
+            >
+                {role}
+            </div>
+
+            {/* Description */}
+            <p 
+                className="text-sm leading-relaxed"
+                style={{ color: isDark ? '#94a3b8' : '#64748b' }}
+            >
+                {desc}
+            </p>
+
+            {/* Bottom accent line */}
+            <motion.div
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                initial={{ width: 0 }}
+                whileInView={{ width: '60%' }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.15 + 0.5, duration: 0.4 }}
+            />
+        </motion.div>
+    );
+};
+
+const WorkflowStep = ({ number, title, desc, role, position, isDark = true, index = 0 }) => (
     <motion.div
-        variants={{
-            hidden: { opacity: 0, y: 50 },
-            visible: { opacity: 1, y: 0, transition: { type: "spring", ease: "easeOut", duration: 0.8 } }
+        initial={{ opacity: 0, y: 60, scale: 0.9 }}
+        whileInView={{ 
+            opacity: 1, 
+            y: 0, 
+            scale: 1,
+            transition: { 
+                type: "spring", 
+                stiffness: 100,
+                damping: 15,
+                delay: index * 0.15,
+                duration: 0.6
+            } 
         }}
-        whileHover={{ y: -5, transition: { duration: 0.2 } }}
-        className="relative border p-6 rounded-2xl z-10 text-left lg:text-center pl-16 lg:pl-6"
+        viewport={{ once: true, margin: "-50px" }}
+        whileHover={{ 
+            y: -8, 
+            scale: 1.02,
+            boxShadow: isDark ? '0 20px 40px -15px rgba(99, 102, 241, 0.3)' : '0 20px 40px -15px rgba(0, 0, 0, 0.15)',
+            transition: { duration: 0.3 } 
+        }}
+        className="relative border p-6 rounded-2xl z-10 text-left lg:text-center pl-16 lg:pl-6 backdrop-blur-sm"
         style={{
-            backgroundColor: isDark ? '#0f172a' : '#ffffff',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+            backgroundColor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            boxShadow: isDark ? '0 4px 20px -5px rgba(0, 0, 0, 0.3)' : '0 4px 20px -5px rgba(0, 0, 0, 0.1)'
         }}
     >
-        <div className="absolute left-4 lg:relative lg:left-0 lg:mx-auto w-8 h-8 lg:w-12 lg:h-12 rounded-full flex items-center justify-center text-indigo-400 font-bold border border-indigo-500/30 mb-2 lg:mb-4 shadow-xl z-20"
-             style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
+        <motion.div 
+            initial={{ scale: 0, rotate: -180 }}
+            whileInView={{ 
+                scale: 1, 
+                rotate: 0,
+                transition: { 
+                    type: "spring", 
+                    stiffness: 200,
+                    delay: index * 0.15 + 0.2
+                } 
+            }}
+            viewport={{ once: true }}
+            className="absolute left-4 lg:relative lg:left-0 lg:mx-auto w-8 h-8 lg:w-12 lg:h-12 rounded-full flex items-center justify-center text-indigo-400 font-bold border border-indigo-500/30 mb-2 lg:mb-4 shadow-xl z-20"
+            style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}
+        >
             {number}
-        </div>
-        <h3 className="font-bold text-lg mb-1"
-            style={{ color: isDark ? '#ffffff' : '#0f172a' }}>{title}</h3>
-        <div className="inline-block px-3 py-1 rounded-full text-xs font-medium text-indigo-300 mb-3"
-             style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(99, 102, 241, 0.1)' }}>{role}</div>
-        <p className="text-sm"
-           style={{ color: isDark ? '#94a3b8' : '#475569' }}>{desc}</p>
+        </motion.div>
+        <motion.h3 
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ 
+                opacity: 1, 
+                x: 0,
+                transition: { delay: index * 0.15 + 0.3 } 
+            }}
+            viewport={{ once: true }}
+            className="font-bold text-lg mb-1"
+            style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+        >
+            {title}
+        </motion.h3>
+        <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ 
+                opacity: 1, 
+                scale: 1,
+                transition: { delay: index * 0.15 + 0.35 } 
+            }}
+            viewport={{ once: true }}
+            className="inline-block px-3 py-1 rounded-full text-xs font-medium text-indigo-300 mb-3"
+            style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(99, 102, 241, 0.1)' }}
+        >
+            {role}
+        </motion.div>
+        <motion.p 
+            initial={{ opacity: 0 }}
+            whileInView={{ 
+                opacity: 1,
+                transition: { delay: index * 0.15 + 0.4 } 
+            }}
+            viewport={{ once: true }}
+            className="text-sm"
+            style={{ color: isDark ? '#94a3b8' : '#475569' }}
+        >
+            {desc}
+        </motion.p>
     </motion.div>
 );
 

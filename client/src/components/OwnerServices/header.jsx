@@ -1,7 +1,8 @@
-import { Building2, LogOut, LayoutDashboard  } from "lucide-react";
+import { Building2, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "../ThemeToggle";
 import NotificationBell from "./NotificationBell";
+import AnimatedLogoutButton from "../AnimatedLogoutButton";
 
 
 const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = true }) => {
@@ -45,16 +46,13 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
             </div>
 
             {/* Logout Button */}
-            <button
-              id="tour-logout"
-              onClick={handleLogout}
-              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl border transition-all duration-200 group hover:border-red-500/50 hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/5"
-              style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)' }}
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4 group-hover:text-red-400 transition-colors" style={{ color: 'var(--text-secondary)' }} />
-              <span className="text-xs sm:text-sm font-medium group-hover:text-red-300 transition-colors" style={{ color: 'var(--text-secondary)' }}>Logout</span>
-            </button>
+            <div id="tour-logout">
+              <AnimatedLogoutButton 
+                onLogout={handleLogout}
+                variant="dark"
+                text="Log Out"
+              />
+            </div>
 
 
           </div>
