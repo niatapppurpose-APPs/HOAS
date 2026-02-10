@@ -10,6 +10,8 @@ import "../ManagementDashboard.css";
 import { HashLoader } from 'react-spinners'
 import EmptyState from "../../../../components/OwnerServices/EmptyState";
 import { useTheme } from "../../../../context/ThemeContext";
+import { useAuth } from "../../../../context/AuthContext";
+import AddWardenModal from './AddWardenModal';
 import NoDataLight from '../../../../assets/No-Data.avif';
 import NoDataDark from '../../../../assets/NoDataDark.png';
 
@@ -20,7 +22,9 @@ const Wardens = () => {
   const [loading, setLoading] = useState(null)
   const [error, setError] = useState(null)
   const searchInputRef = useRef(null);
+  const [showAddWarden, setShowAddWarden] = useState(false);
   const { isDark } = useTheme()
+  const { userData } = useAuth()
   const handleRefresh = async () => {
     setLoading(true);
     try {
@@ -112,7 +116,7 @@ const Wardens = () => {
               <p className="page-subtitle">Manage and monitor all wardens</p>
             </div>
           </div>
-          <button className="btn-primary">
+          <button className="btn-primary" onClick={() => setShowAddWarden(true)}>
             <Plus size={20} />
             Add Warden
           </button>
@@ -266,6 +270,13 @@ const Wardens = () => {
           </div>
         ))))}
       </div>
+
+      {/* Add Warden Modal */}
+      <AddWardenModal
+        isOpen={showAddWarden}
+        onClose={() => setShowAddWarden(false)}
+        collegeName={userData?.collegeName}
+      />
     </>
   );
 };

@@ -9,7 +9,7 @@ import { verifyAdmin, verifyManagementAccess } from './helpers.js';
 export const approveUser = onCall(corsOptions, async (request) => {
   try {
     logger.info('🔍 approveUser called with data:', request.data);
-    
+
     // Check authentication first
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'User must be authenticated');
@@ -57,7 +57,7 @@ export const approveUser = onCall(corsOptions, async (request) => {
 
     logger.info('✅ User approved successfully:', userId);
     return { success: true, message: 'User approved successfully' };
-    
+
   } catch (error) {
     logger.error('❌ Error in approveUser:', error);
     // Re-throw HttpsError as-is
@@ -75,7 +75,7 @@ export const approveUser = onCall(corsOptions, async (request) => {
 export const denyUser = onCall(corsOptions, async (request) => {
   try {
     logger.info('🔍 denyUser called with data:', request.data);
-    
+
     // Check authentication
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'User must be authenticated');
@@ -120,7 +120,7 @@ export const denyUser = onCall(corsOptions, async (request) => {
 
     logger.info('✅ User denied successfully:', userId);
     return { success: true, message: 'User denied successfully' };
-    
+
   } catch (error) {
     logger.error('❌ Error in denyUser:', error);
     if (error instanceof HttpsError) {
@@ -196,7 +196,7 @@ export const getAllManagementUsers = onCall(corsOptions, async (request) => {
 export const createManagement = onCall(corsOptions, async (request) => {
   try {
     logger.info('🔍 createManagement called with data:', request.data);
-    
+
     // Check authentication
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'User must be authenticated');
@@ -206,7 +206,7 @@ export const createManagement = onCall(corsOptions, async (request) => {
     await verifyAdmin(request);
 
     const { collegeName, principalName, email, phone, password } = request.data;
-    
+
     // Validate required fields
     if (!collegeName || !principalName || !email || !password) {
       throw new HttpsError('invalid-argument', 'collegeName, principalName, email, and password are required');
@@ -275,12 +275,12 @@ export const createManagement = onCall(corsOptions, async (request) => {
       // Continue anyway - admin can manually reset password
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       uid: userRecord.uid,
       message: 'Management user created successfully. Password reset email sent.'
     };
-    
+
   } catch (error) {
     logger.error('❌ Error in createManagement:', error);
     if (error instanceof HttpsError) {
@@ -289,3 +289,81 @@ export const createManagement = onCall(corsOptions, async (request) => {
     throw new HttpsError('internal', `Failed to create management user: ${error.message}`);
   }
 });
+
+/**
+ * Create a new warden (Management only)
+ * Creates Firebase Auth user and Firestore document
+ */
+export const createWarden = onCall(corsOptions, async (request) => {
+  try {
+    logger.info('🔍 createWarden called with data:', request.data);
+
+    // Check authentication
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    const { fullName, email, phone, password, hostelBlock, collegeName, managementId } = request.data;
+
+    // Validate required fields
+    if (!fullName || !email || !password) {
+      throw new HttpsError('invalid-argument', 'fullName, email, and password are required');
+    }
+
+    // Check if user with this email already exists
+    try {
+      const existingUser = await auth.getUserByEmail(email);
+      if (existingUser) {
+        throw new HttpsError('already-exists', 'A user with this email already exists');
+      }
+    } catch (error) {
+      if (error.code !== 'auth/user-not-found') {
+        throw error;
+      }
+    }
+
+    // Create user in Firebase Auth
+    const userRecord = await auth.createUser({
+      email: email,
+      password: password,
+      displayName: fullName,
+      emailVerified: false
+    });
+
+    logger.info('✅ Firebase Auth warden created:', userRecord.uid);
+
+    // Create Firestore document
+    await db.collection('users').doc(userRecord.uid).set({
+      uid: userRecord.uid,
+      email: email,
+      displayName: fullName,
+      fullName: fullName,
+      phone: phone || '',
+      role: 'warden',
+      status: 'approved',
+      hostelBlock: hostelBlock || '',
+      collegeName: collegeName || '',
+      managementId: managementId || request.auth.uid,
+      isOnline: false,
+      createdBy: request.auth.uid,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    logger.info('✅ Warden Firestore document created:', userRecord.uid);
+
+    return {
+      success: true,
+      uid: userRecord.uid,
+      message: `Warden "${fullName}" created successfully`
+    };
+
+  } catch (error) {
+    logger.error('❌ Error in createWarden:', error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError('internal', `Failed to create warden: ${error.message}`);
+  }
+});
+

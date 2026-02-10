@@ -28,7 +28,8 @@
     "react-spinners": "^0.17.0",
     "recharts": "^3.6.0",
     "shepherd.js": "^14.5.1",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

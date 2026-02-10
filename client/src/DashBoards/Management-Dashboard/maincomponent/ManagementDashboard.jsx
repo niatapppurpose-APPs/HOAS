@@ -108,8 +108,8 @@ const ManagementDashboard = () => {
     ...wardens.filter(w => w.status === 'pending'),
     ...students.filter(s => s.status === 'pending')
   ].sort((a, b) => {
-    const dateA = a.createdAt?.toDate() || new Date(0);
-    const dateB = b.createdAt?.toDate() || new Date(0);
+    const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0));
+    const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0));
     return dateB - dateA;
   });
 
@@ -118,8 +118,8 @@ const ManagementDashboard = () => {
 
   // Get users for table
   const allUsers = [...wardens, ...students].sort((a, b) => {
-    const dateA = a.createdAt?.toDate() || new Date(0);
-    const dateB = b.createdAt?.toDate() || new Date(0);
+    const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0));
+    const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt ? new Date(b.createdAt) : new Date(0));
     return dateB - dateA;
   });
 

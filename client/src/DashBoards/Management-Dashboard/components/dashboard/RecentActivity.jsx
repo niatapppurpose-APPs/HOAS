@@ -23,9 +23,12 @@ const RecentActivity = ({ recentUsers, onApprove, approvingUserId }) => {
               <span className={`activity-role ${user.role}`}>{user.role}</span>
               <span className="activity-status">Pending</span>
               <span className="activity-date">
-                {user.createdAt?.toDate().toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric', 
+                {(user.createdAt?.toDate
+                  ? user.createdAt.toDate()
+                  : user.createdAt ? new Date(user.createdAt) : new Date()
+                ).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
                   year: 'numeric',
                   hour: '2-digit',
                   minute: '2-digit'
