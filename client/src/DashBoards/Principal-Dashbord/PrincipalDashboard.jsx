@@ -16,11 +16,11 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  LogOut,
   Loader2,
   UserPlus,
   Home,
 } from "lucide-react";
+import AnimatedLogoutButton from "../../components/AnimatedLogoutButton";
 
 // Avatar Component with fallback to initials
 const Avatar = ({ image, name, size = "md" }) => {
@@ -365,13 +365,11 @@ const ManagementDashboard = () => {
                 </span>
               )}
               
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-medium transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </button>
+              <AnimatedLogoutButton 
+                onLogout={handleLogout}
+                variant="dark"
+                text="Log Out"
+              />
 
               <Avatar
                 image={user?.photoURL}
