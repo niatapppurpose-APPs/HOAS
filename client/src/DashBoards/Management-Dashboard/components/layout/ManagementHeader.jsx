@@ -1,7 +1,8 @@
-import { LogOut, LayoutDashboard } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router";
 import { ThemeToggle } from "../../../../components/ThemeToggle";
 import { useAuth } from "../../../../context/AuthContext";
+import AnimatedLogoutButton from "../../../../components/AnimatedLogoutButton";
 
 const ManagementHeader = ({ pendingCount = 0, title = "Dashboard · Management", isCollapsed = true }) => {
   const { logout } = useAuth();
@@ -41,15 +42,11 @@ const ManagementHeader = ({ pendingCount = 0, title = "Dashboard · Management",
             <ThemeToggle size="md" />
 
             {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl border transition-all duration-200 group hover:border-red-500/50 hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/5"
-              style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)' }}
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4 group-hover:text-red-400 transition-colors" style={{ color: 'var(--text-secondary)' }} />
-              <span className="text-xs sm:text-sm font-medium group-hover:text-red-300 transition-colors" style={{ color: 'var(--text-secondary)' }}>Logout</span>
-            </button>
+            <AnimatedLogoutButton 
+              onLogout={handleLogout}
+              variant="dark"
+              text="Log Out"
+            />
           </div>
         </div>
       </div>

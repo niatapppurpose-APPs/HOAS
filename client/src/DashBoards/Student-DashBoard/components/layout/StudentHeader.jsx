@@ -1,7 +1,8 @@
-import { LogOut, GraduationCap, Menu } from "lucide-react";
+import { GraduationCap, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "../../../../components/ThemeToggle";
 import { useAuth } from "../../../../context/AuthContext";
+import AnimatedLogoutButton from "../../../../components/AnimatedLogoutButton";
 
 const StudentHeader = ({ title = "Dashboard · Student Portal", isCollapsed = true, setIsCollapsed }) => {
   const { logout, userData } = useAuth();
@@ -51,15 +52,11 @@ const StudentHeader = ({ title = "Dashboard · Student Portal", isCollapsed = tr
             <ThemeToggle size="md" />
 
             {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl border transition-all duration-200 group hover:border-red-500/50 hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/5"
-              style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)' }}
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4 group-hover:text-red-400 transition-colors" style={{ color: 'var(--text-secondary)' }} />
-              <span className="hidden sm:inline text-xs sm:text-sm font-medium group-hover:text-red-300 transition-colors" style={{ color: 'var(--text-secondary)' }}>Logout</span>
-            </button>
+            <AnimatedLogoutButton 
+              onLogout={handleLogout}
+              variant="dark"
+              text="Log Out"
+            />
           </div>
         </div>
       </div>
