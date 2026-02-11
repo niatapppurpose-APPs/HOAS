@@ -129,7 +129,7 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
       }
     }
 
-    // Store bulk upload record in Firestore
+    // Store bulk upload record in Firestore (including credentials for management reference)
     const uploadRecord = {
       uploadedBy: request.auth.uid,
       uploadedByEmail: request.auth.token?.email || 'unknown',
@@ -140,6 +140,7 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
       skippedCount: results.skipped,
       downloadUrl: downloadUrl || '',
       errors: results.errors,
+      createdStudents: results.createdStudents, // includes name, email, studentId, defaultPassword
       createdAt: new Date().toISOString()
     };
 
