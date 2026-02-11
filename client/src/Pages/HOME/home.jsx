@@ -181,13 +181,13 @@ const Home = () => {
                             className="hidden md:flex items-center gap-6 lg:gap-8"
                         >
                             <button onClick={() => scrollToSection('roles')} 
-                                    className="text-sm font-medium hover:scale-105 transition-all"
+                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-indigo-600"
                                     style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Roles</button>
                             <button onClick={() => scrollToSection('features')} 
-                                    className="text-sm font-medium hover:scale-105 transition-all"
+                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-indigo-600"
                                     style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Features</button>
                             <button onClick={() => scrollToSection('workflow')} 
-                                    className="text-sm font-medium hover:scale-105 transition-all"
+                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-indigo-600"
                                     style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Workflow</button>
 
 
@@ -231,8 +231,10 @@ const Home = () => {
                         <div className="flex md:hidden items-center z-50">
                             <button
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                                className="p-2 hover:bg-white/10 transition-colors active:scale-90"
-                                style={{ color: isDark ? '#cbd5e1' : '#475569' }}
+                                className="p-2 transition-colors active:scale-90"
+                                style={{
+                                    color: isDark ? '#cbd5e1' : '#475569'
+                                }}
                             >
                                 {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                             </button>
@@ -360,7 +362,12 @@ const Home = () => {
                         initial={{ opacity: 0, scale: 0.8, y: -20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         transition={{ duration: 0.8, type: "spring", bounce: 0.5 }}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs md:text-sm font-medium mb-6 md:mb-8 backdrop-blur-sm hover:bg-indigo-500/20 transition-colors cursor-default"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full border text-xs md:text-sm font-medium mb-6 md:mb-8 backdrop-blur-sm transition-colors cursor-default"
+                        style={{
+                            backgroundColor: isDark ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.12)',
+                            borderColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.3)',
+                            color: isDark ? '#a5b4fc' : '#4338ca'
+                        }}
                     >
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
@@ -377,7 +384,12 @@ const Home = () => {
                         style={{ color: isDark ? '#ffffff' : '#0f172a' }}
                     >
                         Simplify Complex <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 animate-text bg-[length:200%_auto]">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r animate-text bg-[length:200%_auto]"
+                              style={{
+                                  backgroundImage: isDark
+                                      ? 'linear-gradient(to right, #818cf8, #c084fc, #818cf8)'
+                                      : 'linear-gradient(to right, #4f46e5, #7c3aed, #4f46e5)'
+                              }}>
                             Hostel Operations
                         </span>
                     </motion.h1>
@@ -425,8 +437,8 @@ const Home = () => {
                             onClick={() => scrollToSection('roles')}
                             className="w-full sm:w-auto px-8 py-4 bg-transparent border rounded-full font-bold text-lg transition-all backdrop-blur-sm"
                             style={{
-                                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                                color: isDark ? '#ffffff' : '#0f172a'
+                                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(79, 70, 229, 0.3)',
+                                color: isDark ? '#ffffff' : '#4f46e5'
                             }}
                         >
                             Explore Features
@@ -498,11 +510,11 @@ const Home = () => {
                          backgroundColor: isDark ? 'rgba(15, 23, 42, 0.5)' : 'rgba(248, 250, 252, 0.8)',
                          borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
                      }}>
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))]"
+                <div className="absolute inset-0"
                      style={{
                          background: isDark 
                              ? 'radial-gradient(ellipse at top right, rgba(79, 70, 229, 0.2), transparent)'
-                             : 'radial-gradient(ellipse at top right, rgba(99, 102, 241, 0.1), transparent)'
+                             : 'radial-gradient(ellipse at top right, rgba(99, 102, 241, 0.08), transparent)'
                      }}></div>
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -555,7 +567,12 @@ const Home = () => {
             <WorkflowSection isDark={isDark} itemVariants={itemVariants} />
 
             {/* Benefits / CTA */}
-            <section className="py-16 md:py-24 bg-gradient-to-b from-slate-900 to-indigo-950/20 relative overflow-hidden">
+            <section className="py-16 md:py-24 relative overflow-hidden"
+                     style={{
+                         background: isDark
+                             ? 'linear-gradient(to bottom, #0f172a, rgba(30, 27, 75, 0.2))'
+                             : 'linear-gradient(to bottom, #eef2ff, #e0e7ff)'
+                     }}>
                 <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent"></div>
 
                 <div className="max-w-5xl mx-auto px-4 text-center">
@@ -564,7 +581,8 @@ const Home = () => {
                         whileInView="visible"
                         viewport={{ once: true }}
                         variants={scaleIn}
-                        className="text-3xl md:text-5xl font-bold text-white mb-6 md:mb-8"
+                        className="text-3xl md:text-5xl font-bold mb-6 md:mb-8"
+                        style={{ color: isDark ? '#ffffff' : '#1e1b4b' }}
                     >
                         Ready to modernize your institution?
                     </motion.h2>
@@ -573,7 +591,8 @@ const Home = () => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.3, duration: 0.8 }}
-                        className="text-lg md:text-xl text-slate-400 mb-8 md:mb-10 max-w-2xl mx-auto"
+                        className="text-lg md:text-xl mb-8 md:mb-10 max-w-2xl mx-auto"
+                        style={{ color: isDark ? '#94a3b8' : '#475569' }}
                     >
                         Join leading colleges in establishing transparency, efficiency, and accountability in hostel operations.
                     </motion.p>
@@ -585,7 +604,14 @@ const Home = () => {
                         viewport={{ once: true }}
                         transition={{ delay: 0.5, type: "spring" }}
                         onClick={() => navigate('/login')}
-                        className="w-full sm:w-auto px-10 py-4 bg-white text-indigo-900 rounded-lg font-bold text-xl hover:bg-slate-100 transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95"
+                        className="w-full sm:w-auto px-10 py-4 rounded-lg font-bold text-xl transition-all hover:scale-105 active:scale-95"
+                        style={{
+                            backgroundColor: isDark ? '#ffffff' : '#4f46e5',
+                            color: isDark ? '#312e81' : '#ffffff',
+                            boxShadow: isDark
+                                ? '0 0 40px -10px rgba(255, 255, 255, 0.3)'
+                                : '0 0 40px -10px rgba(79, 70, 229, 0.4)'
+                        }}
                     >
                         {!user ? 'Get Started Here 👋' : 'Go To Dashbaord 👉'}
                     </motion.button>
@@ -593,7 +619,11 @@ const Home = () => {
             </section>
 
             {/* Footer */}
-            <footer className="bg-slate-950 border-t border-white/5 pt-12 md:pt-16 pb-8">
+            <footer className="pt-12 md:pt-16 pb-8 border-t"
+                    style={{
+                        backgroundColor: isDark ? '#020617' : '#f1f5f9',
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)'
+                    }}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-12">
                         <motion.div
@@ -607,15 +637,18 @@ const Home = () => {
                                 <motion.div
                                     animate={{ y: [0, -4, 0] }}
                                     transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                                    className="w-12 h-12 bg-indigo-600 rounded-xl p-1.5 flex items-center justify-center border border-white/10"
+                                    className="w-12 h-12 bg-indigo-600 rounded-xl p-1.5 flex items-center justify-center"
+                                    style={{ border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(99,102,241,0.3)' }}
                                 >
                                     <div className="w-full h-full bg-white rounded-lg overflow-hidden flex items-center justify-center">
                                         <img src={AppLogo} alt="AppLogo" className="w-full h-full object-contain" />
                                     </div>
                                 </motion.div>
-                                <span className="text-2xl font-bold text-white tracking-tight uppercase">HOAS</span>
+                                <span className="text-2xl font-bold tracking-tight uppercase"
+                                      style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</span>
                             </div>
-                            <p className="text-slate-500 text-sm leading-relaxed max-w-xs">
+                            <p className="text-sm leading-relaxed max-w-xs"
+                               style={{ color: isDark ? '#64748b' : '#64748b' }}>
                                 The standard for modern hostel administration. Built for security, designed for usability.
                             </p>
                         </motion.div>
@@ -626,11 +659,13 @@ const Home = () => {
                             viewport={{ once: true }}
                             transition={{ delay: 0.2 }}
                         >
-                            <h4 className="text-white font-semibold mb-4">Platform</h4>
-                            <ul className="space-y-2 text-sm text-slate-500">
-                                <li className="hover:text-indigo-400 cursor-pointer transition-colors">Owner Dashboard</li>
-                                <li className="hover:text-indigo-400 cursor-pointer transition-colors">Management Portal</li>
-                                <li className="hover:text-indigo-400 cursor-pointer transition-colors">Student App</li>
+                            <h4 className="font-semibold mb-4"
+                                style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Platform</h4>
+                            <ul className="space-y-2 text-sm"
+                                style={{ color: isDark ? '#64748b' : '#64748b' }}>
+                                <li className="hover:text-indigo-500 cursor-pointer transition-colors">Owner Dashboard</li>
+                                <li className="hover:text-indigo-500 cursor-pointer transition-colors">Management Portal</li>
+                                <li className="hover:text-indigo-500 cursor-pointer transition-colors">Student App</li>
                             </ul>
                         </motion.div>
 
@@ -640,11 +675,13 @@ const Home = () => {
                             viewport={{ once: true }}
                             transition={{ delay: 0.3 }}
                         >
-                            <h4 className="text-white font-semibold mb-4">Resources</h4>
-                            <ul className="space-y-2 text-sm text-slate-500">
-                                <li className="hover:text-indigo-400 cursor-pointer transition-colors">Documentation</li>
-                                <li className="hover:text-indigo-400 cursor-pointer transition-colors">API Reference</li>
-                                <li className="hover:text-indigo-400 cursor-pointer transition-colors">Support</li>
+                            <h4 className="font-semibold mb-4"
+                                style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Resources</h4>
+                            <ul className="space-y-2 text-sm"
+                                style={{ color: isDark ? '#64748b' : '#64748b' }}>
+                                <li className="hover:text-indigo-500 cursor-pointer transition-colors">Documentation</li>
+                                <li className="hover:text-indigo-500 cursor-pointer transition-colors">API Reference</li>
+                                <li className="hover:text-indigo-500 cursor-pointer transition-colors">Support</li>
                             </ul>
                         </motion.div>
 
@@ -654,22 +691,28 @@ const Home = () => {
                             viewport={{ once: true }}
                             transition={{ delay: 0.4 }}
                         >
-                            <h4 className="text-white font-semibold mb-4">Legal</h4>
-                            <ul className="space-y-2 text-sm text-slate-500">
-                                <li className="hover:text-indigo-400 cursor-pointer transition-colors">Privacy Policy</li>
-                                <li className="hover:text-indigo-400 cursor-pointer transition-colors">Terms of Service</li>
-                                <li className="hover:text-indigo-400 cursor-pointer transition-colors">Compliance</li>
+                            <h4 className="font-semibold mb-4"
+                                style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Legal</h4>
+                            <ul className="space-y-2 text-sm"
+                                style={{ color: isDark ? '#64748b' : '#64748b' }}>
+                                <li className="hover:text-indigo-500 cursor-pointer transition-colors">Privacy Policy</li>
+                                <li className="hover:text-indigo-500 cursor-pointer transition-colors">Terms of Service</li>
+                                <li className="hover:text-indigo-500 cursor-pointer transition-colors">Compliance</li>
                             </ul>
                         </motion.div>
                     </div>
 
-                    <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
-                        <p className="text-slate-600 text-sm">© 2026 HOAS. All rights reserved.</p>
+                    <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left"
+                         style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)' }}>
+                        <p className="text-sm" style={{ color: isDark ? '#475569' : '#94a3b8' }}>© 2026 HOAS. All rights reserved.</p>
                         <div className="flex gap-4">
                             {/* Social placeholders */}
-                            <motion.div whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.2)" }} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"></motion.div>
-                            <motion.div whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.2)" }} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"></motion.div>
-                            <motion.div whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.2)" }} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"></motion.div>
+                            <motion.div whileHover={{ scale: 1.1 }} className="w-8 h-8 rounded-full transition-colors cursor-pointer"
+                                        style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)' }}></motion.div>
+                            <motion.div whileHover={{ scale: 1.1 }} className="w-8 h-8 rounded-full transition-colors cursor-pointer"
+                                        style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)' }}></motion.div>
+                            <motion.div whileHover={{ scale: 1.1 }} className="w-8 h-8 rounded-full transition-colors cursor-pointer"
+                                        style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)' }}></motion.div>
                         </div>
                     </div>
                 </div>
@@ -699,7 +742,11 @@ const Home = () => {
                             }}
                             exit={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
                             transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                            className="fixed top-1/2 left-1/2 z-[70] bg-slate-900 border border-white/10 rounded-3xl shadow-2xl flex flex-col md:flex-row max-h-[85vh] w-[90%] md:w-auto overflow-hidden"
+                            className="fixed top-1/2 left-1/2 z-[70] border rounded-3xl shadow-2xl flex flex-col md:flex-row max-h-[85vh] w-[90%] md:w-auto overflow-hidden"
+                            style={{
+                                backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            }}
                         >
                             {/* Close Button - Moved to Main Container */}
                             <button
@@ -727,8 +774,10 @@ const Home = () => {
                                         </div>
                                     </motion.div>
 
-                                    <h3 className="text-3xl font-bold text-white mb-2 tracking-tight">HOAS</h3>
-                                    <p className="text-indigo-400 text-xs font-bold tracking-[0.2em] uppercase mb-8">Hostel Operations Accountability System</p>
+                                    <h3 className="text-3xl font-bold mb-2 tracking-tight"
+                                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</h3>
+                                    <p className="text-xs font-bold tracking-[0.2em] uppercase mb-8"
+                                       style={{ color: isDark ? '#818cf8' : '#4f46e5' }}>Hostel Operations Accountability System</p>
 
                                     <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
 
@@ -755,7 +804,12 @@ const Home = () => {
                                             <div className="flex items-center justify-between mb-3">
                                                 <h4 className="text-xs font-bold uppercase tracking-wider"
                                                     style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Version</h4>
-                                                <div className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold border border-indigo-500/20">STABLE</div>
+                                                <div className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                     style={{
+                                         backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
+                                         color: isDark ? '#a5b4fc' : '#4338ca',
+                                         border: isDark ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid rgba(99, 102, 241, 0.3)'
+                                     }}>STABLE</div>
                                             </div>
                                             <div className="flex flex-col">
                                                 <span className="text-xl font-mono font-bold"
@@ -871,7 +925,8 @@ const Home = () => {
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: 20 }}
                                         transition={{ duration: 0.4, ease: "easeOut" }}
-                                        className="w-full md:w-1/2 bg-slate-900/50 backdrop-blur-xl p-8 pt-20 md:pt-16 flex flex-col justify-start relative overflow-y-auto custom-scrollbar max-h-[85vh]"
+                                        className="w-full md:w-1/2 backdrop-blur-xl p-8 pt-20 md:pt-16 flex flex-col justify-start relative overflow-y-auto custom-scrollbar max-h-[85vh]"
+                                        style={{ backgroundColor: isDark ? 'rgba(15, 23, 42, 0.5)' : 'rgba(248, 250, 252, 0.95)' }}
                                     >
                                         <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-slate-900/5 pointer-events-none" />
 
@@ -893,7 +948,8 @@ const Home = () => {
                                                 initial={{ y: 20, opacity: 0 }}
                                                 animate={{ y: 0, opacity: 1 }}
                                                 transition={{ delay: 0.3 }}
-                                                className="text-3xl font-bold text-white mb-2"
+                                                className="text-3xl font-bold mb-2"
+                                                style={{ color: isDark ? '#ffffff' : '#0f172a' }}
                                             >
                                                 {teamData[activeTeamMember].name}
                                             </motion.h2>
@@ -904,10 +960,15 @@ const Home = () => {
                                                 transition={{ delay: 0.4 }}
                                                 className="flex items-center gap-3 mb-6"
                                             >
-                                                <span className="px-3 py-1 rounded-full bg-white/10 text-indigo-300 text-xs font-semibold uppercase tracking-wider">
+                                                <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider"
+                                                       style={{
+                                                           backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(99,102,241,0.12)',
+                                                           color: isDark ? '#a5b4fc' : '#4338ca'
+                                                       }}>
                                                     {teamData[activeTeamMember].role}
                                                 </span>
-                                                <span className="text-slate-500 text-sm flex items-center gap-1">
+                                                <span className="text-sm flex items-center gap-1"
+                                                      style={{ color: isDark ? '#64748b' : '#64748b' }}>
                                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                                     {teamData[activeTeamMember].location}
                                                 </span>
@@ -917,7 +978,8 @@ const Home = () => {
                                                 initial={{ y: 20, opacity: 0 }}
                                                 animate={{ y: 0, opacity: 1 }}
                                                 transition={{ delay: 0.5 }}
-                                                className="text-slate-300 text-lg leading-relaxed mb-8"
+                                                className="text-lg leading-relaxed mb-8"
+                                                style={{ color: isDark ? '#cbd5e1' : '#475569' }}
                                             >
                                                 {teamData[activeTeamMember].desc}
                                             </motion.p>
@@ -928,7 +990,13 @@ const Home = () => {
                                                 transition={{ delay: 0.6 }}
                                                 className="flex gap-4"
                                             >
-                                                <button className="px-6 py-2.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-indigo-50 transition-colors shadow-lg shadow-white/5 active:scale-95 duration-200" onClick={() => {
+                                                <button className="px-6 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-lg active:scale-95 duration-200"
+                                                        style={{
+                                                            backgroundColor: isDark ? '#ffffff' : '#4f46e5',
+                                                            color: isDark ? '#0f172a' : '#ffffff',
+                                                            boxShadow: isDark ? '0 10px 15px -3px rgba(255,255,255,0.05)' : '0 10px 15px -3px rgba(79,70,229,0.2)'
+                                                        }}
+                                                        onClick={() => {
                                                     if (activeTeamMember === 'faziya') {
                                                         window.open('https://www.linkedin.com/in/faziya-tasneem-shaik/', '_blank');
                                                     } else if (activeTeamMember === 'hemanth') {
@@ -941,7 +1009,12 @@ const Home = () => {
                                                     href={`https://mail.google.com/mail/?view=cm&fs=1&to=niatapppurpose@gmail.com&su=${encodeURIComponent(activeTeamMember === 'faziya' ? 'Contact - Frontend Developer (Shaik Faziya Tasneem)' : 'Contact - Backend Developer (Hemanth Atthuluri)')}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="px-6 py-2.5 bg-white/5 text-white border border-white/10 rounded-xl font-medium text-sm hover:bg-white/10 transition-colors active:scale-95 duration-200 text-center"
+                                                    className="px-6 py-2.5 border rounded-xl font-medium text-sm transition-colors active:scale-95 duration-200 text-center"
+                                                    style={{
+                                                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(79,70,229,0.08)',
+                                                        color: isDark ? '#ffffff' : '#4f46e5',
+                                                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(79,70,229,0.25)'
+                                                    }}
                                                 >
                                                     Contact
                                                 </a>
@@ -969,8 +1042,9 @@ const RoleCard = ({ icon: Icon, role, desc, color, isDark = true }) => (
         whileHover={{ y: -10, transition: { duration: 0.3 } }}
         className="group relative p-6 md:p-8 rounded-2xl border transition-colors duration-300"
         style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#ffffff',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(99, 102, 241, 0.15)',
+            boxShadow: isDark ? 'none' : '0 4px 20px -5px rgba(0, 0, 0, 0.08)'
         }}
     >
         <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-2xl`} />
@@ -997,11 +1071,16 @@ const GlassCard = ({ icon: Icon, title, delay, isDark = true }) => (
         whileHover={{ scale: 1.02 }}
         className="p-4 md:p-6 rounded-xl border backdrop-blur-md flex items-center gap-3 md:gap-4 transition-colors cursor-default"
         style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#ffffff',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(99, 102, 241, 0.15)',
+            boxShadow: isDark ? 'none' : '0 4px 20px -5px rgba(0, 0, 0, 0.08)'
         }}
     >
-        <div className="p-2 md:p-3 rounded-lg bg-indigo-500/20 text-indigo-400 shrink-0">
+        <div className="p-2 md:p-3 rounded-lg shrink-0"
+             style={{
+                 backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
+                 color: isDark ? '#818cf8' : '#4f46e5'
+             }}>
             <Icon className="w-5 h-5 md:w-6 md:h-6" />
         </div>
         <span className="font-semibold text-sm md:text-base"
@@ -1018,15 +1097,19 @@ const FeatureItem = ({ title, desc, delay, isDark = true }) => (
         className="flex gap-3 md:gap-4"
     >
         <div className="mt-1 shrink-0">
-            <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                <CheckCircle2 className="w-5 h-5 text-indigo-400" />
+            <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                 style={{
+                     backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
+                     border: isDark ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)'
+                 }}>
+                <CheckCircle2 className="w-5 h-5" style={{ color: isDark ? '#818cf8' : '#4f46e5' }} />
             </div>
         </div>
         <div>
             <h4 className="font-bold mb-1"
                 style={{ color: isDark ? '#ffffff' : '#0f172a' }}>{title}</h4>
             <p className="text-sm leading-relaxed"
-               style={{ color: isDark ? '#64748b' : '#64748b' }}>{desc}</p>
+               style={{ color: isDark ? '#64748b' : '#475569' }}>{desc}</p>
         </div>
     </motion.div>
 );
@@ -1184,7 +1267,7 @@ const ScrollWorkflowCard = ({ number, title, desc, role, icon: Icon, isDark, ind
                 className="inline-block px-3 py-1 rounded-full text-xs font-semibold mb-3"
                 style={{ 
                     backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
-                    color: '#818cf8',
+                    color: isDark ? '#818cf8' : '#4338ca',
                     border: '1px solid rgba(99, 102, 241, 0.3)'
                 }}
             >
@@ -1194,7 +1277,7 @@ const ScrollWorkflowCard = ({ number, title, desc, role, icon: Icon, isDark, ind
             {/* Description */}
             <p 
                 className="text-sm leading-relaxed"
-                style={{ color: isDark ? '#94a3b8' : '#64748b' }}
+                style={{ color: isDark ? '#94a3b8' : '#475569' }}
             >
                 {desc}
             </p>
