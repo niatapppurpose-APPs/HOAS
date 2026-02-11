@@ -178,11 +178,11 @@ const Wardens = () => {
         ) : (getwarden.length === 0 ? (
           <div className="mb-4">
             <EmptyState
-              title={`No matches for "${searchTerm}"`}
-              description={'Try a different name, or clear the search to see all wardens.'}
-              ctaLabel="Clear search"
-              onCta={clearSearchWarden}
-              videoSrc={isDark ? NoDataLight : NoDataDark}
+              title="No wardens yet"
+              description="You haven't added any wardens to your institution yet. Add your first warden to get started."
+              ctaLabel="Add Warden"
+              onCta={() => setShowAddWarden(true)}
+              videoSrc={!isDark ? NoDataLight : NoDataDark}
               className="max-w-5xl mx-auto"
             />
           </div>

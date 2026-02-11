@@ -194,10 +194,10 @@ const Students = () => {
         ) : (students.length === 0 ? (
           <div className="mb-4">
             <EmptyState
-              title={`No matches for "${searchTerm}"`}
-              description={"Try a different name, or clear the search to see all students."}
-              ctaLabel="Clear search"
-              onCta={clearSearchStudent}
+              title="No students yet"
+              description="You haven't added any students to your institution yet. Use Bulk Upload to add students from an Excel sheet."
+              ctaLabel="Bulk Upload"
+              onCta={() => setShowBulkUpload(true)}
               videoSrc={!isDark ? NoDataLight : NoDataDark}
               className="max-w-5xl mx-auto"
             />

@@ -65,12 +65,13 @@ const EmptyState = ({
               <div
                 className="relative rounded-2xl overflow-hidden"
                 style={{
-                    height:'30vh',
+                  height: '30vh',
                   boxShadow: isDark
-                    ? '0 8px 32px rgba(0, 0, 0, 0.3)'
+                    ? 'none'
                     : '0 8px 32px rgba(99, 102, 241, 0.12)',
                   width: '100%',
-                  aspectRatio: '1 / 1'
+                  aspectRatio: '1 / 1',
+                  backgroundColor: isDark ? 'transparent' : undefined,
                 }}
               >
                 <img
@@ -78,7 +79,7 @@ const EmptyState = ({
                   alt={videoAlt}
                   className="w-full h-full block"
                   style={{
-                  
+
                     display: 'block',
                     objectFit: 'cover',
                     borderRadius: 16,
