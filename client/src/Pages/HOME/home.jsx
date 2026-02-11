@@ -178,14 +178,14 @@ const Home = () => {
                         <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="hidden md:flex justify-between relative left-20 items-center gap-8"
+                            className="hidden md:flex items-center gap-6 lg:gap-8"
                         >
-                            <button onClick={() => scrollToSection('features')} 
-                                    className="text-sm font-medium hover:scale-105 transition-all"
-                                    style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Features</button>
                             <button onClick={() => scrollToSection('roles')} 
                                     className="text-sm font-medium hover:scale-105 transition-all"
                                     style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Roles</button>
+                            <button onClick={() => scrollToSection('features')} 
+                                    className="text-sm font-medium hover:scale-105 transition-all"
+                                    style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Features</button>
                             <button onClick={() => scrollToSection('workflow')} 
                                     className="text-sm font-medium hover:scale-105 transition-all"
                                     style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Workflow</button>
@@ -219,7 +219,7 @@ const Home = () => {
                             </div>
                             <button
                                 onClick={() => setIsAboutOpen(true)}
-                                className="relative left-5 p-2 hover:bg-white/10 rounded-full transition-all"
+                                className="p-2 hover:bg-white/10 rounded-full transition-all"
                                 style={{ color: isDark ? '#cbd5e1' : '#475569' }}
                                 title="About App"
                             >
@@ -276,18 +276,18 @@ const Home = () => {
                                                   : 'linear-gradient(to bottom, #0f172a, #475569)'
                                           }}>HOAS</span>
                                 </motion.div>
-                                <motion.button variants={itemVariants} onClick={() => scrollToSection('features')} 
-                                              className="text-lg font-medium py-2 border-b w-full transition-colors"
-                                              style={{ 
-                                                  color: isDark ? '#cbd5e1' : '#475569',
-                                                  borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                              }}>Features</motion.button>
                                 <motion.button variants={itemVariants} onClick={() => scrollToSection('roles')}
                                               className="text-lg font-medium py-2 border-b w-full transition-colors"
                                               style={{ 
                                                   color: isDark ? '#cbd5e1' : '#475569',
                                                   borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
                                               }}>Roles</motion.button>
+                                <motion.button variants={itemVariants} onClick={() => scrollToSection('features')} 
+                                              className="text-lg font-medium py-2 border-b w-full transition-colors"
+                                              style={{ 
+                                                  color: isDark ? '#cbd5e1' : '#475569',
+                                                  borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                              }}>Features</motion.button>
                                 <motion.button variants={itemVariants} onClick={() => scrollToSection('workflow')}
                                               className="text-lg font-medium py-2 border-b w-full transition-colors"
                                               style={{ 
@@ -431,101 +431,6 @@ const Home = () => {
                         >
                             Explore Features
                         </motion.button>
-                    </motion.div>
-
-                    {/* Floating UI Mockup */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 100, rotateX: 25 }}
-                        animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                        transition={{ duration: 1.2, delay: 0.6, type: "spring", bounce: 0.4 }}
-                        className="mt-12 md:mt-20 relative mx-auto max-w-5xl px-2 sm:px-4 perspective-1000"
-                    >
-                        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-20 animate-pulse"></div>
-                        <div className="relative rounded-2xl backdrop-blur-xl shadow-2xl overflow-hidden aspect-[16/10] md:aspect-[16/9] flex items-center justify-center group hover:border-white/20 transition-colors duration-500"
-                             style={{
-                                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.5)' : 'rgba(248, 250, 252, 0.9)',
-                                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                                border: '1px solid'
-                             }}>
-                            <div className="absolute inset-0"
-                                 style={{
-                                     background: isDark 
-                                         ? 'linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(168, 85, 247, 0.05))'
-                                         : 'linear-gradient(135deg, rgba(79, 70, 229, 0.03), rgba(168, 85, 247, 0.03))'
-                                 }}></div>
-                            {/* Simplified Mockup Content */}
-                            <div className="grid grid-cols-4 gap-3 md:gap-6 p-4 md:p-8 w-full h-full opacity-80">
-                                <motion.div
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 1.5, duration: 0.8 }}
-                                    className="hidden sm:block col-span-1 rounded-xl h-full border"
-                                    style={{
-                                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                    }}
-                                ></motion.div>
-                                <div className="col-span-4 sm:col-span-3 flex flex-col gap-3 md:gap-6">
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 1.7, duration: 0.8 }}
-                                        className="h-10 md:h-16 rounded-xl w-full border"
-                                        style={{
-                                            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                            borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                        }}
-                                    ></motion.div>
-                                    <div className="flex-1 grid grid-cols-3 gap-3 md:gap-6">
-                                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 1.9 }} className="rounded-xl border"
-                                                    style={{
-                                                        backgroundColor: isDark ? 'rgba(79, 70, 229, 0.1)' : 'rgba(79, 70, 229, 0.05)',
-                                                        borderColor: isDark ? 'rgba(79, 70, 229, 0.2)' : 'rgba(79, 70, 229, 0.15)'
-                                                    }}></motion.div>
-                                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 2.0 }} className="rounded-xl border"
-                                                    style={{
-                                                        backgroundColor: isDark ? 'rgba(168, 85, 247, 0.1)' : 'rgba(168, 85, 247, 0.05)',
-                                                        borderColor: isDark ? 'rgba(168, 85, 247, 0.2)' : 'rgba(168, 85, 247, 0.15)'
-                                                    }}></motion.div>
-                                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 2.1 }} className="rounded-xl border"
-                                                    style={{
-                                                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                                    }}></motion.div>
-                                    </div>
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 2.2, duration: 0.8 }}
-                                        className="h-32 md:h-48 rounded-xl w-full border"
-                                        style={{
-                                            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                            borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                        }}
-                                    ></motion.div>
-                                </div>
-                            </div>
-
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 2.5, type: "spring" }}
-                                className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                            >
-                                <div className="px-4 py-2 md:px-6 md:py-3 backdrop-blur-md rounded-full border shadow-2xl flex items-center gap-2 md:gap-3 hover:scale-105 transition-transform"
-                                     style={{
-                                         backgroundColor: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(248, 250, 252, 0.9)',
-                                         borderColor: isDark ? 'rgba(79, 70, 229, 0.3)' : 'rgba(79, 70, 229, 0.2)'
-                                     }}>
-                                    <span className="relative flex h-2 w-2 md:h-3 md:w-3">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 md:h-3 md:w-3 bg-green-500"></span>
-                                    </span>
-                                    <span className="text-xs md:text-sm font-mono"
-                                          style={{ color: isDark ? '#a5b4fc' : '#4f46e5' }}>System Active</span>
-                                </div>
-                            </motion.div>
-                        </div>
                     </motion.div>
                 </div>
             </div>
