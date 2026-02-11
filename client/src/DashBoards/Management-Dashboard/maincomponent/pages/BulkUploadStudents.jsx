@@ -320,7 +320,7 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
                                     </table>
                                 </div>
                                 <p className="text-xs mt-2" style={{ color: textSecondary }}>
-                                    💡 Default password = Student ID (e.g., STU001)
+                                    � A random password will be auto-generated for each student
                                 </p>
                             </div>
                         </div>
@@ -558,7 +558,7 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
                                 <p className="text-xs" style={{ color: isDark ? '#93c5fd' : '#1e40af' }}>
                                     <strong>📧 Email sent</strong> to naitapppurpose@gmail.com with the student list and download link.
                                     <br />
-                                    <strong>🔑 Default password</strong> = Student ID (e.g., STU001). Students should change it after first login.
+                                    <strong>🔑 Random passwords</strong> were generated for each student. Check the email for the full credentials list.
                                 </p>
                             </div>
 
