@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { Building2, Loader2, CheckCircle, UploadIcon, MapPin, Home, Sparkles, ArrowRight } from "lucide-react";
+import LocationAutocomplete from "../../components/LocationAutocomplete";
 import { HashLoader } from 'react-spinners'
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from "../../firebase/firebaseConfig";
@@ -401,12 +402,15 @@ const ManagementProfile = () => {
               <label className="block text-slate-300 text-sm font-medium mb-2">
                 Location
               </label>
-              <input
-                type="text"
+              <LocationAutocomplete
                 value={collegeLocation}
-                onChange={(e) => setCollegeLocation(e.target.value)}
+                onChange={(val) => setCollegeLocation(val)}
+                onSelect={(suggestion) => setCollegeLocation(suggestion.display_name)}
                 placeholder="e.g., Mumbai, Maharashtra"
-                className="w-full px-4 py-3 rounded-xl bg-slate-700/50 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
+                style={{
+                  backgroundColor: 'rgba(51, 65, 85, 0.5)',
+                  borderColor: 'rgba(71, 85, 105, 0.5)',
+                }}
               />
             </div>
 

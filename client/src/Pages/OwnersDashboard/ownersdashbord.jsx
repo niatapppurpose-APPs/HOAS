@@ -101,7 +101,7 @@ const OwnersDashboard = () => {
 
       // Fetch password from Firestore
       const credDoc = await getDoc(doc(db, 'managementCredentials', selectedManagementForPassword.id));
-      
+
       if (credDoc.exists()) {
         setManagementPassword(credDoc.data().password);
         setIsPasswordVisible(true);
@@ -150,12 +150,12 @@ const OwnersDashboard = () => {
     event.preventDefault()
     // Clear previous error
     setFormError('');
-    
+
     if (!newManagement.collegeName || !newManagement.principalName || !newManagement.email) {
       toast.warning('Please fill all required fields');
       return;
     }
-    
+
     // Validate official college email (must end with .edu, .ac.in, etc.)
     const emailPattern = /\.(edu|ac\.in|co\.in|edu\.in|org|com)$/i;
     if (!emailPattern.test(newManagement.email)) {
@@ -223,9 +223,9 @@ const OwnersDashboard = () => {
 
     if (!loading) {
       if (!user) {
-        navigate("/admin-login", { replace: true });
+        navigate("/login", { replace: true });
       } else if (adminChecked && !isAdmin) {
-        navigate("/admin-login", { replace: true });
+        navigate("/login", { replace: true });
       }
     }
   }, [user, isAdmin, loading, adminChecked, navigate]);
@@ -791,15 +791,15 @@ const OwnersDashboard = () => {
       {isPasswordModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Backdrop */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={closePasswordModal}
           />
-          
+
           {/* Modal */}
-          <div 
+          <div
             className="relative w-full max-w-md mx-4 rounded-xl shadow-2xl p-6"
-            style={{ 
+            style={{
               backgroundColor: isDark ? '#1f2937' : '#ffffff',
               border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`
             }}
@@ -814,7 +814,7 @@ const OwnersDashboard = () => {
                   View Password
                 </h3>
               </div>
-              <button 
+              <button
                 onClick={closePasswordModal}
                 className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
@@ -891,14 +891,14 @@ const OwnersDashboard = () => {
                   <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
                     Management Password
                   </label>
-                  <div 
+                  <div
                     className="flex items-center gap-2 p-3 rounded-lg border"
                     style={{
                       backgroundColor: isDark ? '#374151' : '#f9fafb',
                       borderColor: isDark ? '#4b5563' : '#d1d5db'
                     }}
                   >
-                    <code 
+                    <code
                       className="flex-1 font-mono text-lg tracking-wider"
                       style={{ color: isDark ? '#10b981' : '#059669' }}
                     >

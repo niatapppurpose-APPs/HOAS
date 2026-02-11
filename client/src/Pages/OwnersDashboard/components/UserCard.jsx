@@ -1,4 +1,4 @@
-import { CheckCircle, XCircle, Trash2, CheckSquare, Square, GraduationCap, Shield, Building2, Key } from "lucide-react";
+import { CheckCircle, XCircle, Trash2, CheckSquare, Square, GraduationCap, Shield, Building2, Key, MapPin } from "lucide-react";
 import { HashLoader } from "react-spinners";
 import Avatar from "../../../components/OwnerServices/Avatar";
 import StatusBadge from "../../../components/OwnerServices/StatusBadge";
@@ -79,6 +79,27 @@ const UserCard = ({
                   hour12: true
                 }) || "Unknown"}
               </p>
+            </div>
+            {/* College Name & Location - Real-time from Firestore */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+              {userData.collegeName && (
+                <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <Building2 className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate max-w-[180px]">{userData.collegeName}</span>
+                </div>
+              )}
+              {userData.collegeLocation && (
+                <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <MapPin className="w-3 h-3 flex-shrink-0 text-emerald-500" />
+                  <span className="truncate max-w-[180px]">{userData.collegeLocation}</span>
+                </div>
+              )}
+              {!userData.collegeLocation && userData.status === 'approved' && (
+                <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
+                  <MapPin className="w-3 h-3 flex-shrink-0" />
+                  <span className="italic">No location set</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

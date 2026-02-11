@@ -36,7 +36,7 @@ const OwnerProfile = () => {
   useEffect(() => {
     if (!loading && adminChecked) {
       if (!user || !isAdmin) {
-        navigate("/admin-login", { replace: true });
+        navigate("/login", { replace: true });
       }
     }
   }, [user, isAdmin, loading, adminChecked, navigate]);
@@ -79,7 +79,7 @@ const OwnerProfile = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate("/admin-login", { replace: true });
+      navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -126,14 +126,14 @@ const OwnerProfile = () => {
             <button
               onClick={() => {
                 // Get return path from location state or sessionStorage
-                const returnPath = location.state?.returnPath || 
-                  sessionStorage.getItem('ownerProfileReturnPath') || 
+                const returnPath = location.state?.returnPath ||
+                  sessionStorage.getItem('ownerProfileReturnPath') ||
                   "/OwnersDashboard";
                 const savedState = location.state || {};
-                
+
                 // Navigate back with saved state
                 navigate(returnPath, { state: savedState });
-                
+
                 // Clean up sessionStorage
                 sessionStorage.removeItem('ownerProfileReturnPath');
               }}
@@ -242,7 +242,7 @@ const OwnerProfile = () => {
               Save Changes
             </button>
 
-            <AnimatedLogoutButton 
+            <AnimatedLogoutButton
               onLogout={handleLogout}
               variant="dark"
               text="Log Out"

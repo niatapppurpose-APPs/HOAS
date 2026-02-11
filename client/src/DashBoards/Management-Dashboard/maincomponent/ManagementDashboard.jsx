@@ -15,7 +15,7 @@ import QuickApproval from "../components/dashboard/QuickApproval";
 import RecentActivity from "../components/dashboard/RecentActivity";
 import StatusTable from "../components/dashboard/StatusTable";
 import StatusVisualization from "../components/dashboard/StatusVisualization";
-import AddWarden from './pages/AddWarden'
+import AddWarden from './pages/AddWardenModal'
 // Import styles
 import "./ManagementDashboard.css";
 

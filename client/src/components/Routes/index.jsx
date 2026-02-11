@@ -16,7 +16,7 @@ import Dashboard from '../../Pages/Dashboard/Dashboard';
 import UserRole from "../UserServices/userrole";
 import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval";
 import NotFound from "../../Pages/NotFound";
-import AdminLogin from '../OwnerServices/AdminLogin';
+
 
 // Lazy loaded pages - loaded on demand for better performance
 const StudentProfile = lazy(() => import('../../DashBoards/Student-DashBoard/index'));
@@ -47,6 +47,7 @@ const ManagementStudents = lazy(() => import("../../DashBoards/Management-Dashbo
 const ManagementHostels = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Hostels"));
 const ManagementReports = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Reports"));
 const ManagementHelp = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/HelpSupport"));
+const ManagementSettings_Page = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/ManagementSettings"));
 
 // Owner Dashboard - lazy loaded
 const OwnersDashboard = lazy(() => import("../../Pages/OwnersDashboard/ownersdashbord"));
@@ -105,11 +106,12 @@ const Routes_path = () => {
                     <Route path="students" element={<ManagementStudents />} />
                     <Route path="hostels" element={<ManagementHostels />} />
                     <Route path="reports" element={<ManagementReports />} />
+                    <Route path="settings" element={<ManagementSettings_Page />} />
                     <Route path="help" element={<ManagementHelp />} />
                 </Route>
 
                 {/* --------------------------------------- Owners Page ------------------------------------- */}
-                <Route path="/admin-login" element={<AdminLogin />} />
+                <Route path="/admin-login" element={<Navigate to="/login" replace />} />
                 <Route path="/OwnersDashboard" element={<OwnersLayout />}>
                     <Route index element={<OwnersDashboard />} />
                     <Route path="wardens" element={<Wardens />} />
