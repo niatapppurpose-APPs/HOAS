@@ -29,7 +29,7 @@ const StudentDashboard = () => {
             } else if (userData.status === 'pending' || userData.status === 'denied') {
                 navigate('/waiting-approval');
             } else if (userData.role !== 'student') {
-                navigate('/role');
+                navigate('/dashboard');
             }
         }
     }, [userData, userDataLoading, navigate]);

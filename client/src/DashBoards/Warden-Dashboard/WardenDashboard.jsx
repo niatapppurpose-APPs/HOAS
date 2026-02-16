@@ -38,7 +38,7 @@ const WardenDashboard = () => {
             } else if (userData.status === 'pending' || userData.status === 'denied') {
                 navigate('/waiting-approval');
             } else if (userData.role !== 'warden') {
-                navigate('/role');
+                navigate('/dashboard');
             }
         }
     }, [userData, userDataLoading, navigate]);

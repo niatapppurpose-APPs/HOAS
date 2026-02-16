@@ -223,7 +223,8 @@ const ManagementDashboard = () => {
       }
       
       if (!userData) {
-        navigate("/role", { replace: true });
+        // Role-selection removed — send new users to waiting-approval until owner/management provisions them
+        navigate("/waiting-approval", { replace: true });
         return;
       }
 

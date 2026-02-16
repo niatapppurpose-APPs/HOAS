@@ -13,7 +13,6 @@ const PageLoader = () => (
 import Home from '../../Pages/HOME/home';
 import Login from '../../Pages/LoginPage/Login';
 import Dashboard from '../../Pages/Dashboard/Dashboard';
-import UserRole from "../UserServices/userrole";
 import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval";
 import NotFound from "../../Pages/NotFound";
 
@@ -70,7 +69,6 @@ const Routes_path = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/role" element={<UserRole />} />
                 <Route path="/waiting-approval" element={<WaitingApproval />} />
 
                 {/* ------------------------------ Profile Pages ----------------------------------------- */}

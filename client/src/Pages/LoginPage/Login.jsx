@@ -51,7 +51,7 @@ const Login = () => {
           navigate("/waiting-approval", { replace: true });
         }
       } else {
-        navigate("/role", { replace: true });
+        navigate("/waiting-approval", { replace: true });
       }
     }
   }, [user, userData, userDataLoading, loading, navigate, minDelayPassed]);

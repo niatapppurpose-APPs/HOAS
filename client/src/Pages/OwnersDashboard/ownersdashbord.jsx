@@ -24,6 +24,7 @@ import PaginationControls from "./components/PaginationControls";
 import EmptyState from "./components/EmptyState";
 import ErrorState from "./components/ErrorState";
 import LoadingState from "./components/LoadingState";
+import CollegeSelect from "./components/CollegeSelect";
 
 import { Building2, CheckCircle, Clock, GraduationCap, Shield, LayoutDashboard, X, Plus, Eye, EyeOff, Lock } from "lucide-react";
 
@@ -690,17 +691,11 @@ const OwnersDashboard = () => {
                 <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
                   College Name *
                 </label>
-                <input
-                  type="text"
+                <CollegeSelect
                   value={newManagement.collegeName}
-                  onChange={(e) => handleCollegeNameChange(e.target.value)}
-                  placeholder="Enter college name"
-                  className="w-full px-4 py-2.5 rounded-lg border outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
-                  style={{
-                    backgroundColor: isDark ? '#374151' : '#f9fafb',
-                    borderColor: isDark ? '#4b5563' : '#d1d5db',
-                    color: isDark ? '#fff' : '#000'
-                  }}
+                  onChange={handleCollegeNameChange}
+                  isDark={isDark}
+                  placeholder="Query or enter college name..."
                 />
               </div>
 

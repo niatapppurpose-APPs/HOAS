@@ -76,8 +76,8 @@ export const AuthProvider = ({ children }) => {
                   await setDoc(userDocRef, adminProfileData);
                   console.log("Admin user document created automatically.");
                 } else {
-                  // For non-admins, let the user role page handle it
-                  console.log("New user detected, waiting for role selection...");
+                  // For non-admins, role self-selection is disabled — wait for owner/management provisioning
+                  console.log("New user detected — awaiting admin/owner provisioning (role selection disabled).");
                 }
               } else {
                 // User exists - update isOnline to true

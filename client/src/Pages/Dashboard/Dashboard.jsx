@@ -14,8 +14,8 @@ const Dashboard = () => {
         // Redirect to role-specific dashboard
         navigate(`/dashboard/${user.role}`, { replace: true });
       } else {
-        // If no role assigned, go to role selection
-        navigate('/role', { replace: true });
+        // If no role assigned, send user to waiting-approval (role selection removed)
+        navigate('/waiting-approval', { replace: true });
       }
     }
   }, [user, loading, navigate]);
