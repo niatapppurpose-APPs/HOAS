@@ -37,11 +37,8 @@ Owner (Super Admin)
 - [x] Role-based routing protection
 - [x] Admin authentication via custom claims
 
-### 2. Role Selection Flow
-- [x] New users select their role (Student/Warden/Management)
-- [x] **College Selection Dropdown** - Students & Wardens must select their college during registration
-- [x] `managementId` field links users to their Principal
-- [x] Automatic redirect to waiting approval page
+### 2. Role Selection Flow (legacy — removed from client)
+- Role self-selection removed; user roles are now provisioned by Owner/Management. The waiting-approval page remains for status tracking.
 
 ### 3. Owner Dashboard (`/owner-dashboard`)
 - [x] View all Management (Principal) users
@@ -95,8 +92,7 @@ src/
 │   ├── Routes/
 │   │   └── index.jsx           # App routing configuration
 │   ├── UserServices/
-│   │   ├── userrole.jsx        # Role selection with college dropdown
-│   │   └── userrole.css
+│   │   └── (userrole.jsx removed — role self-selection disabled)
 │   └── OwnerServices/
 │       ├── header.jsx          # Owner dashboard header with profile icon
 │       └── OwnerProfile.jsx    # Owner profile page
@@ -116,7 +112,7 @@ src/
 │   └── firebaseConfig.js       # Firebase configuration
 ├── Pages/
 │   ├── AdminLogin/
-│   │   └── AdminLogin.jsx      # Owner login page
+│   │   └── (AdminLogin.jsx removed — admin uses /login)
 │   ├── Dashboard/
 │   │   ├── Dashboard.jsx
 │   │   └── dashboard.css

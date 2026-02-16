@@ -130,9 +130,9 @@ HOAS/
 │   │   ├── components/
 │   │   │   ├── FirebaseModeIndicator.jsx
 │   │   │   ├── OwnerServices/       # Owner/Admin components
-│   │   │   │   ├── AdminLogin.jsx
 │   │   │   │   ├── Avatar.jsx
 │   │   │   │   ├── DeleteConfirmModal.jsx
+│   │   │   │   └── (AdminLogin.jsx removed — admin uses /login)
 │   │   │   │   ├── GlobalDeleteModal.jsx
 │   │   │   │   ├── header.jsx
 │   │   │   │   ├── OwnerProfile.jsx
@@ -148,7 +148,7 @@ HOAS/
 │   │   │   │   ├── Toast.css
 │   │   │   │   ├── ToastContainer.jsx
 │   │   │   │   └── README.md
-│   │   │   └── UserServices/        # User role selection
+│   │   │   └── UserServices/        # (role self-selection removed; admin provisioning)
 │   │   ├── context/
 │   │   │   ├── AuthContext.jsx      # Firebase auth state
 │   │   │   ├── ModalContext.jsx     # Modal management
@@ -430,12 +430,9 @@ The HOAS project has evolved through systematic development iterations. Below is
 - Added admin authentication via custom claims
 - **Related Files**: `LoginPage/`, `AuthContext.jsx`, `firebaseConfig.js`
 
-**PR #2: Role Selection & Approval Workflow**
-- Built new user role selection flow (Student/Warden/Management)
-- Implemented college selection dropdown for hierarchical structure
-- Created waiting approval page with real-time status listeners
-- Added automatic redirect upon approval
-- **Related Files**: `UserServices/userrole.jsx`, `WaitingApproval/`
+**PR #2: Role Selection (legacy — removed)**
+- Role self-selection has been removed from the client; roles are now provisioned by Owner/Management.
+- See `WaitingApproval/` and Owner provisioning workflows for user setup.
 
 #### **Phase 2: Core Dashboard Development (December 2024 - January 2025)**
 

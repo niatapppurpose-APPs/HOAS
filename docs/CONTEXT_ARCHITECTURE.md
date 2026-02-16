@@ -165,7 +165,7 @@ App Routes (BrowserRouter)
 │
 ├── / ................................ Home
 ├── /login ........................... Login
-├── /admin-login ..................... Admin Login
+├── /admin-login ..................... (redirects to /login) Admin Login (use /login)
 ├── /dashboard ....................... Main Dashboard
 ├── /role ............................ Role Selection
 ├── /waiting-approval ................ Waiting Page

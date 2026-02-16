@@ -103,9 +103,9 @@ Check User Document in Firestore
     │   ├── Pending → Waiting Approval Page
     │   └── Denied → Waiting Approval Page (Denied Message)
     │
-    └── No User Document → Role Selection Page
+    └── No User Document → Waiting Approval (owner/management provisioning required)
             ↓
-        Create User Profile (status: pending)
+        (Owner/Management to provision user role and profile)
             ↓
         Waiting Approval Page
 ```
@@ -160,7 +160,7 @@ HOAS/
 │   │
 │   ├── components/                  # Reusable components
 │   │   ├── OwnerServices/          # Owner dashboard components
-│   │   │   ├── AdminLogin.jsx      # Admin authentication page
+│   │   │   └── (AdminLogin.jsx removed — admin uses `/login`) # Admin authentication handled by standard login
 │   │   │   ├── Avatar.jsx          # User avatar component
 │   │   │   ├── DeleteConfirmModal.jsx  # Deletion confirmation
 │   │   │   ├── header.jsx          # Dashboard header
@@ -173,8 +173,7 @@ HOAS/
 │   │   │   └── index.jsx           # Main route definitions
 │   │   │
 │   │   └── UserServices/           # User-related components
-│   │       ├── userrole.jsx        # Role selection page
-│   │       └── userrole.css        # Role selection styles
+│   │       └── UserServices/       # (role self-selection removed — admin provisioning)
 │   │
 │   ├── context/                    # React Context providers
 │   │   └── AuthContext.jsx         # Authentication state management
@@ -327,7 +326,7 @@ Each document represents a user in the system.
 
 ### Firestore Queries
 
-**Fetch approved colleges for role selection:**
+**Fetch approved colleges (used for management provisioning / college lookup):**
 ```javascript
 const q = query(
   collection(db, "users"),
@@ -372,7 +371,7 @@ const q = query(
 
 **Key Components:**
 - `OwnersDashboard.jsx` - Main dashboard (454 lines)
-- `AdminLogin.jsx` - Secure admin login
+- `AdminLogin.jsx` - **removed** (admin uses standard `/login`)
 - `DeleteConfirmModal.jsx` - Confirmation before cascade deletion
 
 ### 2. Management (Principal/Co-Admin)
@@ -437,7 +436,7 @@ const q = query(
    ↓
 4. AuthContext detects new user (no Firestore document)
    ↓
-5. Redirected to /role (Role Selection Page)
+5. Redirected to /waiting-approval (role provisioning required)
    ↓
 6. User selects role:
    - Student → Must select college from dropdown
@@ -507,11 +506,11 @@ Real-time update reflects in UI
   {/* Public Routes */}
   <Route path="/" element={<Home />} />
   <Route path="/login" element={<Login />} />
-  <Route path="/admin-login" element={<AdminLogin />} />
+  <!-- /admin-login route removed; redirects to /login -->
   
   {/* Protected Routes */}
   <Route path="/dashboard" element={<Dashboard />} />
-  <Route path="/role" element={<UserRole />} />
+  <!-- /role route removed — role self-selection disabled; provisioning is admin-driven -->
   <Route path="/waiting-approval" element={<WaitingApproval />} />
   
   {/* Profile Pages */}
@@ -624,7 +623,7 @@ useEffect(() => {
 Students and Wardens must select their parent college during registration:
 
 ```javascript
-// userrole.jsx
+// userrole.jsx — removed (role self-selection disabled)
 useEffect(() => {
   const fetchColleges = async () => {
     const q = query(
@@ -694,7 +693,8 @@ useEffect(() => {
         navigate('/waiting-approval');
       }
     } else {
-      navigate("/role");
+      // Role self-selection removed — send new users to waiting approval for provisioning
+      navigate("/waiting-approval");
     }
   }
 }, [user, userData, userDataLoading, navigate]);
@@ -790,7 +790,8 @@ Admin status verified on every protected route access:
 useEffect(() => {
   if (!loading && adminChecked) {
     if (!user || !isAdmin) {
-      navigate("/admin-login", { replace: true });
+      // admin login now uses /login
+      navigate("/login", { replace: true });
     }
   }
 }, [user, isAdmin, loading, adminChecked, navigate]);
@@ -846,7 +847,7 @@ This sets custom claims for specified admin emails.
 
 ✅ **Fully Functional:**
 - Authentication system
-- Role selection and college linking
+- College linking is handled via management/owner provisioning
 - Approval workflows
 - Real-time data sync
 - Cascade deletion
@@ -955,7 +956,7 @@ From the UI, these features have placeholder buttons:
 2. `PrincipalDashboard.jsx` - 552 lines
 3. `OwnersDashboard.jsx` - 454 lines
 4. `WardenDashboard.jsx` - 339 lines
-5. `userrole.jsx` - 252 lines
+5. `userrole.jsx` — removed (role self-selection disabled)
 6. `AuthContext.jsx` - 207 lines
 
 ### Code Organization

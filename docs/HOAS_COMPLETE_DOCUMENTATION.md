@@ -191,7 +191,7 @@ src/
 │   │   ├── DeleteConfirmModal.jsx
 │   │   └── GlobalDeleteModal.jsx
 │   ├── UserServices/
-│   │   └── userrole.jsx       # Role selection
+│   │   └── (userrole.jsx removed — role self-selection disabled)
 │   └── Toast/                 # Notification system
 │       ├── Toast.jsx
 │       ├── Toast.css

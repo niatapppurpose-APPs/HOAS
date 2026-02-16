@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { signInWithPopup, signInWithRedirect, signInWithEmailAndPassword } from "firebase/auth";
-import { auth, provider } from "../../firebase/firebaseConfig";
+import {signInWithEmailAndPassword } from "firebase/auth";
+import { collection, query, where, getDocs, limit } from "firebase/firestore";
+import { auth, provider, db } from "../../firebase/firebaseConfig";
 import { useToast } from "../../components/Toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, IdCard } from "lucide-react";
 import { HashLoader } from 'react-spinners';
 import { useTheme } from "../../context/ThemeContext";
-
+import { useAuth } from "../../context/AuthContext";
 // Detect if user is on mobile device
 const isMobileDevice = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
@@ -22,7 +23,7 @@ const LoginButton = () => {
   const [changeToggle, setChangeToggle] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const toast = useToast();
-
+const {user} = useAuth()
   const handleLogin = async (event) => {
     event.preventDefault();
     if (!email || !password) {
@@ -32,17 +33,48 @@ const LoginButton = () => {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast.success(`Welcome back ${email} 👋`, 3000);
+      let loginEmail = email;
+
+      // If logging in as Student (using ID), find their email first
+      if (changeToggle) {
+        const usersRef = collection(db, "users");
+        // Create a query against the collection.
+        // limit(1) to be efficient since ID should be unique
+        const q = query(usersRef, where("studentId", "==", email), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          // Check if it might be an email entered by mistake in ID field
+          if (email.includes('@')) {
+            // Proceed as email, maybe
+            // But strictly speaking, if toggle is ID, we expect ID. 
+            // Let's just fail if ID not found.
+          }
+          throw { code: "auth/user-not-found", message: "Student ID not found" };
+        }
+
+        const userDoc = querySnapshot.docs[0];
+        const userData = userDoc.data();
+
+        if (!userData.email) {
+          throw { code: "auth/invalid-email", message: "No email linked to this Student ID" };
+        }
+
+        loginEmail = userData.email;
+        console.log("Found student email:", loginEmail);
+      }
+
+      const credential = await signInWithEmailAndPassword(auth, loginEmail, password);
+      const authUser = credential?.user || auth.currentUser;
+      const displayName = authUser?.displayName || (authUser?.email ? authUser.email.split('@')[0] : 'User');
+      toast.success(`Welcome back ${displayName} 👋`, 3000);
     } catch (e) {
       console.error('Login error:', e.code, e.message);
-      if (changeToggle == true) {
-        toast.info('We are Working on it please go it with Email field!.');
-      }
+
       const code = e?.code || "";
       let errorMsg = "Login failed. Please try again.";
       if (code === "auth/user-not-found") {
-        errorMsg = "No account found with this email.";
+        errorMsg = changeToggle ? "Student ID not found." : "No account found with this email.";
       } else if (code === "auth/too-many-requests") {
         errorMsg = "Too many attempts. Try again later.";
       } else if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/invalid-email") {
@@ -79,17 +111,17 @@ const LoginButton = () => {
   return (
     <>
       {/* Pill-shaped Email/ID Toggle */}
-      <div className="flex justify-center mb-6">
-        <div className="relative flex rounded-full p-[3px]"
-             style={{
-               backgroundColor: isDark ? 'rgba(15, 23, 42, 0.6)' : 'rgba(241, 245, 249, 0.8)',
-               border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(99, 102, 241, 0.2)'
-             }}>
+      <div className="flex justify-center  mb-6">
+        <div className="relative flex rounded-full p-[3px] gap-10"
+          style={{
+            backgroundColor: isDark ? 'rgba(15, 23, 42, 0.6)' : 'rgba(241, 245, 249, 0.8)',
+            border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(99, 102, 241, 0.2)'
+          }}>
           {/* Sliding active indicator */}
           <div
-            className="absolute top-[3px] bottom-[3px] rounded-full transition-all duration-300 ease-out"
+            className="absolute top-[3px] bottom-[3px] rounded-full transition-all duration-100 ease-out"
             style={{
-              width: 'calc(50% - 3px)',
+              width: 'calc(60% - 1px)',
               left: !changeToggle ? '3px' : 'calc(50%)',
               background: isDark
                 ? 'linear-gradient(135deg, #4f46e5, #7c3aed)'
@@ -108,12 +140,15 @@ const LoginButton = () => {
               justifyContent: 'center'
             }}
             type="button"
-            onClick={() => setChangeToggle(false)}
+            onClick={() => {
+              setChangeToggle(false);
+              setEmail("");
+            }}
             aria-label="Login with Email"
             aria-pressed={!changeToggle}
           >
-            <Mail className="w-3.5 h-3.5" />
-            Email
+            <Mail className="w-4 h-3.5" />
+            Management
           </button>
 
           <button
@@ -124,12 +159,15 @@ const LoginButton = () => {
               justifyContent: 'center'
             }}
             type="button"
-            onClick={() => setChangeToggle(true)}
+            onClick={() => {
+              setChangeToggle(true);
+              setEmail("");
+            }}
             aria-label="Login with ID Number"
             aria-pressed={changeToggle}
           >
-            <IdCard className="w-3.5 h-3.5" />
-            ID
+            <IdCard className="w-4 h-3.5" />
+            Student
           </button>
         </div>
       </div>
@@ -140,19 +178,19 @@ const LoginButton = () => {
           {/* Email / ID Input */}
           <div>
             <label className="block text-xs font-medium uppercase tracking-wider mb-2"
-                   style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
+              style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
               {changeToggle ? 'ID Number' : 'Email Address'}
             </label>
             <div className="relative">
               {!changeToggle ? (
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] transition-colors"
-                      style={{ color: focusedField === 'email' ? (isDark ? '#818cf8' : '#4f46e5') : (isDark ? '#475569' : '#94a3b8') }} />
+                  style={{ color: focusedField === 'email' ? (isDark ? '#818cf8' : '#4f46e5') : (isDark ? '#475569' : '#94a3b8') }} />
               ) : (
                 <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors"
-                        style={{ color: focusedField === 'email' ? (isDark ? '#818cf8' : '#4f46e5') : (isDark ? '#475569' : '#94a3b8') }} />
+                  style={{ color: focusedField === 'email' ? (isDark ? '#818cf8' : '#4f46e5') : (isDark ? '#475569' : '#94a3b8') }} />
               )}
               <input
-                type={changeToggle ? "number" : "email"}
+                type={changeToggle ? "text" : "email"}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onFocus={() => setFocusedField('email')}
@@ -170,12 +208,12 @@ const LoginButton = () => {
           {/* Password Input */}
           <div>
             <label className="block text-xs font-medium uppercase tracking-wider mb-2"
-                   style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
+              style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
               Password
             </label>
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] transition-colors"
-                    style={{ color: focusedField === 'password' ? (isDark ? '#818cf8' : '#4f46e5') : (isDark ? '#475569' : '#94a3b8') }} />
+                style={{ color: focusedField === 'password' ? (isDark ? '#818cf8' : '#4f46e5') : (isDark ? '#475569' : '#94a3b8') }} />
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
@@ -227,10 +265,10 @@ const LoginButton = () => {
             {!loading && (
               <div className="absolute inset-0 overflow-hidden rounded-xl">
                 <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] opacity-0 hover:opacity-100 transition-opacity duration-500"
-                     style={{
-                       background: 'conic-gradient(from 0deg, transparent 0%, rgba(255,255,255,0.08) 10%, transparent 20%)',
-                       animation: 'spin 3s linear infinite'
-                     }} />
+                  style={{
+                    background: 'conic-gradient(from 0deg, transparent 0%, rgba(255,255,255,0.08) 10%, transparent 20%)',
+                    animation: 'spin 3s linear infinite'
+                  }} />
               </div>
             )}
 

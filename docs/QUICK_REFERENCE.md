@@ -57,9 +57,8 @@ openDeleteModal({
 |-------|-----------|---------|
 | `/` | Home | Landing page |
 | `/login` | Login | User login |
-| `/admin-login` | AdminLogin | Admin login |
+| `/admin-login` | (redirects to `/login`) | Admin login (use `/login`) |
 | `/dashboard` | Dashboard | Main dashboard |
-| `/role` | UserRole | Role selection |
 | `/waiting-approval` | WaitingApproval | Pending approval |
 | `/profile/student-profile` | StudentProfile | Student setup |
 | `/profile/warden-profile` | WardenProfile | Warden setup |
@@ -108,7 +107,7 @@ const { user, isAdmin } = useAuth();
 
 useEffect(() => {
   if (!user || !isAdmin) {
-    navigate('/admin-login');
+    navigate('/login');
   }
 }, [user, isAdmin, navigate]);
 ```

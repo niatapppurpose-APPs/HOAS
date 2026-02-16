@@ -36,13 +36,13 @@ The NotFound page is automatically shown when users navigate to a route that doe
 ```
 / ..................... Home page
 /login ................ Login page
-/admin-login .......... Admin login page
+/admin-login .......... (redirects to /login) Admin login (use /login)
 ```
 
 #### Dashboard Routes
 ```
 /dashboard ............ Main dashboard
-/role ................. User role selection
+/role ................. (removed — role self-selection disabled)
 /waiting-approval ..... Approval waiting page
 ```
 

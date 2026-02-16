@@ -54,7 +54,6 @@ Use this checklist to ensure successful deployment of your HOAS full-stack appli
 
 ### 3. Frontend Testing
 - [ ] Login works (Google OAuth)
-- [ ] Role selection works
 - [ ] Waiting approval page displays correctly
 - [ ] Owner dashboard loads
 - [ ] Management dashboard loads
@@ -66,7 +65,6 @@ Use this checklist to ensure successful deployment of your HOAS full-stack appli
 
 ### 4. User Flow Testing
 - [ ] New user can register
-- [ ] New user selects role
 - [ ] New user sees waiting approval page
 - [ ] Owner can approve/deny management
 - [ ] Management can approve/deny wardens
