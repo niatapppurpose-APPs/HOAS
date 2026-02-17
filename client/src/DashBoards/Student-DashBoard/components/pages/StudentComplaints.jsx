@@ -1,35 +1,671 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
+import { useTheme } from '../../../../context/ThemeContext';
 import { useOutletContext } from 'react-router-dom';
+import { useToast } from '../../../../components/Toast';
 import StudentHeader from '../layout/StudentHeader';
-import { FileText, MessageSquare } from 'lucide-react';
+import { db } from '../../../../firebase/firebaseConfig';
+import {
+    collection,
+    addDoc,
+    query,
+    where,
+    onSnapshot,
+    serverTimestamp,
+} from 'firebase/firestore';
 
+import {
+    FileText,
+    Send,
+    Image as ImageIcon,
+    X,
+    ChevronRight,
+    Clock,
+    CheckCircle2,
+    XCircle,
+    Loader2,
+    Tag,
+    Calendar,
+    Upload,
+    MessageSquareText,
+    Inbox,
+    Eye,
+} from 'lucide-react';
+import './StudentComplaints.css';
+
+// ── Complaint Categories ─────────────────────────────────────
+const CATEGORIES = [
+    { value: '', label: 'Select a category…' },
+    { value: 'maintenance', label: '🔧 Maintenance & Repairs' },
+    { value: 'cleanliness', label: '🧹 Cleanliness & Hygiene' },
+    { value: 'electrical', label: '⚡ Electrical Issues' },
+    { value: 'plumbing', label: '🚿 Plumbing & Water' },
+    { value: 'food', label: '🍽️ Food & Mess' },
+    { value: 'security', label: '🔒 Security Concerns' },
+    { value: 'noise', label: '🔊 Noise Disturbance' },
+    { value: 'internet', label: '📶 Internet & WiFi' },
+    { value: 'furniture', label: '🪑 Furniture Issues' },
+    { value: 'other', label: '📌 Other' },
+];
+
+const STATUS_CONFIG = {
+    pending: {
+        label: 'Pending',
+        className: 'complaint-status-pending',
+        icon: Clock,
+    },
+    'in-progress': {
+        label: 'In Progress',
+        className: 'complaint-status-in-progress',
+        icon: Loader2,
+    },
+    resolved: {
+        label: 'Resolved',
+        className: 'complaint-status-resolved',
+        icon: CheckCircle2,
+    },
+    rejected: {
+        label: 'Rejected',
+        className: 'complaint-status-rejected',
+        icon: XCircle,
+    },
+};
+
+const FILTER_OPTIONS = [
+    { value: 'all', label: 'All' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'in-progress', label: 'In Progress' },
+    { value: 'resolved', label: 'Resolved' },
+    { value: 'rejected', label: 'Rejected' },
+];
+
+// ── Helpers ──────────────────────────────────────────────────
+const formatDate = (timestamp) => {
+    if (!timestamp) return '—';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
+};
+
+const getCategoryLabel = (value) => {
+    const cat = CATEGORIES.find((c) => c.value === value);
+    return cat ? cat.label : value;
+};
+
+// ══════════════════════════════════════════════════════════════
+// Component
+// ══════════════════════════════════════════════════════════════
 const StudentComplaints = () => {
-    const { userData } = useAuth();
+    const { user, userData } = useAuth();
+    const { isDark } = useTheme();
     const { isCollapsed, setIsCollapsed } = useOutletContext();
+    const toast = useToast();
+    const fileInputRef = useRef(null);
 
+    // ── Form state ───────────────────────────────────────────
+    const [category, setCategory] = useState('');
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+
+    // ── History state ────────────────────────────────────────
+    const [complaints, setComplaints] = useState([]);
+    const [historyLoading, setHistoryLoading] = useState(true);
+    const [activeFilter, setActiveFilter] = useState('all');
+    const [selectedComplaint, setSelectedComplaint] = useState(null);
+
+    // ── Fetch complaints in real-time ────────────────────────
+    useEffect(() => {
+        if (!user?.uid) return;
+
+        // Only filter by studentId — no orderBy to avoid needing a composite index
+        const q = query(
+            collection(db, 'complaints'),
+            where('studentId', '==', user.uid)
+        );
+
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+                // Sort client-side: newest first
+                data.sort((a, b) => {
+                    const timeA = a.createdAt?.toMillis?.() || 0;
+                    const timeB = b.createdAt?.toMillis?.() || 0;
+                    return timeB - timeA;
+                });
+                setComplaints(data);
+                setHistoryLoading(false);
+            },
+            (err) => {
+                console.error('Error fetching complaints:', err);
+                setHistoryLoading(false);
+            }
+        );
+
+        return () => unsubscribe();
+    }, [user?.uid]);
+
+    // ── Filtered complaints ──────────────────────────────────
+    const filteredComplaints =
+        activeFilter === 'all'
+            ? complaints
+            : complaints.filter((c) => c.status === activeFilter);
+
+    // ── Stats ────────────────────────────────────────────────
+    const stats = {
+        total: complaints.length,
+        pending: complaints.filter((c) => c.status === 'pending').length,
+        inProgress: complaints.filter((c) => c.status === 'in-progress').length,
+        resolved: complaints.filter((c) => c.status === 'resolved').length,
+    };
+
+    // ── Image handling ───────────────────────────────────────
+    const handleImageSelect = useCallback((file) => {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            toast.warning('Please select an image file (PNG, JPG, WEBP)');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.warning('Image must be smaller than 5 MB');
+            return;
+        }
+        setImageFile(file);
+        const reader = new FileReader();
+        reader.onload = (e) => setImagePreview(e.target.result);
+        reader.readAsDataURL(file);
+    }, [toast]);
+
+    const removeImage = () => {
+        setImageFile(null);
+        setImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    // ── Drag & Drop ──────────────────────────────────────────
+    const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
+    const handleDragLeave = () => setIsDragging(false);
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) handleImageSelect(file);
+    };
+
+    // ── Compress image & convert to base64 data URL ────────────
+    // Store directly in Firestore to avoid GCS CORS issues
+    const compressImage = (file) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                img.onload = () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 800;
+                        let { width, height } = img;
+
+                        // Scale down if necessary
+                        if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+                            const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+                            width = Math.round(width * ratio);
+                            height = Math.round(height * ratio);
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Compress as JPEG at 0.7 quality (~100-200KB for most photos)
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        resolve(dataUrl);
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                img.onerror = () => reject(new Error('Failed to load image'));
+                img.src = e.target.result;
+            };
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsDataURL(file);
+        });
+    };
+
+    // ── Submit complaint ─────────────────────────────────────
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!category) {
+            toast.warning('Please select a complaint category');
+            return;
+        }
+        if (!title.trim()) {
+            toast.warning('Please enter a complaint title');
+            return;
+        }
+        if (!description.trim() || description.trim().length < 20) {
+            toast.warning('Description must be at least 20 characters');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setUploadProgress(0);
+
+        try {
+            let imageUrl = null;
+
+            // Compress & encode image as base64 data URL (stored in Firestore directly)
+            if (imageFile) {
+                try {
+                    setUploadProgress(30);
+                    imageUrl = await compressImage(imageFile);
+                    setUploadProgress(100);
+                } catch (compressErr) {
+                    console.warn('Image compression failed:', compressErr);
+                    toast.warning('Image processing failed — complaint will be submitted without the attachment.');
+                    imageUrl = null;
+                }
+            }
+
+            await addDoc(collection(db, 'complaints'), {
+                studentId: user.uid,
+                studentName: userData?.fullName || user.displayName || 'Student',
+                studentEmail: user.email,
+                collegeName: userData?.collegeName || '',
+                managementId: userData?.managementId || '',
+                roomNumber: userData?.roomNumber || '',
+                category,
+                title: title.trim(),
+                description: description.trim(),
+                imageUrl,
+                status: 'pending',
+                response: null,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+
+            // Reset form
+            setCategory('');
+            setTitle('');
+            setDescription('');
+            removeImage();
+            toast.success('Complaint submitted successfully! 🎉');
+        } catch (err) {
+            console.error('Failed to submit complaint:', err);
+            toast.error('Failed to submit complaint. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+            setUploadProgress(0);
+        }
+    };
+
+    // ── View detail modal ────────────────────────────────────
+    const openDetail = async (complaint) => {
+        setSelectedComplaint(complaint);
+    };
+
+    const closeDetail = () => setSelectedComplaint(null);
+
+    // ══════════════════════════════════════════════════════════
+    // Render
+    // ══════════════════════════════════════════════════════════
     return (
         <>
-            <StudentHeader 
-                title="Complaints · Student Portal" 
+            <StudentHeader
+                title="Complaints · Student Portal"
                 isCollapsed={isCollapsed}
                 setIsCollapsed={setIsCollapsed}
             />
-            
+
             <div className="pt-24 px-4 sm:px-6 lg:px-8 pb-8">
-                <div className="rounded-2xl border p-8 text-center" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-                    <FileText className="w-16 h-16 mx-auto mb-4 text-blue-500" />
-                    <h2 className="text-2xl font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-                        Complaints Management
-                    </h2>
-                    <p className="text-lg mb-6" style={{ color: 'var(--text-muted)' }}>
-                        File and track your hostel complaints
-                    </p>
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500/10 text-blue-600">
-                        <MessageSquare className="w-4 h-4" />
-                        <span className="text-sm">Coming Soon</span>
+                {/* ── Hero Banner ──────────────────────────────── */}
+                <div className="complaints-hero">
+                    <div className="complaints-hero-content">
+                        <h2>Complaint Management</h2>
+                        <p>Submit & track your hostel complaints in one place</p>
+                        <div className="complaints-stats-row">
+                            <div className="complaints-stat-chip">
+                                <FileText size={13} /> {stats.total} Total
+                            </div>
+                            <div className="complaints-stat-chip">
+                                <Clock size={13} /> {stats.pending} Pending
+                            </div>
+                            <div className="complaints-stat-chip">
+                                <Loader2 size={13} /> {stats.inProgress} Active
+                            </div>
+                            <div className="complaints-stat-chip">
+                                <CheckCircle2 size={13} /> {stats.resolved} Resolved
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Main Grid ────────────────────────────────── */}
+                <div className="complaints-grid">
+
+                    {/* ═══ LEFT — Submit Form ═══ */}
+                    <div className="complaints-card">
+                        <div className="complaints-card-header">
+                            <div
+                                className="complaints-card-header-icon"
+                                style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
+                            >
+                                <Send size={16} color="white" />
+                            </div>
+                            <div>
+                                <h3>File a Complaint</h3>
+                                <p>Describe your issue in detail</p>
+                            </div>
+                        </div>
+
+                        <div className="complaints-card-body">
+                            <form className="complaints-form" onSubmit={handleSubmit}>
+                                {/* Category */}
+                                <div className="complaints-field">
+                                    <label className="complaints-label">
+                                        <Tag size={13} /> Category <span className="required">*</span>
+                                    </label>
+                                    <select
+                                        className="complaints-select"
+                                        value={category}
+                                        onChange={(e) => setCategory(e.target.value)}
+                                        disabled={isSubmitting}
+                                    >
+                                        {CATEGORIES.map((c) => (
+                                            <option key={c.value} value={c.value} disabled={!c.value}>
+                                                {c.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Title */}
+                                <div className="complaints-field">
+                                    <label className="complaints-label">
+                                        <FileText size={13} /> Title <span className="required">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="complaints-input"
+                                        placeholder="e.g. Broken window in Room 204"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        maxLength={100}
+                                        disabled={isSubmitting}
+                                    />
+                                    <span className="complaints-char-count">{title.length}/100</span>
+                                </div>
+
+                                {/* Description */}
+                                <div className="complaints-field">
+                                    <label className="complaints-label">
+                                        <MessageSquareText size={13} /> Description <span className="required">*</span>
+                                    </label>
+                                    <textarea
+                                        className="complaints-textarea"
+                                        placeholder="Provide a detailed description of the issue, including when it started and its impact…"
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        maxLength={1000}
+                                        disabled={isSubmitting}
+                                    />
+                                    <span className="complaints-char-count">{description.length}/1000</span>
+                                </div>
+
+                                {/* Image Upload */}
+                                <div className="complaints-field">
+                                    <label className="complaints-label">
+                                        <ImageIcon size={13} /> Attach Image <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span>
+                                    </label>
+
+                                    {!imagePreview ? (
+                                        <div
+                                            className={`complaints-upload-zone ${isDragging ? 'dragging' : ''} flex flex-col items-center`}
+                                            onClick={() => fileInputRef.current?.click()}
+                                            onDragOver={handleDragOver}
+                                            onDragLeave={handleDragLeave}
+                                            onDrop={handleDrop}
+                                        >
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                accept="image/png,image/jpeg,image/webp"
+                                                onChange={(e) => handleImageSelect(e.target.files?.[0])}
+                                            />
+                                            <Upload size={28} className="complaints-upload-icon" />
+                                            <p className="complaints-upload-text">
+                                                Drag & drop or <span>browse</span>
+                                            </p>
+                                            <p className="complaints-upload-hint">PNG, JPG or WEBP — Max 5 MB</p>
+                                        </div>
+                                    ) : (
+                                        <div className="complaints-upload-preview">
+                                            <img src={imagePreview} alt="Complaint attachment" />
+                                            <button type="button" className="complaints-upload-remove" onClick={removeImage}>
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Upload Progress */}
+                                {isSubmitting && uploadProgress > 0 && uploadProgress < 100 && (
+                                    <div className="complaints-progress-bar">
+                                        <div
+                                            className="complaints-progress-fill"
+                                            style={{ width: `${uploadProgress}%` }}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Submit */}
+                                <button
+                                    type="submit"
+                                    className="complaints-submit-btn"
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 size={18} className="complaints-spinner" />
+                                            Submitting…
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send size={16} />
+                                            Submit Complaint
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    {/* ═══ RIGHT — Complaint History ═══ */}
+                    <div className="complaints-card">
+                        <div className="complaints-card-header">
+                            <div
+                                className="complaints-card-header-icon"
+                                style={{ background: 'linear-gradient(135deg, #8b5cf6, #6366f1)' }}
+                            >
+                                <Inbox size={16} color="white" />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <h3>Complaint History</h3>
+                                <p>{complaints.length} complaint{complaints.length !== 1 ? 's' : ''} filed</p>
+                            </div>
+                        </div>
+
+                        {/* Filters */}
+                        <div className="complaints-history-controls" style={{ paddingTop: '0.75rem' }}>
+                            {FILTER_OPTIONS.map((f) => (
+                                <button
+                                    key={f.value}
+                                    className={`complaints-filter-btn ${activeFilter === f.value ? 'active' : ''}`}
+                                    onClick={() => setActiveFilter(f.value)}
+                                >
+                                    {f.label}
+                                    {f.value !== 'all' && (
+                                        <> ({complaints.filter((c) => f.value === 'all' || c.status === f.value).length})</>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* List */}
+                        <div className="complaints-scroll" style={{ maxHeight: '520px', overflowY: 'auto' }}>
+                            {historyLoading ? (
+                                <div className="complaints-empty">
+                                    <Loader2 size={32} className="complaints-spinner" style={{ color: '#3b82f6' }} />
+                                    <p style={{ marginTop: '0.75rem' }}>Loading complaints…</p>
+                                </div>
+                            ) : filteredComplaints.length === 0 ? (
+                                <div className="complaints-empty">
+                                    <div className="complaints-empty-icon">
+                                        <Inbox size={24} style={{ color: 'var(--text-muted)' }} />
+                                    </div>
+                                    <h4>No complaints found</h4>
+                                    <p>
+                                        {activeFilter === 'all'
+                                            ? "You haven't filed any complaints yet. Use the form to get started."
+                                            : `No ${activeFilter} complaints right now.`}
+                                    </p>
+                                </div>
+                            ) : (
+                                filteredComplaints.map((complaint) => {
+                                    const statusCfg = STATUS_CONFIG[complaint.status] || STATUS_CONFIG.pending;
+                                    return (
+                                        <div className="complaint-item" key={complaint.id}>
+                                            <div className="complaint-item-top">
+                                                <span className="complaint-item-title">{complaint.title}</span>
+                                                <div className={`complaint-status ${statusCfg.className}`}>
+                                                    <span className="complaint-status-dot" />
+                                                    {statusCfg.label}
+                                                </div>
+                                            </div>
+                                            <div className="complaint-item-meta">
+                                                <span className="complaint-item-category">
+                                                    <Tag size={10} />
+                                                    {getCategoryLabel(complaint.category)}
+                                                </span>
+                                                <span className="complaint-item-date">
+                                                    <Calendar size={10} />
+                                                    {formatDate(complaint.createdAt)}
+                                                </span>
+                                            </div>
+                                            <div className="complaint-item-actions">
+                                                <button
+                                                    className="complaint-view-btn"
+                                                    onClick={() => openDetail(complaint)}
+                                                >
+                                                    <Eye size={13} />
+                                                    View Details
+                                                    <ChevronRight size={13} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* ── Detail Modal ─────────────────────────────────── */}
+            {selectedComplaint && (
+                <div className="complaint-modal-backdrop" onClick={closeDetail}>
+                    <div className="complaint-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="complaint-modal-header">
+                            <h3>Complaint Details</h3>
+                            <button className="complaint-modal-close" onClick={closeDetail}>
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <div className="complaint-modal-body">
+                            {/* Status */}
+                            <div className="complaint-detail-row">
+                                <span className="complaint-detail-label">Status</span>
+                                <div style={{ marginTop: '0.25rem' }}>
+                                    {(() => {
+                                        const s = STATUS_CONFIG[selectedComplaint.status] || STATUS_CONFIG.pending;
+                                        return (
+                                            <div className={`complaint-status ${s.className}`}>
+                                                <span className="complaint-status-dot" />
+                                                {s.label}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+
+                            {/* Title */}
+                            <div className="complaint-detail-row">
+                                <span className="complaint-detail-label">Title</span>
+                                <span className="complaint-detail-value" style={{ fontWeight: 600 }}>
+                                    {selectedComplaint.title}
+                                </span>
+                            </div>
+
+                            {/* Category */}
+                            <div className="complaint-detail-row">
+                                <span className="complaint-detail-label">Category</span>
+                                <span className="complaint-detail-value">
+                                    {getCategoryLabel(selectedComplaint.category)}
+                                </span>
+                            </div>
+
+                            {/* Description */}
+                            <div className="complaint-detail-row">
+                                <span className="complaint-detail-label">Description</span>
+                                <span className="complaint-detail-value" style={{ whiteSpace: 'pre-wrap' }}>
+                                    {selectedComplaint.description}
+                                </span>
+                            </div>
+
+                            {/* Date */}
+                            <div className="complaint-detail-row">
+                                <span className="complaint-detail-label">Filed on</span>
+                                <span className="complaint-detail-value">
+                                    {formatDate(selectedComplaint.createdAt)}
+                                </span>
+                            </div>
+
+                            {/* Attached Image */}
+                            {selectedComplaint.imageUrl && (
+                                <div className="complaint-detail-row">
+                                    <span className="complaint-detail-label">Attached Image</span>
+                                    <div className="complaint-detail-image">
+                                        <img src={selectedComplaint.imageUrl} alt="Complaint attachment" />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Response from hostel */}
+                            {selectedComplaint.response && (
+                                <div className="complaint-response-card">
+                                    <h4>
+                                        <MessageSquareText size={14} />
+                                        Response from Hostel
+                                    </h4>
+                                    <p>{selectedComplaint.response}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

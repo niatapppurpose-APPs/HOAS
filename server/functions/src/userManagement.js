@@ -205,7 +205,7 @@ export const createManagement = onCall(corsOptions, async (request) => {
     // Verify admin
     await verifyAdmin(request);
 
-    const { collegeName, principalName, email, phone, password } = request.data;
+    const { collegeName, principalName, email, phone, password, collegeLogo } = request.data;
 
     // Validate required fields
     if (!collegeName || !principalName || !email || !password) {
@@ -245,6 +245,7 @@ export const createManagement = onCall(corsOptions, async (request) => {
       displayName: principalName,
       collegeName: collegeName,
       phone: phone || '',
+      collegeLogo: collegeLogo || null,
       role: 'management',
       status: 'approved',
       createdBy: request.auth.uid,

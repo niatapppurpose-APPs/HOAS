@@ -26,7 +26,7 @@ import ErrorState from "./components/ErrorState";
 import LoadingState from "./components/LoadingState";
 import CollegeSelect from "./components/CollegeSelect";
 
-import { Building2, CheckCircle, Clock, GraduationCap, Shield, LayoutDashboard, X, Plus, Eye, EyeOff, Lock } from "lucide-react";
+import { Building2, CheckCircle, Clock, GraduationCap, Shield, LayoutDashboard, X, Plus, Eye, EyeOff, Lock, UploadIcon, Image as ImageIcon } from "lucide-react";
 
 // Main Dashboard Component
 const OwnersDashboard = () => {
@@ -64,6 +64,10 @@ const OwnersDashboard = () => {
     password: ''
   });
   const [formError, setFormError] = useState('');
+
+  // Logo state for Add Management modal
+  const [modalLogoFile, setModalLogoFile] = useState(null);
+  const [modalLogoPreview, setModalLogoPreview] = useState(null);
 
   // View Password Modal state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -166,24 +170,61 @@ const OwnersDashboard = () => {
 
 
     try {
+      // Compress logo if provided
+      let logoUrl = null;
+      if (modalLogoFile) {
+        logoUrl = await compressLogoForModal(modalLogoFile);
+      }
+
       await cloudFunctions.createManagement({
         collegeName: newManagement.collegeName,
         principalName: newManagement.principalName,
         email: newManagement.email,
         phone: newManagement.phone || '',
-        password: newManagement.password
+        password: newManagement.password,
+        collegeLogo: logoUrl || null,
       })
       toast.success('Management added Successfully 🎉')
 
       setNewManagement({ collegeName: '', principalName: '', email: '', phone: '', password: '' });
+      setModalLogoFile(null);
+      setModalLogoPreview(null);
       setIsAddModalOpen(false);
     } catch (error) {
       toast.error(`Failed to add management: ${error.message}`);
     }
-
-
-
   }
+
+  // Compress logo image to base64 data URL
+  const compressLogoForModal = (file) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            const MAX = 400;
+            let { width, height } = img;
+            if (width > MAX || height > MAX) {
+              const ratio = Math.min(MAX / width, MAX / height);
+              width = Math.round(width * ratio);
+              height = Math.round(height * ratio);
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          } catch (err) { reject(err); }
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
   // Tour Driver Effect
   useEffect(() => {
     if (location.state?.startTour) {
@@ -755,6 +796,83 @@ const OwnersDashboard = () => {
                     color: isDark ? '#fff' : '#000'
                   }}
                 />
+              </div>
+
+              {/* College Logo Upload */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+                  College Logo (Optional)
+                </label>
+                <p className="text-xs mb-2" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+                  Recommended: <span style={{ color: '#10b981', fontWeight: 500 }}>400×400 pixels</span> for best results
+                </p>
+
+                {!modalLogoPreview ? (
+                  <label
+                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed cursor-pointer transition-all hover:border-emerald-500/50"
+                    style={{
+                      borderColor: isDark ? '#4b5563' : '#d1d5db',
+                      backgroundColor: isDark ? 'rgba(55, 65, 81, 0.3)' : 'rgba(249, 250, 251, 0.5)',
+                      color: isDark ? '#9ca3af' : '#6b7280',
+                    }}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 5 * 1024 * 1024) {
+                            toast.warning('Logo must be smaller than 5 MB');
+                            return;
+                          }
+                          setModalLogoFile(file);
+                          setModalLogoPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                    />
+                    <UploadIcon size={18} />
+                    <span className="text-sm font-medium">Upload College Logo</span>
+                  </label>
+                ) : (
+                  <div
+                    className="flex items-center gap-3 p-3 rounded-lg border"
+                    style={{
+                      backgroundColor: isDark ? 'rgba(55, 65, 81, 0.3)' : '#f9fafb',
+                      borderColor: isDark ? '#4b5563' : '#d1d5db',
+                    }}
+                  >
+                    <img
+                      src={modalLogoPreview}
+                      alt="Logo preview"
+                      className="w-12 h-12 rounded-lg object-cover"
+                      style={{ border: '2px solid rgba(16, 185, 129, 0.3)' }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: isDark ? '#fff' : '#000' }}>
+                        {modalLogoFile?.name}
+                      </p>
+                      <p className="text-xs" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>Ready to upload</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors"
+                      style={{
+                        color: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                      }}
+                      onClick={() => {
+                        if (modalLogoPreview) URL.revokeObjectURL(modalLogoPreview);
+                        setModalLogoFile(null);
+                        setModalLogoPreview(null);
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Buttons */}

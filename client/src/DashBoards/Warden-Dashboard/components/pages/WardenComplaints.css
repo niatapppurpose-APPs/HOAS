@@ -1,0 +1,644 @@
+/* ============================================
+   Warden Complaints Page - Styles
+   ============================================ */
+
+/* ── Hero Banner ─────────────────────── */
+.warden-complaints-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    padding: 1.75rem 1.5rem;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%);
+    color: white;
+    margin-bottom: 2rem;
+}
+
+.warden-complaints-hero::before {
+    content: '';
+    position: absolute;
+    top: -60%;
+    right: -40%;
+    width: 80%;
+    height: 220%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.warden-complaints-hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.warden-complaints-hero h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.warden-complaints-hero p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+}
+
+.warden-stats-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.warden-stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ── Filter Tabs ─────────────────────── */
+.warden-filter-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.warden-filter-btn {
+    padding: 0.375rem 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    border: 1.5px solid var(--border-primary);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.warden-filter-btn:hover {
+    border-color: var(--text-muted);
+}
+
+.warden-filter-btn.active {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+/* ── Complaint Card ──────────────────── */
+.warden-complaint-item {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+    transition: background-color 0.15s ease;
+    animation: warden-complaint-enter 0.3s ease forwards;
+}
+
+.warden-complaint-item:last-child {
+    border-bottom: none;
+}
+
+.warden-complaint-item:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.warden-complaint-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.warden-complaint-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+    flex: 1;
+    min-width: 0;
+}
+
+.warden-complaint-student {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.warden-complaint-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.375rem;
+}
+
+.warden-complaint-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.375rem;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+
+.warden-complaint-date {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.warden-complaint-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* ── Status Badges ───────────────────── */
+.warden-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.warden-status-dot {
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.warden-status-pending {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.warden-status-pending .warden-status-dot {
+    background: #f59e0b;
+    animation: warden-status-pulse 2s ease-in-out infinite;
+}
+
+.warden-status-in-progress {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.warden-status-in-progress .warden-status-dot {
+    background: #3b82f6;
+    animation: warden-status-pulse 1.5s ease-in-out infinite;
+}
+
+.warden-status-resolved {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.warden-status-resolved .warden-status-dot {
+    background: #10b981;
+}
+
+.warden-status-rejected {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.warden-status-rejected .warden-status-dot {
+    background: #ef4444;
+}
+
+/* ── Action Buttons ──────────────────── */
+.warden-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid;
+}
+
+.warden-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.warden-btn-progress {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.warden-btn-progress:hover:not(:disabled) {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+.warden-btn-resolve {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.warden-btn-resolve:hover:not(:disabled) {
+    background: rgba(16, 185, 129, 0.15);
+}
+
+.warden-btn-reject {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.warden-btn-reject:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.warden-btn-view {
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.08);
+    border-color: rgba(249, 115, 22, 0.2);
+}
+
+.warden-btn-view:hover:not(:disabled) {
+    background: rgba(249, 115, 22, 0.15);
+    transform: translateX(2px);
+}
+
+/* ── Detail Modal ────────────────────── */
+.warden-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    animation: warden-modal-fade 0.2s ease;
+}
+
+.warden-modal {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 1rem;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    animation: warden-modal-slide 0.25s ease;
+}
+
+.warden-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.warden-modal-header h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.warden-modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    border: none;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.warden-modal-close:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.warden-modal-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.warden-detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.warden-detail-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.warden-detail-value {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.warden-detail-image {
+    width: 100%;
+    border-radius: 0.625rem;
+    border: 1px solid var(--border-primary);
+    overflow: hidden;
+}
+
+.warden-detail-image img {
+    width: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ── Response Form in Modal ──────────── */
+.warden-response-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+}
+
+.warden-response-form label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.warden-response-textarea {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.5rem;
+    border: 1.5px solid var(--border-primary);
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+    min-height: 80px;
+    resize: vertical;
+}
+
+.warden-response-textarea:focus {
+    border-color: #f97316;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+.warden-response-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.warden-response-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.warden-response-submit.resolve {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.warden-response-submit.resolve:hover {
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.warden-response-submit.reject {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.warden-response-submit.reject:hover {
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.warden-response-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── Empty State ─────────────────────── */
+.warden-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.warden-empty-icon {
+    width: 4rem;
+    height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    margin-bottom: 1rem;
+}
+
+.warden-empty h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.warden-empty p {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    max-width: 280px;
+}
+
+/* ── Card Base ───────────────────────── */
+.warden-complaints-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.warden-complaints-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.warden-complaints-card-header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.625rem;
+    flex-shrink: 0;
+}
+
+.warden-complaints-card-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.warden-complaints-card-header p {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.125rem;
+}
+
+/* ── Scrollbar ───────────────────────── */
+.warden-scroll::-webkit-scrollbar {
+    width: 5px;
+}
+
+.warden-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.warden-scroll::-webkit-scrollbar-thumb {
+    background: var(--text-muted);
+    border-radius: 3px;
+}
+
+/* ── Animations ──────────────────────── */
+@keyframes warden-status-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+@keyframes warden-modal-fade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes warden-modal-slide {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes warden-complaint-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.warden-complaint-item:nth-child(1) {
+    animation-delay: 0.02s;
+}
+
+.warden-complaint-item:nth-child(2) {
+    animation-delay: 0.04s;
+}
+
+.warden-complaint-item:nth-child(3) {
+    animation-delay: 0.06s;
+}
+
+.warden-complaint-item:nth-child(4) {
+    animation-delay: 0.08s;
+}
+
+.warden-complaint-item:nth-child(5) {
+    animation-delay: 0.10s;
+}
+
+.warden-complaint-item:nth-child(6) {
+    animation-delay: 0.12s;
+}
+
+@keyframes warden-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.warden-spinner {
+    animation: warden-spin 0.8s linear infinite;
+}

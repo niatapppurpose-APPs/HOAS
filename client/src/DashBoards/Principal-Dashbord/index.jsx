@@ -4,8 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { Building2, Loader2, CheckCircle, UploadIcon, MapPin, Home, Sparkles, ArrowRight } from "lucide-react";
 import LocationAutocomplete from "../../components/LocationAutocomplete";
 import { HashLoader } from 'react-spinners'
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from "../../firebase/firebaseConfig";
+
 
 const ManagementProfile = () => {
   const { user, userData, userDataLoading, loading, createUserProfile } = useAuth();
@@ -75,29 +74,42 @@ const ManagementProfile = () => {
     }
   }, [showSuccess, countdown, navigate]);
 
-  // Upload file to Firebase Storage and return download URL
-  const uploadToStorage = (file) => {
+  // Compress logo image and return base64 data URL
+  // Stored directly in Firestore to avoid GCS CORS issues
+  const compressLogo = (file) => {
     return new Promise((resolve, reject) => {
-      const fileName = `college-logos/${user.uid}-${Date.now()}.${file.name.split('.').pop()}`;
-      const storageRef = ref(storage, fileName);
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      const img = new Image();
+      const reader = new FileReader();
 
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-          console.log('Upload progress:', progress + '%');
-        },
-        (error) => {
-          console.error('Upload error:', error);
-          reject(error);
-        },
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          console.log('File uploaded successfully. URL:', downloadURL);
-          resolve(downloadURL);
-        }
-      );
+      reader.onload = (e) => {
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            const MAX = 400; // Recommended 400x400
+            let { width, height } = img;
+
+            if (width > MAX || height > MAX) {
+              const ratio = Math.min(MAX / width, MAX / height);
+              width = Math.round(width * ratio);
+              height = Math.round(height * ratio);
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            resolve(dataUrl);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
     });
   };
 
@@ -113,10 +125,10 @@ const ManagementProfile = () => {
     }
 
     try {
-      // Upload logo to Firebase Storage
+      // Compress logo to base64 data URL
       let logoUrl = null;
       if (logoFile) {
-        logoUrl = await uploadToStorage(logoFile);
+        logoUrl = await compressLogo(logoFile);
         setUploadedLogoUrl(logoUrl);
       }
 
