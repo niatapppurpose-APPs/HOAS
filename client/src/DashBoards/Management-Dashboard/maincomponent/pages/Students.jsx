@@ -203,14 +203,15 @@ const Students = () => {
             />
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 " >
             {serachStudentList.map((student) => (
               <div
                 key={student.id}
                 className="flex items-center gap-3 rounded-xl p-4 transition-all"
                 style={{
                   backgroundColor: 'var(--bg-card)',
-                  border: '1px solid var(--border-primary)'
+                  border: '1px solid var(--border-primary)',
+                  borderColor: student.isOnline ? "green" : "red",
                 }}
               ><Avatar
                   image={student.photoURL}
@@ -218,7 +219,7 @@ const Students = () => {
                   size="lg"
                 />
 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 " >
 
                   {/* Name and Badge */}
                   <div className="flex items-center gap-8 mb-1 flex-wrap">
@@ -237,23 +238,7 @@ const Students = () => {
                         <GraduationCap className="w-3.5 h-3.5" />
                         {student.role || 'Student'}
                       </span>
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-white text-xs font-medium ${student.isOnline ? 'bg-gradient-to-r from-green-600/80 to-emerald-600/80' : 'bg-gradient-to-r from-red-600/80 to-rose-600/80'}`}>
-                        {student.isOnline ? (
-                          <><CheckCircle className="w-3 h-3" /> Active</>
-                        ) : (
-                          <><CircleX className="w-3 h-3" /> Inactive</>
-                        )}
-                      </span>
-                      {/* Premium Hostel Badge */}
-                      {/* <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white text-xs font-semibold shadow-lg border border-emerald-500/30">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                      </svg>
-                      {warden.hostelBlock || contextInfo.hostelName}
-                      <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold">
-                        ★
-                      </span>
-                    </span> */}
+
                     </div>
                   </div>
 

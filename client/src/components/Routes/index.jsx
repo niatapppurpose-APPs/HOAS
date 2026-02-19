@@ -18,9 +18,7 @@ import NotFound from "../../Pages/NotFound";
 
 
 // Lazy loaded pages - loaded on demand for better performance
-const StudentProfile = lazy(() => import('../../DashBoards/Student-DashBoard/index'));
-const WardenProfile = lazy(() => import('../../DashBoards/Warden-Dashboard/index'));
-const ManagementProfile = lazy(() => import('../../DashBoards/Principal-Dashbord/index'));
+
 
 // Lazy loaded dashboards
 const StudentDashboard = lazy(() => import("../../DashBoards/Student-DashBoard/StudentDashboard"));
@@ -30,6 +28,7 @@ const StudentLeaveRequests = lazy(() => import("../../DashBoards/Student-DashBoa
 const StudentAnnouncements = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentAnnouncements"));
 const StudentSettings = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentSettings"));
 const StudentHelpSupport = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentHelpSupport"));
+const StudentProfile = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentProfile"));
 const WardenDashboard = lazy(() => import("../../DashBoards/Warden-Dashboard/WardenDashboard"));
 const WardenLayout = lazy(() => import("../../DashBoards/Warden-Dashboard/components/layout/WardenLayout"));
 const WardenStudents = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenStudents"));
@@ -37,6 +36,7 @@ const WardenComplaints = lazy(() => import("../../DashBoards/Warden-Dashboard/co
 const WardenAnnouncements = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenAnnouncements"));
 const WardenSettings = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenSettings"));
 const WardenHelpSupport = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenHelpSupport"));
+const WardenProfile = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenProfile"));
 
 // Management Dashboard - lazy loaded
 const ManagementDashboard = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/ManagementDashboard"));
@@ -47,6 +47,7 @@ const ManagementHostels = lazy(() => import("../../DashBoards/Management-Dashboa
 const ManagementReports = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Reports"));
 const ManagementHelp = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/HelpSupport"));
 const ManagementSettings_Page = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/ManagementSettings"));
+const ManagementProfile = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/ManagementProfile"));
 
 // Owner Dashboard - lazy loaded
 const OwnersDashboard = lazy(() => import("../../Pages/OwnersDashboard/ownersdashbord"));
@@ -85,6 +86,7 @@ const Routes_path = () => {
                     <Route path="announcements" element={<StudentAnnouncements />} />
                     <Route path="settings" element={<StudentSettings />} />
                     <Route path="help" element={<StudentHelpSupport />} />
+                    <Route path="profile" element={<StudentProfile />} />
                 </Route>
 
                 {/* Warden Dashboard with Layout */}
@@ -95,6 +97,7 @@ const Routes_path = () => {
                     <Route path="announcements" element={<WardenAnnouncements />} />
                     <Route path="settings" element={<WardenSettings />} />
                     <Route path="help" element={<WardenHelpSupport />} />
+                    <Route path="profile" element={<WardenProfile />} />
                 </Route>
 
                 {/* Management Dashboard with Layout */}
@@ -106,6 +109,7 @@ const Routes_path = () => {
                     <Route path="reports" element={<ManagementReports />} />
                     <Route path="settings" element={<ManagementSettings_Page />} />
                     <Route path="help" element={<ManagementHelp />} />
+                    <Route path="profile" element={<ManagementProfile />} />
                 </Route>
 
                 {/* --------------------------------------- Owners Page ------------------------------------- */}

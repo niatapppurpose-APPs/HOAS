@@ -190,7 +190,12 @@ const Wardens = () => {
           <div
             key={warden.id}
             className="rounded-xl p-4 hover:border-slate-600/50 transition-all"
-            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
+
+            style={{
+              backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)',
+              borderColor: warden.isOnline ? "green" : "red",
+
+            }}
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
 
@@ -221,23 +226,6 @@ const Wardens = () => {
                         <Shield className="w-3.5 h-3.5" />
                         {getRoleLabel(warden)}
                       </span>
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-white text-xs font-medium ${warden.isOnline ? 'bg-gradient-to-r from-green-600/80 to-emerald-600/80' : 'bg-gradient-to-r from-red-600/80 to-rose-600/80'}`}>
-                        {warden.isOnline ? (
-                          <><CheckCircle className="w-3 h-3" /> Active</>
-                        ) : (
-                          <><CircleX className="w-3 h-3" /> Inactive</>
-                        )}
-                      </span>
-                      {/* Premium Hostel Badge */}
-                      {/* <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white text-xs font-semibold shadow-lg border border-emerald-500/30">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                      </svg>
-                      {warden.hostelBlock || contextInfo.hostelName}
-                      <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold">
-                        ★
-                      </span>
-                    </span> */}
                     </div>
                   </div>
 

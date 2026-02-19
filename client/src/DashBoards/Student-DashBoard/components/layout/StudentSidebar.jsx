@@ -10,7 +10,7 @@ import {
   HelpCircle,
   Pin,
   ChevronLeft,
-  X, 
+  X,
   GraduationCap,
 } from "lucide-react";
 import { useAuth } from "../../../../context/AuthContext";
@@ -116,7 +116,7 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
           backgroundColor: 'var(--bg-sidebar)',
           borderColor: 'var(--border-primary)'
         }}
-        className={`fixed top-0 left-0 h-full backdrop-blur-xl border-r z-40 transition-all duration-300 ease-in-out
+        className={`fixed top-0 left-0 h-full backdrop-blur-xl border-r z-40 transition-all duration-300 ease-in-out overflow-hidden
           ${isCollapsed ? "-translate-x-full lg:translate-x-0 lg:w-20" : "translate-x-0 w-72 lg:w-72"}`}
       >
         {/* Logo Section */}
@@ -124,29 +124,31 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
           className="flex items-center justify-between h-20 px-4 border-b shrink-0"
           style={{ borderColor: 'var(--border-primary)' }}
         >
-          <div className={`flex items-center gap-3 transition-all duration-300 ${!showContent ? "lg:justify-center lg:w-full" : ""}`}>
+          <div className={`flex items-center gap-3 min-w-0 flex-1 transition-all duration-300 ${!showContent ? "lg:justify-center lg:flex-none" : ""}`}>
             <button
               onClick={() => setShowLogoPopup(true)}
-              className={`relative transition-all duration-300 group cursor-pointer ${!showContent ? "w-12 h-12" : "w-14 h-14"}`}
+              className={`relative flex-shrink-0 transition-all duration-300 group cursor-pointer ${!showContent ? "w-9 h-9" : "w-11 h-11"}`}
               title="Click to view logo"
             >
               <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <img
                 src={collegeLogo ? collegeLogo : Applogo}
-                className="relative w-full h-full rounded-full object-contain border-2 border-slate-600/50 shadow-lg group-hover:border-blue-500/50 transition-all duration-300 group-hover:scale-105"
+                className="relative w-full h-full rounded-xl object-contain border-2 border-slate-600/50 shadow-lg group-hover:border-blue-500/50 transition-all duration-300 group-hover:scale-105"
                 alt={collegeLogo ? "College Logo" : "HOAS Logo"}
               />
             </button>
 
-            <div className={`flex flex-col transition-all duration-300 origin-left ${!showContent ? "lg:hidden opacity-0 w-0 scale-95" : "opacity-100 w-auto scale-100"}`}>
-              <h1 className="text-xl font-bold leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>{userData?.collegeName || 'HOAS'}</h1>
-              <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
-                {collegeLogo ? 'College Portal' : 'Student Portal'}
+            <div className={`flex flex-col min-w-0 overflow-hidden transition-all duration-300 origin-left ${!showContent ? "lg:hidden opacity-0 w-0 scale-95" : "opacity-100 flex-1 scale-100"}`}>
+              <h1 className="text-sm font-bold leading-tight tracking-tight truncate" style={{ color: 'var(--text-primary)' }} title={userData?.collegeName || 'HOAS'}>
+                {userData?.collegeName || 'HOAS'}
+              </h1>
+              <p className="text-xs font-medium mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
+                Student Portal
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 flex-shrink-0 ml-1">
             {/* Pin Button - Desktop Only */}
             <button
               onClick={handlePinClick}
@@ -276,26 +278,46 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
           </div>
 
           {/* User Profile Section */}
-          <div className="mt-auto px-3 pt-4 border-t" style={{ borderColor: 'var(--border-primary)' }}>
-            <div className={`flex items-center gap-3 px-3 py-2 ${!showContent ? "lg:justify-center" : ""}`}>
-              <Avatar src={user?.photoURL} size={showContent ? 40 : 32} className="flex-shrink-0" />
-              <div className={`flex-1 min-w-0 transition-all duration-200 ${!showContent ? "lg:hidden" : ""}`}>
-                <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                  {user?.displayName || 'Student'}
-                </p>
-                <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                  {user?.email}
-                </p>
+          <button
+            onClick={() => {
+              navigate("/dashboard/student/profile");
+              if (window.innerWidth < 1024) setIsCollapsed(true);
+            }}
+            className={`mt-auto mb-3 mx-2 group relative ${!showContent ? "flex justify-center" : "block"} cursor-pointer`}
+          >
+            <div
+              className={`transition-all duration-200 ${showContent ? "p-3 rounded-xl border" : "p-1 hover:scale-105"}`}
+              style={showContent ? {
+                background: isDark
+                  ? 'linear-gradient(to bottom right, rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.4))'
+                  : 'linear-gradient(to bottom right, rgba(241, 245, 249, 0.8), rgba(241, 245, 249, 0.4))',
+                borderColor: 'var(--border-secondary)'
+              } : undefined}
+            >
+              <div className={`flex items-center ${showContent ? "gap-3" : "justify-center"}`}>
+                <Avatar image={user?.photoURL} name={user?.displayName} size="sm" rounded="full" />
+                {showContent && (
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                      {user?.displayName || 'Student'}
+                    </p>
+                    <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                      {user?.email}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-
-          {/* Footer */}
-          <div className={`px-4 py-3 text-center transition-all duration-200 ${!showContent ? "lg:hidden" : ""}`}>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              © {handleDateYear()} HOAS
-            </p>
-          </div>
+            {!showContent && (
+              <div
+                className="hidden lg:block absolute left-full ml-3 px-3 py-2 text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 top-1/2 -translate-y-1/2"
+                style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', boxShadow: 'var(--shadow-lg)' }}
+              >
+                My Profile
+                <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 rotate-45" style={{ backgroundColor: 'var(--bg-card)' }} />
+              </div>
+            )}
+          </button>
         </nav>
       </aside>
 

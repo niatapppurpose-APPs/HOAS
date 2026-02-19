@@ -27,6 +27,16 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
   const [isPinned, setIsPinned] = useState(false);
   const [showLogoPopup, setShowLogoPopup] = useState(false);
 
+  // Close popup on Escape key
+  useEffect(() => {
+    if (!showLogoPopup) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setShowLogoPopup(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showLogoPopup]);
+
   // Get active item from current path
   const getActiveItem = () => {
     const path = location.pathname;
@@ -119,37 +129,49 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
           backgroundColor: 'var(--bg-sidebar)',
           borderColor: 'var(--border-primary)'
         }}
-        className={`fixed top-0 left-0 h-full backdrop-blur-xl border-r z-40 transition-all duration-300 ease-in-out
+        className={`fixed top-0 left-0 h-full backdrop-blur-xl border-r z-40 transition-all duration-300 ease-in-out overflow-hidden
           ${isCollapsed ? "-translate-x-full lg:translate-x-0 lg:w-20" : "translate-x-0 w-72 lg:w-72"}`}
       >
         {/* Logo Section */}
         <div
-          className="flex items-center justify-between h-20 px-4 border-b shrink-0"
+          className="flex items-center justify-between h-20 px-4 border-b shrink-0 overflow-hidden"
           style={{ borderColor: 'var(--border-primary)' }}
         >
-          <div className={`flex items-center gap-3 transition-all duration-300 ${!showContent ? "lg:justify-center lg:w-full" : ""}`}>
+          {/* Logo + Name — takes remaining space, never pushes buttons off screen */}
+          <div className={`flex items-center gap-3 min-w-0 flex-1 transition-all duration-300 ${!showContent ? "lg:justify-center lg:flex-none" : ""}`}>
             <button
               onClick={() => setShowLogoPopup(true)}
-              className={`relative transition-all duration-300 group cursor-pointer ${!showContent ? "w-12 h-12" : "w-14 h-14"}`}
+              className={`relative flex-shrink-0 transition-all duration-300 group cursor-pointer ${!showContent ? "w-12 h-12" : "w-11 h-11"}`}
               title="Click to view logo"
             >
               <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <img
                 src={collegeLogo ? collegeLogo : AppLogo4k}
-                className="relative w-full h-full rounded-full object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-indigo-500/50 transition-all duration-300 group-hover:scale-105"
+                className="relative w-full h-full rounded-xl object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-indigo-500/50 transition-all duration-300 group-hover:scale-105"
                 alt={collegeLogo ? "College Logo" : "HOAS Logo"}
               />
             </button>
 
-            <div className={`flex flex-col transition-all duration-300 origin-left ${!showContent ? "lg:hidden opacity-0 w-0 scale-95" : "opacity-100 w-auto scale-100"}`}>
-              <h1 className="text-xl font-bold leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>{userData?.collegeName || 'HOAS'}</h1>
-              <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
+            {/* Text block: hidden when collapsed, truncates when name is long */}
+            <div
+              className={`flex flex-col min-w-0 overflow-hidden transition-all duration-300 origin-left ${!showContent ? "lg:hidden opacity-0 w-0 scale-95" : "opacity-100 flex-1 scale-100"
+                }`}
+            >
+              <h1
+                className="text-sm font-bold leading-tight tracking-tight truncate"
+                style={{ color: 'var(--text-primary)' }}
+                title={userData?.collegeName || 'HOAS'}
+              >
+                {userData?.collegeName || 'HOAS'}
+              </h1>
+              <p className="text-xs font-medium mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
                 {collegeLogo ? 'College Portal' : 'Management Portal'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Action buttons — always visible, never pushed off */}
+          <div className="flex items-center gap-1 flex-shrink-0 ml-1">
             {/* Pin Button - Desktop Only */}
             <button
               onClick={handlePinClick}
@@ -277,13 +299,13 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
           {/* User Profile Card */}
           <button
             onClick={() => {
-              navigate("/management-profile");
+              navigate("/dashboard/management/profile");
               if (window.innerWidth < 1024) setIsCollapsed(true);
             }}
-            className={`mt-5 mb-5 mx-2 group relative ${!showContent ? "flex justify-center" : "block"} cursor-pointer`}
+            className={`mt-auto mb-3 mx-2 group relative ${!showContent ? "flex justify-center" : "block"} cursor-pointer`}
           >
             <div
-              className={`transition-all duration-200 ${showContent ? "p-3 rounded-xl border-2" : "p-0 hover:scale-105 transition-transform"}`}
+              className={`transition-all duration-200 ${showContent ? "p-3 rounded-xl border" : "p-1 hover:scale-105 transition-transform"}`}
               style={showContent ? {
                 background: isDark
                   ? 'linear-gradient(to bottom right, rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.4))'
@@ -292,7 +314,7 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
               } : undefined}
             >
               <div className={`flex items-center ${showContent ? "gap-3" : "justify-center"}`}>
-                <Avatar image={user?.photoURL} name={user?.displayName} size="md" />
+                <Avatar image={user?.photoURL} name={user?.displayName} size="sm" rounded="lg" />
                 {showContent && (
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{user?.displayName}</p>
@@ -308,7 +330,7 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
                 className="hidden lg:block absolute left-full ml-3 px-3 py-2 text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 top-1/2 -translate-y-1/2"
                 style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', boxShadow: 'var(--shadow-lg)' }}
               >
-                Profile
+                My Profile
                 <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 rotate-45" style={{ backgroundColor: 'var(--bg-card)' }} />
               </div>
             )}
@@ -329,28 +351,33 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
         <ChevronRight className="w-5 h-5" />
       </button>
 
-      {/* Logo Popup Modal */}
+      {/* Logo Popup Modal — z-[9999] ensures it's above everything */}
       {showLogoPopup && (
         <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
-          onClick={() => setShowLogoPopup(false)}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          style={{ zIndex: 9999 }}
+          onMouseDown={(e) => {
+            // Close only when clicking the backdrop itself, not the card
+            if (e.target === e.currentTarget) setShowLogoPopup(false);
+          }}
         >
           <div
-            className="relative rounded-2xl p-8 max-w-2xl w-full shadow-2xl animate-scaleIn"
+            className="relative rounded-2xl p-8 max-w-lg w-full shadow-2xl"
             style={{
               background: isDark
                 ? 'linear-gradient(to bottom right, #0f172a, #1e293b)'
                 : 'linear-gradient(to bottom right, #ffffff, #f1f5f9)',
-              border: '1px solid var(--border-primary)'
+              border: '1px solid var(--border-primary)',
+              zIndex: 10000
             }}
-            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
               onClick={() => setShowLogoPopup(false)}
-              className="absolute top-4 right-4 p-2 rounded-full transition-all duration-200 group hover:bg-red-500/10"
-              style={{ backgroundColor: 'var(--bg-tertiary)' }}
-              title="Close"
+              className="absolute top-4 right-4 p-2 rounded-full transition-all duration-200 hover:bg-red-500/20"
+              style={{ backgroundColor: 'var(--bg-tertiary)', zIndex: 10001 }}
+              title="Close (Esc)"
             >
               <X className="w-5 h-5 text-red-500" />
             </button>
@@ -363,15 +390,16 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
                   <img
                     src={collegeLogo ? collegeLogo : AppLogo4k}
                     alt={collegeLogo ? "College Logo" : "HOAS Logo"}
-                    className="relative w-118  h-38 mx-auto rounded-xl object-cover border-4 border-red-700/50 shadow-2xl"
+                    className="relative max-w-xs w-full mx-auto rounded-xl object-contain border-4 border-red-700/50 shadow-2xl"
+                    style={{ maxHeight: '200px' }}
                   />
                 </div>
               </div>
 
-              <h2 className="text-3xl font-bold cursive mb-2 bg-gradient-to-r from-red-400 to-red-400 bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
                 {userData?.collegeName}
               </h2>
-              <p className="text-lg mb-1" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-base mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Hostel Operation Accountability System
               </p>
 
@@ -383,6 +411,11 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
               <div className="mt-6 text-xs" style={{ color: 'var(--text-muted)' }}>
                 © {handleDateYear()} HOAS. All rights reserved.
               </div>
+
+              {/* Tap outside hint */}
+              <p className="mt-3 text-xs opacity-50" style={{ color: 'var(--text-muted)' }}>
+                Click outside or press Esc to close
+              </p>
             </div>
           </div>
         </div>

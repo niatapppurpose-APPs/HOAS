@@ -14,21 +14,37 @@ const Login = () => {
   const [showRedirecting, setShowRedirecting] = useState(false);
   const [minDelayPassed, setMinDelayPassed] = useState(false);
 
+  // Track if user was already logged in when this component first mounted
+  // (as opposed to a fresh login that happened while on this page)
+  const wasAlreadyLoggedInRef = useRef(null); // null = not yet determined
   const previousUserRef = useRef(null);
+
+  // On first render (after auth loading completes), record whether user was already logged in
+  useEffect(() => {
+    if (loading) return; // wait until auth state is known
+    if (wasAlreadyLoggedInRef.current === null) {
+      // First time we know the auth state
+      wasAlreadyLoggedInRef.current = !!user;
+    }
+  }, [loading, user]);
 
   // Detect when user logs in (user changes from null to a value)
   useEffect(() => {
     if (!previousUserRef.current && user) {
-      // User just logged in - show redirecting page
-      setShowRedirecting(true);
-      setMinDelayPassed(false);
+      // User just transitioned from logged-out → logged-in
+      // Only show the redirecting animation if this was a FRESH login (not a page reload)
+      if (wasAlreadyLoggedInRef.current === false) {
+        // Fresh login — show the animation
+        setShowRedirecting(true);
+        setMinDelayPassed(false);
 
-      // Minimum 3 second delay before allowing navigation
-      const timer = setTimeout(() => {
-        setMinDelayPassed(true);
-      }, 5000);
+        const timer = setTimeout(() => {
+          setMinDelayPassed(true);
+        }, 5000);
 
-      return () => clearTimeout(timer);
+        return () => clearTimeout(timer);
+      }
+      // else: user was already logged in on mount — skip animation, navigate immediately
     }
     previousUserRef.current = user;
   }, [user]);
@@ -37,26 +53,30 @@ const Login = () => {
     // Don't navigate if still loading auth state
     if (loading) return;
 
-    // Wait for both: data loaded AND minimum delay passed
-    if (user && !userDataLoading && minDelayPassed) {
-      if (userData) {
-        const { role, status } = userData;
-        if (status === "approved") {
-          if (role === 'admin' || role === 'owner') {
-            navigate('/OwnersDashboard', { replace: true });
+    if (user && !userDataLoading) {
+      // If user was already logged in when page loaded, navigate immediately (no delay)
+      // If it's a fresh login, wait for the minimum delay
+      const alreadyLoggedIn = wasAlreadyLoggedInRef.current === true;
+      if (alreadyLoggedIn || minDelayPassed) {
+        if (userData) {
+          const { role, status } = userData;
+          if (status === "approved") {
+            if (role === 'admin' || role === 'owner') {
+              navigate('/OwnersDashboard', { replace: true });
+            } else {
+              navigate(`/dashboard/${role}`, { replace: true });
+            }
           } else {
-            navigate(`/dashboard/${role}`, { replace: true });
+            navigate("/waiting-approval", { replace: true });
           }
         } else {
           navigate("/waiting-approval", { replace: true });
         }
-      } else {
-        navigate("/waiting-approval", { replace: true });
       }
     }
   }, [user, userData, userDataLoading, loading, navigate, minDelayPassed]);
 
-  // Show redirecting page while user is logged in and either loading data or waiting for delay
+  // Show redirecting page only for fresh logins, while waiting for data or delay
   if (showRedirecting && user && (userDataLoading || !minDelayPassed)) {
     return (
       <RedirectingPage
@@ -101,11 +121,11 @@ const Login = () => {
         {/* Ambient background orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
           <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full opacity-20 blur-[120px]"
-               style={{ background: isDark ? 'radial-gradient(circle, #4f46e5, transparent)' : 'radial-gradient(circle, #a5b4fc, transparent)' }} />
+            style={{ background: isDark ? 'radial-gradient(circle, #4f46e5, transparent)' : 'radial-gradient(circle, #a5b4fc, transparent)' }} />
           <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full opacity-15 blur-[100px]"
-               style={{ background: isDark ? 'radial-gradient(circle, #7c3aed, transparent)' : 'radial-gradient(circle, #c4b5fd, transparent)' }} />
+            style={{ background: isDark ? 'radial-gradient(circle, #7c3aed, transparent)' : 'radial-gradient(circle, #c4b5fd, transparent)' }} />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-10 blur-[140px]"
-               style={{ background: isDark ? 'radial-gradient(circle, #6366f1, transparent)' : 'radial-gradient(circle, #e0e7ff, transparent)' }} />
+            style={{ background: isDark ? 'radial-gradient(circle, #6366f1, transparent)' : 'radial-gradient(circle, #e0e7ff, transparent)' }} />
         </div>
 
         {/* Go Home button */}
@@ -131,12 +151,12 @@ const Login = () => {
             {/* Logo */}
             <div className="mb-6 sm:mb-8 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl p-1 inline-flex items-center justify-center"
-                   style={{
-                     background: isDark
-                       ? 'linear-gradient(135deg, rgba(79, 70, 229, 0.3), rgba(124, 58, 237, 0.3))'
-                       : 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2))',
-                     border: isDark ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid rgba(99, 102, 241, 0.25)'
-                   }}>
+                style={{
+                  background: isDark
+                    ? 'linear-gradient(135deg, rgba(79, 70, 229, 0.3), rgba(124, 58, 237, 0.3))'
+                    : 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2))',
+                  border: isDark ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid rgba(99, 102, 241, 0.25)'
+                }}>
                 <div className="w-full h-full rounded-xl overflow-hidden bg-white flex items-center justify-center">
                   <img src={Applogo} alt="HOAS Logo" className="w-full h-full object-contain" />
                 </div>
@@ -145,27 +165,27 @@ const Login = () => {
 
             {/* Heading */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] font-extrabold leading-[1.1] mb-4 animate-fade-in-up"
-                style={{
-                  animationDelay: '250ms',
-                  color: isDark ? '#ffffff' : '#0f172a'
-                }}>
+              style={{
+                animationDelay: '250ms',
+                color: isDark ? '#ffffff' : '#0f172a'
+              }}>
               HOAS — better{' '}
               <span className="text-transparent bg-clip-text"
-                    style={{
-                      backgroundImage: isDark
-                        ? 'linear-gradient(135deg, #818cf8, #a78bfa)'
-                        : 'linear-gradient(135deg, #4f46e5, #7c3aed)'
-                    }}>
+                style={{
+                  backgroundImage: isDark
+                    ? 'linear-gradient(135deg, #818cf8, #a78bfa)'
+                    : 'linear-gradient(135deg, #4f46e5, #7c3aed)'
+                }}>
                 housing
               </span>
               , faster
             </h1>
 
             <p className="text-base sm:text-lg mb-8 max-w-md mx-auto lg:mx-0 animate-fade-in-up"
-               style={{
-                 animationDelay: '350ms',
-                 color: isDark ? '#94a3b8' : '#64748b'
-               }}>
+              style={{
+                animationDelay: '350ms',
+                color: isDark ? '#94a3b8' : '#64748b'
+              }}>
               Tools to run housing operations — securely and simply.
             </p>
 
@@ -174,10 +194,10 @@ const Login = () => {
               {features.map((item, i) => (
                 <div key={i} className="flex items-center gap-3 group">
                   <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110"
-                       style={{
-                         backgroundColor: isDark ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.1)',
-                         border: isDark ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid rgba(99, 102, 241, 0.15)'
-                       }}>
+                    style={{
+                      backgroundColor: isDark ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.1)',
+                      border: isDark ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid rgba(99, 102, 241, 0.15)'
+                    }}>
                     <item.icon className="w-4 h-4" style={{ color: isDark ? '#818cf8' : '#4f46e5' }} />
                   </div>
                   <span className="text-sm font-medium" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>
@@ -193,47 +213,47 @@ const Login = () => {
             {/* Neon glow behind card */}
             <div className="relative">
               <div className="absolute -inset-[1px] rounded-[22px] opacity-60 blur-sm pointer-events-none"
-                   style={{
-                     background: isDark
-                       ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3))'
-                       : 'linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2))'
-                   }} />
+                style={{
+                  background: isDark
+                    ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3))'
+                    : 'linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2))'
+                }} />
 
               {/* Gradient border wrapper */}
               <div className="relative rounded-[20px] p-[1px]"
-                   style={{
-                     background: isDark
-                       ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.4))'
-                       : 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.25))'
-                   }}>
+                style={{
+                  background: isDark
+                    ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.4))'
+                    : 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.25))'
+                }}>
 
                 {/* Card body */}
                 <div className="rounded-[19px] backdrop-blur-xl px-6 sm:px-8 py-8 sm:py-10 relative overflow-hidden"
-                     role="region"
-                     aria-labelledby="signin-heading"
-                     style={{
-                       backgroundColor: isDark ? 'rgba(10, 15, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-                       boxShadow: isDark
-                         ? '0 25px 60px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-                         : '0 25px 60px -12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
-                     }}>
+                  role="region"
+                  aria-labelledby="signin-heading"
+                  style={{
+                    backgroundColor: isDark ? 'rgba(10, 15, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+                    boxShadow: isDark
+                      ? '0 25px 60px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+                      : '0 25px 60px -12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+                  }}>
 
                   {/* Subtle shine effect */}
                   <div className="absolute top-0 left-0 right-0 h-px pointer-events-none"
-                       style={{
-                         background: isDark
-                           ? 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)'
-                           : 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent)'
-                       }} />
+                    style={{
+                      background: isDark
+                        ? 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent)'
+                        : 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent)'
+                    }} />
 
                   {/* Card header */}
                   <div className="text-center mb-8">
                     <h2 id="signin-heading" className="text-2xl sm:text-3xl font-bold mb-2 tracking-tight"
-                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
+                      style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
                       Sign in to HOAS
                     </h2>
                     <p className="text-sm"
-                       style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
+                      style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
                       Fast, secure access to your workspace.
                     </p>
                   </div>
