@@ -118,73 +118,7 @@ const Notifications = () => {
             </div>
           </motion.div>
         )}
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="p-6 rounded-xl border"
-            style={{
-              backgroundColor: isDark ? '#1e293b' : '#ffffff',
-              borderColor: isDark ? '#334155' : '#e2e8f0'
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium mb-1" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
-                  Total Notifications
-                </p>
-                <p className="text-3xl font-bold" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
-                  {notifications.length}
-                </p>
-              </div>
-              <Bell className="w-10 h-10 text-indigo-400" />
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="p-6 rounded-xl border"
-            style={{
-              backgroundColor: isDark ? '#1e293b' : '#ffffff',
-              borderColor: isDark ? '#334155' : '#e2e8f0'
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium mb-1" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
-                  Unread
-                </p>
-                <p className="text-3xl font-bold text-orange-400">{unreadCount}</p>
-              </div>
-              <AlertCircle className="w-10 h-10 text-orange-400" />
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="p-6 rounded-xl border"
-            style={{
-              backgroundColor: isDark ? '#1e293b' : '#ffffff',
-              borderColor: isDark ? '#334155' : '#e2e8f0'
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium mb-1" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
-                  Read
-                </p>
-                <p className="text-3xl font-bold text-green-400">{notifications.length - unreadCount}</p>
-              </div>
-              <CheckCircle className="w-10 h-10 text-green-400" />
-            </div>
-          </motion.div>
-        </div>
+        
 
         {/* Search and Actions */}
         <div

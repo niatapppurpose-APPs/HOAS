@@ -30,7 +30,7 @@ const SystemSettingsContext = createContext({
   settings: DEFAULT_SETTINGS,
   loading: true,
   error: null,
-  refresh: () => {},
+  refresh: () => { },
   isFeatureEnabled: () => true,
   isMaintenanceMode: () => false,
   isRegistrationEnabled: () => true,
@@ -55,9 +55,9 @@ export const SystemSettingsProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      // Add timeout to prevent hanging (longer timeout for cold starts)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 25000)
       );
 
       const result = await Promise.race([
@@ -80,7 +80,7 @@ export const SystemSettingsProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Error loading system settings:', err);
-      
+
       if (mountedRef.current) {
         // Use defaults on error so the app still works
         setSettings(DEFAULT_SETTINGS);
@@ -164,7 +164,7 @@ export const useSystemSettings = () => {
       settings: DEFAULT_SETTINGS,
       loading: false,
       error: null,
-      refresh: () => {},
+      refresh: () => { },
       isFeatureEnabled: () => true,
       isMaintenanceMode: () => false,
       isRegistrationEnabled: () => true,
@@ -293,7 +293,7 @@ export const MaintenanceGate = ({ children, maintenanceComponent = null }) => {
     if (maintenanceComponent) {
       return maintenanceComponent;
     }
-    
+
     // Default maintenance message
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">

@@ -71,6 +71,11 @@ const STATUS_CONFIG = {
     },
 };
 
+
+
+
+
+
 const FILTER_OPTIONS = [
     { value: 'all', label: 'All' },
     { value: 'pending', label: 'Pending' },
@@ -120,7 +125,31 @@ const StudentComplaints = () => {
     const [historyLoading, setHistoryLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState('all');
     const [selectedComplaint, setSelectedComplaint] = useState(null);
+    const [currentTime, setCurrentTime] = useState(new Date());
 
+    // ── Real-time clock ──────────────────────────────────────
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    // ── Helper: Calculate Remaining Time (24h Window) ────────
+    const getTimeRemaining = (createdAt) => {
+        if (!createdAt) return '—';
+        const createdMs = createdAt.toMillis ? createdAt.toMillis() : new Date(createdAt).getTime();
+        const expiryMs = createdMs + (24 * 60 * 60 * 1000); // 24 Hours from creation
+        const remainingMs = expiryMs - currentTime.getTime();
+
+        if (remainingMs <= 0) return 'Expired';
+
+        const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+        const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
+
+        return `${hours}h ${minutes}m ${seconds}s left`;
+    };
     // ── Fetch complaints in real-time ────────────────────────
     useEffect(() => {
         if (!user?.uid) return;
@@ -316,6 +345,16 @@ const StudentComplaints = () => {
     };
 
     const closeDetail = () => setSelectedComplaint(null);
+
+
+
+
+
+
+
+
+
+
 
     // ══════════════════════════════════════════════════════════
     // Render
@@ -573,7 +612,20 @@ const StudentComplaints = () => {
                                                     <ChevronRight size={13} />
                                                 </button>
                                             </div>
+                                            <div className="complaint-timer-display" style={{ 
+                                                marginTop: '0.5rem', 
+                                                fontSize: '0.75rem', 
+                                                color: '#ef4444', 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                gap: '4px',
+                                                fontWeight: '600'
+                                            }}>
+                                                <Clock size={12} />
+                                                Expires in: {getTimeRemaining(complaint.createdAt)}
+                                            </div>
                                         </div>
+
                                     );
                                 })
                             )}

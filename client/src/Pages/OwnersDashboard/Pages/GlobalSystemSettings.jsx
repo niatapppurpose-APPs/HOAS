@@ -1480,8 +1480,8 @@ const GlobalSystemSettings = () => {
       }
       setLoadError(null);
 
-      // Helper function to add timeout to promises (shorter timeout - 8 seconds)
-      const withTimeout = (promise, timeoutMs = 8000) => {
+      // Helper function to add timeout to promises (longer timeout - 25 seconds for cold starts)
+      const withTimeout = (promise, timeoutMs = 25000) => {
         return Promise.race([
           promise,
           new Promise((_, reject) =>
@@ -1497,6 +1497,14 @@ const GlobalSystemSettings = () => {
         withTimeout(cloudFunctions.getApprovalWorkflows()),
         withTimeout(cloudFunctions.getCollegeLimits()),
       ]);
+
+      // DEBUG: Log separate results
+      console.group('System Settings Load Results');
+      console.log('Settings:', results[0].status, results[0].status === 'rejected' ? results[0].reason : 'Success');
+      console.log('Templates:', results[1].status, results[1].status === 'rejected' ? results[1].reason : 'Success');
+      console.log('Workflows:', results[2].status, results[2].status === 'rejected' ? results[2].reason : 'Success');
+      console.log('Limits:', results[3].status, results[3].status === 'rejected' ? results[3].reason : 'Success');
+      console.groupEnd();
 
       // Process settings result
       if (results[0].status === 'fulfilled') {
@@ -1548,6 +1556,18 @@ const GlobalSystemSettings = () => {
         if (someFailed && !initialLoad) {
           toast.warning('Some settings could not be loaded');
         }
+      }
+
+      // Capture specific errors for diagnostics
+      const rejectedItems = results.filter(r => r.status === 'rejected');
+      if (rejectedItems.length > 0) {
+        const errors = rejectedItems.map(r => {
+          // Firebase errors often have code and message
+          const code = r.reason?.code || '';
+          const message = r.reason?.message || 'Unknown error';
+          return code ? `${code}: ${message}` : message;
+        });
+        setLoadError(errors[0]);
       }
 
       setInitialLoad(false);
@@ -1649,7 +1669,7 @@ const GlobalSystemSettings = () => {
 
   // No more loading blocker - page renders immediately with defaults
   // Show sync status in the header instead
-//---------------------------------- Handle logout--------------------------------------------------
+  //---------------------------------- Handle logout--------------------------------------------------
   const handleLogout = async () => {
     try {
       await signOut();
@@ -1735,8 +1755,18 @@ const GlobalSystemSettings = () => {
                   Unable to connect to server
                 </span>
                 <p className="text-sm text-amber-600/80 dark:text-amber-400/80">
-                  Showing default settings. Changes cannot be saved until connection is restored.
+                  {loadError ? `Error: ${loadError}` : 'Showing default settings. Changes cannot be saved until connection is restored.'}
                 </p>
+                {loadError?.toLowerCase().includes('timeout') && (
+                  <p className="text-xs text-amber-500 mt-1 font-medium">
+                    ⚡ Tip: Cloud Functions take a few seconds to wake up (cold start). Try hitting "Retry" now.
+                  </p>
+                )}
+                {loadError?.toLowerCase().includes('permission') && (
+                  <p className="text-xs text-amber-500 mt-1 font-medium">
+                    🔒 Tip: You may not have sufficient permissions. Try logging out and back in.
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => loadData(true)}

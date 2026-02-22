@@ -19,7 +19,7 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 export const db = getFirestore(app);
-export const functions = getFunctions(app);
+export const functions = getFunctions(app, 'us-central1');
 export const storage = getStorage(app);
 
 // Initialize Cloud Messaging (only if supported by browser)

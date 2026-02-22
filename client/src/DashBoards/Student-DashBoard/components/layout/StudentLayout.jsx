@@ -8,11 +8,35 @@ import { useTheme } from '../../../../context/ThemeContext';
 
 const StudentLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [collegeLogo, setCollegeLogo] = useState(null);
+  const [managementData, setManagementData] = useState(null);
   const { userData } = useAuth();
   const { isDark } = useTheme();
 
-  const theme = userData?.theme || {
+  // Fetch management data (college logo, location, etc.)
+  useEffect(() => {
+    const managementId = userData?.managementId;
+    if (!managementId) {
+      setManagementData(null);
+      return;
+    }
+
+    const managementRef = doc(db, "users", managementId);
+    const unsubscribe = onSnapshot(managementRef, (snap) => {
+      if (snap.exists()) {
+        setManagementData(snap.data());
+      } else {
+        setManagementData(null);
+      }
+    }, () => {
+      setManagementData(null);
+    });
+
+    return () => unsubscribe();
+  }, [userData]);
+
+  const collegeLogo = managementData?.collegeLogo || null;
+
+  const themeInfo = userData?.theme || {
     primary: '#3b82f6', // Blue theme for student
     secondary: '#6366f1',
     surface: isDark ? '#0f172a' : '#ffffff',
@@ -20,69 +44,36 @@ const StudentLayout = () => {
     background: isDark ? '#0f172a' : '#f8fafc'
   };
 
-  // Fetch college logo from the management user's document
-  useEffect(() => {
-    // First priority: collegeLogo stored directly in student's userData (unlikely but check)
-    if (userData?.collegeLogo) {
-      setCollegeLogo(userData.collegeLogo);
-      return;
-    }
-
-    // Second priority: fetch from management user's document using managementId
-    const managementId = userData?.managementId;
-
-    if (!managementId) {
-      setCollegeLogo(null);
-      return;
-    }
-
-    // Fetch the management user's document to get their collegeLogo
-    const managementRef = doc(db, "users", managementId);
-    const unsubscribe = onSnapshot(managementRef, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        // Get collegeLogo from management user's document
-        setCollegeLogo(data.collegeLogo || null);
-      } else {
-        setCollegeLogo(null);
-      }
-    }, () => {
-      setCollegeLogo(null);
-    });
-
-    return () => unsubscribe();
-  }, [userData]);
-
   const themeVars = {
-    '--student-accent': theme.primary,
-    '--student-accent-2': theme.secondary,
+    '--student-accent': themeInfo.primary,
+    '--student-accent-2': themeInfo.secondary,
     '--student-surface': isDark ? '#1e293b' : '#ffffff',
     '--student-text': isDark ? '#f8fafc' : '#0f172a',
     '--student-background': isDark ? '#0f172a' : '#f8fafc',
   };
 
   return (
-    <div 
-      style={themeVars} 
+    <div
+      style={themeVars}
       className="min-h-screen font-sans selection:bg-blue-500/30 transition-colors duration-300"
     >
-      <div 
+      <div
         className="min-h-screen transition-colors duration-300"
-        style={{ 
+        style={{
           backgroundColor: 'transparent',
-          color: 'var(--text-primary)' 
+          color: 'var(--text-primary)'
         }}
       >
-        <StudentSidebar 
-          isCollapsed={isCollapsed} 
+        <StudentSidebar
+          isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}
           collegeLogo={collegeLogo}
+          managementData={managementData}
         />
-        
-        <main className={`transition-all duration-300 ease-in-out ml-0 ${
-          isCollapsed ? 'lg:ml-20' : 'lg:ml-72'
-        }`}>
-          <Outlet context={{ isCollapsed, setIsCollapsed }} />
+
+        <main className={`transition-all duration-300 ease-in-out ml-0 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-72'
+          }`}>
+          <Outlet context={{ isCollapsed, setIsCollapsed, collegeLogo, managementData }} />
         </main>
       </div>
     </div>

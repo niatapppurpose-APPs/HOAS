@@ -37,14 +37,28 @@ export async function verifyAdmin(context) {
     throw new HttpsError('unauthenticated', 'User must be authenticated');
   }
 
+  // OPTIMIZATION: Check custom claims directly from the token first
+  // This avoids a network call to the Identity Toolkit API, which is often disabled/restricted
+  // and is the most common cause of "internal" errors when verifying admin status.
+  const token = context.auth.token;
+  const isAdminFromToken = token.role === 'admin' || token.admin === true;
+
+  if (isAdminFromToken) {
+    console.log('✅ Admin verified via token claims for:', context.auth.uid);
+    return { uid: context.auth.uid, customClaims: token };
+  }
+
   try {
+    // FALLBACK: If token claims don't show admin, fetch the full user record
+    // (useful if claims were recently updated but not yet refreshed in the client's token)
     const userRecord = await auth.getUser(context.auth.uid);
-    const isAdmin = userRecord.customClaims?.role === 'admin';
+    const isAdmin = userRecord.customClaims?.role === 'admin' || userRecord.customClaims?.admin === true;
 
     if (!isAdmin) {
       throw new HttpsError('permission-denied', 'User must be an admin');
     }
 
+    console.log('✅ Admin verified via getUser for:', context.auth.uid);
     return userRecord;
   } catch (error) {
     console.error('Error verifying admin status:', error);

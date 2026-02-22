@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext, Link } from 'react-router-dom';
 import { db } from '../../firebase/firebaseConfig';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, limit, orderBy } from 'firebase/firestore';
 import * as cloudFunctions from '../../firebase/cloudFunctions';
 import { useToast } from '../../components/Toast';
 import WardenHeader from './components/layout/WardenHeader';
-import StatsCard from '../../components/OwnerServices/StatsCard';
 import './WardenDashboard.css';
 import {
     Shield,
@@ -18,8 +17,16 @@ import {
     CheckCircle,
     XCircle,
     Clock,
-    GraduationCap,
+    FileText,
+    Bell,
+    Users,
+    ArrowRight,
+    MessageSquare,
+    ClipboardCheck,
+    Calendar,
+    ChevronRight,
 } from 'lucide-react';
+import Avatar from '../../components/OwnerServices/Avatar';
 
 const WardenDashboard = () => {
     const { userData, userDataLoading, logout } = useAuth();
@@ -27,9 +34,9 @@ const WardenDashboard = () => {
     const toast = useToast();
     const { isCollapsed, setIsCollapsed } = useOutletContext();
 
-    const [students, setStudents] = useState([]);
+    const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('pending');
+    const [pendingCount, setPendingCount] = useState(0);
 
     useEffect(() => {
         if (!userDataLoading) {
@@ -43,44 +50,36 @@ const WardenDashboard = () => {
         }
     }, [userData, userDataLoading, navigate]);
 
-    // Fetch students from same college
+    // Fetch recent complaints
     useEffect(() => {
-        if (!userData?.collegeId) return;
+        if (!userData?.managementId) return;
 
         const q = query(
-            collection(db, 'users'),
-            where('role', '==', 'student'),
-            where('collegeId', '==', userData.collegeId)
+            collection(db, 'complaints'),
+            where('managementId', '==', userData.managementId),
+            orderBy('createdAt', 'desc'),
+            limit(5)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const studentList = snapshot.docs.map(doc => ({
+            const list = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
-            setStudents(studentList);
+            setComplaints(list);
             setLoading(false);
+
+            // Count pending
+            const pending = list.filter(c => c.status === 'pending').length;
+            setPendingCount(pending);
         });
 
         return () => unsubscribe();
-    }, [userData?.collegeId]);
+    }, [userData?.managementId]);
 
     const handleLogout = async () => {
         await logout();
         navigate('/');
-    };
-
-    const handleStatusChange = async (studentId, newStatus) => {
-        try {
-            if (newStatus === 'approved') {
-                await cloudFunctions.approveUser(studentId, 'warden');
-            } else if (newStatus === 'denied') {
-                await cloudFunctions.denyUser(studentId, 'Denied by warden');
-            }
-        } catch (error) {
-            console.error('Error updating status:', error);
-            toast.error(`Failed to ${newStatus} student: ${error.message}`);
-        }
     };
 
     if (userDataLoading || !userData) {
@@ -91,176 +90,262 @@ const WardenDashboard = () => {
         );
     }
 
-    const filteredStudents = students.filter(s => s.status === activeTab);
-    const stats = {
-        pending: students.filter(s => s.status === 'pending').length,
-        approved: students.filter(s => s.status === 'approved').length,
-        denied: students.filter(s => s.status === 'denied').length
+    const quickActions = [
+        {
+            title: 'Complaints',
+            desc: 'Review student issues',
+            icon: MessageSquare,
+            path: 'complaints',
+            color: 'orange',
+            count: pendingCount > 0 ? pendingCount : null
+        },
+        {
+            title: 'Students',
+            desc: 'View student directory',
+            icon: Users,
+            path: 'students',
+            color: 'blue'
+        },
+        {
+            title: 'Notice Board',
+            desc: 'Post announcements',
+            icon: Bell,
+            path: 'announcements',
+            color: 'purple'
+        },
+        {
+            title: 'Attendance',
+            desc: 'Daily hostel check',
+            icon: ClipboardCheck,
+            path: 'students',
+            color: 'green'
+        },
+    ];
+
+    const formatDate = (timestamp) => {
+        if (!timestamp) return '—';
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+        });
     };
 
     return (
         <>
             {/* Header */}
             <WardenHeader
-                pendingCount={stats.pending}
-                title="Dashboard · Warden Portal"
+                pendingCount={pendingCount}
+                title="Warden Overview · Command Center"
                 isCollapsed={isCollapsed}
                 setIsCollapsed={setIsCollapsed}
             />
 
             {/* Main Content */}
             <div className="pt-24 px-4 sm:px-6 lg:px-8 pb-8">
-                {/* Stats Section */}
-                <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
-                    <StatsCard
-                        icon={Clock}
-                        title="Pending Students"
-                        value={stats.pending}
-                        gradient="bg-gradient-to-br from-amber-500 to-orange-600"
-                    />
-                    <StatsCard
-                        icon={CheckCircle}
-                        title="Approved Students"
-                        value={stats.approved}
-                        gradient="bg-gradient-to-br from-emerald-500 to-green-600"
-                    />
-                    <StatsCard
-                        icon={XCircle}
-                        title="Denied Students"
-                        value={stats.denied}
-                        gradient="bg-gradient-to-br from-red-500 to-rose-600"
-                    />
-                </section>
+                {/* Welcome Banner */}
+                <div className="relative mb-6 md:mb-10 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-12 border shadow-2xl transition-all hover:shadow-orange-500/10"
+                    style={{
+                        backgroundColor: 'var(--bg-card)',
+                        borderColor: 'var(--border-primary)',
+                        background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%)'
+                    }}>
+                    <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 rounded-full bg-orange-500/10 blur-[80px]" />
+                    <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-48 h-48 rounded-full bg-amber-500/5 blur-[60px]" />
 
-                <div className="grid lg:grid-cols-4 gap-6">
-                    {/* Profile Card */}
-                    <div className="lg:col-span-1">
-                        <div className="rounded-2xl border p-4" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-                            <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Your Profile</h3>
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    <User className="w-4 h-4 text-orange-500" />
-                                    <span>{userData.fullName}</span>
+                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
+                        <div className="text-center md:text-left">
+                            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                                Welcome back, <span className="bg-clip-text  ">{userData.fullName} 👋</span>
+                            </h1>
+                            <div className="mt-6 flex flex-wrap gap-3 justify-center md:justify-start">
+                                <Link to="complaints" className="px-4 md:px-5 py-2 md:py-2.5 rounded-xl bg-orange-500 text-white font-bold text-xs md:text-sm shadow-lg shadow-orange-500/30 hover:scale-105 transition-transform flex items-center gap-2">
+                                    <MessageSquare size={14} className="md:w-4 md:h-4" /> Manage Complaints
+                                </Link>
+                                <button onClick={() => navigate('profile')} className="px-4 md:px-5 py-2 md:py-2.5 rounded-xl border font-bold text-xs md:text-sm hover:bg-orange-500/5 transition-all flex items-center gap-2" style={{ borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}>
+                                    <User size={14} className="md:w-4 md:h-4" /> Profile Details
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex gap-4 sm:gap-8">
+                            <div className="text-center">
+                                <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-60 mb-1" style={{ color: 'var(--text-muted)' }}>Status</p>
+                                <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-orange-500/10 border border-orange-500/20">
+                                    <Shield className="w-6 h-6 md:w-8 md:h-8 text-orange-500 mx-auto" />
+                                    <p className="mt-1 md:mt-2 text-xs font-bold text-orange-500">Active</p>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    <Phone className="w-4 h-4 text-orange-500" />
-                                    <span>{userData.phone}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    <Briefcase className="w-4 h-4 text-orange-500" />
-                                    <span>{userData.designation}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    <Building2 className="w-4 h-4 text-orange-500" />
-                                    <span>{userData.collegeName}</span>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-60 mb-1" style={{ color: 'var(--text-muted)' }}>Pending</p>
+                                <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-amber-500/10 border border-amber-500/20">
+                                    <p className="text-2xl md:text-3xl font-black text-amber-500">{pendingCount}</p>
+                                    <p className="mt-1 text-[10px] md:text-xs font-bold text-amber-500">Issues</p>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {/* Main Content Area */}
-                    <div className="lg:col-span-3 space-y-6">
-                        {/* Student Management Card */}
-                        <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-                            <div className="p-6 border-b" style={{ borderColor: 'var(--border-primary)' }}>
-                                <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Student Management</h3>
-                                <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-                                    Manage student registrations for {userData.collegeName}
+                <div className="grid lg:grid-cols-12 gap-6 md:gap-8">
+                    {/* Left Column: Action Hub and Activity */}
+                    <div className="lg:col-span-8 space-y-6 md:y-8">
+                        {/* Action Center Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {quickActions.map((action, idx) => (
+                                <Link
+                                    key={idx}
+                                    to={action.path}
+                                    className="group relative flex flex-col items-center justify-center rounded-[1.25rem] md:rounded-[1.5rem] border p-4 md:p-6 transition-all hover:scale-[1.05] hover:shadow-2xl"
+                                    style={{
+                                        backgroundColor: 'var(--bg-card)',
+                                        borderColor: 'var(--border-primary)'
+                                    }}
+                                >
+                                    <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl bg-${action.color}-500/10 text-${action.color}-500 group-hover:bg-${action.color}-500 group-hover:text-white transition-all duration-300`}>
+                                        <action.icon className="w-5 h-5 md:w-6 md:h-6" />
+                                    </div>
+                                    <h3 className="mt-3 md:mt-4 text-xs md:text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{action.title}</h3>
+                                    {action.count && (
+                                        <div className="absolute top-2 right-2 flex h-4 w-4 md:h-5 md:w-5 items-center justify-center rounded-full bg-orange-500 text-[9px] md:text-[10px] font-bold text-white shadow-lg">
+                                            {action.count}
+                                        </div>
+                                    )}
+                                </Link>
+                            ))}
+                        </div>
+
+                        {/* Recent Activity: Complaints Feed */}
+                        <div className="rounded-[1.25rem] md:rounded-[1.5rem] border overflow-hidden shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                            <div className="p-5 md:p-8 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-tertiary)' }}>
+                                <div>
+                                    <h3 className="text-lg md:text-xl font-black" style={{ color: 'var(--text-primary)' }}>Recent Activity</h3>
+                                    <p className="text-xs md:text-sm font-medium mt-1 opacity-60" style={{ color: 'var(--text-muted)' }}>Latest updates from students</p>
+                                </div>
+                                <Link to="complaints" className="group flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-bold text-orange-500 hover:gap-3 transition-all">
+                                    <span className="hidden sm:inline">View Service Hub</span> <ArrowRight size={14} className="md:w-4 md:h-4" />
+                                </Link>
+                            </div>
+
+                            <div className="divide-y" style={{ borderColor: 'var(--border-primary)' }}>
+                                {loading ? (
+                                    <div className="p-12 md:p-16 text-center">
+                                        <Loader2 className="w-7 h-7 md:w-8 md:h-8 animate-spin mx-auto text-orange-500" />
+                                        <p className="mt-3 md:mt-4 text-xs md:text-sm font-medium animate-pulse" style={{ color: 'var(--text-muted)' }}>Syncing data...</p>
+                                    </div>
+                                ) : complaints.length === 0 ? (
+                                    <div className="p-12 md:p-16 text-center">
+                                        <div className="w-12 h-12 md:w-16 md:h-16 bg-orange-500/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-orange-500/10">
+                                            <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-orange-500 opacity-20" />
+                                        </div>
+                                        <p className="text-xs md:text-sm font-bold" style={{ color: 'var(--text-muted)' }}>No active grievances found.</p>
+                                    </div>
+                                ) : (
+                                    complaints.map((c) => (
+                                        <div key={c.id} className="p-4 md:p-5 flex items-center gap-3 md:gap-4 hover:bg-orange-500/5 transition-all cursor-pointer group" onClick={() => navigate('complaints')}>
+                                            <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
+                                                <FileText className="w-5 h-5 md:w-6 md:h-6" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-sm md:text-base font-bold truncate group-hover:text-orange-500 transition-colors" style={{ color: 'var(--text-primary)' }}>{c.title}</p>
+                                                    <span className="text-[10px] md:text-xs font-bold" style={{ color: 'var(--text-muted)' }}>{formatDate(c.createdAt)}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between mt-1">
+                                                    <div className="flex items-center gap-1.5 md:gap-2">
+                                                        <div className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-orange-500" />
+                                                        <p className="text-[10px] md:text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{c.studentName || 'Student'} · {c.roomNumber || 'N/A'}</p>
+                                                    </div>
+                                                    <span className={`text-[9px] md:text-[10px] px-2 md:px-2.5 py-0.5 md:py-1 rounded-lg font-black tracking-wider uppercase ${c.status === 'pending' ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20' :
+                                                            c.status === 'in-progress' ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20' :
+                                                                'bg-green-500/10 text-green-600 border border-green-500/20'
+                                                        }`}>
+                                                        {c.status}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <ChevronRight className="hidden sm:block w-4 h-4 md:w-5 md:h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" style={{ color: 'var(--text-muted)' }} />
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Mini Profile & System Status */}
+                    <div className="lg:col-span-4 space-y-6 md:y-8">
+                        {/* Warden Info Card */}
+                        <div className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 md:p-8 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                            <div className="flex flex-col items-center text-center">
+                                <div className="w-20 h-20 rounded-lg md:w-24 md:h-24 p-1 mb-4 md:mb-6 shadow-xl hover:rotate-0 ">
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <Avatar name={userData?.displayName} image={userData.photoURL} alt="Admin" className="w-full h-full object-cover" />
+                                    </div>
+                                </div>
+                                <h3 className="font-black text-xl md:text-2xl" style={{ color: 'var(--text-primary)' }}>{userData.fullName}</h3>
+                                <div className="mt-2 px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-orange-500/10 text-orange-600 text-[10px] font-black uppercase tracking-widest">
+                                    Authorized Warden
+                                </div>
+                            </div>
+
+                            <div className="mt-6 md:mt-8 space-y-2 md:space-y-3">
+                                <div className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl md:rounded-2xl transition-colors hover:bg-orange-500/5" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                                    <Phone className="w-4 h-4 md:w-5 md:h-5 text-orange-500" />
+                                    <div className="min-w-0">
+                                        <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest opacity-50" style={{ color: 'var(--text-muted)' }}>Contact</p>
+                                        <p className="text-xs md:text-sm font-bold truncate" style={{ color: 'var(--text-secondary)' }}>{userData.phone || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl md:rounded-2xl transition-colors hover:bg-orange-500/5" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                                    <Building2 className="w-4 h-4 md:w-5 md:h-5 text-orange-500" />
+                                    <div className="min-w-0">
+                                        <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest opacity-50" style={{ color: 'var(--text-muted)' }}>College</p>
+                                        <p className="text-xs md:text-sm font-bold truncate" style={{ color: 'var(--text-secondary)' }}>{userData.collegeName}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => navigate('profile')}
+                                className="w-full mt-6 md:mt-8 py-3 md:py-4 rounded-xl md:rounded-[1.25rem] text-[11px] md:text-xs font-black uppercase tracking-widest bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xl shadow-orange-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+                            >
+                                Edit Profile
+                            </button>
+                        </div>
+
+                        {/* Date & Insight Widget */}
+                        <div className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 md:p-8"
+                            style={{
+                                backgroundColor: 'var(--bg-card)',
+                                borderColor: 'var(--border-primary)',
+                                background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(249,115,22,0.03) 100%)'
+                            }}>
+                            <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
+                                <div className="p-2.5 md:p-3 rounded-xl md:rounded-2xl bg-blue-500/10 text-blue-500 shadow-inner">
+                                    <Calendar className="w-5 h-5 md:w-6 md:h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-base md:text-lg" style={{ color: 'var(--text-primary)' }}>Calendar</h3>
+                                    <p className="text-[10px] md:text-xs font-medium opacity-60" style={{ color: 'var(--text-muted)' }}>Status</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-0.5 md:space-y-1">
+                                <p className="text-3xl md:text-4xl font-black tracking-tighter" style={{ color: 'var(--text-primary)' }}>
+                                    {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                                </p>
+                                <p className="text-[10px] md:text-sm font-bold uppercase tracking-widest opacity-50" style={{ color: 'var(--text-muted)' }}>
+                                    {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric' })}
                                 </p>
                             </div>
 
-                            {/* Tabs */}
-                            <div className="flex border-b" style={{ borderColor: 'var(--border-primary)' }}>
-                                {['pending', 'approved', 'denied'].map((tab) => (
-                                    <button
-                                        key={tab}
-                                        onClick={() => setActiveTab(tab)}
-                                        className={`flex-1 py-3 text-sm font-medium transition-all relative ${activeTab === tab ? 'text-orange-500' : ''
-                                            }`}
-                                        style={activeTab !== tab ? { color: 'var(--text-secondary)' } : {}}
-                                    >
-                                        {tab.charAt(0).toUpperCase() + tab.slice(1)} ({
-                                            tab === 'pending' ? stats.pending :
-                                                tab === 'approved' ? stats.approved : stats.denied
-                                        })
-                                        {activeTab === tab && (
-                                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-amber-500" />
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Student List */}
-                            <div className="p-6 max-h-[500px] overflow-y-auto">
-                                {loading ? (
-                                    <div className="flex items-center justify-center py-12">
-                                        <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+                            <div className="mt-8 md:mt-10 pt-6 md:pt-8 border-t" style={{ borderColor: 'var(--border-primary)' }}>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5 md:gap-2">
+                                        <div className="w-1.5 md:w-2 h-1.5 md:h-2 rounded-full bg-green-500 animate-pulse" />
+                                        <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Link</span>
                                     </div>
-                                ) : filteredStudents.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <GraduationCap className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
-                                        <p style={{ color: 'var(--text-muted)' }}>No {activeTab} students</p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {filteredStudents.map((student) => (
-                                            <div
-                                                key={student.id}
-                                                className="flex items-center justify-between p-4 rounded-xl"
-                                                style={{ backgroundColor: 'var(--bg-tertiary)' }}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <img
-                                                        src={student.photoURL || '/default-avatar.png'}
-                                                        alt={student.fullName}
-                                                        className="w-12 h-12 rounded-full object-cover border-2"
-                                                        style={{ borderColor: 'var(--border-primary)' }}
-                                                    />
-                                                    <div>
-                                                        <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{student.fullName}</p>
-                                                        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{student.email}</p>
-                                                        <div className="flex gap-4 mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-                                                            <span>Roll: {student.rollNumber}</span>
-                                                            <span>Room: {student.roomNumber}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {activeTab === 'pending' && (
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => handleStatusChange(student.id, 'approved')}
-                                                            className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-sm rounded-lg hover:opacity-90 transition-all flex items-center gap-1"
-                                                        >
-                                                            <CheckCircle className="w-4 h-4" />
-                                                            Approve
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleStatusChange(student.id, 'denied')}
-                                                            className="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white text-sm rounded-lg hover:opacity-90 transition-all flex items-center gap-1"
-                                                        >
-                                                            <XCircle className="w-4 h-4" />
-                                                            Deny
-                                                        </button>
-                                                    </div>
-                                                )}
-                                                {activeTab === 'approved' && (
-                                                    <span className="px-3 py-1 bg-green-500/20 text-green-400 text-sm rounded-full border border-green-500/30">
-                                                        Active
-                                                    </span>
-                                                )}
-                                                {activeTab === 'denied' && (
-                                                    <button
-                                                        onClick={() => handleStatusChange(student.id, 'approved')}
-                                                        className="px-4 py-2 text-sm rounded-lg transition-colors border"
-                                                        style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
-                                                    >
-                                                        Restore
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                    <span className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-green-500/10 text-green-600 text-[8px] md:text-[10px] font-black uppercase">Live</span>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -18,7 +18,7 @@ import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from '../../../../components/OwnerServices/Avatar';
 import Applogo from '../../../../assets/AppLogo4k.png';
 
-const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
+const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementData }) => {
   const { user, userData } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
@@ -133,14 +133,14 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
               <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <img
                 src={collegeLogo ? collegeLogo : Applogo}
-                className="relative w-full h-full rounded-xl object-contain border-2 border-slate-600/50 shadow-lg group-hover:border-blue-500/50 transition-all duration-300 group-hover:scale-105"
+                className={`relative w-full h-full rounded-xl object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-blue-500/50 transition-all duration-300 group-hover:scale-105 ${collegeLogo ? 'bg-white' : ''}`}
                 alt={collegeLogo ? "College Logo" : "HOAS Logo"}
               />
             </button>
 
             <div className={`flex flex-col min-w-0 overflow-hidden transition-all duration-300 origin-left ${!showContent ? "lg:hidden opacity-0 w-0 scale-95" : "opacity-100 flex-1 scale-100"}`}>
-              <h1 className="text-sm font-bold leading-tight tracking-tight truncate" style={{ color: 'var(--text-primary)' }} title={userData?.collegeName || 'HOAS'}>
-                {userData?.collegeName || 'HOAS'}
+              <h1 className="text-sm font-bold leading-tight tracking-tight truncate" style={{ color: 'var(--text-primary)' }} title={managementData?.collegeName || userData?.collegeName || 'HOAS'}>
+                {managementData?.collegeName || userData?.collegeName || 'HOAS'}
               </h1>
               <p className="text-xs font-medium mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
                 Student Portal
