@@ -41,7 +41,7 @@ const WardenDashboard = () => {
     useEffect(() => {
         if (!userDataLoading) {
             if (!userData) {
-                navigate('/profile/warden-profile');
+                navigate('/');
             } else if (userData.status === 'pending' || userData.status === 'denied') {
                 navigate('/waiting-approval');
             } else if (userData.role !== 'warden') {
@@ -58,7 +58,6 @@ const WardenDashboard = () => {
             collection(db, 'complaints'),
             where('managementId', '==', userData.managementId),
             orderBy('createdAt', 'desc'),
-            limit(5)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -139,12 +138,13 @@ const WardenDashboard = () => {
                 title="Warden Overview · Command Center"
                 isCollapsed={isCollapsed}
                 setIsCollapsed={setIsCollapsed}
+                handleLogout={handleLogout}
             />
 
             {/* Main Content */}
-            <div className="pt-24 px-4 sm:px-6 lg:px-8 pb-8">
+            <div className="pt-20 md:pt-24 px-4 sm:px-6 lg:px-8 pb-6 md:pb-0">
                 {/* Welcome Banner */}
-                <div className="relative mb-6 md:mb-10 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-12 border shadow-2xl transition-all hover:shadow-orange-500/10"
+                <div className="relative mb-6 md:mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-10 border shadow-2xl transition-all hover:shadow-orange-500/10"
                     style={{
                         backgroundColor: 'var(--bg-card)',
                         borderColor: 'var(--border-primary)',
@@ -155,7 +155,7 @@ const WardenDashboard = () => {
 
                     <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
                         <div className="text-center md:text-left">
-                            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                            <h1 className="text-2xl sm:text-3xl md:text-4xl font-mono tracking-tight" style={{ color: 'var(--text-primary)' }}>
                                 Welcome back, <span className="bg-clip-text  ">{userData.fullName} 👋</span>
                             </h1>
                             <div className="mt-6 flex flex-wrap gap-3 justify-center md:justify-start">
@@ -167,19 +167,28 @@ const WardenDashboard = () => {
                                 </button>
                             </div>
                         </div>
-                        <div className="flex gap-4 sm:gap-8">
-                            <div className="text-center">
-                                <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-60 mb-1" style={{ color: 'var(--text-muted)' }}>Status</p>
-                                <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-orange-500/10 border border-orange-500/20">
-                                    <Shield className="w-6 h-6 md:w-8 md:h-8 text-orange-500 mx-auto" />
-                                    <p className="mt-1 md:mt-2 text-xs font-bold text-orange-500">Active</p>
-                                </div>
+                        <div className="flex flex-wrap items-center justify-center md:justify-end gap-4 md:gap-8">
+                            {/* Date Widget */}
+                            <div className="flex flex-col items-center md:items-start p-3 md:p-5 rounded-2xl border backdrop-blur-md transition-all hover:scale-105"
+                                style={{
+                                    backgroundColor: 'var(--bg-tertiary)',
+                                    borderColor: 'var(--border-primary)',
+                                    boxShadow: '0 4px 20px -5px rgba(0,0,0,0.1)'
+                                }}>
+                                <p className="text-2xl md:text-3xl font-black tracking-tighter leading-none" style={{ color: 'var(--text-primary)' }}>
+                                    {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                </p>
+                                <p className="mt-1 text-[9px] md:text-xs font-bold uppercase tracking-widest opacity-60" style={{ color: 'var(--text-primary)' }}>
+                                    {new Date().toLocaleDateString('en-IN', { weekday: 'long' })}
+                                </p>
                             </div>
-                            <div className="text-center">
-                                <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-60 mb-1" style={{ color: 'var(--text-muted)' }}>Pending</p>
-                                <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-amber-500/10 border border-amber-500/20">
-                                    <p className="text-2xl md:text-3xl font-black text-amber-500">{pendingCount}</p>
-                                    <p className="mt-1 text-[10px] md:text-xs font-bold text-amber-500">Issues</p>
+
+                            <div className="flex gap-4 md:gap-8">
+                                <div className="text-center">
+                                    <div className="p-3 md:p-5 rounded-xl md:rounded-2xl bg-amber-500/10 border border-amber-500/20 shadow-inner">
+                                        <p className="text-xl md:text-2xl font-black text-amber-500 leading-none">{pendingCount}</p>
+                                        <p className="mt-1 md:mt-1.5 text-[10px] md:text-xs font-bold text-amber-500">Issues</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -226,9 +235,9 @@ const WardenDashboard = () => {
                                 </Link>
                             </div>
 
-                            <div className="divide-y" style={{ borderColor: 'var(--border-primary)' }}>
+                            <div className="divide-y max-h-[380px] overflow-y-auto warden-scrollbar" style={{ borderColor: 'var(--border-primary)' }}>
                                 {loading ? (
-                                    <div className="p-12 md:p-16 text-center">
+                                    <div className="p-10 md:p-12 text-center">
                                         <Loader2 className="w-7 h-7 md:w-8 md:h-8 animate-spin mx-auto text-orange-500" />
                                         <p className="mt-3 md:mt-4 text-xs md:text-sm font-medium animate-pulse" style={{ color: 'var(--text-muted)' }}>Syncing data...</p>
                                     </div>
@@ -256,8 +265,8 @@ const WardenDashboard = () => {
                                                         <p className="text-[10px] md:text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{c.studentName || 'Student'} · {c.roomNumber || 'N/A'}</p>
                                                     </div>
                                                     <span className={`text-[9px] md:text-[10px] px-2 md:px-2.5 py-0.5 md:py-1 rounded-lg font-black tracking-wider uppercase ${c.status === 'pending' ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20' :
-                                                            c.status === 'in-progress' ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20' :
-                                                                'bg-green-500/10 text-green-600 border border-green-500/20'
+                                                        c.status === 'in-progress' ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20' :
+                                                            'bg-green-500/10 text-green-600 border border-green-500/20'
                                                         }`}>
                                                         {c.status}
                                                     </span>
@@ -313,7 +322,7 @@ const WardenDashboard = () => {
                         </div>
 
                         {/* Date & Insight Widget */}
-                        <div className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 md:p-8"
+                        {/* <div className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 md:p-8"
                             style={{
                                 backgroundColor: 'var(--bg-card)',
                                 borderColor: 'var(--border-primary)',
@@ -331,10 +340,10 @@ const WardenDashboard = () => {
 
                             <div className="space-y-0.5 md:space-y-1">
                                 <p className="text-3xl md:text-4xl font-black tracking-tighter" style={{ color: 'var(--text-primary)' }}>
-                                    {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                                    {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                                 </p>
                                 <p className="text-[10px] md:text-sm font-bold uppercase tracking-widest opacity-50" style={{ color: 'var(--text-muted)' }}>
-                                    {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric' })}
+                                    {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric' })}
                                 </p>
                             </div>
 
@@ -347,7 +356,7 @@ const WardenDashboard = () => {
                                     <span className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-green-500/10 text-green-600 text-[8px] md:text-[10px] font-black uppercase">Live</span>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>

@@ -341,7 +341,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
             <div className="flex flex-col items-center">
               <img
                 src={collegeLogo ? collegeLogo : AppLogo4k}
-                className="w-full h-32 rounded-xl object-cover border-4 border-orange-500/30 shadow-lg"
+                className="w-full h-full rounded-xl object-contain border-2 border-orange-500/30 shadow-lg"
                 alt={collegeLogo ? "College Logo" : "HOAS Logo"}
               />
               <h2 className="mt-4 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{userData?.collegeName}</h2>
