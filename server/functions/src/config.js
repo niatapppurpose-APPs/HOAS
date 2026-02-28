@@ -40,15 +40,19 @@ export const allowedOrigins = [
 // CORS options for v2 callable functions
 // Using 'true' allows all origins - Firebase callable functions handle auth via tokens, not CORS
 // This is safe because authentication is verified via Firebase Auth tokens, not origin
+// 'invoker: public' is REQUIRED for v2 functions (Cloud Run) to allow unauthenticated HTTP
+// requests through — including browser CORS preflight (OPTIONS) requests. Without it, Cloud Run
+// rejects the preflight with 403 before the function code can set CORS headers.
 export const corsOptions = {
-  cors: true,  // Allow all origins for callable functions - auth is handled via tokens
+  cors: true,           // Allow all origins for callable functions - auth is handled via tokens
+  invoker: 'public',    // Allow Cloud Run to accept unauthenticated invocations (CORS preflight)
 };
 
 // Set global options for v2 functions
-// Using 'true' for CORS to allow mobile apps which don't send origin headers
+// Note: 'cors' and 'invoker' are per-function options, not global options.
+// They are set in corsOptions above and passed to each onCall/onRequest function.
 setGlobalOptions({
   region: 'us-central1',
-  cors: true,  // Allow all origins - mobile apps don't send origin headers
 });
 
 export const db = getFirestore();
