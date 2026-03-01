@@ -20,7 +20,7 @@ import Avatar from './Avatar'
 import Applogo from '../../assets/Applogo.png'
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -373,11 +373,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               } : undefined}
             >
               <div className={`flex items-center ${showContent ? "gap-3" : "justify-center"}`}>
-                <Avatar image={user?.photoURL} name={user?.displayName} size="md" objectFit="fill" />
+                <Avatar image={userData?.photoURL || user?.photoURL} name={userData?.displayName || user?.displayName} size="md" objectFit="fill" />
 
                 {showContent && (
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{user?.displayName}</p>
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{userData?.displayName || user?.displayName}</p>
                     <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
                   </div>
                 )}

@@ -5,7 +5,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../components/Toast';
 import Header from '../../../components/OwnerServices/header';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
-import { doc, setDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, query, orderBy, limit as fsLimit } from 'firebase/firestore';
 import { db } from '../../../firebase/firebaseConfig';
 import {
   Settings,
@@ -43,6 +43,9 @@ import {
   Fingerprint,
   Key,
   LogOut,
+  X,
+  Eye,
+  ChevronDown,
 } from 'lucide-react';
 
 /* ── Status Badge ── */
@@ -106,7 +109,7 @@ const SettingRow = ({ icon: Icon, title, description, children, warning = false 
       backgroundColor: warning ? 'rgba(245,158,11,0.05)' : 'var(--bg-tertiary)',
       border: warning ? '1px solid rgba(245,158,11,0.18)' : '1px solid transparent',
     }}>
-    <div className="flex items-center gap-3 min-w-0"> 
+    <div className="flex items-center gap-3 min-w-0">
       {Icon && <Icon className="w-[18px] h-[18px] flex-shrink-0" style={{ color: warning ? '#f59e0b' : 'var(--text-muted)' }} />}
       <div className="min-w-0">
         <p className="font-medium text-sm leading-snug" style={{ color: 'var(--text-primary)' }}>{title}</p>
@@ -167,6 +170,11 @@ const GlobalSystemSettings = () => {
   const [mgmtLoading, setMgmtLoading] = useState(true);
   const [busy, setBusy] = useState(null);
 
+  /* ── Access Logs ── */
+  const [showLogs, setShowLogs] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+
   const loadData = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
@@ -220,6 +228,25 @@ const GlobalSystemSettings = () => {
     catch { toast.error('Logout failed'); }
   };
 
+  const fetchLogs = useCallback(async () => {
+    setLogsLoading(true);
+    try {
+      const q = query(collection(db, 'systemSettingsAudit'), orderBy('performedAt', 'desc'), fsLimit(50));
+      const snap = await getDocs(q);
+      setLogs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (err) {
+      console.error('Failed to fetch access logs:', err);
+      toast.error('Failed to load access logs');
+    } finally {
+      setLogsLoading(false);
+    }
+  }, [toast]);
+
+  const openLogs = () => {
+    setShowLogs(true);
+    fetchLogs();
+  };
+
   const roleColor = r => ({ management: '#8b5cf6', principal: '#f59e0b', warden: '#22c55e', student: '#3b82f6' }[r] || '#6b7280');
   const secStatus = settings.twoFactorEnabled ? 'secured' : (settings.autoLogoutMinutes > 0 ? 'active' : 'warning');
 
@@ -261,10 +288,14 @@ const GlobalSystemSettings = () => {
 
           {/* ── 1. Role & Access Management ── */}
           <SectionCard title="Role & Access" icon={Shield} accent="#f59e0b" status="active">
-            <div className="space-y-5">
+            <div className="space-y-3">
               <div className="flex items-center justify-start">
-                <p className="relative left-2 text-[11px]" style={{ color: 'var(--text-muted)' }}>Manage accounts & permissions</p>
-                
+                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Manage accounts & permissions</p>
+                <button onClick={loadUsers} disabled={mgmtLoading}
+                  className="flex items-center gap-1.5 px-3 py-2.5 border rounded-xl text-xs font-medium cursor-pointer"
+                  style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)', border: '1px solid var(--border-muted)' }}>
+                  <RefreshCw className={`w-4 h-4 ${mgmtLoading ? 'animate-spin' : ''}`} /> 
+                </button>
               </div>
 
               {mgmtLoading ? (
@@ -381,10 +412,10 @@ const GlobalSystemSettings = () => {
                     <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>min</span>
                   </div>
                 </SettingRow>
-                <SettingRow icon={ScrollText} title="Access Logs" description="Recent login & access activity">
-                  <button className="px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer"
+                <SettingRow icon={ScrollText} title="Access Logs" description="Recent settings change activity">
+                  <button onClick={openLogs} className="px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer hover:opacity-80"
                     style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-secondary)', border: '1px solid var(--border-primary)' }}>
-                    View Logs
+                    <span className="flex items-center gap-1.5"><Eye className="w-3 h-3" />View Logs</span>
                   </button>
                 </SettingRow>
               </div>
@@ -544,6 +575,115 @@ const GlobalSystemSettings = () => {
         </div>
       </div>
   
+
+      {/* ── Access Logs Modal ── */}
+      {showLogs && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div className="w-full max-w-2xl max-h-[80vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-primary)' }}>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.12)' }}>
+                  <ScrollText className="w-[18px] h-[18px]" style={{ color: '#6366f1' }} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>Access Logs</h3>
+                  <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Recent settings changes &amp; audit trail</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={fetchLogs} disabled={logsLoading}
+                  className="p-2 rounded-lg border transition hover:scale-105 cursor-pointer"
+                  style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>
+                  <RefreshCw className={`w-4 h-4 ${logsLoading ? 'animate-spin' : ''}`} />
+                </button>
+                <button onClick={() => setShowLogs(false)}
+                  className="p-2 rounded-lg border transition hover:scale-105 cursor-pointer"
+                  style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal body */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
+              {logsLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#6366f1' }} />
+                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading logs…</p>
+                </div>
+              ) : logs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <ScrollText className="w-10 h-10" style={{ color: 'var(--text-muted)' }} />
+                  <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>No access logs yet</p>
+                  <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Logs will appear when settings are changed</p>
+                </div>
+              ) : (
+                logs.map((log) => {
+                  const date = log.performedAt ? new Date(log.performedAt) : null;
+                  const changedKeys = log.changes ? Object.keys(log.changes).filter(k => !['updatedAt', 'updatedBy', 'version'].includes(k)) : [];
+                  return (
+                    <div key={log.id} className="p-4 rounded-xl border transition-colors"
+                      style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)' }}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(99,102,241,0.1)' }}>
+                            <Settings className="w-4 h-4" style={{ color: '#6366f1' }} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                              {log.action === 'UPDATE_SETTINGS' ? 'Settings Updated' : log.action || 'Change'}
+                            </p>
+                            <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                              v{log.previousVersion || '?'} → v{log.newVersion || '?'}
+                              {log.performedBy && <span> · by <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{log.performedBy.substring(0, 8)}…</span></span>}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          {date && (
+                            <>
+                              <p className="text-[11px] font-medium" style={{ color: 'var(--text-secondary)' }}>{date.toLocaleDateString()}</p>
+                              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{date.toLocaleTimeString()}</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {changedKeys.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {changedKeys.slice(0, 6).map(k => (
+                            <span key={k} className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium"
+                              style={{ backgroundColor: 'rgba(99,102,241,0.08)', color: '#6366f1', border: '1px solid rgba(99,102,241,0.15)' }}>
+                              {k}
+                            </span>
+                          ))}
+                          {changedKeys.length > 6 && (
+                            <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium"
+                              style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-muted)' }}>
+                              +{changedKeys.length - 6} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Modal footer */}
+            <div className="px-6 py-3 border-t flex items-center justify-between" style={{ borderColor: 'var(--border-primary)' }}>
+              <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{logs.length} log{logs.length !== 1 ? 's' : ''} · Last 50 entries</p>
+              <button onClick={() => setShowLogs(false)}
+                className="px-4 py-2 rounded-xl text-sm font-medium transition cursor-pointer hover:opacity-80"
+                style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-primary)' }}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar{width:4px}

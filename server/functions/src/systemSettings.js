@@ -98,6 +98,12 @@ export const updateSystemSettings = onCall(async (request) => {
       'defaultWardenLimit',
       'defaultHostelLimit',
       'features',
+      'complaintSlaHours',
+      'autoEscalation',
+      'escalateToOwner',
+      'overdueThresholdHours',
+      'smsEscalationAlerts',
+      'emailEscalationAlerts',
     ];
 
     const updateData = {};

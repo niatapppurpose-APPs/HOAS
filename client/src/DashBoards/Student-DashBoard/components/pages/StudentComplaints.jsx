@@ -12,6 +12,8 @@ import {
     where,
     onSnapshot,
     serverTimestamp,
+    doc,
+    updateDoc,
 } from 'firebase/firestore';
 
 import {
@@ -30,6 +32,10 @@ import {
     MessageSquareText,
     Inbox,
     Eye,
+    AlertTriangle,
+    ThumbsUp,
+    ThumbsDown,
+    ShieldAlert,
 } from 'lucide-react';
 import './StudentComplaints.css';
 
@@ -59,6 +65,11 @@ const STATUS_CONFIG = {
         className: 'complaint-status-in-progress',
         icon: Loader2,
     },
+    'warden-resolved': {
+        label: 'Review Required',
+        className: 'complaint-status-review',
+        icon: AlertTriangle,
+    },
     resolved: {
         label: 'Resolved',
         className: 'complaint-status-resolved',
@@ -68,6 +79,16 @@ const STATUS_CONFIG = {
         label: 'Rejected',
         className: 'complaint-status-rejected',
         icon: XCircle,
+    },
+    disputed: {
+        label: 'Disputed',
+        className: 'complaint-status-disputed',
+        icon: ShieldAlert,
+    },
+    escalated: {
+        label: 'Escalated to Management',
+        className: 'complaint-status-escalated',
+        icon: AlertTriangle,
     },
 };
 
@@ -80,7 +101,10 @@ const FILTER_OPTIONS = [
     { value: 'all', label: 'All' },
     { value: 'pending', label: 'Pending' },
     { value: 'in-progress', label: 'In Progress' },
+    { value: 'warden-resolved', label: 'Review Required' },
     { value: 'resolved', label: 'Resolved' },
+    { value: 'disputed', label: 'Disputed' },
+    { value: 'escalated', label: 'Escalated' },
     { value: 'rejected', label: 'Rejected' },
 ];
 
@@ -127,6 +151,11 @@ const StudentComplaints = () => {
     const [selectedComplaint, setSelectedComplaint] = useState(null);
     const [currentTime, setCurrentTime] = useState(new Date());
 
+    // ── Review / Dispute state ───────────────────────────────
+    const [showDisputeModal, setShowDisputeModal] = useState(false);
+    const [disputeReason, setDisputeReason] = useState('');
+    const [isReviewing, setIsReviewing] = useState(false);
+
     // ── Real-time clock ──────────────────────────────────────
     useEffect(() => {
         const timer = setInterval(() => {
@@ -135,11 +164,11 @@ const StudentComplaints = () => {
         return () => clearInterval(timer);
     }, []);
 
-    // ── Helper: Calculate Remaining Time (24h Window) ────────
+    // ── Helper: Calculate Remaining Time (48h Window) ────────
     const getTimeRemaining = (createdAt) => {
         if (!createdAt) return '—';
         const createdMs = createdAt.toMillis ? createdAt.toMillis() : new Date(createdAt).getTime();
-        const expiryMs = createdMs + (24 * 60 * 60 * 1000); // 24 Hours from creation
+        const expiryMs = createdMs + (48 * 60 * 60 * 1000); // 48 Hours from creation
         const remainingMs = expiryMs - currentTime.getTime();
 
         if (remainingMs <= 0) return 'Expired';
@@ -308,7 +337,7 @@ const StudentComplaints = () => {
             }
 
             const now = new Date();
-            const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 Hours from now
+            const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000); // 48 Hours from now
 
             await addDoc(collection(db, 'complaints'), {
                 studentId: user.uid,
@@ -324,6 +353,15 @@ const StudentComplaints = () => {
                 status: 'pending',
                 response: null,
                 isEscalated: false,
+                studentReviewStatus: null,
+                disputeReason: null,
+                disputeCount: 0,
+                escalationReason: null,
+                complaintHistory: [{
+                    action: 'created',
+                    timestamp: now.toISOString(),
+                    by: 'student',
+                }],
                 expiresAt: expiresAt,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
@@ -349,12 +387,88 @@ const StudentComplaints = () => {
         setSelectedComplaint(complaint);
     };
 
-    const closeDetail = () => setSelectedComplaint(null);
+    const closeDetail = () => {
+        setSelectedComplaint(null);
+        setShowDisputeModal(false);
+        setDisputeReason('');
+    };
 
+    // ── Accept Resolution (Student confirms issue is fixed) ──
+    const handleAcceptResolution = async (complaint) => {
+        setIsReviewing(true);
+        try {
+            const history = complaint.complaintHistory || [];
+            history.push({
+                action: 'student_accepted',
+                timestamp: new Date().toISOString(),
+                by: 'student',
+            });
 
+            await updateDoc(doc(db, 'complaints', complaint.id), {
+                status: 'resolved',
+                studentReviewStatus: 'accepted',
+                complaintHistory: history,
+                updatedAt: serverTimestamp(),
+            });
 
+            toast.success('Resolution accepted! Complaint is now resolved.');
+            if (selectedComplaint?.id === complaint.id) {
+                setSelectedComplaint(prev => ({ ...prev, status: 'resolved', studentReviewStatus: 'accepted' }));
+            }
+        } catch (err) {
+            console.error('Error accepting resolution:', err);
+            toast.error('Failed to accept resolution. Please try again.');
+        } finally {
+            setIsReviewing(false);
+        }
+    };
 
+    // ── Dispute Resolution (Student says issue is NOT fixed) ──
+    const handleDisputeResolution = async (complaint) => {
+        if (!disputeReason.trim()) {
+            toast.warning('Please provide a reason for your dispute');
+            return;
+        }
 
+        setIsReviewing(true);
+        try {
+            const history = complaint.complaintHistory || [];
+            history.push({
+                action: 'student_disputed',
+                reason: disputeReason.trim(),
+                timestamp: new Date().toISOString(),
+                by: 'student',
+                disputeCount: (complaint.disputeCount || 0) + 1,
+            });
+
+            await updateDoc(doc(db, 'complaints', complaint.id), {
+                status: 'disputed',
+                studentReviewStatus: 'disputed',
+                disputeReason: disputeReason.trim(),
+                disputedAt: serverTimestamp(),
+                disputeCount: (complaint.disputeCount || 0) + 1,
+                complaintHistory: history,
+                updatedAt: serverTimestamp(),
+            });
+
+            toast.success('Dispute submitted! The warden will be alerted.');
+            setShowDisputeModal(false);
+            setDisputeReason('');
+            if (selectedComplaint?.id === complaint.id) {
+                setSelectedComplaint(prev => ({
+                    ...prev,
+                    status: 'disputed',
+                    studentReviewStatus: 'disputed',
+                    disputeReason: disputeReason.trim(),
+                }));
+            }
+        } catch (err) {
+            console.error('Error disputing resolution:', err);
+            toast.error('Failed to submit dispute. Please try again.');
+        } finally {
+            setIsReviewing(false);
+        }
+    };
 
 
 
@@ -607,6 +721,55 @@ const StudentComplaints = () => {
                                                     {formatDate(complaint.createdAt)}
                                                 </span>
                                             </div>
+
+                                            {/* ── Review Required Banner ── */}
+                                            {complaint.status === 'warden-resolved' && (
+                                                <div className="complaint-review-banner">
+                                                    <div className="complaint-review-banner-text">
+                                                        <AlertTriangle size={14} />
+                                                        <span>Warden marked this as resolved. Is your issue fixed?</span>
+                                                    </div>
+                                                    <div className="complaint-review-actions">
+                                                        <button
+                                                            className="complaint-review-btn complaint-btn-accept"
+                                                            onClick={(e) => { e.stopPropagation(); handleAcceptResolution(complaint); }}
+                                                            disabled={isReviewing}
+                                                        >
+                                                            <ThumbsUp size={13} />
+                                                            Yes, Resolved
+                                                        </button>
+                                                        <button
+                                                            className="complaint-review-btn complaint-btn-dispute"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedComplaint(complaint);
+                                                                setShowDisputeModal(true);
+                                                            }}
+                                                            disabled={isReviewing}
+                                                        >
+                                                            <ThumbsDown size={13} />
+                                                            Not Resolved
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* ── Disputed Banner ── */}
+                                            {complaint.status === 'disputed' && (
+                                                <div className="complaint-disputed-banner">
+                                                    <ShieldAlert size={14} />
+                                                    <span>You disputed this resolution. Waiting for warden response...</span>
+                                                </div>
+                                            )}
+
+                                            {/* ── Escalated Banner ── */}
+                                            {complaint.status === 'escalated' && (
+                                                <div className="complaint-escalated-banner">
+                                                    <AlertTriangle size={14} />
+                                                    <span>This complaint has been escalated to management.</span>
+                                                </div>
+                                            )}
+
                                             <div className="complaint-item-actions">
                                                 <button
                                                     className="complaint-view-btn"
@@ -617,18 +780,20 @@ const StudentComplaints = () => {
                                                     <ChevronRight size={13} />
                                                 </button>
                                             </div>
-                                            <div className="complaint-timer-display" style={{
-                                                marginTop: '0.5rem',
-                                                fontSize: '0.75rem',
-                                                color: '#ef4444',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '4px',
-                                                fontWeight: '600'
-                                            }}>
-                                                <Clock size={12} />
-                                                Expires in: {getTimeRemaining(complaint.createdAt)}
-                                            </div>
+                                            {(complaint.status === 'pending' || complaint.status === 'in-progress') && (
+                                                <div className="complaint-timer-display" style={{
+                                                    marginTop: '0.5rem',
+                                                    fontSize: '0.75rem',
+                                                    color: '#ef4444',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    <Clock size={12} />
+                                                    Auto-escalation in: {getTimeRemaining(complaint.createdAt)}
+                                                </div>
+                                            )}
                                         </div>
 
                                     );
@@ -717,6 +882,146 @@ const StudentComplaints = () => {
                                         Response from Hostel
                                     </h4>
                                     <p>{selectedComplaint.response}</p>
+                                    {selectedComplaint.respondedBy && (
+                                        <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                            — {selectedComplaint.respondedBy}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* ── Review Section (Warden-Resolved) ── */}
+                            {selectedComplaint.status === 'warden-resolved' && !showDisputeModal && (
+                                <div className="complaint-review-section">
+                                    <div className="complaint-review-header">
+                                        <AlertTriangle size={16} style={{ color: '#f59e0b' }} />
+                                        <h4>Review Required</h4>
+                                    </div>
+                                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                                        The warden has marked this complaint as resolved. Please verify if your issue has actually been fixed.
+                                    </p>
+                                    <div className="complaint-review-modal-actions">
+                                        <button
+                                            className="complaint-review-btn complaint-btn-accept"
+                                            onClick={() => handleAcceptResolution(selectedComplaint)}
+                                            disabled={isReviewing}
+                                        >
+                                            {isReviewing ? <Loader2 size={14} className="complaints-spinner" /> : <ThumbsUp size={14} />}
+                                            Yes, Issue is Resolved
+                                        </button>
+                                        <button
+                                            className="complaint-review-btn complaint-btn-dispute"
+                                            onClick={() => setShowDisputeModal(true)}
+                                            disabled={isReviewing}
+                                        >
+                                            <ThumbsDown size={14} />
+                                            No, Issue is NOT Resolved
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ── Dispute Form (within modal) ── */}
+                            {showDisputeModal && selectedComplaint.status === 'warden-resolved' && (
+                                <div className="complaint-dispute-form">
+                                    <div className="complaint-review-header">
+                                        <ShieldAlert size={16} style={{ color: '#ef4444' }} />
+                                        <h4>Dispute Resolution</h4>
+                                    </div>
+                                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                        Explain why the issue is not resolved. This will be sent to the warden as an urgent alert.
+                                        {selectedComplaint.disputeCount > 0 && (
+                                            <span style={{ color: '#ef4444', fontWeight: 600 }}>
+                                                {' '}(Disputed {selectedComplaint.disputeCount} time{selectedComplaint.disputeCount !== 1 ? 's' : ''} before)
+                                            </span>
+                                        )}
+                                    </p>
+                                    <textarea
+                                        className="complaint-dispute-textarea"
+                                        placeholder="Describe why the issue is still not resolved..."
+                                        value={disputeReason}
+                                        onChange={(e) => setDisputeReason(e.target.value)}
+                                        maxLength={500}
+                                    />
+                                    <span className="complaints-char-count">{disputeReason.length}/500</span>
+                                    <div className="complaint-review-modal-actions" style={{ marginTop: '0.5rem' }}>
+                                        <button
+                                            className="complaint-review-btn complaint-btn-dispute"
+                                            onClick={() => handleDisputeResolution(selectedComplaint)}
+                                            disabled={isReviewing || !disputeReason.trim()}
+                                        >
+                                            {isReviewing ? <Loader2 size={14} className="complaints-spinner" /> : <ShieldAlert size={14} />}
+                                            Submit Dispute
+                                        </button>
+                                        <button
+                                            className="complaint-review-btn"
+                                            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
+                                            onClick={() => { setShowDisputeModal(false); setDisputeReason(''); }}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ── Dispute Info (when already disputed) ── */}
+                            {selectedComplaint.status === 'disputed' && selectedComplaint.disputeReason && (
+                                <div className="complaint-dispute-info">
+                                    <div className="complaint-review-header">
+                                        <ShieldAlert size={16} style={{ color: '#ef4444' }} />
+                                        <h4>Your Dispute</h4>
+                                    </div>
+                                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                                        &ldquo;{selectedComplaint.disputeReason}&rdquo;
+                                    </p>
+                                    <p style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 600, marginTop: '0.5rem' }}>
+                                        Waiting for warden to respond. If no response within 48 hours, this will be escalated to management automatically.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* ── Escalation Info ── */}
+                            {selectedComplaint.status === 'escalated' && (
+                                <div className="complaint-escalated-info">
+                                    <div className="complaint-review-header">
+                                        <AlertTriangle size={16} style={{ color: '#dc2626' }} />
+                                        <h4>Escalated to Management</h4>
+                                    </div>
+                                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                                        {selectedComplaint.escalationReason || 'This complaint has been escalated to management for review.'}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* ── Complaint History Timeline ── */}
+                            {selectedComplaint.complaintHistory && selectedComplaint.complaintHistory.length > 0 && (
+                                <div className="complaint-history-section">
+                                    <h4 style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+                                        <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                        Complaint Timeline
+                                    </h4>
+                                    <div className="complaint-timeline">
+                                        {selectedComplaint.complaintHistory.map((entry, idx) => (
+                                            <div className="complaint-timeline-item" key={idx}>
+                                                <div className="complaint-timeline-dot" />
+                                                <div className="complaint-timeline-content">
+                                                    <span className="complaint-timeline-action">
+                                                        {entry.action === 'created' && 'Complaint Filed'}
+                                                        {entry.action === 'warden_resolved' && 'Warden Marked Resolved'}
+                                                        {entry.action === 'student_accepted' && 'Student Accepted Resolution'}
+                                                        {entry.action === 'student_disputed' && 'Student Disputed Resolution'}
+                                                        {entry.action === 'auto_escalated' && 'Auto-Escalated to Management'}
+                                                    </span>
+                                                    {entry.reason && (
+                                                        <span className="complaint-timeline-reason">{entry.reason}</span>
+                                                    )}
+                                                    <span className="complaint-timeline-time">
+                                                        {new Date(entry.timestamp).toLocaleString('en-IN')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>

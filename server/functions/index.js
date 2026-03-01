@@ -12,4 +12,5 @@ export * from './src/reports.js';
 export * from './src/systemSettings.js';
 export * from './src/notifications.js';
 export * from './src/bulkUpload.js';
+export * from './src/complaintFunctions.js';
 

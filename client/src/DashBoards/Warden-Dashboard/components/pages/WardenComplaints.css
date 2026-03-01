@@ -642,3 +642,205 @@
 .warden-spinner {
     animation: warden-spin 0.8s linear infinite;
 }
+
+/* ============================================
+   New Statuses: Warden-Resolved, Disputed, Escalated
+   ============================================ */
+
+/* Awaiting Student Review */
+.warden-status-warden-resolved {
+    background: rgba(168, 85, 247, 0.12);
+    color: #7c3aed;
+    border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.warden-status-warden-resolved .warden-status-dot {
+    background: #7c3aed;
+    animation: warden-status-pulse 2s ease-in-out infinite;
+}
+
+/* DISPUTED — RED FLAG */
+.warden-status-disputed {
+    background: rgba(239, 68, 68, 0.18);
+    color: #dc2626;
+    border: 2px solid rgba(239, 68, 68, 0.5);
+    font-weight: 800;
+    animation: disputed-border-pulse 1.5s ease-in-out infinite;
+}
+
+.warden-status-disputed .warden-status-dot {
+    background: #dc2626;
+    animation: warden-status-pulse 0.6s ease-in-out infinite;
+}
+
+/* Escalated */
+.warden-status-escalated {
+    background: rgba(220, 38, 38, 0.12);
+    color: #b91c1c;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.warden-status-escalated .warden-status-dot {
+    background: #b91c1c;
+}
+
+@keyframes warden-status-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+@keyframes disputed-border-pulse {
+    0%, 100% { border-color: rgba(239, 68, 68, 0.5); }
+    50% { border-color: rgba(239, 68, 68, 0.9); }
+}
+
+/* ============================================
+   Disputed Stat Chip (in hero)
+   ============================================ */
+
+.warden-stat-disputed {
+    background: rgba(239, 68, 68, 0.25) !important;
+    color: #fecaca !important;
+    border: 1px solid rgba(239, 68, 68, 0.5) !important;
+    animation: disputed-chip-flash 2s ease-in-out infinite;
+}
+
+@keyframes disputed-chip-flash {
+    0%, 100% { background: rgba(239, 68, 68, 0.25); }
+    50% { background: rgba(239, 68, 68, 0.45); }
+}
+
+/* ============================================
+   Red Flag Banner (on disputed complaint cards)
+   ============================================ */
+
+.warden-complaint-disputed {
+    border: 2px solid rgba(239, 68, 68, 0.4) !important;
+    background: rgba(239, 68, 68, 0.03) !important;
+    animation: disputed-card-glow 2s ease-in-out infinite;
+}
+
+@keyframes disputed-card-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    50% { box-shadow: 0 0 12px 3px rgba(239, 68, 68, 0.15); }
+}
+
+.warden-red-flag-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.08));
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #dc2626;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.warden-red-flag-icon-pulse {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #ef4444;
+    animation: red-flag-pulse 1s ease-in-out infinite;
+}
+
+@keyframes red-flag-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    50% { transform: scale(1.3); opacity: 0.8; box-shadow: 0 0 8px 4px rgba(239, 68, 68, 0.2); }
+}
+
+/* ============================================
+   Dispute Reason (on card)
+   ============================================ */
+
+.warden-dispute-reason {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    background: rgba(239, 68, 68, 0.06);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    font-size: 0.75rem;
+    color: #dc2626;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+.warden-dispute-count {
+    margin-left: auto;
+    flex-shrink: 0;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.75rem;
+    background: #ef4444;
+    color: white;
+    font-size: 0.625rem;
+    font-weight: 800;
+    font-style: normal;
+}
+
+/* ============================================
+   Awaiting Badge
+   ============================================ */
+
+.warden-awaiting-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #7c3aed;
+    background: rgba(168, 85, 247, 0.08);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    border-radius: 0.5rem;
+}
+
+/* ============================================
+   Modal Dispute Alert
+   ============================================ */
+
+.warden-response-disputed {
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    background: rgba(239, 68, 68, 0.03) !important;
+}
+
+.warden-modal-dispute-alert {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.06));
+    border: 1.5px solid rgba(239, 68, 68, 0.35);
+}
+
+.warden-modal-dispute-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #dc2626;
+    font-size: 0.8125rem;
+    margin-bottom: 0.375rem;
+}
+
+.warden-modal-dispute-reason {
+    font-size: 0.8125rem;
+    color: #b91c1c;
+    font-style: italic;
+    margin-bottom: 0.375rem;
+    line-height: 1.5;
+}
+
+.warden-modal-dispute-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.6875rem;
+    color: #f59e0b;
+    font-weight: 600;
+}

@@ -30,11 +30,15 @@ const Students = () => {
   // Use Auth context to get user's college if provided (management user assigned to a college)
   const { userData, user } = useAuth();
 
+  // Extract stable primitive values for useEffect deps (avoids re-running when userData object reference changes)
+  const userCollegeId = userData?.collegeId;
+  const userCollegeName = userData?.collegeName;
+
   // Determine college filter: URL param takes precedence, otherwise use user's collegeId/collegeName
   const getCollegeFilter = () => {
     if (initialCollegeId) return { field: 'collegeId', value: initialCollegeId };
-    if (userData?.collegeId) return { field: 'collegeId', value: userData.collegeId };
-    if (userData?.collegeName) return { field: 'collegeName', value: userData.collegeName };
+    if (userCollegeId) return { field: 'collegeId', value: userCollegeId };
+    if (userCollegeName) return { field: 'collegeName', value: userCollegeName };
     return null;
   };
 
@@ -64,7 +68,7 @@ const Students = () => {
       unsubscribe();
       if (timer) clearTimeout(timer);
     };
-  }, [initialCollegeId, userData]);
+  }, [initialCollegeId, userCollegeId, userCollegeName]);
 
   // Helper function to get role badge color
   const getRoleBadgeColor = (user) => {
@@ -132,7 +136,7 @@ const Students = () => {
               <p className="page-subtitle">Manage and monitor all students</p>
             </div>
           </div>
-          <button className="btn-primary" onClick={() => setShowBulkUpload(true)}>
+          <button type="button" className="btn-primary" onClick={() => setShowBulkUpload(true)}>
             <FileSpreadsheet size={20} />
             Bulk Upload
           </button>
