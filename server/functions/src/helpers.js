@@ -116,6 +116,9 @@ export async function verifyManagementAccess(context, collegeId) {
     }
 
     const userData = userDoc.data();
+    if (!userData) {
+      throw new HttpsError('not-found', 'User profile data is empty');
+    }
     console.log('Current user data:', { role: userData.role, uid: userData.uid });
 
     // Check if user is admin

@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { db, auth, corsOptions } from './config.js';
+import { db, auth } from './config.js';
 import * as logger from 'firebase-functions/logger';
 import { verifyManagementAccess } from './helpers.js';
 import nodemailer from 'nodemailer';
@@ -23,7 +23,7 @@ function generatePassword() {
  * Management uploads Excel → parsed data sent here → creates Auth users + Firestore docs
  * Sends email notification to naitapppurpose@gmail.com with summary
  */
-export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }, async (request) => {
+export const bulkCreateStudents = onCall({ timeoutSeconds: 300 }, async (request) => {
   try {
     logger.info('📋 bulkCreateStudents called');
 

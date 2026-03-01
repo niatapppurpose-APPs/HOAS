@@ -307,6 +307,9 @@ const StudentComplaints = () => {
                 }
             }
 
+            const now = new Date();
+            const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 Hours from now
+
             await addDoc(collection(db, 'complaints'), {
                 studentId: user.uid,
                 studentName: userData?.fullName || user.displayName || 'Student',
@@ -320,6 +323,8 @@ const StudentComplaints = () => {
                 imageUrl,
                 status: 'pending',
                 response: null,
+                isEscalated: false,
+                expiresAt: expiresAt,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
             });
@@ -612,12 +617,12 @@ const StudentComplaints = () => {
                                                     <ChevronRight size={13} />
                                                 </button>
                                             </div>
-                                            <div className="complaint-timer-display" style={{ 
-                                                marginTop: '0.5rem', 
-                                                fontSize: '0.75rem', 
-                                                color: '#ef4444', 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
+                                            <div className="complaint-timer-display" style={{
+                                                marginTop: '0.5rem',
+                                                fontSize: '0.75rem',
+                                                color: '#ef4444',
+                                                display: 'flex',
+                                                alignItems: 'center',
                                                 gap: '4px',
                                                 fontWeight: '600'
                                             }}>

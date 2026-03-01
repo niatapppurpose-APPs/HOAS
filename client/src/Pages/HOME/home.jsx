@@ -19,7 +19,12 @@ import {
     X,
     ChevronRight,
     Search,
-    Info
+    Info,
+    Linkedin,
+    Twitter,
+    Github,
+    Instagram,
+    Mail
 } from 'lucide-react';
 import FrontendDeveloper from '../../assets/DeveploersImages/FrontendDevloper.jpeg'
 import BackendDeveloper from '../../assets/DeveploersImages/Backenddeveloper.png'
@@ -138,17 +143,17 @@ const Home = () => {
 
     return (
         <div className="min-h-screen font-sans selection:bg-indigo-500/30 selection:text-indigo-200 overflow-x-hidden transition-colors duration-300"
-             style={{
-                 backgroundColor: isDark ? '#020617' : '#f8fafc',
-                 color: isDark ? '#f1f5f9' : '#0f172a'
-             }}>
+            style={{
+                backgroundColor: isDark ? '#020617' : '#f8fafc',
+                color: isDark ? '#f1f5f9' : '#0f172a'
+            }}>
 
             {/* Navigation */}
             <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b border-indigo-500/10 supports-[backdrop-filter]:transition-colors duration-300"
-                 style={{
-                     backgroundColor: isDark ? 'rgba(2, 6, 23, 0.8)' : 'rgba(248, 250, 252, 0.8)',
-                     borderColor: isDark ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.2)'
-                 }}>
+                style={{
+                    backgroundColor: isDark ? 'rgba(2, 6, 23, 0.8)' : 'rgba(248, 250, 252, 0.8)',
+                    borderColor: isDark ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.2)'
+                }}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16 md:h-20">
                         {/* Logo */}
@@ -171,7 +176,7 @@ const Home = () => {
                                 </div>
                             </motion.div>
                             <span className="text-xl md:text-2xl font-bold tracking-tight group-hover:text-indigo-300 transition-colors uppercase"
-                                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</span>
+                                style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</span>
                         </motion.div>
 
                         {/* Desktop Menu */}
@@ -180,15 +185,15 @@ const Home = () => {
                             animate={{ opacity: 1, x: 0 }}
                             className="hidden md:flex items-center gap-6 lg:gap-8"
                         >
-                            <button onClick={() => scrollToSection('roles')} 
-                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-indigo-600"
-                                    style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Roles</button>
-                            <button onClick={() => scrollToSection('features')} 
-                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-indigo-600"
-                                    style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Features</button>
-                            <button onClick={() => scrollToSection('workflow')} 
-                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-indigo-600"
-                                    style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Workflow</button>
+                            <button onClick={() => scrollToSection('roles')}
+                                className="text-sm font-medium hover:scale-105 transition-all hover:text-indigo-600"
+                                style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Roles</button>
+                            <button onClick={() => scrollToSection('features')}
+                                className="text-sm font-medium hover:scale-105 transition-all hover:text-indigo-600"
+                                style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Features</button>
+                            <button onClick={() => scrollToSection('workflow')}
+                                className="text-sm font-medium hover:scale-105 transition-all hover:text-indigo-600"
+                                style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Workflow</button>
 
 
 
@@ -196,7 +201,7 @@ const Home = () => {
                                 {/* Theme Toggle */}
                                 <ThemeToggle size="sm" className="bg-white/5 hover:bg-white/10 border border-white/10" />
 
-                               
+
 
 
                                 {/* Get Started / Dashboard button */}
@@ -272,36 +277,36 @@ const Home = () => {
                                         </div>
                                     </motion.div>
                                     <span className="text-3xl font-black uppercase tracking-[0.3em] bg-clip-text text-transparent bg-gradient-to-b"
-                                          style={{
-                                              backgroundImage: isDark 
-                                                  ? 'linear-gradient(to bottom, #ffffff, #94a3b8)' 
-                                                  : 'linear-gradient(to bottom, #0f172a, #475569)'
-                                          }}>HOAS</span>
+                                        style={{
+                                            backgroundImage: isDark
+                                                ? 'linear-gradient(to bottom, #ffffff, #94a3b8)'
+                                                : 'linear-gradient(to bottom, #0f172a, #475569)'
+                                        }}>HOAS</span>
                                 </motion.div>
                                 <motion.button variants={itemVariants} onClick={() => scrollToSection('roles')}
-                                              className="text-lg font-medium py-2 border-b w-full transition-colors"
-                                              style={{ 
-                                                  color: isDark ? '#cbd5e1' : '#475569',
-                                                  borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                              }}>Roles</motion.button>
-                                <motion.button variants={itemVariants} onClick={() => scrollToSection('features')} 
-                                              className="text-lg font-medium py-2 border-b w-full transition-colors"
-                                              style={{ 
-                                                  color: isDark ? '#cbd5e1' : '#475569',
-                                                  borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                              }}>Features</motion.button>
+                                    className="text-lg font-medium py-2 border-b w-full transition-colors"
+                                    style={{
+                                        color: isDark ? '#cbd5e1' : '#475569',
+                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                    }}>Roles</motion.button>
+                                <motion.button variants={itemVariants} onClick={() => scrollToSection('features')}
+                                    className="text-lg font-medium py-2 border-b w-full transition-colors"
+                                    style={{
+                                        color: isDark ? '#cbd5e1' : '#475569',
+                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                    }}>Features</motion.button>
                                 <motion.button variants={itemVariants} onClick={() => scrollToSection('workflow')}
-                                              className="text-lg font-medium py-2 border-b w-full transition-colors"
-                                              style={{ 
-                                                  color: isDark ? '#cbd5e1' : '#475569',
-                                                  borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                              }}>Workflow</motion.button>
-                                <motion.button variants={itemVariants} onClick={() => { setIsMobileMenuOpen(false); setIsAboutOpen(true); }} 
-                                              className="text-lg font-medium py-2 border-b w-full flex items-center justify-center gap-2 transition-colors"
-                                              style={{ 
-                                                  color: isDark ? '#cbd5e1' : '#475569',
-                                                  borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                              }}>
+                                    className="text-lg font-medium py-2 border-b w-full transition-colors"
+                                    style={{
+                                        color: isDark ? '#cbd5e1' : '#475569',
+                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                    }}>Workflow</motion.button>
+                                <motion.button variants={itemVariants} onClick={() => { setIsMobileMenuOpen(false); setIsAboutOpen(true); }}
+                                    className="text-lg font-medium py-2 border-b w-full flex items-center justify-center gap-2 transition-colors"
+                                    style={{
+                                        color: isDark ? '#cbd5e1' : '#475569',
+                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                    }}>
                                     <Info className="w-5 h-5" /> About App
                                 </motion.button>
                             </motion.div>
@@ -316,11 +321,11 @@ const Home = () => {
                                 <div className="flex justify-center">
                                     <ThemeToggle size="md" className="bg-white/5 hover:bg-white/10 border border-white/10" />
                                 </div>
-                                
+
                                 <motion.button
                                     variants={itemVariants}
-                                    onClick={() => { 
-                                        setIsMobileMenuOpen(false); 
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
                                         if (isAdmin) {
                                             navigate('/OwnersDashboard');
                                         } else if (user) {
@@ -385,11 +390,11 @@ const Home = () => {
                     >
                         Simplify Complex <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r animate-text bg-[length:200%_auto]"
-                              style={{
-                                  backgroundImage: isDark
-                                      ? 'linear-gradient(to right, #818cf8, #c084fc, #818cf8)'
-                                      : 'linear-gradient(to right, #4f46e5, #7c3aed, #4f46e5)'
-                              }}>
+                            style={{
+                                backgroundImage: isDark
+                                    ? 'linear-gradient(to right, #818cf8, #c084fc, #818cf8)'
+                                    : 'linear-gradient(to right, #4f46e5, #7c3aed, #4f46e5)'
+                            }}>
                             Hostel Operations
                         </span>
                     </motion.h1>
@@ -460,7 +465,7 @@ const Home = () => {
                         <h2 className="text-3xl md:text-5xl font-bold mb-4 md:mb-6"
                             style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Designed for Every Stakeholder</h2>
                         <p className="text-base md:text-lg max-w-3xl mx-auto px-2"
-                           style={{ color: isDark ? '#94a3b8' : '#475569' }}>
+                            style={{ color: isDark ? '#94a3b8' : '#475569' }}>
                             A unified ecosystem providing tailored experiences for every role in the accommodation process.
                         </p>
                     </motion.div>
@@ -506,16 +511,16 @@ const Home = () => {
 
             {/* Features Grid */}
             <section id="features" className="py-16 md:py-24 border-y relative overflow-hidden"
-                     style={{
-                         backgroundColor: isDark ? 'rgba(15, 23, 42, 0.5)' : 'rgba(248, 250, 252, 0.8)',
-                         borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                     }}>
+                style={{
+                    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.5)' : 'rgba(248, 250, 252, 0.8)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                }}>
                 <div className="absolute inset-0"
-                     style={{
-                         background: isDark 
-                             ? 'radial-gradient(ellipse at top right, rgba(79, 70, 229, 0.2), transparent)'
-                             : 'radial-gradient(ellipse at top right, rgba(99, 102, 241, 0.08), transparent)'
-                     }}></div>
+                    style={{
+                        background: isDark
+                            ? 'radial-gradient(ellipse at top right, rgba(79, 70, 229, 0.2), transparent)'
+                            : 'radial-gradient(ellipse at top right, rgba(99, 102, 241, 0.08), transparent)'
+                    }}></div>
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
@@ -531,7 +536,7 @@ const Home = () => {
                                 <span className="text-indigo-400">Hostel Management</span>
                             </h2>
                             <p className="text-base md:text-lg mb-8 leading-relaxed"
-                               style={{ color: isDark ? '#94a3b8' : '#475569' }}>
+                                style={{ color: isDark ? '#94a3b8' : '#475569' }}>
                                 HOAS replaces outdated spreadsheet systems with a powerful, real-time cloud platform.
                                 Experience seamless integration of student data, room inventory, and administrative workflows.
                             </p>
@@ -568,11 +573,11 @@ const Home = () => {
 
             {/* Benefits / CTA */}
             <section className="py-16 md:py-24 relative overflow-hidden"
-                     style={{
-                         background: isDark
-                             ? 'linear-gradient(to bottom, #0f172a, rgba(30, 27, 75, 0.2))'
-                             : 'linear-gradient(to bottom, #eef2ff, #e0e7ff)'
-                     }}>
+                style={{
+                    background: isDark
+                        ? 'linear-gradient(to bottom, #0f172a, rgba(30, 27, 75, 0.2))'
+                        : 'linear-gradient(to bottom, #eef2ff, #e0e7ff)'
+                }}>
                 <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent"></div>
 
                 <div className="max-w-5xl mx-auto px-4 text-center">
@@ -620,10 +625,10 @@ const Home = () => {
 
             {/* Footer */}
             <footer className="pt-12 md:pt-16 pb-8 border-t"
-                    style={{
-                        backgroundColor: isDark ? '#020617' : '#f1f5f9',
-                        borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)'
-                    }}>
+                style={{
+                    backgroundColor: isDark ? '#020617' : '#f1f5f9',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)'
+                }}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-12">
                         <motion.div
@@ -645,10 +650,10 @@ const Home = () => {
                                     </div>
                                 </motion.div>
                                 <span className="text-2xl font-bold tracking-tight uppercase"
-                                      style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</span>
+                                    style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</span>
                             </div>
                             <p className="text-sm leading-relaxed max-w-xs"
-                               style={{ color: isDark ? '#64748b' : '#64748b' }}>
+                                style={{ color: isDark ? '#64748b' : '#64748b' }}>
                                 The standard for modern hostel administration. Built for security, designed for usability.
                             </p>
                         </motion.div>
@@ -703,16 +708,43 @@ const Home = () => {
                     </div>
 
                     <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left"
-                         style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)' }}>
+                        style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)' }}>
                         <p className="text-sm" style={{ color: isDark ? '#475569' : '#94a3b8' }}>© 2026 HOAS. All rights reserved.</p>
-                        <div className="flex gap-4">
-                            {/* Social placeholders */}
-                            <motion.div whileHover={{ scale: 1.1 }} className="w-8 h-8 rounded-full transition-colors cursor-pointer"
-                                        style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)' }}></motion.div>
-                            <motion.div whileHover={{ scale: 1.1 }} className="w-8 h-8 rounded-full transition-colors cursor-pointer"
-                                        style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)' }}></motion.div>
-                            <motion.div whileHover={{ scale: 1.1 }} className="w-8 h-8 rounded-full transition-colors cursor-pointer"
-                                        style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)' }}></motion.div>
+                        <div className="flex gap-3">
+                            {[
+                                { icon: Linkedin, href: 'https://linkedin.com', label: 'LinkedIn', hoverColor: '#0A66C2' },
+                                { icon: Twitter, href: 'https://twitter.com', label: 'Twitter', hoverColor: '#1DA1F2' },
+                                { icon: Github, href: 'https://github.com', label: 'GitHub', hoverColor: isDark ? '#ffffff' : '#333333' },
+                                { icon: Instagram, href: 'https://instagram.com', label: 'Instagram', hoverColor: '#E4405F' },
+                                { icon: Mail, href: 'mailto:support@hoas.app', label: 'Email', hoverColor: '#6366f1' }
+                            ].map(({ icon: Icon, href, label, hoverColor }) => (
+                                <motion.a
+                                    key={label}
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={label}
+                                    whileHover={{ scale: 1.15, y: -2 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 group"
+                                    style={{
+                                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)',
+                                        border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = hoverColor + '20';
+                                        e.currentTarget.style.borderColor = hoverColor + '40';
+                                        e.currentTarget.querySelector('svg').style.color = hoverColor;
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
+                                        e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+                                        e.currentTarget.querySelector('svg').style.color = isDark ? '#64748b' : '#94a3b8';
+                                    }}
+                                >
+                                    <Icon className="w-4 h-4 transition-colors duration-300" style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
+                                </motion.a>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -777,101 +809,101 @@ const Home = () => {
                                     <h3 className="text-3xl font-bold mb-2 tracking-tight"
                                         style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</h3>
                                     <p className="text-xs font-bold tracking-[0.2em] uppercase mb-8"
-                                       style={{ color: isDark ? '#818cf8' : '#4f46e5' }}>Hostel Operations Accountability System</p>
+                                        style={{ color: isDark ? '#818cf8' : '#4f46e5' }}>Hostel Operations Accountability System</p>
 
                                     <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
 
                                         {/* Description Card */}
                                         <div className="col-span-1 sm:col-span-2 rounded-2xl p-5 border hover:bg-opacity-80 transition-colors group"
-                                             style={{
-                                                 backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                                 borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                             }}>
+                                            style={{
+                                                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                                borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                            }}>
                                             <h4 className="text-xs font-bold uppercase tracking-wider mb-2 group-hover:text-indigo-400 transition-colors"
                                                 style={{ color: isDark ? '#64748b' : '#94a3b8' }}>System Overview</h4>
                                             <p className="text-sm leading-relaxed"
-                                               style={{ color: isDark ? '#cbd5e1' : '#475569' }}>
+                                                style={{ color: isDark ? '#cbd5e1' : '#475569' }}>
                                                 A comprehensive enterprise platform designed to streamline hostel management, ensuring transparency, automating approvals, and driving efficiency in accommodation processes.
                                             </p>
                                         </div>
 
                                         {/* Version Card */}
                                         <div className="rounded-2xl p-5 border hover:bg-opacity-80 transition-colors"
-                                             style={{
-                                                 backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                                 borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                             }}>
+                                            style={{
+                                                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                                borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                            }}>
                                             <div className="flex items-center justify-between mb-3">
                                                 <h4 className="text-xs font-bold uppercase tracking-wider"
                                                     style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Version</h4>
                                                 <div className="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                                     style={{
-                                         backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
-                                         color: isDark ? '#a5b4fc' : '#4338ca',
-                                         border: isDark ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid rgba(99, 102, 241, 0.3)'
-                                     }}>STABLE</div>
+                                                    style={{
+                                                        backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
+                                                        color: isDark ? '#a5b4fc' : '#4338ca',
+                                                        border: isDark ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid rgba(99, 102, 241, 0.3)'
+                                                    }}>STABLE</div>
                                             </div>
                                             <div className="flex flex-col">
                                                 <span className="text-xl font-mono font-bold"
-                                                      style={{ color: isDark ? '#ffffff' : '#0f172a' }}>v1.2.0</span>
+                                                    style={{ color: isDark ? '#ffffff' : '#0f172a' }}>v1.2.0</span>
                                                 <span className="text-xs mt-1"
-                                                      style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Build 2026.01.30</span>
+                                                    style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Build 2026.01.30</span>
                                             </div>
                                         </div>
 
                                         {/* Year Created Card */}
                                         <div className="rounded-2xl p-5 border hover:bg-opacity-80 transition-colors"
-                                             style={{
-                                                 backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                                 borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                             }}>
+                                            style={{
+                                                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                                borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                            }}>
                                             <h4 className="text-xs font-bold uppercase tracking-wider mb-3"
                                                 style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Established</h4>
                                             <div className="flex items-center gap-3">
                                                 <div className="p-2 rounded-lg"
-                                                     style={{
-                                                         backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
-                                                         color: isDark ? '#cbd5e1' : '#475569'
-                                                     }}>
+                                                    style={{
+                                                        backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+                                                        color: isDark ? '#cbd5e1' : '#475569'
+                                                    }}>
                                                     <LayoutDashboard className="w-5 h-5" />
                                                 </div>
                                                 <div>
                                                     <span className="block text-lg font-bold"
-                                                          style={{ color: isDark ? '#ffffff' : '#0f172a' }}>2026</span>
+                                                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}>2026</span>
                                                     <span className="text-xs"
-                                                          style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Since Jan</span>
+                                                        style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Since Jan</span>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Organization Card */}
                                         <div className="rounded-2xl p-5 border hover:bg-opacity-80 transition-colors"
-                                             style={{
-                                                 backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                                 borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                             }}>
+                                            style={{
+                                                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                                borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                            }}>
                                             <h4 className="text-xs font-bold uppercase tracking-wider mb-2"
                                                 style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Organization</h4>
                                             <div className="flex items-center gap-2 mb-1">
                                                 <ShieldCheck className="w-4 h-4 text-indigo-500" />
                                                 <span className="font-semibold text-sm"
-                                                      style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Antigravity Inst.</span>
+                                                    style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Antigravity Inst.</span>
                                             </div>
                                             <p className="text-xs pl-6"
-                                               style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Enterprise License</p>
+                                                style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Enterprise License</p>
                                         </div>
 
                                         {/* Creator / Team Card */}
                                         <div className="col-span-1 sm:col-span-2 rounded-2xl p-5 border transition-all"
-                                             style={{
-                                                 backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                                 borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
-                                             }}>
+                                            style={{
+                                                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                                borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                            }}>
                                             <h4 className="text-xs font-bold uppercase tracking-wider mb-4"
                                                 style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Developed By</h4>
                                             <div className="flex items-center justify-between">
                                                 <span className="font-medium text-sm"
-                                                      style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Admin Team</span>
+                                                    style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Admin Team</span>
                                                 <div className="flex gap-3">
                                                     {['faziya', 'hemanth'].map((key) => (
                                                         <motion.button
@@ -879,15 +911,14 @@ const Home = () => {
                                                             whileHover={{ scale: 1.1, y: -2 }}
                                                             whileTap={{ scale: 0.95 }}
                                                             onClick={() => setActiveTeamMember(activeTeamMember === key ? null : key)}
-                                                            className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg border-2 transition-all overflow-hidden ${
-                                                                activeTeamMember === key 
-                                                                    ? isDark 
-                                                                        ? 'border-white ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 scale-110' 
+                                                            className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg border-2 transition-all overflow-hidden ${activeTeamMember === key
+                                                                    ? isDark
+                                                                        ? 'border-white ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 scale-110'
                                                                         : 'border-indigo-500 ring-2 ring-indigo-500 ring-offset-2 ring-offset-white scale-110'
                                                                     : isDark
                                                                         ? 'border-slate-800 opacity-80 hover:opacity-100'
                                                                         : 'border-slate-300 opacity-80 hover:opacity-100'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             {teamData[key].image ? (
                                                                 <img src={teamData[key].image} alt={teamData[key].name} className="w-full h-full object-cover" />
@@ -904,13 +935,13 @@ const Home = () => {
 
                                     <div className="mt-8 flex flex-col items-center gap-2">
                                         <div className="flex items-center gap-2 text-xs font-medium"
-                                             style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
+                                            style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
                                             <span>© 2026 HOAS</span>
                                             <span className="w-1 h-1 rounded-full"
-                                                  style={{ backgroundColor: isDark ? '#475569' : '#cbd5e1' }}></span>
+                                                style={{ backgroundColor: isDark ? '#475569' : '#cbd5e1' }}></span>
                                             <span className="hover:text-indigo-400 cursor-pointer transition-colors">Privacy</span>
                                             <span className="w-1 h-1 rounded-full"
-                                                  style={{ backgroundColor: isDark ? '#475569' : '#cbd5e1' }}></span>
+                                                style={{ backgroundColor: isDark ? '#475569' : '#cbd5e1' }}></span>
                                             <span className="hover:text-indigo-400 cursor-pointer transition-colors">Terms</span>
                                         </div>
                                     </div>
@@ -961,14 +992,14 @@ const Home = () => {
                                                 className="flex items-center gap-3 mb-6"
                                             >
                                                 <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider"
-                                                       style={{
-                                                           backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(99,102,241,0.12)',
-                                                           color: isDark ? '#a5b4fc' : '#4338ca'
-                                                       }}>
+                                                    style={{
+                                                        backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(99,102,241,0.12)',
+                                                        color: isDark ? '#a5b4fc' : '#4338ca'
+                                                    }}>
                                                     {teamData[activeTeamMember].role}
                                                 </span>
                                                 <span className="text-sm flex items-center gap-1"
-                                                      style={{ color: isDark ? '#64748b' : '#64748b' }}>
+                                                    style={{ color: isDark ? '#64748b' : '#64748b' }}>
                                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                                     {teamData[activeTeamMember].location}
                                                 </span>
@@ -991,18 +1022,18 @@ const Home = () => {
                                                 className="flex gap-4"
                                             >
                                                 <button className="px-6 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-lg active:scale-95 duration-200"
-                                                        style={{
-                                                            backgroundColor: isDark ? '#ffffff' : '#4f46e5',
-                                                            color: isDark ? '#0f172a' : '#ffffff',
-                                                            boxShadow: isDark ? '0 10px 15px -3px rgba(255,255,255,0.05)' : '0 10px 15px -3px rgba(79,70,229,0.2)'
-                                                        }}
-                                                        onClick={() => {
-                                                    if (activeTeamMember === 'faziya') {
-                                                        window.open('https://www.linkedin.com/in/faziya-tasneem-shaik/', '_blank');
-                                                    } else if (activeTeamMember === 'hemanth') {
-                                                        window.open('https://www.linkedin.com/in/hemanth-atthuluri/', '_blank');
-                                                    }
-                                                }}>
+                                                    style={{
+                                                        backgroundColor: isDark ? '#ffffff' : '#4f46e5',
+                                                        color: isDark ? '#0f172a' : '#ffffff',
+                                                        boxShadow: isDark ? '0 10px 15px -3px rgba(255,255,255,0.05)' : '0 10px 15px -3px rgba(79,70,229,0.2)'
+                                                    }}
+                                                    onClick={() => {
+                                                        if (activeTeamMember === 'faziya') {
+                                                            window.open('https://www.linkedin.com/in/faziya-tasneem-shaik/', '_blank');
+                                                        } else if (activeTeamMember === 'hemanth') {
+                                                            window.open('https://www.linkedin.com/in/hemanth-atthuluri/', '_blank');
+                                                        }
+                                                    }}>
                                                     View Profile
                                                 </button>
                                                 <a
@@ -1058,7 +1089,7 @@ const RoleCard = ({ icon: Icon, role, desc, color, isDark = true }) => (
         <h3 className="text-lg md:text-xl font-bold mb-2 md:mb-3"
             style={{ color: isDark ? '#ffffff' : '#0f172a' }}>{role}</h3>
         <p className="leading-relaxed text-sm"
-           style={{ color: isDark ? '#94a3b8' : '#475569' }}>{desc}</p>
+            style={{ color: isDark ? '#94a3b8' : '#475569' }}>{desc}</p>
     </motion.div>
 );
 
@@ -1077,14 +1108,14 @@ const GlassCard = ({ icon: Icon, title, delay, isDark = true }) => (
         }}
     >
         <div className="p-2 md:p-3 rounded-lg shrink-0"
-             style={{
-                 backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
-                 color: isDark ? '#818cf8' : '#4f46e5'
-             }}>
+            style={{
+                backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
+                color: isDark ? '#818cf8' : '#4f46e5'
+            }}>
             <Icon className="w-5 h-5 md:w-6 md:h-6" />
         </div>
         <span className="font-semibold text-sm md:text-base"
-              style={{ color: isDark ? '#ffffff' : '#0f172a' }}>{title}</span>
+            style={{ color: isDark ? '#ffffff' : '#0f172a' }}>{title}</span>
     </motion.div>
 );
 
@@ -1098,10 +1129,10 @@ const FeatureItem = ({ title, desc, delay, isDark = true }) => (
     >
         <div className="mt-1 shrink-0">
             <div className="w-8 h-8 rounded-full flex items-center justify-center"
-                 style={{
-                     backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
-                     border: isDark ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)'
-                 }}>
+                style={{
+                    backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
+                    border: isDark ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)'
+                }}>
                 <CheckCircle2 className="w-5 h-5" style={{ color: isDark ? '#818cf8' : '#4f46e5' }} />
             </div>
         </div>
@@ -1109,7 +1140,7 @@ const FeatureItem = ({ title, desc, delay, isDark = true }) => (
             <h4 className="font-bold mb-1"
                 style={{ color: isDark ? '#ffffff' : '#0f172a' }}>{title}</h4>
             <p className="text-sm leading-relaxed"
-               style={{ color: isDark ? '#64748b' : '#475569' }}>{desc}</p>
+                style={{ color: isDark ? '#64748b' : '#475569' }}>{desc}</p>
         </div>
     </motion.div>
 );
@@ -1127,12 +1158,12 @@ const WorkflowSection = ({ isDark, itemVariants }) => {
     ];
 
     return (
-        <section 
-            id="workflow" 
-            ref={containerRef} 
+        <section
+            id="workflow"
+            ref={containerRef}
             className="relative py-20 md:py-32"
             style={{
-                background: isDark 
+                background: isDark
                     ? 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)'
                     : 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%)'
             }}
@@ -1146,7 +1177,7 @@ const WorkflowSection = ({ isDark, itemVariants }) => {
                     transition={{ duration: 0.6 }}
                     className="text-center mb-16"
                 >
-                    <h2 
+                    <h2
                         className="text-3xl md:text-5xl font-bold mb-4"
                         style={{ color: isDark ? '#ffffff' : '#0f172a' }}
                     >
@@ -1160,7 +1191,7 @@ const WorkflowSection = ({ isDark, itemVariants }) => {
                 {/* Cards Grid */}
                 <div className="relative">
                     {/* Connecting Line - Desktop only */}
-                    <motion.div 
+                    <motion.div
                         className="absolute top-1/2 left-[10%] right-[10%] h-1 hidden lg:block -translate-y-1/2 z-0"
                         initial={{ scaleX: 0 }}
                         whileInView={{ scaleX: 1 }}
@@ -1168,7 +1199,7 @@ const WorkflowSection = ({ isDark, itemVariants }) => {
                         transition={{ duration: 1.5, delay: 0.3, ease: "easeOut" }}
                         style={{ transformOrigin: 'left' }}
                     >
-                        <div 
+                        <div
                             className="w-full h-full rounded-full bg-gradient-to-r from-indigo-600 via-purple-500 to-indigo-600"
                         />
                     </motion.div>
@@ -1196,22 +1227,22 @@ const ScrollWorkflowCard = ({ number, title, desc, role, icon: Icon, isDark, ind
             initial={{ opacity: 0, y: 60, scale: 0.9 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, margin: "-50px" }}
-            transition={{ 
-                duration: 0.6, 
+            transition={{
+                duration: 0.6,
                 delay: index * 0.15,
                 ease: [0.25, 0.46, 0.45, 0.94]
             }}
-            whileHover={{ 
-                y: -8, 
+            whileHover={{
+                y: -8,
                 scale: 1.03,
-                transition: { duration: 0.2 } 
+                transition: { duration: 0.2 }
             }}
             className="relative p-6 rounded-2xl border text-center backdrop-blur-sm"
             style={{
                 backgroundColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.98)',
                 borderColor: isDark ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.2)',
-                boxShadow: isDark 
-                    ? '0 20px 40px -15px rgba(99, 102, 241, 0.2), 0 0 0 1px rgba(99, 102, 241, 0.1)' 
+                boxShadow: isDark
+                    ? '0 20px 40px -15px rgba(99, 102, 241, 0.2), 0 0 0 1px rgba(99, 102, 241, 0.1)'
                     : '0 20px 40px -15px rgba(0, 0, 0, 0.1)'
             }}
         >
@@ -1219,27 +1250,27 @@ const ScrollWorkflowCard = ({ number, title, desc, role, icon: Icon, isDark, ind
             <div
                 className="absolute inset-0 rounded-2xl pointer-events-none"
                 style={{
-                    background: isDark 
+                    background: isDark
                         ? 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.08) 0%, transparent 70%)'
                         : 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.05) 0%, transparent 70%)'
                 }}
             />
 
             {/* Icon with number badge */}
-            <motion.div 
+            <motion.div
                 className="mx-auto w-16 h-16 rounded-xl flex items-center justify-center mb-4 relative"
                 initial={{ scale: 0.5, rotate: -10 }}
                 whileInView={{ scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.15 + 0.2, type: "spring", stiffness: 200 }}
-                style={{ 
+                style={{
                     backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
                     border: '2px solid rgba(99, 102, 241, 0.4)'
                 }}
             >
                 <Icon size={28} style={{ color: '#6366f1' }} />
                 {/* Step number */}
-                <motion.div 
+                <motion.div
                     className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
                     initial={{ scale: 0 }}
                     whileInView={{ scale: 1 }}
@@ -1255,7 +1286,7 @@ const ScrollWorkflowCard = ({ number, title, desc, role, icon: Icon, isDark, ind
             </motion.div>
 
             {/* Title */}
-            <h3 
+            <h3
                 className="font-bold text-lg mb-2"
                 style={{ color: isDark ? '#ffffff' : '#0f172a' }}
             >
@@ -1263,9 +1294,9 @@ const ScrollWorkflowCard = ({ number, title, desc, role, icon: Icon, isDark, ind
             </h3>
 
             {/* Role badge */}
-            <div 
+            <div
                 className="inline-block px-3 py-1 rounded-full text-xs font-semibold mb-3"
-                style={{ 
+                style={{
                     backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
                     color: isDark ? '#818cf8' : '#4338ca',
                     border: '1px solid rgba(99, 102, 241, 0.3)'
@@ -1275,7 +1306,7 @@ const ScrollWorkflowCard = ({ number, title, desc, role, icon: Icon, isDark, ind
             </div>
 
             {/* Description */}
-            <p 
+            <p
                 className="text-sm leading-relaxed"
                 style={{ color: isDark ? '#94a3b8' : '#475569' }}
             >
@@ -1297,24 +1328,24 @@ const ScrollWorkflowCard = ({ number, title, desc, role, icon: Icon, isDark, ind
 const WorkflowStep = ({ number, title, desc, role, position, isDark = true, index = 0 }) => (
     <motion.div
         initial={{ opacity: 0, y: 60, scale: 0.9 }}
-        whileInView={{ 
-            opacity: 1, 
-            y: 0, 
+        whileInView={{
+            opacity: 1,
+            y: 0,
             scale: 1,
-            transition: { 
-                type: "spring", 
+            transition: {
+                type: "spring",
                 stiffness: 100,
                 damping: 15,
                 delay: index * 0.15,
                 duration: 0.6
-            } 
+            }
         }}
         viewport={{ once: true, margin: "-50px" }}
-        whileHover={{ 
-            y: -8, 
+        whileHover={{
+            y: -8,
             scale: 1.02,
             boxShadow: isDark ? '0 20px 40px -15px rgba(99, 102, 241, 0.3)' : '0 20px 40px -15px rgba(0, 0, 0, 0.15)',
-            transition: { duration: 0.3 } 
+            transition: { duration: 0.3 }
         }}
         className="relative border p-6 rounded-2xl z-10 text-left lg:text-center pl-16 lg:pl-6 backdrop-blur-sm"
         style={{
@@ -1323,16 +1354,16 @@ const WorkflowStep = ({ number, title, desc, role, position, isDark = true, inde
             boxShadow: isDark ? '0 4px 20px -5px rgba(0, 0, 0, 0.3)' : '0 4px 20px -5px rgba(0, 0, 0, 0.1)'
         }}
     >
-        <motion.div 
+        <motion.div
             initial={{ scale: 0, rotate: -180 }}
-            whileInView={{ 
-                scale: 1, 
+            whileInView={{
+                scale: 1,
                 rotate: 0,
-                transition: { 
-                    type: "spring", 
+                transition: {
+                    type: "spring",
                     stiffness: 200,
                     delay: index * 0.15 + 0.2
-                } 
+                }
             }}
             viewport={{ once: true }}
             className="absolute left-4 lg:relative lg:left-0 lg:mx-auto w-8 h-8 lg:w-12 lg:h-12 rounded-full flex items-center justify-center text-indigo-400 font-bold border border-indigo-500/30 mb-2 lg:mb-4 shadow-xl z-20"
@@ -1340,12 +1371,12 @@ const WorkflowStep = ({ number, title, desc, role, position, isDark = true, inde
         >
             {number}
         </motion.div>
-        <motion.h3 
+        <motion.h3
             initial={{ opacity: 0, x: -20 }}
-            whileInView={{ 
-                opacity: 1, 
+            whileInView={{
+                opacity: 1,
                 x: 0,
-                transition: { delay: index * 0.15 + 0.3 } 
+                transition: { delay: index * 0.15 + 0.3 }
             }}
             viewport={{ once: true }}
             className="font-bold text-lg mb-1"
@@ -1353,12 +1384,12 @@ const WorkflowStep = ({ number, title, desc, role, position, isDark = true, inde
         >
             {title}
         </motion.h3>
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ 
-                opacity: 1, 
+            whileInView={{
+                opacity: 1,
                 scale: 1,
-                transition: { delay: index * 0.15 + 0.35 } 
+                transition: { delay: index * 0.15 + 0.35 }
             }}
             viewport={{ once: true }}
             className="inline-block px-3 py-1 rounded-full text-xs font-medium text-indigo-300 mb-3"
@@ -1366,11 +1397,11 @@ const WorkflowStep = ({ number, title, desc, role, position, isDark = true, inde
         >
             {role}
         </motion.div>
-        <motion.p 
+        <motion.p
             initial={{ opacity: 0 }}
-            whileInView={{ 
+            whileInView={{
                 opacity: 1,
-                transition: { delay: index * 0.15 + 0.4 } 
+                transition: { delay: index * 0.15 + 0.4 }
             }}
             viewport={{ once: true }}
             className="text-sm"

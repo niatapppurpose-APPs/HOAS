@@ -45,6 +45,7 @@ const ManagementWardens = lazy(() => import("../../DashBoards/Management-Dashboa
 const ManagementStudents = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Students"));
 const ManagementHostels = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Hostels"));
 const ManagementReports = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Reports"));
+const ManagementComplaints = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/ManagementComplaints"));
 const ManagementHelp = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/HelpSupport"));
 const ManagementSettings_Page = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/ManagementSettings"));
 const ManagementProfile = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/ManagementProfile"));
@@ -57,8 +58,7 @@ const Students = lazy(() => import("../../Pages/OwnersDashboard/Pages/Students")
 const Analytics = lazy(() => import("../../Pages/OwnersDashboard/Pages/Analytics"));
 const Reports = lazy(() => import("../../Pages/OwnersDashboard/Pages/Reports"));
 const Notifications = lazy(() => import("../../Pages/OwnersDashboard/Pages/Notifications"));
-const Settings = lazy(() => import("../../Pages/OwnersDashboard/Pages/Settings"));
-const GlobalSystemSettings = lazy(() => import("../../Pages/OwnersDashboard/Pages/GlobalSystemSettings"));
+const Settings = lazy(() => import("../../Pages/OwnersDashboard/Pages/GlobalSystemSettings"));
 const SupportTickets = lazy(() => import("../../Pages/OwnersDashboard/Pages/SupportTickets"));
 const OwnerProfile = lazy(() => import("../OwnerServices/OwnerProfile"));
 
@@ -106,6 +106,7 @@ const Routes_path = () => {
                     <Route path="wardens" element={<ManagementWardens />} />
                     <Route path="students" element={<ManagementStudents />} />
                     <Route path="hostels" element={<ManagementHostels />} />
+                    <Route path="complaints" element={<ManagementComplaints />} />
                     <Route path="reports" element={<ManagementReports />} />
                     <Route path="settings" element={<ManagementSettings_Page />} />
                     <Route path="help" element={<ManagementHelp />} />
@@ -122,7 +123,6 @@ const Routes_path = () => {
                     <Route path="reports" element={<Reports />} />
                     <Route path="notifications" element={<Notifications />} />
                     <Route path="settings" element={<Settings />} />
-                    <Route path="system-settings" element={<GlobalSystemSettings />} />
                     <Route path="support-tickets" element={<SupportTickets />} />
                 </Route>
                 <Route path="/owner-profile" element={<OwnerProfile />} />

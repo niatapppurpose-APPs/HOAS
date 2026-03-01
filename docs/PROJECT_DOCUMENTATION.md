@@ -1,1344 +1,802 @@
-# HOAS - Hostel Operations Accountability System
-## Comprehensive Project Documentation
+# HOAS — Hostel Operations Accountability System
 
-**Version:** 0.0.0  
-**Last Updated:** December 22, 2025  
-**Project Type:** Web Application (React + Firebase)
+## 📌 Project Documentation
 
 ---
 
-## 📋 Executive Summary
+## 1. Project Overview
 
-**HOAS (Hostel Operations Accountability System)** is a comprehensive full-stack web application designed to streamline hostel/dormitory management for educational institutions. The system implements a hierarchical role-based access control (RBAC) structure with four distinct user levels: Owner (Super Admin), Management (Principal/Co-Admin), Warden, and Student. 
+**HOAS (Hostel Operations Accountability System)** is a full-stack web application built to digitize and streamline hostel management operations in educational institutions.
 
-Built with modern web technologies including React 19, Firebase (Authentication & Firestore), and Tailwind CSS, the platform provides real-time data synchronization, approval workflows, and role-specific dashboards for efficient hostel administration.
+### The Problem It Solves
 
-### Key Capabilities:
-- **Multi-tier Role-Based Access Control** with approval workflows
-- **Real-time User Management** via Firebase Firestore
-- **Secure Authentication** using Google OAuth
-- **Responsive UI** with Tailwind CSS and Lucide icons
-- **Hierarchical Data Structure** linking Students → Wardens → Management → Owners
+Managing hostels in colleges and universities is still largely a manual process — paper-based registrations, verbal approvals, no clear accountability chain, and zero visibility across the hierarchy. HOAS replaces this chaos with a structured, role-based digital platform where every action is tracked, every approval is logged, and every stakeholder has their own dashboard.
 
----
+### Who It's For
 
-## 🎯 Project Objectives
+- **Hostel Owners / Super Admins** — who oversee multiple colleges
+- **Management / Principals** — who manage wardens and students at individual colleges
+- **Wardens** — who handle day-to-day student interactions
+- **Students** — who need visibility into their hostel status, complaints, and announcements
 
-1. **Streamline Hostel Management**: Automate and digitize hostel operations from student registration to administrative approvals
-2. **Role-Based Workflows**: Implement granular permission systems ensuring each user role has appropriate access levels
-3. **Real-Time Synchronization**: Provide instant updates across all user interfaces using Firestore real-time listeners
-4. **Scalability**: Support multiple colleges/hostels under a single super admin with isolated data contexts
-5. **User Experience**: Deliver intuitive, modern interfaces tailored to each user role's needs
+### Core Value Proposition
+
+> One platform, four roles, real-time sync, zero paperwork.
 
 ---
 
-## 🏗️ System Architecture
+## 2. Features List
 
-### Application Architecture (Full-Stack)
+### Authentication & Access Control
+- Google OAuth sign-in via Firebase Authentication
+- Role-Based Access Control (RBAC) using Firebase custom claims
+- Hierarchical permission chain: **Owner → Management → Warden → Student**
+- Approval workflow for new user registrations
+- Persistent login with automatic route protection
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    FRONTEND (React)                      │
-│  - React 19 + Vite                                      │
-│  - Tailwind CSS                                         │
-│  - Firebase SDK                                         │
-│  - Real-time Firestore listeners (reads)               │
-└────────────────┬────────────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────────────┐
-│           FIREBASE CLOUD FUNCTIONS (Backend)             │
-│  - User Management APIs                                 │
-│  - College Management APIs                              │
-│  - Admin Operations                                     │
-│  - Authorization & Validation                           │
-│  - Audit Logging (future)                              │
-└────────────────┬────────────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────────────┐
-│                FIREBASE SERVICES                         │
-│  ┌──────────────┬──────────────┬──────────────┐        │
-│  │   Firestore  │  Auth (OAuth)│   Functions  │        │
-│  │   Database   │  & Custom    │   Runtime    │        │
-│  │              │  Claims      │              │        │
-│  └──────────────┴──────────────┴──────────────┘        │
-└─────────────────────────────────────────────────────────┘
-```
+### Owner (Super Admin) Dashboard
+- Manage all Management/Principal users across colleges
+- Approve or deny pending management account requests
+- Cascade delete — removing a college deletes all wardens and students under it
+- Real-time KPI cards (total users, pending approvals, etc.)
+- Support ticket management with resolution tracking
+- Global system settings panel:
+  - Registration toggles, maintenance mode, feature flags
+  - Role permission templates
+  - Approval workflow configuration
+  - Per-college user capacity limits
 
-### User Hierarchy
+### Management (Principal) Dashboard
+- View and manage wardens and students for a specific college
+- Approve/deny pending warden and student requests
+- Quick approval panel, status visualizations, recent activity feed
+- Bulk student upload via Excel spreadsheets
+- Create wardens with auto-generated credentials
+- Glassmorphism UI with purple-blue gradient theme
 
-```
-┌─────────────────────────────────────────┐
-│          OWNER (Super Admin)            │
-│  - Full system access                   │
-│  - Manage all Management users          │
-│  - Custom claims via Firebase Admin SDK │
-└──────────────┬──────────────────────────┘
-               │
-               ├── Management User 1 (College A)
-               │   ├── Warden 1
-               │   │   └── Student 1, 2, 3...
-               │   └── Warden 2
-               │       └── Student 4, 5, 6...
-               │
-               └── Management User 2 (College B)
-                   ├── Warden 3
-                   └── Student 7, 8, 9...
-```
+### Warden Dashboard
+- Monitor assigned students and hostel operations
+- AI-powered translation system (multilingual support)
+- Manage student statuses, complaints, announcements
+- Real-time notifications and alerts
 
-### Data Flow Architecture
+### Student Dashboard
+- View hostel information and personal profile
+- Submit complaints and leave requests
+- View announcements and approval status
+- Settings and help/support section
 
-```
-User Login (Google OAuth)
-    ↓
-Firebase Authentication
-    ↓
-AuthContext (Global State)
-    ↓
-Check User Document in Firestore
-    ↓
-    ├── User Exists → Check Status
-    │   ├── Approved → Redirect to Dashboard
-    │   ├── Pending → Waiting Approval Page
-    │   └── Denied → Waiting Approval Page (Denied Message)
-    │
-    └── No User Document → Waiting Approval (owner/management provisioning required)
-            ↓
-        (Owner/Management to provision user role and profile)
-            ↓
-        Waiting Approval Page
-```
+### Platform-Wide Features
+- 🎨 Modern dark theme with glassmorphism effects and smooth animations
+- 📊 JSON and PDF report generation and export
+- 🔔 Custom toast notification system (4 types: Success, Error, Warning, Info)
+- 🌐 Internationalization (i18n) with AI-powered translation
+- 🎭 Interactive onboarding tour using Shepherd.js
+- 🌓 Auto-detect system theme or manual dark/light toggle
+- 📱 Fully responsive, mobile-first design
+- ⚡ Real-time data sync via Firestore listeners
+- 🔍 Search, filter, and pagination across dashboards
+- 🚫 Server offline detection with fallback UI
+- 📂 Bulk student upload from Excel files
+- 🗂️ Support ticketing system with Firestore-backed tracking
+- 🛡️ Error boundary with global error modal and email fallback
 
 ---
 
-## 💻 Technical Stack
+## 3. Tech Stack
 
-### Frontend Technologies
+### Frontend
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **React** | 19.2.0 | UI framework for component-based architecture |
-| **React Router DOM** | 7.10.1 | Client-side routing and navigation |
-| **Vite** | 7.2.4 | Build tool and development server (HMR) |
-| **Tailwind CSS** | 4.1.18 | Utility-first CSS framework |
-| **Lucide React** | 0.561.0 | Icon library (modern, clean icons) |
+| Technology          | Version   | Purpose                              |
+|---------------------|-----------|--------------------------------------|
+| React               | 19.2.0    | UI framework (modern hooks, Suspense)|
+| Vite                | 7.2.4     | Build tool and dev server            |
+| Tailwind CSS        | 4.1.18    | Utility-first CSS framework          |
+| React Router        | 7.10.1    | Client-side routing                  |
+| Firebase SDK        | 12.6.0    | Auth, Firestore, Functions, Storage  |
+| Framer Motion       | 12.27.5   | Animations and transitions           |
+| Lucide React        | 0.561.0   | Icon library                         |
+| Recharts            | 3.6.0     | Data visualization / charts          |
+| i18next             | 25.8.0    | Internationalization                 |
+| Shepherd.js         | 14.5.1    | Interactive onboarding tours         |
+| XLSX                | 0.18.5    | Excel file parsing (bulk upload)     |
+| Lottie React        | -         | Animated illustrations               |
+| react-colorful      | 5.6.1     | Color picker component               |
 
-### Backend & Services
+### Backend
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Firebase** | 12.6.0 | Authentication & Realtime Database |
-| **Firebase Admin** | 13.6.0 / 12.6.0 | Server-side operations (custom claims) |
-| **Firebase Functions** | 6.1.1 | Backend API / Cloud Functions |
-| **Firestore** | - | NoSQL database for user data |
-| **Firebase Auth** | - | Google OAuth authentication |
-| **CORS** | 2.8.5 | Cross-origin resource sharing |
+| Technology           | Version | Purpose                              |
+|----------------------|---------|--------------------------------------|
+| Node.js              | 20+     | JavaScript runtime                   |
+| Firebase Functions   | v2 (7.x)| Serverless cloud functions           |
+| Firebase Admin SDK   | 13.6.0  | Server-side Firebase operations      |
+| Firestore            | -       | NoSQL real-time database             |
+| Express.js           | 5.2.1   | HTTP middleware (for report routes)   |
+| PDFKit               | 0.15.0  | PDF report generation                |
+| Nodemailer           | 8.0.1   | Email notifications (bulk upload)    |
+| CORS                 | 2.8.5   | Cross-origin resource sharing        |
 
-### Development Tools
+### Development & DevOps
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **ESLint** | 9.39.1 | Code quality and linting |
-| **eslint-plugin-react-hooks** | 7.0.1 | React Hooks linting rules |
-| **@vitejs/plugin-react** | 5.1.1 | React Fast Refresh for Vite |
+| Tool                 | Purpose                              |
+|----------------------|--------------------------------------|
+| Firebase Emulator    | Local development environment        |
+| ESLint               | Code linting                         |
+| Concurrently         | Run client + server simultaneously   |
+| Git                  | Version control                      |
 
 ---
 
-## 📁 Project Structure
+## 4. Architecture / Folder Structure
 
 ```
 HOAS/
-├── public/                          # Static assets
-├── functions/                       # ⭐ NEW: Firebase Cloud Functions
-│   ├── package.json                # Functions dependencies
-│   ├── .gitignore                  # Functions-specific ignores
-│   └── index.js                    # Cloud Functions (10 functions)
-├── src/
-│   ├── assets/                      # Images, logos, icons
-│   │   └── GoogleImage.png
+├── client/                              # React Frontend (Vite)
+│   ├── public/                          # Static assets (favicon, etc.)
+│   ├── src/
+│   │   ├── App.jsx                      # Root component (offline check, routing)
+│   │   ├── main.jsx                     # Entry point (Context providers tree)
+│   │   ├── index.css                    # Global styles
+│   │   │
+│   │   ├── components/                  # Shared/reusable components
+│   │   │   ├── Routes/index.jsx         # All route definitions
+│   │   │   ├── OwnerServices/           # Owner-specific UI (Avatar, StatsCard, etc.)
+│   │   │   ├── Toast/                   # Custom toast notification system
+│   │   │   ├── ThemeToggle/             # Dark/light mode toggle
+│   │   │   ├── ServerOffline/           # Offline detection UI
+│   │   │   ├── ErrorBoundary.jsx        # React error boundary
+│   │   │   ├── ErrorModal.jsx           # Global error reporting modal
+│   │   │   ├── FirebaseModeIndicator    # Dev-mode emulator indicator
+│   │   │   ├── LocationAutocomplete     # Address autocomplete
+│   │   │   └── ProfileBanner.jsx        # Profile header banner
+│   │   │
+│   │   ├── context/                     # React Context providers
+│   │   │   ├── AuthContext.jsx          # Auth state + custom claims
+│   │   │   ├── ThemeContext.jsx          # Theme management
+│   │   │   ├── ModalContext.jsx          # Global modal management
+│   │   │   ├── ErrorContext.jsx          # Error state management
+│   │   │   └── NotificationContext.jsx   # Real-time notifications
+│   │   │
+│   │   ├── DashBoards/                  # Role-specific dashboards
+│   │   │   ├── Student-DashBoard/       # Student dashboard + sub-pages
+│   │   │   ├── Warden-Dashboard/        # Warden dashboard + sub-pages
+│   │   │   ├── Management-Dashboard/    # Management dashboard + sub-pages
+│   │   │   └── Principal-Dashbord/      # Legacy principal dashboard
+│   │   │
+│   │   ├── Pages/                       # Top-level pages
+│   │   │   ├── HOME/                    # Landing/homepage
+│   │   │   ├── LoginPage/               # Login page
+│   │   │   ├── Dashboard/               # Smart router (redirects by role)
+│   │   │   ├── OwnersDashboard/         # Owner dashboard + sub-pages
+│   │   │   ├── ProfilePage/             # Profile pages
+│   │   │   ├── WaitingApproval/         # Approval pending screen
+│   │   │   └── NotFound/               # 404 page
+│   │   │
+│   │   ├── firebase/                    # Firebase client configuration
+│   │   │   ├── firebaseConfig.js        # Firebase init + emulator setup
+│   │   │   ├── cloudFunctions.js        # Cloud Functions API wrappers
+│   │   │   └── debugUtils.js            # Debug utilities
+│   │   │
+│   │   ├── hooks/                       # Custom React hooks
+│   │   │   ├── useServerStatus.js       # Server health monitoring
+│   │   │   ├── useSystemSettings.js     # System settings enforcement
+│   │   │   └── useTranslation.js        # i18n translation hook
+│   │   │
+│   │   ├── data/                        # Static data files
+│   │   └── assets/                      # Images, icons, animations
 │   │
-│   ├── components/                  # Reusable components
-│   │   ├── OwnerServices/          # Owner dashboard components
-│   │   │   └── (AdminLogin.jsx removed — admin uses `/login`) # Admin authentication handled by standard login
-│   │   │   ├── Avatar.jsx          # User avatar component
-│   │   │   ├── DeleteConfirmModal.jsx  # Deletion confirmation
-│   │   │   ├── header.jsx          # Dashboard header
-│   │   │   ├── OwnerProfile.jsx    # Owner profile view
-│   │   │   ├── Sidebar.jsx         # Dashboard sidebar
-│   │   │   ├── StatsCard.jsx       # Statistics card component
-│   │   │   └── StatusBadge.jsx     # Status indicator component
-│   │   │
-│   │   ├── Routes/                 # Application routing
-│   │   │   └── index.jsx           # Main route definitions
-│   │   │
-│   │   └── UserServices/           # User-related components
-│   │       └── UserServices/       # (role self-selection removed — admin provisioning)
-│   │
-│   ├── context/                    # React Context providers
-│   │   └── AuthContext.jsx         # Authentication state management
-│   │
-│   ├── DashBoards/                 # Role-specific dashboards
-│   │   ├── Principal-Dashbord/
-│   │   │   ├── index.jsx           # Profile page
-│   │   │   └── PrincipalDashboard.jsx  # Main dashboard
-│   │   │
-│   │   ├── Student-DashBoard/
-│   │   │   ├── index.jsx           # Profile page
-│   │   │   └── StudentDashboard.jsx    # Main dashboard
-│   │   │
-│   │   └── Warden-Dashboard/
-│   │   ├── firebaseConfig.js       # Firebase initialization
-│   │   └── cloudFunctions.js       # ⭐ NEW: Cloud Functions wrapper
-│   │       └── WardenDashboard.jsx     # Main dashboard
-│   │
-│   ├── firebase/                   # Firebase configuration
-│   │   └── firebaseConfig.js       # Firebase initialization
-│   │
-│   ├── Pages/                      # Application pages
-│   │   ├── Dashboard/
-│   │   │   ├── Dashboard.jsx       # General dashboard
-│   │   │   └── dashboard.css
-│   │   │
-│   │   ├── HOME/
-│   │   │   ├── home.jsx            # Landing page
-│   │   │   └── home.css
-│   │   │
-│   │   ├── LoginPage/
-│   │   │   ├── Login.jsx           # Login page
-│   │   │   ├── LoginButton.jsx     # Google login button
-│   │   │   └── LogoutButton.jsx    # Logout button
-│   │   │
-│   │   ├── OwnersDashboard/
-│   │   │   ├── ownersdashbord.jsx  # Owner dashboard (454 lines)
-│   │   │   └── generate-context.js # Context generation utility
-│   │   │
-│   │   ├── ProfilePage/
-│   │   │   ├── Profile.jsx         # User profile page
-│   │   │   └── Profile.css
-│   │   │
-│   │   └── WaitingApproval/
-│   │       └── WaitingApproval.jsx # Approval waiting page
-│   │
-│   ├── App.css                     # Global application styles
-│   ├── App.jsx                     # Root application component
-│   ├── index.css                   # Global CSS (Tailwind imports)
-│   └── main.jsx                    # Application entry point
+│   ├── index.html                       # HTML entry point
+│   ├── vite.config.js                   # Vite configuration
+│   ├── package.json                     # Frontend dependencies
+│   └── eslint.config.js                 # ESLint config
 │
-├── .firebaserc                     # ⭐ NEW: Firebase project config
-├── firebase.json                   # ⭐ NEW: Firebase hosting/functions config
-├── CHANGELOG.md                    # Detailed project changelog (686 lines)
-├── PROJECT_DOCUMENTATION.md        # ⭐ This file
-├── BACKEND_MIGRATION.md            # ⭐ NEW: Backend migration guide
-├── FIREBASE_FUNCTIONS_DEPLOYMENT.md # ⭐ NEW: Deployment guide
-├── CLOUD_FUNCTIONS_API.md          # ⭐ NEW: API reference
-├── CHANGELOG.md                    # Detailed project changelog (686 lines)
-├── eslint.config.js                # ESLint configuration
-├── index.html                      # HTML entry point
-├── package.json                    # Dependencies and scripts
-├── README.md                       # Basic project documentation
-├── serviceAccountKey.json          # Firebase Admin SDK credentials
-├── setAdmin.js                     # Script to set admin custom claims
-└── vite.config.js                  # Vite configuration
+├── server/                              # Firebase Backend
+│   ├── functions/
+│   │   ├── index.js                     # Entry — re-exports all modules
+│   │   ├── package.json                 # Backend dependencies
+│   │   └── src/
+│   │       ├── config.js               # Firebase Admin init, CORS, region
+│   │       ├── helpers.js              # Auth verification utilities
+│   │       ├── admin.js                # Admin ops (setRole, profile CRUD)
+│   │       ├── userManagement.js       # User CRUD (approve, deny, create)
+│   │       ├── collegeManagement.js    # College ops (cascade delete, stats)
+│   │       ├── reports.js              # JSON/PDF report generation
+│   │       ├── systemSettings.js       # Global settings, permissions, limits
+│   │       ├── notifications.js        # Push notifications (FCM triggers)
+│   │       ├── bulkUpload.js           # Bulk student creation from Excel
+│   │       ├── triggers.js             # Firestore document triggers
+│   │       └── utility.js             # Health check endpoint
+│   │
+│   ├── firebase.json                    # Firebase hosting/functions config
+│   ├── storage.rules                    # Firebase Storage security rules
+│   ├── serviceAccountKey.json           # Service account (gitignored)
+│   ├── setAdmin.js                      # One-time admin setup script
+│   └── setup-iam.js                     # IAM role setup utility
+│
+├── docs/                                # 25 documentation files
+├── package.json                         # Root workspace config
+├── .env                                 # Environment variables
+└── README.md                            # Project README
+```
+
+### Architectural Diagram
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                     BROWSER (Client)                         │
+│                                                              │
+│  React 19 + Vite + Tailwind CSS                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌──────────────────┐     │
+│  │  Auth        │  │  Dashboard  │  │  Shared           │     │
+│  │  Context     │  │  Components │  │  Components       │     │
+│  └──────┬──────┘  └──────┬──────┘  └────────┬─────────┘     │
+│         │                │                   │               │
+│  ┌──────▼────────────────▼───────────────────▼──────────┐    │
+│  │          Firebase Client SDK (v12.6.0)                │    │
+│  │   Auth  ·  Firestore (reads/listeners)  ·  Functions  │    │
+│  └──────────────────────┬───────────────────────────────┘    │
+└─────────────────────────┼────────────────────────────────────┘
+                          │
+                          ▼  HTTPS (callable / onRequest)
+┌──────────────────────────────────────────────────────────────┐
+│               FIREBASE CLOUD FUNCTIONS (v2)                  │
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │ User Mgmt    │  │ College Mgmt │  │ Reports      │       │
+│  │ (approve,    │  │ (cascade     │  │ (JSON, PDF)  │       │
+│  │  deny, CRUD) │  │  delete,     │  │              │       │
+│  │              │  │  stats)      │  │              │       │
+│  ├──────────────┤  ├──────────────┤  ├──────────────┤       │
+│  │ System       │  │ Notifications│  │ Bulk Upload  │       │
+│  │ Settings     │  │ (FCM +       │  │ (Excel →     │       │
+│  │ (15+ APIs)   │  │  Firestore)  │  │  Auth+DB)    │       │
+│  ├──────────────┤  ├──────────────┤  ├──────────────┤       │
+│  │ Admin Ops    │  │ Triggers     │  │ Health Check │       │
+│  │ (roles,      │  │ (onCreate,   │  │              │       │
+│  │  profiles)   │  │  onUpdate)   │  │              │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
+│                                                              │
+│  Authorization: verifyAdmin() / verifyManagementAccess()     │
+└──────────────────────┬───────────────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────────────┐
+│                    FIREBASE PLATFORM                         │
+│                                                              │
+│  ┌───────────┐  ┌──────────────┐  ┌──────────┐  ┌────────┐ │
+│  │ Firestore │  │ Auth (OAuth  │  │ Cloud    │  │Storage │ │
+│  │ Database  │  │ + Custom     │  │ Messaging│  │        │ │
+│  │ (NoSQL)   │  │   Claims)    │  │ (FCM)    │  │        │ │
+│  └───────────┘  └──────────────┘  └──────────┘  └────────┘ │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔐 Authentication & Authorization
+## 5. Important Modules & Their Responsibilities
 
-### Firebase Authentication Flow
+### Backend Modules (`server/functions/src/`)
 
-1. **Google OAuth Login**
-   - Users click "Sign in with Google" button
-   - Firebase handles OAuth flow with Google
-   - `signInWithPopup()` creates or logs in user
+| Module                  | Responsibility                                                                                         |
+|-------------------------|---------------------------------------------------------------------------------------------------------|
+| `config.js`             | Firebase Admin SDK initialization, CORS configuration, Firestore/Auth exports, emulator detection       |
+| `helpers.js`            | Authorization utilities — `verifyAdmin()` (checks custom claims + fallback), `verifyManagementAccess()` |
+| `userManagement.js`     | User lifecycle — `approveUser`, `denyUser`, `getCollegeUsers`, `getAllManagementUsers`, `createManagement`, `createWarden` |
+| `collegeManagement.js`  | College operations — `deleteCollege` (cascade deletes wardens + students via batch), `getCollegeStats`  |
+| `admin.js`              | Admin operations — `setRole` (custom claims), `getUserProfile`, `updateUserProfile`                     |
+| `reports.js`            | Report generation — `downloadReportJson`, `downloadReportPdf` (PDFKit with watermarks, styled layout)  |
+| `systemSettings.js`     | 15+ APIs for global settings — toggles, role permission templates, approval workflows, college limits   |
+| `notifications.js`      | Push notifications via FCM + Firestore — triggers on new colleges, support tickets, warden registrations|
+| `bulkUpload.js`         | Bulk student creation from Excel data — creates Auth users + Firestore docs, sends email summary        |
+| `triggers.js`           | Firestore document triggers — `onUserCreated`, `onUserStatusChanged` (audit logging placeholders)       |
+| `utility.js`            | `healthCheck` — simple server liveness endpoint                                                         |
 
-2. **Auth State Persistence**
-   - `browserLocalPersistence` keeps users logged in
-   - `onAuthStateChanged()` listener in AuthContext
-   - Real-time sync across all tabs/windows
+### Frontend Modules (`client/src/`)
 
-3. **Custom Claims (Admin)**
-   - Owner role set via Firebase Admin SDK
-   - `setAdmin.js` script assigns admin claims
-   - Verified on each auth state change
-
-### Authorization Hierarchy
-
-```javascript
-// AuthContext.jsx - Admin verification
-const tokenResult = await user.getIdTokenResult(true);
-const isAdmin = tokenResult.claims.admin === true;
-```
-
-**Admin Emails** (configured in setAdmin.js):
-- `faziyashaik81@gmail.com`
-- `ramasaiahemanth@gmail.com`
+| Module                          | Responsibility                                                                                    |
+|----------------------------------|---------------------------------------------------------------------------------------------------|
+| `context/AuthContext.jsx`        | Core auth state management — Google OAuth, custom claims check, Firestore user doc sync, login/logout |
+| `context/ThemeContext.jsx`       | Dark/light theme toggle with system preference auto-detection                                     |
+| `context/ModalContext.jsx`       | Global modal state (used for delete confirmations, etc.)                                          |
+| `context/ErrorContext.jsx`       | Global error state for error modal display                                                        |
+| `context/NotificationContext.jsx`| Real-time notification state from Firestore + FCM token management                                |
+| `firebase/firebaseConfig.js`    | Firebase SDK initialization — emulator/production toggle, auth persistence, mode switch detection  |
+| `firebase/cloudFunctions.js`    | 30+ wrapper functions for calling Cloud Functions via `httpsCallable`                              |
+| `components/Routes/index.jsx`   | All route definitions — lazy-loaded dashboards with `Suspense` fallback                           |
+| `hooks/useServerStatus.js`      | Server health monitoring — calls `healthCheck` periodically, shows offline UI                     |
+| `hooks/useSystemSettings.js`    | System settings enforcement hooks (FeatureGate, MaintenanceGate, RegistrationGate)                |
+| `components/Toast/`             | Custom toast notification system — 4 types with gradient backgrounds, auto-dismiss, progress bar  |
+| `components/ErrorBoundary.jsx`  | React error boundary — catches render errors, shows fallback UI                                   |
+| `components/ErrorModal.jsx`     | Error reporting — Firestore submission + fallback email option                                    |
 
 ---
 
-## 🗄️ Database Schema (Firestore)
+## 6. API Endpoints (Cloud Functions)
+
+All backend APIs are Firebase Cloud Functions (v2). Callable functions use `httpsCallable`, report endpoints use `onRequest`.
+
+### User Management
+
+| Function               | Type       | Auth Required | Description                                      |
+|------------------------|------------|---------------|--------------------------------------------------|
+| `approveUser`          | `onCall`   | Admin / Management | Approve a pending user (sets status to "approved") |
+| `denyUser`             | `onCall`   | Admin / Management | Deny a user with optional reason                  |
+| `getCollegeUsers`      | `onCall`   | Management    | Get wardens/students for a specific college        |
+| `getAllManagementUsers` | `onCall`   | Admin         | List all management users across all colleges      |
+| `createManagement`     | `onCall`   | Admin         | Create a new management user (Auth + Firestore)    |
+| `createWarden`         | `onCall`   | Management    | Create a new warden (Auth + Firestore)             |
+
+### College Management
+
+| Function               | Type       | Auth Required | Description                                      |
+|------------------------|------------|---------------|--------------------------------------------------|
+| `deleteCollege`        | `onCall`   | Admin         | Cascade delete — removes college + all wardens + students |
+| `getCollegeStats`      | `onCall`   | Management    | Stats breakdown (wardens/students by status)       |
+
+### Admin Operations
+
+| Function               | Type       | Auth Required | Description                                      |
+|------------------------|------------|---------------|--------------------------------------------------|
+| `setRole`              | `onCall`   | Admin         | Set custom claim (role) on a Firebase Auth user    |
+| `getUserProfile`       | `onCall`   | Self / Admin  | Get user's Firestore profile                       |
+| `updateUserProfile`    | `onCall`   | Self / Admin  | Update allowed profile fields                      |
+
+### Reports
+
+| Function               | Type        | Auth Required | Description                                     |
+|------------------------|-------------|---------------|--------------------------------------------------|
+| `downloadReportJson`   | `onRequest` | Bearer token  | Generate and download college report as JSON      |
+| `downloadReportPdf`    | `onRequest` | Bearer token  | Generate and download college report as branded PDF|
+
+### System Settings (15+ endpoints)
+
+| Function                       | Type     | Auth Required | Description                                  |
+|--------------------------------|----------|---------------|----------------------------------------------|
+| `getSystemSettings`           | `onCall` | Any auth      | Get global system settings                    |
+| `updateSystemSettings`        | `onCall` | Admin         | Update global toggles, limits, feature flags  |
+| `getRolePermissionTemplates`  | `onCall` | Admin         | List all role permission templates             |
+| `saveRolePermissionTemplate`  | `onCall` | Admin         | Create or update a permission template         |
+| `deleteRolePermissionTemplate`| `onCall` | Admin         | Delete a permission template                   |
+| `getApprovalWorkflows`        | `onCall` | Admin         | List approval workflow configs                 |
+| `saveApprovalWorkflow`        | `onCall` | Admin         | Create or update a workflow                    |
+| `deleteApprovalWorkflow`      | `onCall` | Admin         | Delete a workflow                              |
+| `getCollegeLimits`            | `onCall` | Admin         | Get user limits for all colleges               |
+| `setCollegeLimits`            | `onCall` | Admin         | Set capacity limits for a college              |
+| `checkRegistrationAllowed`    | `onCall` | Any           | Check if new registrations are enabled         |
+| `checkCollegeCapacity`        | `onCall` | Any auth      | Verify college hasn't exceeded user limits     |
+| `getSystemStatus`             | `onCall` | Any           | Get maintenance mode, feature flags status     |
+| `initializeSystemSettings`    | `onCall` | Admin         | Initialize defaults for first-time setup       |
+
+### Notifications (Firestore Triggers)
+
+| Function                    | Type              | Trigger                              | Description                           |
+|-----------------------------|-------------------|--------------------------------------|---------------------------------------|
+| `onNewCollegeApproval`     | `onDocumentCreated`| `ManagementData/{collegeId}`         | Push notification for new college request |
+| `onNewSupportTicket`       | `onDocumentCreated`| `supportTickets/{ticketId}`          | Notify owner of new support ticket     |
+| `onSupportTicketUpdate`    | `onDocumentUpdated`| `supportTickets/{ticketId}`          | Notify on ticket escalation to urgent  |
+| `onNewWardenRegistration`  | `onDocumentCreated`| `users/{userId}`                     | Notify owner of new warden registration|
+| `onUserCreated`            | `onDocumentCreated`| `users/{userId}`                     | Log new user creation                  |
+| `onUserStatusChanged`      | `onDocumentUpdated`| `users/{userId}`                     | Log status changes (approve/deny)      |
+
+### Bulk Upload
+
+| Function               | Type     | Auth Required | Description                                      |
+|------------------------|----------|---------------|--------------------------------------------------|
+| `bulkCreateStudents`   | `onCall` | Management    | Batch create students from Excel data (300s timeout)|
+
+### Utility
+
+| Function               | Type     | Auth Required | Description                                      |
+|------------------------|----------|---------------|--------------------------------------------------|
+| `healthCheck`          | `onCall` | None          | Returns server status + timestamp                 |
+
+---
+
+## 7. Database Structure (Firestore)
 
 ### Collection: `users`
 
-Each document represents a user in the system.
-
-```javascript
-{
-  uid: string,                    // Firebase Auth UID (document ID)
-  email: string,                  // User email from Google
-  displayName: string,            // User name from Google
-  photoURL: string,               // Profile picture URL
-  role: string,                   // "student" | "warden" | "management"
-  status: string,                 // "pending" | "approved" | "denied"
-  
-  // Timestamps
-  createdAt: string,              // ISO timestamp
-  updatedAt: string,              // ISO timestamp
-  approvedAt: string,             // ISO timestamp (when approved)
-  approvedBy: string,             // UID of approver
-  
-  // Role-specific fields
-  // For Management:
-  collegeName: string,            // Name of college/institution
-  address: string,                // Physical address
-  phone: string,                  // Contact number
-  designation: string,            // Job title
-  
-  // For Warden:
-  fullName: string,               // Full name
-  phone: string,                  // Contact number
-  designation: string,            // Job title
-  managementId: string,           // UID of parent Management user
-  collegeId: string,              // Same as managementId
-  collegeName: string,            // Denormalized college name
-  
-  // For Student:
-  fullName: string,               // Full name
-  phone: string,                  // Contact number
-  rollNumber: string,             // Student roll number
-  roomNumber: string,             // Hostel room number
-  managementId: string,           // UID of parent Management user
-  collegeId: string,              // Same as managementId
-  collegeName: string             // Denormalized college name
-}
-```
-
-### Firestore Queries
-
-**Fetch approved colleges (used for management provisioning / college lookup):**
-```javascript
-const q = query(
-  collection(db, "users"),
-  where("role", "==", "management"),
-  where("status", "==", "approved")
-);
-```
-
-**Fetch students under a warden's college:**
-```javascript
-const q = query(
-  collection(db, "users"),
-  where("role", "==", "student"),
-  where("collegeId", "==", userData.collegeId)
-);
-```
-
-**Fetch all management users (Owner Dashboard):**
-```javascript
-const q = query(
-  collection(db, "users"),
-  where("role", "==", "management")
-);
-```
-
----
-
-## 🚦 User Roles & Permissions
-
-### 1. Owner (Super Admin)
-
-**Access Level:** Full system access  
-**Dashboard Route:** `/OwnersDashboard`
-
-**Capabilities:**
-- View all Management (Principal) users across all colleges
-- Approve or deny Management registration requests
-- Delete colleges and cascade-delete all associated Wardens & Students
-- View real-time statistics (total, pending, approved)
-- Filter users by status (All/Pending/Approved/Denied)
-- Protected by Firebase Admin custom claims
-
-**Key Components:**
-- `OwnersDashboard.jsx` - Main dashboard (454 lines)
-- `AdminLogin.jsx` - **removed** (admin uses standard `/login`)
-- `DeleteConfirmModal.jsx` - Confirmation before cascade deletion
-
-### 2. Management (Principal/Co-Admin)
-
-**Access Level:** College-wide management  
-**Dashboard Route:** `/dashboard/management`
-
-**Capabilities:**
-- View all Wardens and Students within their college
-- Approve or deny Warden and Student registration requests
-- Real-time monitoring of pending approvals
-- Manage hierarchical structure within their institution
-
-**Key Components:**
-- `PrincipalDashboard.jsx` - Main dashboard (552 lines)
-- Stats cards showing Warden and Student counts
-- Expandable user cards with detailed information
-
-### 3. Warden
-
-**Access Level:** Student management within college  
-**Dashboard Route:** `/dashboard/warden`
-
-**Capabilities:**
-- View all Students in their assigned college
-- Approve or deny Student registration requests
-- Monitor student status (pending, approved, denied)
-- Access student profile information
-
-**Key Components:**
-- `WardenDashboard.jsx` - Main dashboard (339 lines)
-- Student approval workflow interface
-- Real-time student list with status badges
-
-### 4. Student
-
-**Access Level:** Personal dashboard  
-**Dashboard Route:** `/dashboard/student`
-
-**Capabilities:**
-- View personal profile information
-- Access hostel-related quick actions (File Complaint, Apply for Leave, View Notices)
-- View announcements and notifications
-
-**Key Components:**
-- `StudentDashboard.jsx` - Main dashboard
-- Profile information cards
-- Quick action buttons (planned features)
-
----
-
-## 🔄 Application Workflows
-
-### 1. New User Registration Flow
+The primary collection — stores all user types (admin, management, warden, student).
 
 ```
-1. User visits home page (/)
-   ↓
-2. Clicks "Login" → Redirected to /login
-   ↓
-3. Signs in with Google OAuth
-   ↓
-4. AuthContext detects new user (no Firestore document)
-   ↓
-5. Redirected to /waiting-approval (role provisioning required)
-   ↓
-6. User selects role:
-   - Student → Must select college from dropdown
-   - Warden → Must select college from dropdown
-   - Management → Fills in college details
-   ↓
-7. Profile created in Firestore with status: "pending"
-   ↓
-8. Redirected to /waiting-approval
-   ↓
-9. Waits for approval from:
-   - Management → Approved by Owner
-   - Warden → Approved by Management
-   - Student → Approved by Management OR Warden
-   ↓
-10. After approval, status changes to "approved"
-    ↓
-11. User redirected to role-specific dashboard
+users/{userId}
+├── uid: string                    # Firebase Auth UID
+├── email: string                  # User email
+├── displayName: string            # Display name
+├── photoURL: string               # Google profile photo
+├── role: string                   # "admin" | "management" | "warden" | "student"
+├── status: string                 # "pending" | "approved" | "denied"
+├── collegeName: string            # Associated college name
+├── managementId: string           # UID of management user (for wardens/students)
+├── hostelBlock: string            # (warden) Assigned hostel block
+├── fullName: string               # Full name
+├── phone: string                  # Phone number
+├── collegeLogo: string            # Logo URL (management)
+├── isOnline: boolean              # Online status
+├── fcmToken: string               # FCM push notification token
+├── approvedAt: string             # ISO timestamp of approval
+├── approvedBy: string             # UID of approver
+├── deniedAt: string               # ISO timestamp of denial
+├── denialReason: string           # Reason for denial
+├── createdBy: string              # UID of creator
+├── createdAt: string              # ISO timestamp
+├── updatedAt: string              # ISO timestamp
+└── bulkUploaded: boolean          # Was this user created via bulk upload?
 ```
 
-### 2. Approval Workflow
+### Collection: `managementCredentials`
 
-**Management Approval (by Owner):**
-```
-Owner Dashboard → Pending Tab → View Management Request
-  → Click "Approve" → Status updated to "approved"
-  → Management user gains access to their dashboard
-```
-
-**Warden/Student Approval (by Management):**
-```
-Management Dashboard → View Wardens/Students
-  → Filter by "Pending" status → Click "Approve"
-  → Status updated to "approved"
-  → User gains dashboard access
-```
-
-### 3. College Deletion Workflow (Cascade Delete)
+Stores generated credentials for management users (owner-only access).
 
 ```
-Owner Dashboard → View College → Click Delete Icon
-  ↓
-Delete Confirmation Modal Opens
-  ↓
-Shows count: "X Wardens, Y Students will be deleted"
-  ↓
-Owner confirms deletion
-  ↓
-Batch operation:
-  1. Delete all Students where managementId = collegeId
-  2. Delete all Wardens where managementId = collegeId
-  3. Delete Management user document
-  ↓
-Real-time update reflects in UI
+managementCredentials/{userId}
+├── managementId: string
+├── email: string
+├── collegeName: string
+├── password: string               # Temporary, viewable once by owner
+├── createdBy: string
+├── createdAt: string
+└── isViewed: boolean
+```
+
+### Collection: `systemSettings`
+
+Global system configuration (single document).
+
+```
+systemSettings/global
+├── registrationEnabled: boolean
+├── approvalsEnabled: boolean
+├── maintenanceMode: boolean
+├── maintenanceMessage: string
+├── defaultStudentLimit: number
+├── defaultWardenLimit: number
+├── defaultHostelLimit: number
+├── features: {
+│   ├── notifications: boolean
+│   ├── reports: boolean
+│   ├── analytics: boolean
+│   └── bulkOperations: boolean
+│ }
+├── version: number
+├── updatedAt: string
+└── updatedBy: string
+```
+
+### Collection: `rolePermissionTemplates`
+
+Configurable permission sets per role.
+
+```
+rolePermissionTemplates/{templateId}
+├── name: string
+├── role: string
+├── permissions: {
+│   ├── canViewReports: boolean
+│   ├── canManageStudents: boolean
+│   ├── canManageWardens: boolean
+│   ├── canApproveUsers: boolean
+│   ├── canManageHostels: boolean
+│   ├── canAccessAnalytics: boolean
+│   ├── canBulkOperations: boolean
+│   ├── canExportData: boolean
+│   ├── canViewNotifications: boolean
+│   └── canSendNotifications: boolean
+│ }
+├── isDefault: boolean
+├── createdAt: string
+├── updatedAt: string
+└── createdBy: string
+```
+
+### Collection: `approvalWorkflows`
+
+Configurable approval sequences.
+
+```
+approvalWorkflows/{workflowId}
+├── name: string
+├── targetRole: string
+├── steps: array
+├── requireAllApprovals: boolean
+├── autoApprove: boolean
+├── createdAt: string
+├── updatedAt: string
+└── createdBy: string
+```
+
+### Collection: `collegeLimits`
+
+Per-college user capacity constraints.
+
+```
+collegeLimits/{collegeId}
+├── collegeId: string
+├── collegeName: string
+├── maxStudents: number
+├── maxWardens: number
+├── maxHostels: number
+├── currentStudents: number
+├── currentWardens: number
+├── currentHostels: number
+├── customSettings: object
+├── updatedAt: string
+└── updatedBy: string
+```
+
+### Collection: `supportTickets`
+
+User-submitted support/issue tickets.
+
+```
+supportTickets/{ticketId}
+├── subject: string
+├── description: string
+├── userName: string
+├── userId: string
+├── priority: string               # "low" | "medium" | "high" | "urgent"
+├── status: string                 # "open" | "in_progress" | "resolved" | "closed"
+├── createdAt: timestamp
+└── resolvedAt: timestamp
+```
+
+### Collection: `notifications`
+
+In-app notification records.
+
+```
+notifications/{notificationId}
+├── title: string
+├── body: string
+├── type: string
+├── userId: string                 # Target user
+├── read: boolean
+├── timestamp: server_timestamp
+└── link: string                   # Deep link to relevant page
+```
+
+### Collection: `bulkUploadRecords`
+
+Audit trail for bulk student imports.
+
+```
+bulkUploadRecords/{recordId}
+├── uploadedBy: string
+├── uploadedByEmail: string
+├── managementId: string
+├── collegeName: string
+├── totalStudents: number
+├── created: number
+├── failed: number
+├── skipped: number
+├── errors: array
+├── createdStudents: array         # Names, emails, generated passwords
+└── uploadedAt: string
 ```
 
 ---
 
-## 🛣️ Application Routes
+## 8. Setup & Installation
 
-### Route Configuration
+### Prerequisites
 
-```javascript
-// src/components/Routes/index.jsx
+- **Node.js** 20+ — [Download](https://nodejs.org/)
+- **npm** package manager (comes with Node.js)
+- **Firebase CLI** — `npm install -g firebase-tools`
+- **Git** — [Download](https://git-scm.com/)
+- A **Firebase project** with Firestore and Authentication enabled
 
-<Routes>
-  {/* Public Routes */}
-  <Route path="/" element={<Home />} />
-  <Route path="/login" element={<Login />} />
-  <!-- /admin-login route removed; redirects to /login -->
-  
-  {/* Protected Routes */}
-  <Route path="/dashboard" element={<Dashboard />} />
-  <!-- /role route removed — role self-selection disabled; provisioning is admin-driven -->
-  <Route path="/waiting-approval" element={<WaitingApproval />} />
-  
-  {/* Profile Pages */}
-  <Route path="/profile/student-profile" element={<StudentProfile />} />
-  <Route path="/profile/warden-profile" element={<WardenProfile />} />
-  <Route path="/profile/management-profile" element={<ManagementProfile />} />
-  
-  {/* Role-Specific Dashboards */}
-  <Route path="/dashboard/student" element={<StudentDashboard />} />
-  <Route path="/dashboard/warden" element={<WardenDashboard />} />
-  <Route path="/dashboard/management" element={<ManagementDashboard />} />
-  
-  {/* Owner Dashboard */}
-  <Route path="/OwnersDashboard" element={<OwnersDashboard />} />
-  <Route path="/owner-profile" element={<OwnerProfile />} />
-</Routes>
-```
-
-### Route Protection Logic
-
-Each protected route checks:
-1. **Authentication status** - User must be logged in
-2. **User data exists** - Firestore document created
-3. **Approval status** - Status must be "approved"
-4. **Role match** - User's role matches route requirement
-
-```javascript
-// Example from StudentDashboard.jsx
-useEffect(() => {
-  if (!userDataLoading) {
-    if (!userData) {
-      navigate('/profile/student-profile');
-    } else if (userData.status === 'pending' || userData.status === 'denied') {
-      navigate('/waiting-approval');
-    } else if (userData.role !== 'student') {
-      navigate('/role');
-    }
-  }
-}, [userData, userDataLoading, navigate]);
-```
-
----
-
-## 🎨 UI/UX Design
-
-### Design System
-
-**Color Palette:**
-- **Primary:** Indigo/Purple gradient (`from-indigo-500 to-purple-600`)
-- **Student:** Blue gradient (`from-blue-500 to-indigo-600`)
-- **Warden:** Orange gradient (`from-orange-500 to-amber-600`)
-- **Management:** Emerald gradient (`from-emerald-500 to-teal-600`)
-- **Background:** Dark slate (`from-slate-900 via-slate-800 to-slate-900`)
-
-**Typography:**
-- Font: System fonts (default Tailwind)
-- Headings: Bold, varying sizes (text-xl to text-4xl)
-- Body: Regular weight, gray-scale colors
-
-**Component Library:**
-- **Lucide React Icons:** Modern, consistent iconography
-- **Glass-morphism effects:** Backdrop blur + semi-transparent backgrounds
-- **Status badges:** Color-coded (Yellow=Pending, Green=Approved, Red=Denied)
-- **Avatar system:** Photo fallback to colored initials
-
-### Responsive Design
-
-All dashboards are fully responsive using Tailwind's utility classes:
-- Mobile-first approach
-- Breakpoints: `sm:`, `md:`, `lg:`, `xl:`
-- Grid layouts adjust from single column to multi-column
-
-```jsx
-// Example responsive grid
-<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-  {/* Cards */}
-</div>
-```
-
----
-
-## 🔧 Key Features Implementation
-
-### 1. Real-Time Data Synchronization
-
-**Firestore Listeners:**
-```javascript
-// AuthContext.jsx - Real-time user data
-useEffect(() => {
-  if (!user) return;
-  
-  const userDocRef = doc(db, "users", user.uid);
-  const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-    if (docSnap.exists()) {
-      setUserData(docSnap.data());
-    }
-  });
-  
-  return () => unsubscribe();
-}, [user]);
-```
-
-**Benefits:**
-- Instant UI updates when admin approves/denies users
-- No manual refresh required
-- Consistent state across multiple browser tabs
-
-### 2. College Selection Dropdown
-
-Students and Wardens must select their parent college during registration:
-
-```javascript
-// userrole.jsx — removed (role self-selection disabled)
-useEffect(() => {
-  const fetchColleges = async () => {
-    const q = query(
-      collection(db, "users"),
-      where("role", "==", "management"),
-      where("status", "==", "approved")
-    );
-    const querySnapshot = await getDocs(q);
-    const collegesData = querySnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(doc => doc.status === "approved");
-    setColleges(collegesData);
-  };
-  fetchColleges();
-}, []);
-```
-
-This creates the hierarchical link: `Student/Warden.managementId → Management.uid`
-
-### 3. Cascade Deletion
-
-Owner can delete colleges and all associated users:
-
-```javascript
-// ownersdashbord.jsx
-const handleDeleteCollege = async () => {
-  const batch = writeBatch(db);
-  
-  // Delete all wardens
-  const wardensQuery = query(
-    collection(db, "users"),
-    where("role", "==", "warden"),
-    where("managementId", "==", collegeId)
-  );
-  const wardensSnap = await getDocs(wardensQuery);
-  wardensSnap.docs.forEach(doc => batch.delete(doc.ref));
-  
-  // Delete all students
-  const studentsQuery = query(
-    collection(db, "users"),
-    where("role", "==", "student"),
-    where("managementId", "==", collegeId)
-  );
-  const studentsSnap = await getDocs(studentsQuery);
-  studentsSnap.docs.forEach(doc => batch.delete(doc.ref));
-  
-  // Delete college
-  batch.delete(doc(db, "users", collegeId));
-  
-  await batch.commit();
-};
-```
-
-### 4. Status-Based Routing
-
-Navigation automatically redirects based on user status:
-
-```javascript
-// Login.jsx
-useEffect(() => {
-  if (user && !userDataLoading) {
-    if (userData) {
-      const { role, status } = userData;
-      if (status === 'approved') {
-        navigate(`/dashboard/${role}`);
-      } else {
-        navigate('/waiting-approval');
-      }
-    } else {
-      // Role self-selection removed — send new users to waiting approval for provisioning
-      navigate("/waiting-approval");
-    }
-  }
-}, [user, userData, userDataLoading, navigate]);
-```
-
----
-
-## 📊 Statistics & Analytics
-
-### Owner Dashboard Metrics
-
-```javascript
-// Real-time statistics calculation
-const stats = {
-  total: allUsers.length,
-  pending: allUsers.filter(u => u.status === "pending").length,
-  approved: allUsers.filter(u => u.status === "approved").length,
-  denied: allUsers.filter(u => u.status === "denied").length
-};
-```
-
-**Displayed Metrics:**
-- Total Management Users
-- Pending Approvals (with clock icon)
-- Approved Institutions (with checkmark)
-- Denied Requests (with X icon)
-
-### Management Dashboard Metrics
-
-- Total Wardens
-- Total Students
-- Pending Warden Approvals
-- Pending Student Approvals
-
-### Warden Dashboard Metrics
-
-- Total Students
-- Pending Student Approvals
-- Approved Students
-- Denied Students
-
----
-
-## 🔒 Security Considerations
-
-### 1. Firebase Security Rules (Recommended)
-
-```javascript
-// Firestore Security Rules (to be implemented)
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId} {
-      // Users can read their own document
-      allow read: if request.auth != null && request.auth.uid == userId;
-      
-      // Admins can read all users
-      allow read: if request.auth != null && 
-                    request.auth.token.admin == true;
-      
-      // Users can create their own profile
-      allow create: if request.auth != null && 
-                      request.auth.uid == userId;
-      
-      // Only admins can approve/deny
-      allow update: if request.auth != null && 
-                      request.auth.token.admin == true;
-      
-      // Only admins can delete
-      allow delete: if request.auth != null && 
-                      request.auth.token.admin == true;
-    }
-  }
-}
-```
-
-### 2. Environment Variables
-
-Firebase credentials stored in `.env`:
-```
-VITE_FIREBASE_API_KEY=...
-VITE_FIREBASE_AUTH_DOMAIN=...
-VITE_FIREBASE_PROJECT_ID=...
-VITE_FIREBASE_STORAGE_BUCKET=...
-VITE_FIREBASE_MESSAGING_SENDER_ID=...
-VITE_FIREBASE_APP_ID=...
-```
-
-### 3. Admin Verification
-
-Admin status verified on every protected route access:
-```javascript
-useEffect(() => {
-  if (!loading && adminChecked) {
-    if (!user || !isAdmin) {
-      // admin login now uses /login
-      navigate("/login", { replace: true });
-    }
-  }
-}, [user, isAdmin, loading, adminChecked, navigate]);
-```
-
----
-
-## 🚀 Development Workflow
-
-### Installation
+### Step-by-Step Installation
 
 ```bash
-# Clone repository
-git clone <repository-url>
+# 1. Clone the repository
+git clone https://github.com/niatapppurpose-APPs/HOAS.git
 cd HOAS
 
-# Install dependencies
-npm install
+# 2. Install all dependencies (root, client, and server)
+npm run install:all
 
-# Set up environment variables
-cp .env.example .env
-# Add Firebase credentials to .env
+# 3. Set up environment variables
+# Copy the .env file at the root and update Firebase config values
+# The client also has a .env at client/.env
 
-# Run development server
-npm run dev
-```
+# 4. Firebase setup
+# Log in to Firebase CLI
+firebase login
 
-### Available Scripts
-
-```json
-{
-  "dev": "vite",              // Start development server
-  "build": "vite build",      // Production build
-  "lint": "eslint .",         // Run ESLint
-  "preview": "vite preview"   // Preview production build
-}
-```
-
-### Set Admin Users
-
-```bash
-# Run admin setup script
+# 5. Set up the admin user (one-time)
+cd server
 node setAdmin.js
-```
+cd ..
 
-This sets custom claims for specified admin emails.
-
----
-
-## 🐛 Known Issues & Current Status
-
-### Current Status
-
-✅ **Fully Functional:**
-- Authentication system
-- College linking is handled via management/owner provisioning
-- Approval workflows
-- Real-time data sync
-- Cascade deletion
-- All dashboards operational
-
-⚠️ **Terminal Error:**
-- `npm run dev` shows Exit Code: 1
-- However, no ESLint errors detected
-- Likely a transient process issue
-- Application should run successfully on retry
-
-### Planned Features (Not Yet Implemented)
-
-From the UI, these features have placeholder buttons:
-- **File Complaint** - Student & Warden complaint system
-- **Apply for Leave** - Student leave request system
-- **View Notices** - Announcement system
-- **Settings** - User settings and preferences
-
----
-
-## 📦 Dependencies Analysis
-
-### Production Dependencies (11 packages)
-
-| Package | Version | Bundle Size | Purpose |
-|---------|---------|-------------|---------|
-| `react` | 19.2.0 | ~6 KB | Core React library |
-| `react-dom` | 19.2.0 | ~130 KB | React DOM rendering |
-| `react-router` | 7.10.1 | ~11 KB | Routing core |
-| `react-router-dom` | 7.10.1 | ~13 KB | Browser routing |
-| `firebase` | 12.6.0 | ~250 KB | Firebase SDK |
-| `firebase-admin` | 13.6.0 | N/A | Server-side operations |
-| `tailwindcss` | 4.1.18 | 0 KB (build) | CSS framework |
-| `@tailwindcss/vite` | 4.1.18 | N/A | Vite plugin |
-| `lucide-react` | 0.561.0 | ~50 KB | Icon library |
-
-### Development Dependencies (9 packages)
-
-- ESLint and plugins for code quality
-- Vite and React plugin for development
-- TypeScript types for React
-
-**Total Bundle Size (estimated):** ~460 KB (optimized production build)
-
----
-
-## 🔮 Future Enhancements
-
-### Phase 1: Core Features Completion
-1. **Complaint Management System**
-   - File complaints (Students)
-   - View and resolve complaints (Wardens/Management)
-   - Track complaint status
-
-2. **Leave Request System**
-   - Submit leave requests (Students)
-   - Approve/deny leaves (Wardens)
-   - Leave history tracking
-
-3. **Announcement System**
-   - Broadcast announcements (Management/Wardens)
-   - Notification system
-   - Read receipts
-
-### Phase 2: Advanced Features
-4. **Analytics Dashboard**
-   - User activity metrics
-   - Approval time analytics
-   - Hostel occupancy reports
-
-5. **Communication Module**
-   - In-app messaging
-   - Email notifications
-   - SMS alerts (via Twilio)
-
-6. **Profile Management**
-   - Edit profile information
-   - Upload documents
-   - Profile verification
-
-### Phase 3: Performance & UX
-7. **Performance Optimization**
-   - Code splitting
-   - Lazy loading routes
-   - Image optimization
-
-8. **Accessibility Improvements**
-   - ARIA labels
-   - Keyboard navigation
-   - Screen reader support
-
-9. **Multi-language Support**
-   - i18n implementation
-   - Language selector
-   - RTL support
-
----
-
-## 📚 Code Quality Metrics
-
-### File Size Analysis
-
-**Largest Files:**
-1. `CHANGELOG.md` - 686 lines (comprehensive changelog)
-2. `PrincipalDashboard.jsx` - 552 lines
-3. `OwnersDashboard.jsx` - 454 lines
-4. `WardenDashboard.jsx` - 339 lines
-5. `userrole.jsx` — removed (role self-selection disabled)
-6. `AuthContext.jsx` - 207 lines
-
-### Code Organization
-
-- **Modular Components:** Well-separated concerns
-- **Context-based State Management:** Centralized auth state
-- **Reusable Components:** Avatar, StatusBadge, StatsCard
-- **Consistent Naming:** camelCase for variables, PascalCase for components
-
-### Best Practices Implemented
-
-✅ **React Hooks:** Proper use of useState, useEffect, useContext  
-✅ **Error Handling:** Try-catch blocks in async operations  
-✅ **Loading States:** Loading indicators during async operations  
-✅ **Navigation Guards:** Protected routes with status checks  
-✅ **Real-time Sync:** Firestore listeners with cleanup  
-✅ **Batch Operations:** Efficient cascade deletions  
-✅ **Responsive Design:** Mobile-first approach  
-✅ **Type Safety:** PropTypes or TypeScript can be added  
-
----
-
-## 🔗 External Resources
-
-### Firebase Documentation
-- [Firebase Auth](https://firebase.google.com/docs/auth)
-- [Cloud Firestore](https://firebase.google.com/docs/firestore)
-- [Admin SDK](https://firebase.google.com/docs/admin/setup)
-
-### React Ecosystem
-- [React 19 Documentation](https://react.dev/)
-- [React Router v7](https://reactrouter.com/)
-- [Vite Documentation](https://vitejs.dev/)
-
-### Styling & UI
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Lucide Icons](https://lucide.dev/)
-
----
-
-## 👥 Project Team
-
-**Admin Users:**
-- faziyashaik81@gmail.com
-- ramasaiahemanth@gmail.com
-
----
-
-## 📝 Changelog Highlights
-
-From `CHANGELOG.md` (686 lines):
-
-### ✅ Completed Features
-- Google OAuth authentication
-- Role-based routing protection
-- College selection dropdown
-- Owner dashboard with approval system
-- Management dashboard (Warden/Student approval)
-- Warden dashboard (Student management)
-- Student dashboard
-- Real-time statistics
-- Cascade deletion
-- Waiting approval page with status indicators
-
-### 🏗️ Architecture
-- Hierarchical user structure (Owner → Management → Warden → Student)
-- Approval workflows at each level
-- Firebase custom claims for admin role
-- Firestore real-time listeners
-
----
-
-## 🎓 Glossary
-
-| Term | Definition |
-|------|------------|
-| **HOAS** | Hostel Operations Accountability System |
-| **RBAC** | Role-Based Access Control |
-| **Owner** | Super Admin with full system access |
-| **Management** | College Principal/Co-Admin managing institution |
-| **Warden** | Hostel warden managing students |
-| **Custom Claims** | Firebase Auth metadata for additional user properties |
-| **Firestore** | Firebase's NoSQL cloud database |
-| **Real-time Listener** | Firestore feature for live data synchronization |
-| **Cascade Delete** | Delete operation that removes related records |
-| **managementId** | Foreign key linking users to their parent college |
-| **HMR** | Hot Module Replacement (Vite feature) |
-
----
-
-## 📊 Project Statistics
-
-- **Total Files:** ~60+ files
-- **Total Lines of Code:** ~5,000+ lines (estimated)
-- **Components:** 25+ React components
-- **Routes:** 13 defined routes
-- **User Roles:** 4 distinct roles
-- **Firebase Collections:** 1 main collection (`users`)
-- **Development Time:** Ongoing (as of Dec 22, 2025)
-
----
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**1. Terminal Exit Code: 1**
-```bash
-# Solution: Restart dev server
+# 6. Start the development environment
 npm run dev
+# This runs both client (Vite on port 5173) and server (Firebase emulators) concurrently
 ```
 
-**2. Admin Login Access Denied**
-```bash
-# Solution: Run admin setup script
-node setAdmin.js
+### Individual Commands
+
+| Command               | What it does                                    |
+|-----------------------|--------------------------------------------------|
+| `npm run client`      | Start only the frontend (Vite dev server)        |
+| `npm run server`      | Start only Firebase emulators                    |
+| `npm run dev`         | Start both client + server concurrently          |
+| `npm run build`       | Build the frontend for production                |
+| `npm run deploy`      | Deploy Cloud Functions to Firebase               |
+| `npm run install:all` | Install dependencies for both client and server  |
+
+### Firebase Emulator Configuration
+
+The project supports seamless switching between emulator and production modes:
+
+- Set `VITE_USE_FIREBASE_EMULATOR=true` in `.env` for emulator mode
+- The client auto-connects to emulators on ports: Auth (9099), Firestore (8080), Functions (5001), Storage (9199)
+- A `FirebaseModeIndicator` component shows current mode during development
+- Debug utilities available via `debugUtils.js`
+
+---
+
+## 9. How the Project Works (Flow)
+
+### User Authentication Flow
+
+```
+User visits HOAS → Homepage (/)
+        │
+        ├─ Clicks "Sign In" → Login Page (/login)
+        │       │
+        │       └─ Google OAuth (Firebase Auth)
+        │               │
+        │               ├─ First-time user? → AuthContext checks claims
+        │               │       │
+        │               │       ├─ Has admin claim? → Create admin profile → /OwnersDashboard
+        │               │       └─ No admin claim? → Awaiting provisioning
+        │               │
+        │               └─ Returning user? → Check Firestore profile
+        │                       │
+        │                       ├─ admin → /OwnersDashboard
+        │                       ├─ management (approved) → /dashboard/management
+        │                       ├─ warden (approved) → /dashboard/warden
+        │                       ├─ student (approved) → /dashboard/student
+        │                       └─ Any role (pending/denied) → /waiting-approval
+        │
+        └─ Not logged in → Stays on homepage
 ```
 
-**3. User Not Redirecting After Approval**
+### User Provisioning Flow
+
 ```
-# Cause: Real-time listener not triggering
-# Solution: Force refresh or re-login
+Owner creates Management user
+    │
+    ├─ Cloud Function (createManagement)
+    │   ├─ Creates Firebase Auth user with email/password
+    │   ├─ Creates Firestore user document (status: approved)
+    │   ├─ Stores credentials in managementCredentials collection
+    │   └─ Generates password reset link
+    │
+    └─ Management now logs in → /dashboard/management
+
+Management creates Warden
+    │
+    ├─ Cloud Function (createWarden)
+    │   ├─ Creates Firebase Auth user
+    │   └─ Creates Firestore document (status: approved)
+    │
+    └─ Warden now logs in → /dashboard/warden
+
+Management bulk uploads Students
+    │
+    ├─ Excel parsed on frontend (xlsx library)
+    ├─ Cloud Function (bulkCreateStudents)
+    │   ├─ Creates Auth users with generated passwords
+    │   ├─ Creates Firestore documents
+    │   ├─ Stores upload record for audit
+    │   └─ Sends email summary via Nodemailer
+    │
+    └─ Students log in → /dashboard/student
 ```
 
-**4. College Dropdown Empty**
+### Approval Workflow
+
 ```
-# Cause: No approved Management users
-# Solution: Owner must approve at least one Management user
+Pending user request arrives
+    │
+    ├─ Management user pending → Owner sees in /OwnersDashboard
+    ├─ Warden/Student pending → Management sees in /dashboard/management
+    │
+    ├─ Approve button clicked →  approveUser Cloud Function
+    │   ├─ Verifies caller permissions
+    │   ├─ Updates status to "approved" in Firestore
+    │   └─ Returns success
+    │
+    └─ Deny button clicked → denyUser Cloud Function
+        ├─ Verifies caller permissions
+        ├─ Updates status to "denied" with reason
+        └─ Returns success
+```
+
+### Real-Time Data Flow
+
+```
+Firestore Database ←──→ Cloud Functions (writes)
+        │
+        ├─ onSnapshot listeners (reads)
+        │       │
+        │       └─ React Context providers
+        │               │
+        │               └─ Dashboard components re-render automatically
+        │
+        └─ Document triggers
+                │
+                ├─ onUserCreated → Log event
+                ├─ onUserStatusChanged → Notify user
+                ├─ onNewSupportTicket → Push to owner
+                └─ onNewCollegeApproval → Push to owner
 ```
 
 ---
 
-## 🚦 Deployment Checklist
+## 10. Challenges Faced & Solutions
 
-### Pre-Deployment
+### Challenge 1: Firebase Emulator ↔ Production Mode Switching
 
-- [ ] Set up Firebase Security Rules
-- [ ] Configure environment variables for production
-- [ ] Run `npm run build` successfully
-- [ ] Test all user flows
-- [ ] Verify admin access works
-- [ ] Check mobile responsiveness
-- [ ] Test real-time updates
-- [ ] Validate cascade deletion
+**Problem:** When switching from emulator to production, cached auth tokens from the emulator are invalid against real Firebase Auth, causing silent login failures.
 
-### Deployment Options
+**Solution:** Implemented mode detection in `firebaseConfig.js` that tracks the last Firebase mode in `localStorage`. When a switch from emulator → production is detected, it automatically signs out the stale session and clears credentials before allowing a fresh login.
 
-**1. Firebase Hosting:**
-```bash
-npm run build
-firebase deploy --only hosting
-```
+### Challenge 2: Admin Verification Failing on Mobile
 
-**2. Vercel:**
-```bash
-npm run build
-vercel --prod
-```
+**Problem:** The `auth.getUser()` call to verify admin status frequently fails on mobile because the Identity Toolkit API is disabled or restricted.
 
-**3. Netlify:**
-```bash
-npm run build
-netlify deploy --prod
-```
+**Solution:** Implemented a two-tier verification in `verifyAdmin()`. First, check custom claims directly from the auth token (no network call). Only fall back to `auth.getUser()` if the token says non-admin — this handles the case where claims were recently updated but the client token hasn't refreshed yet.
 
-### Post-Deployment
+### Challenge 3: Cascade Delete Consistency
 
-- [ ] Verify production Firebase config
-- [ ] Test authentication flow
-- [ ] Check API rate limits
-- [ ] Monitor error logs
-- [ ] Set up analytics (optional)
+**Problem:** Deleting a management user needs to remove all associated wardens and students. Individual deletes are slow and risk partial failures.
+
+**Solution:** Used Firestore batch operations in `deleteCollege()`. Query all wardens and students by `managementId`, add them all to a batch, and commit in a single atomic operation.
+
+### Challenge 4: CORS Issues with Cloud Functions v2
+
+**Problem:** Callable functions worked in the emulator but failed in production due to CORS origin restrictions, especially from mobile devices that don't send origin headers.
+
+**Solution:** Set `cors: true` globally for callable functions (safe because auth is enforced via Firebase tokens, not origin). Created a separate, more restrictive CORS handler for `onRequest` endpoints (report downloads) that validates specific origins.
+
+### Challenge 5: Context Provider Nesting and Load Order
+
+**Problem:** Multiple context providers (Auth, Theme, Toast, Error, Notification, Modal) needed correct nesting order — `ErrorModal` must render outside `ErrorBoundary` but inside `ErrorProvider`.
+
+**Solution:** Carefully structured the provider tree in `main.jsx` with `ErrorModal` placed between `ErrorProvider` and `ErrorBoundary`, ensuring error reporting works even when the main app tree crashes.
+
+### Challenge 6: Lazy Loading Dashboard Performance
+
+**Problem:** Loading all four role-specific dashboards upfront was slow, especially on mobile.
+
+**Solution:** Used React `lazy()` + `Suspense` to code-split each dashboard and its sub-pages. Only core pages (Home, Login, Dashboard router) are loaded eagerly; everything else loads on demand with a branded loading spinner.
 
 ---
 
-## 📞 Support & Contribution
+## 11. Future Improvements
 
-### Getting Help
-
-For issues or questions:
-1. Check this documentation
-2. Review CHANGELOG.md for recent changes
-3. Inspect browser console for errors
-4. Check Firebase console for auth/database issues
-
-### Contributing Guidelines
-
-1. **Fork the repository**
-2. **Create feature branch** (`git checkout -b feature/amazing-feature`)
-3. **Commit changes** (`git commit -m 'Add amazing feature'`)
-4. **Push to branch** (`git push origin feature/amazing-feature`)
-5. **Open Pull Request**
-
----
-
-## 📄 License
-
-This project is private and proprietary. All rights reserved.
+- [ ] **Email notifications** — Send emails for approval/rejection status changes
+- [ ] **SMS integration** — Critical alerts via SMS for wardens and management
+- [ ] **Advanced analytics** — Charts and dashboards with trends over time (Recharts expansion)
+- [ ] **CSV/Excel bulk export** — Download filtered user data as spreadsheets
+- [ ] **Mobile app** — React Native version for wardens and students
+- [ ] **Hostel inventory management** — Track rooms, beds, furniture
+- [ ] **Fee payment integration** — Payment gateway for hostel fees
+- [ ] **Room allocation automation** — Auto-assign rooms based on availability
+- [ ] **Attendance tracking** — Daily attendance with warden verification
+- [ ] **Parent portal** — Read-only access for parents to view student info
+- [ ] **Push notifications** — Full FCM integration for all user roles (currently Owner-only)
+- [ ] **Audit logging** — Complete activity history for compliance
+- [ ] **Data export scheduling** — Automated periodic report generation
+- [ ] **Offline mode** — Service worker for basic offline functionality
+- [ ] **Rate limiting** — Protect Cloud Functions from abuse
+- [ ] **Unit/Integration tests** — Jest + React Testing Library coverage
 
 ---
 
-## 🎯 Summary
-
-**HOAS** is a production-ready, full-stack hostel management system with:
-- 🔐 Secure Google OAuth authentication
-- 👥 4-tier role-based access control
-- ⚡ Real-time data synchronization
-- 📱 Fully responsive UI
-- 🎨 Modern design with Tailwind CSS
-- 🔥 Firebase backend (Auth + Firestore)
-- ⚛️ React 19 frontend with Vite
-
-**Current Status:** Core features implemented and functional. Ready for feature expansion and deployment.
-
----
-
-## 📝 Special Projects Application Responses
-
-### Personal Information
-- **Name:** Hemanth Atthuluri
-- **Student ID:** N24H01A0641
-- **Email:** ramasaiahemanth@gmail.com
-- **WhatsApp:** 8978112219
-
-### Question 1: Challenge Faced and How You Overcame It (Critical Thinking & Discipline)
-
-**Response:**
-
-During the development of HOAS (Hostel Operations Accountability System), I faced a critical architectural challenge: implementing a secure, scalable hierarchical approval system that required precise database structuring and real-time synchronization across four user roles (Owner, Management, Warden, Student).
-
-**The Challenge:**
-The system needed cascade deletion functionality—when an Owner deletes a college, all associated Wardens and Students must be removed atomically. Initial attempts resulted in orphaned records and database inconsistencies, particularly when handling concurrent deletions while real-time listeners were active.
-
-**Critical Thinking Applied:**
-1. **Root Cause Analysis:** I debugged the issue by analyzing Firebase Firestore's batch operation limitations and discovered that mixing real-time listeners with batch writes created race conditions.
-2. **Solution Design:** Implemented a two-phase deletion strategy using Firestore's `writeBatch()` API, combined with client-side optimistic updates and listener cleanup before batch execution.
-3. **Testing Methodology:** Created a systematic test plan simulating edge cases: rapid deletions, network interruptions, and concurrent user actions.
-
-**Discipline & Execution:**
-- Maintained detailed documentation of every architectural decision (686-line CHANGELOG.md)
-- Followed strict version control practices with atomic commits
-- Adhered to React best practices: proper hooks usage, cleanup functions, and error boundaries
-- Implemented comprehensive error handling with try-catch blocks and user-friendly error messages
-
-**Outcome:**
-Successfully deployed a production-ready system processing 100+ user operations without data loss, demonstrating both technical problem-solving and systematic development discipline.
-
----
-
-### Question 2: Past Experience Building Projects (Hardware Related)
-
-**Response:**
-
-Primary Project: HOAS - Full-Stack Hostel Management System
-
-Built a comprehensive web application serving 4 distinct user hierarchies with real-time data synchronization:
-
-Technical Stack Mastery:
-Frontend: React 19 (latest version), Vite build tooling, Tailwind CSS for responsive design
-Backend: Firebase Cloud Functions (10+ API endpoints), Firebase Admin SDK for custom authentication
-Database: Firestore with complex querying (role-based filtering, hierarchical data structures)
-Authentication:Google OAuth integration with custom claims for role-based access control
-
-**Key Achievements:**
-1. **Scalable Architecture:** Designed a parent-child relational model in NoSQL (managementId foreign keys linking colleges to wardens/students)
-2. **Real-Time Systems:** Implemented Firestore `onSnapshot()` listeners for instant UI updates across multiple browser sessions
-3. **Security Engineering:** Custom Firebase security rules, environment variable management, and admin verification flows
-4. **Performance Optimization:** Achieved ~460 KB production bundle size through code splitting and tree shaking
-
-**Quantifiable Metrics:**
-- 5,000+ lines of production code across 60+ files
-- 25+ reusable React components with proper separation of concerns
-- 13 protected routes with authorization guards
-- Supports unlimited colleges, wardens, and students with O(log n) query complexity
-
-**Hardware-Related Skills (Transferable):**
-While HOAS is primarily software, it demonstrates hardware-compatible skills:
-- **Systems Thinking:** Understanding component interactions, state management, and data flow (analogous to circuit design)
-- **Debugging Methodology:** Systematic troubleshooting using browser DevTools, Firebase Console, and network inspection (similar to oscilloscope/multimeter usage)
-- **Integration Expertise:** Connecting multiple APIs and services (Firebase Auth + Firestore + Cloud Functions) mirrors hardware system integration
-
-**Additional Projects:**
-- Developed automation scripts using Node.js for Firebase admin operations (setAdmin.js)
-- Created batch processing systems for database migrations and data validation
-
----
-
-### Question 3: Project Idea (Practical, Tangible, High Societal Impact)
-
-**Proposed Project: Smart Campus Safety & Accountability Network (SCSAN)**
-
-**Problem Statement:**
-Educational institutions struggle with real-time safety monitoring, emergency response coordination, and incident documentation. Current systems are fragmented (manual attendance, paper-based complaint logs, delayed emergency notifications), leading to slower response times during critical situations.
-
-**Solution Overview:**
-An IoT-enabled safety ecosystem integrating hardware sensors with a centralized web/mobile platform for comprehensive campus security management.
-
-**Hardware Components:**
-1. **Smart ID Badges (ESP32-based):**
-   - RFID/NFC chips for automatic attendance tracking
-   - Panic button triggering silent alerts to security personnel
-   - BLE beacons for real-time location tracking in emergencies
-   - Battery-powered with low-energy design (30-day battery life)
-
-2. **Zone Sensors (Arduino/Raspberry Pi):**
-   - PIR motion sensors for restricted area monitoring
-   - Gas/smoke detectors integrated with automatic alarm systems
-   - Temperature/humidity sensors for hostel room safety compliance
-   - Camera modules with edge AI for suspicious activity detection
-
-3. **Emergency Alert Stations:**
-   - Push-button emergency kiosks at strategic campus locations
-   - LED indicators showing active emergency status
-   - Two-way audio communication with security control room
-
-**Software Platform:**
-- **Web Dashboard:** Real-time campus map showing student locations, sensor statuses, and emergency alerts
-- **Mobile App:** Instant push notifications, SOS button, incident reporting
-- **Admin Panel:** Historical data analytics, incident reports, pattern recognition using ML
-
-**Societal Impact:**
-
-1. **Enhanced Student Safety (Direct Impact):**
-   - Sub-60-second emergency response time (vs. current 5-10 minutes)
-   - GPS tracking for missing person cases
-   - Automatic parent notifications during emergencies
-
-2. **Women's Safety:**
-   - Dedicated panic buttons for harassment situations
-   - Safe zone notifications (entering unsafe areas at odd hours)
-   - Anonymous complaint reporting system
-
-3. **Health Monitoring:**
-   - Air quality alerts in dormitories
-   - Fire hazard early warning systems
-   - COVID-19 contact tracing using BLE proximity data
-
-4. **Administrative Efficiency:**
-   - Automated attendance (saving 30+ minutes per class)
-   - Digital incident logs for legal compliance
-   - Predictive analytics for preventive safety measures
-
-**Scalability & Feasibility:**
-
-**Phase 1 (Pilot - 3 months):**
-- Deploy 50 smart badges in one hostel block
-- Install 10 zone sensors in critical areas
-- Basic web dashboard with real-time monitoring
-
-**Phase 2 (Campus-wide - 6 months):**
-- Scale to 500+ badges across entire campus
-- Integrate with existing CCTV infrastructure
-- Mobile app with parent access
-
-**Phase 3 (Multi-campus - 12 months):**
-- White-label solution for other institutions
-- AI-powered predictive safety analytics
-- Integration with local law enforcement
-
-**Technical Innovation:**
-- **Edge Computing:** On-device AI processing for privacy-preserving surveillance
-- **Mesh Networking:** ESP32 devices creating self-healing network during internet outages
-- **Blockchain Logging:** Immutable audit trails for incident documentation (legal compliance)
-
-**Budget Estimate (Pilot Phase):**
-- 50 ESP32 smart badges: ₹15,000
-- 10 Sensor nodes (Arduino + sensors): ₹8,000
-- 5 Emergency alert stations: ₹10,000
-- Cloud hosting (Firebase/AWS): ₹2,000/month
-- **Total:** ₹35,000 + ₹2,000/month operational
-
-**Measurable Outcomes:**
-- 80% reduction in emergency response time
-- 100% automated attendance accuracy
-- 50% decrease in unreported safety incidents
-- Potential to serve 10,000+ students across multiple institutions
-
-**Why This Project:**
-Combines my proven full-stack development expertise (HOAS project) with hardware integration, addressing a critical gap in campus safety infrastructure. The project is immediately deployable, financially viable, and directly saves lives—making it both practical and high-impact.
-
----
-
-**Document Version:** 1.0  
-**Last Updated:** December 22, 2025  
-**Maintained By:** HOAS Development Team
+*Last updated: February 2026*
+*Version: 1.0.0*
+*Active Development: December 2024 — Present*
