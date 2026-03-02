@@ -23,6 +23,22 @@ const DEFAULT_SETTINGS = {
     analytics: true,
     bulkOperations: true,
   },
+  // Complaint & escalation defaults
+  complaintSlaHours: 48,
+  autoEscalation: true,
+  escalateToOwner: false,
+  overdueThresholdHours: 72,
+  smsEscalationAlerts: false,
+  emailEscalationAlerts: true,
+  // Notification defaults
+  emailNotifications: true,
+  smsNotifications: false,
+  criticalAlerts: true,
+  activityNotifications: true,
+  // Security defaults
+  twoFactorEnabled: false,
+  forcePasswordReset: false,
+  autoLogoutMinutes: 30,
 };
 
 // Context for sharing system settings across the app

@@ -6,6 +6,7 @@ import RedirectingPage from "./RedirectingPage";
 import { Loader2, ArrowLeft, Shield, Zap, Eye } from 'lucide-react';
 import Applogo from '../../assets/Applogo.png'
 import { useTheme } from "../../context/ThemeContext";
+import { useRegistrationCheck } from "../../hooks/useSystemSettings";
 
 const Login = () => {
   const { user, userData, userDataLoading, loading } = useAuth();
@@ -13,6 +14,7 @@ const Login = () => {
   const { isDark } = useTheme()
   const [showRedirecting, setShowRedirecting] = useState(false);
   const [minDelayPassed, setMinDelayPassed] = useState(false);
+  const { allowed: registrationAllowed, message: registrationMessage, loading: regLoading } = useRegistrationCheck();
 
   // Track if user was already logged in when this component first mounted
   // (as opposed to a fresh login that happened while on this page)
@@ -259,6 +261,23 @@ const Login = () => {
                   </div>
 
                   <LoginButton />
+
+                  {/* Registration disabled banner */}
+                  {!regLoading && !registrationAllowed && (
+                    <div className="mt-4 p-3 rounded-xl border flex items-start gap-2.5"
+                      style={{
+                        backgroundColor: isDark ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.06)',
+                        borderColor: isDark ? 'rgba(245, 158, 11, 0.25)' : 'rgba(245, 158, 11, 0.3)',
+                      }}>
+                      <Shield className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-500" />
+                      <div>
+                        <p className="text-xs font-semibold text-amber-500">New Registrations Paused</p>
+                        <p className="text-[11px] mt-0.5" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
+                          {registrationMessage || 'New registrations are currently disabled. Existing users can still sign in.'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

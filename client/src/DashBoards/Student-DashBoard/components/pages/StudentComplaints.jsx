@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import { useTheme } from '../../../../context/ThemeContext';
 import { useOutletContext } from 'react-router-dom';
@@ -15,7 +15,6 @@ import {
     doc,
     updateDoc,
 } from 'firebase/firestore';
-
 import {
     FileText,
     Send,
@@ -24,7 +23,6 @@ import {
     ChevronRight,
     Clock,
     CheckCircle2,
-    XCircle,
     Loader2,
     Tag,
     Calendar,
@@ -37,92 +35,11 @@ import {
     ThumbsDown,
     ShieldAlert,
 } from 'lucide-react';
+import { CATEGORIES, STATUS_CONFIG, FILTER_OPTIONS, formatDate, getCategoryLabel } from './complaintConstants';
+import compressImage from './utils/compressImage';
+import CountdownTimer from './CountdownTimer';
+import ComplaintDetailModal from './ComplaintDetailModal';
 import './StudentComplaints.css';
-
-// ── Complaint Categories ─────────────────────────────────────
-const CATEGORIES = [
-    { value: '', label: 'Select a category…' },
-    { value: 'maintenance', label: '🔧 Maintenance & Repairs' },
-    { value: 'cleanliness', label: '🧹 Cleanliness & Hygiene' },
-    { value: 'electrical', label: '⚡ Electrical Issues' },
-    { value: 'plumbing', label: '🚿 Plumbing & Water' },
-    { value: 'food', label: '🍽️ Food & Mess' },
-    { value: 'security', label: '🔒 Security Concerns' },
-    { value: 'noise', label: '🔊 Noise Disturbance' },
-    { value: 'internet', label: '📶 Internet & WiFi' },
-    { value: 'furniture', label: '🪑 Furniture Issues' },
-    { value: 'other', label: '📌 Other' },
-];
-
-const STATUS_CONFIG = {
-    pending: {
-        label: 'Pending',
-        className: 'complaint-status-pending',
-        icon: Clock,
-    },
-    'in-progress': {
-        label: 'In Progress',
-        className: 'complaint-status-in-progress',
-        icon: Loader2,
-    },
-    'warden-resolved': {
-        label: 'Review Required',
-        className: 'complaint-status-review',
-        icon: AlertTriangle,
-    },
-    resolved: {
-        label: 'Resolved',
-        className: 'complaint-status-resolved',
-        icon: CheckCircle2,
-    },
-    rejected: {
-        label: 'Rejected',
-        className: 'complaint-status-rejected',
-        icon: XCircle,
-    },
-    disputed: {
-        label: 'Disputed',
-        className: 'complaint-status-disputed',
-        icon: ShieldAlert,
-    },
-    escalated: {
-        label: 'Escalated to Management',
-        className: 'complaint-status-escalated',
-        icon: AlertTriangle,
-    },
-};
-
-
-
-
-
-
-const FILTER_OPTIONS = [
-    { value: 'all', label: 'All' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'warden-resolved', label: 'Review Required' },
-    { value: 'resolved', label: 'Resolved' },
-    { value: 'disputed', label: 'Disputed' },
-    { value: 'escalated', label: 'Escalated' },
-    { value: 'rejected', label: 'Rejected' },
-];
-
-// ── Helpers ──────────────────────────────────────────────────
-const formatDate = (timestamp) => {
-    if (!timestamp) return '—';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
-};
-
-const getCategoryLabel = (value) => {
-    const cat = CATEGORIES.find((c) => c.value === value);
-    return cat ? cat.label : value;
-};
 
 // ══════════════════════════════════════════════════════════════
 // Component
@@ -149,36 +66,11 @@ const StudentComplaints = () => {
     const [historyLoading, setHistoryLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState('all');
     const [selectedComplaint, setSelectedComplaint] = useState(null);
-    const [currentTime, setCurrentTime] = useState(new Date());
 
     // ── Review / Dispute state ───────────────────────────────
     const [showDisputeModal, setShowDisputeModal] = useState(false);
-    const [disputeReason, setDisputeReason] = useState('');
     const [isReviewing, setIsReviewing] = useState(false);
 
-    // ── Real-time clock ──────────────────────────────────────
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setCurrentTime(new Date());
-        }, 1000);
-        return () => clearInterval(timer);
-    }, []);
-
-    // ── Helper: Calculate Remaining Time (48h Window) ────────
-    const getTimeRemaining = (createdAt) => {
-        if (!createdAt) return '—';
-        const createdMs = createdAt.toMillis ? createdAt.toMillis() : new Date(createdAt).getTime();
-        const expiryMs = createdMs + (48 * 60 * 60 * 1000); // 48 Hours from creation
-        const remainingMs = expiryMs - currentTime.getTime();
-
-        if (remainingMs <= 0) return 'Expired';
-
-        const hours = Math.floor(remainingMs / (1000 * 60 * 60));
-        const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
-
-        return `${hours}h ${minutes}m ${seconds}s left`;
-    };
     // ── Fetch complaints in real-time ────────────────────────
     useEffect(() => {
         if (!user?.uid) return;
@@ -211,19 +103,21 @@ const StudentComplaints = () => {
         return () => unsubscribe();
     }, [user?.uid]);
 
-    // ── Filtered complaints ──────────────────────────────────
-    const filteredComplaints =
+    // ── Filtered complaints (memoized) ───────────────────────────────
+    const filteredComplaints = useMemo(() =>
         activeFilter === 'all'
             ? complaints
-            : complaints.filter((c) => c.status === activeFilter);
+            : complaints.filter((c) => c.status === activeFilter),
+        [complaints, activeFilter]
+    );
 
-    // ── Stats ────────────────────────────────────────────────
-    const stats = {
+    // ── Stats (memoized) ─────────────────────────────────────────────
+    const stats = useMemo(() => ({
         total: complaints.length,
         pending: complaints.filter((c) => c.status === 'pending').length,
         inProgress: complaints.filter((c) => c.status === 'in-progress').length,
         resolved: complaints.filter((c) => c.status === 'resolved').length,
-    };
+    }), [complaints]);
 
     // ── Image handling ───────────────────────────────────────
     const handleImageSelect = useCallback((file) => {
@@ -256,48 +150,6 @@ const StudentComplaints = () => {
         setIsDragging(false);
         const file = e.dataTransfer.files?.[0];
         if (file) handleImageSelect(file);
-    };
-
-    // ── Compress image & convert to base64 data URL ────────────
-    // Store directly in Firestore to avoid GCS CORS issues
-    const compressImage = (file) => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            const reader = new FileReader();
-
-            reader.onload = (e) => {
-                img.onload = () => {
-                    try {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 800;
-                        const MAX_HEIGHT = 800;
-                        let { width, height } = img;
-
-                        // Scale down if necessary
-                        if (width > MAX_WIDTH || height > MAX_HEIGHT) {
-                            const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
-                            width = Math.round(width * ratio);
-                            height = Math.round(height * ratio);
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        // Compress as JPEG at 0.7 quality (~100-200KB for most photos)
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                        resolve(dataUrl);
-                    } catch (err) {
-                        reject(err);
-                    }
-                };
-                img.onerror = () => reject(new Error('Failed to load image'));
-                img.src = e.target.result;
-            };
-            reader.onerror = () => reject(new Error('Failed to read file'));
-            reader.readAsDataURL(file);
-        });
     };
 
     // ── Submit complaint ─────────────────────────────────────
@@ -390,7 +242,6 @@ const StudentComplaints = () => {
     const closeDetail = () => {
         setSelectedComplaint(null);
         setShowDisputeModal(false);
-        setDisputeReason('');
     };
 
     // ── Accept Resolution (Student confirms issue is fixed) ──
@@ -424,8 +275,8 @@ const StudentComplaints = () => {
     };
 
     // ── Dispute Resolution (Student says issue is NOT fixed) ──
-    const handleDisputeResolution = async (complaint) => {
-        if (!disputeReason.trim()) {
+    const handleDisputeResolution = async (complaint, disputeReason) => {
+        if (!disputeReason?.trim()) {
             toast.warning('Please provide a reason for your dispute');
             return;
         }
@@ -453,7 +304,6 @@ const StudentComplaints = () => {
 
             toast.success('Dispute submitted! The warden will be alerted.');
             setShowDisputeModal(false);
-            setDisputeReason('');
             if (selectedComplaint?.id === complaint.id) {
                 setSelectedComplaint(prev => ({
                     ...prev,
@@ -781,18 +631,7 @@ const StudentComplaints = () => {
                                                 </button>
                                             </div>
                                             {(complaint.status === 'pending' || complaint.status === 'in-progress') && (
-                                                <div className="complaint-timer-display" style={{
-                                                    marginTop: '0.5rem',
-                                                    fontSize: '0.75rem',
-                                                    color: '#ef4444',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '4px',
-                                                    fontWeight: '600'
-                                                }}>
-                                                    <Clock size={12} />
-                                                    Auto-escalation in: {getTimeRemaining(complaint.createdAt)}
-                                                </div>
+                                                <CountdownTimer createdAt={complaint.createdAt} />
                                             )}
                                         </div>
 
@@ -805,229 +644,15 @@ const StudentComplaints = () => {
             </div>
 
             {/* ── Detail Modal ─────────────────────────────────── */}
-            {selectedComplaint && (
-                <div className="complaint-modal-backdrop" onClick={closeDetail}>
-                    <div className="complaint-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="complaint-modal-header">
-                            <h3>Complaint Details</h3>
-                            <button className="complaint-modal-close" onClick={closeDetail}>
-                                <X size={16} />
-                            </button>
-                        </div>
-
-                        <div className="complaint-modal-body">
-                            {/* Status */}
-                            <div className="complaint-detail-row">
-                                <span className="complaint-detail-label">Status</span>
-                                <div style={{ marginTop: '0.25rem' }}>
-                                    {(() => {
-                                        const s = STATUS_CONFIG[selectedComplaint.status] || STATUS_CONFIG.pending;
-                                        return (
-                                            <div className={`complaint-status ${s.className}`}>
-                                                <span className="complaint-status-dot" />
-                                                {s.label}
-                                            </div>
-                                        );
-                                    })()}
-                                </div>
-                            </div>
-
-                            {/* Title */}
-                            <div className="complaint-detail-row">
-                                <span className="complaint-detail-label">Title</span>
-                                <span className="complaint-detail-value" style={{ fontWeight: 600 }}>
-                                    {selectedComplaint.title}
-                                </span>
-                            </div>
-
-                            {/* Category */}
-                            <div className="complaint-detail-row">
-                                <span className="complaint-detail-label">Category</span>
-                                <span className="complaint-detail-value">
-                                    {getCategoryLabel(selectedComplaint.category)}
-                                </span>
-                            </div>
-
-                            {/* Description */}
-                            <div className="complaint-detail-row">
-                                <span className="complaint-detail-label">Description</span>
-                                <span className="complaint-detail-value" style={{ whiteSpace: 'pre-wrap' }}>
-                                    {selectedComplaint.description}
-                                </span>
-                            </div>
-
-                            {/* Date */}
-                            <div className="complaint-detail-row">
-                                <span className="complaint-detail-label">Filed on</span>
-                                <span className="complaint-detail-value">
-                                    {formatDate(selectedComplaint.createdAt)}
-                                </span>
-                            </div>
-
-                            {/* Attached Image */}
-                            {selectedComplaint.imageUrl && (
-                                <div className="complaint-detail-row">
-                                    <span className="complaint-detail-label">Attached Image</span>
-                                    <div className="complaint-detail-image">
-                                        <img src={selectedComplaint.imageUrl} alt="Complaint attachment" />
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Response from hostel */}
-                            {selectedComplaint.response && (
-                                <div className="complaint-response-card">
-                                    <h4>
-                                        <MessageSquareText size={14} />
-                                        Response from Hostel
-                                    </h4>
-                                    <p>{selectedComplaint.response}</p>
-                                    {selectedComplaint.respondedBy && (
-                                        <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                                            — {selectedComplaint.respondedBy}
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* ── Review Section (Warden-Resolved) ── */}
-                            {selectedComplaint.status === 'warden-resolved' && !showDisputeModal && (
-                                <div className="complaint-review-section">
-                                    <div className="complaint-review-header">
-                                        <AlertTriangle size={16} style={{ color: '#f59e0b' }} />
-                                        <h4>Review Required</h4>
-                                    </div>
-                                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
-                                        The warden has marked this complaint as resolved. Please verify if your issue has actually been fixed.
-                                    </p>
-                                    <div className="complaint-review-modal-actions">
-                                        <button
-                                            className="complaint-review-btn complaint-btn-accept"
-                                            onClick={() => handleAcceptResolution(selectedComplaint)}
-                                            disabled={isReviewing}
-                                        >
-                                            {isReviewing ? <Loader2 size={14} className="complaints-spinner" /> : <ThumbsUp size={14} />}
-                                            Yes, Issue is Resolved
-                                        </button>
-                                        <button
-                                            className="complaint-review-btn complaint-btn-dispute"
-                                            onClick={() => setShowDisputeModal(true)}
-                                            disabled={isReviewing}
-                                        >
-                                            <ThumbsDown size={14} />
-                                            No, Issue is NOT Resolved
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* ── Dispute Form (within modal) ── */}
-                            {showDisputeModal && selectedComplaint.status === 'warden-resolved' && (
-                                <div className="complaint-dispute-form">
-                                    <div className="complaint-review-header">
-                                        <ShieldAlert size={16} style={{ color: '#ef4444' }} />
-                                        <h4>Dispute Resolution</h4>
-                                    </div>
-                                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                                        Explain why the issue is not resolved. This will be sent to the warden as an urgent alert.
-                                        {selectedComplaint.disputeCount > 0 && (
-                                            <span style={{ color: '#ef4444', fontWeight: 600 }}>
-                                                {' '}(Disputed {selectedComplaint.disputeCount} time{selectedComplaint.disputeCount !== 1 ? 's' : ''} before)
-                                            </span>
-                                        )}
-                                    </p>
-                                    <textarea
-                                        className="complaint-dispute-textarea"
-                                        placeholder="Describe why the issue is still not resolved..."
-                                        value={disputeReason}
-                                        onChange={(e) => setDisputeReason(e.target.value)}
-                                        maxLength={500}
-                                    />
-                                    <span className="complaints-char-count">{disputeReason.length}/500</span>
-                                    <div className="complaint-review-modal-actions" style={{ marginTop: '0.5rem' }}>
-                                        <button
-                                            className="complaint-review-btn complaint-btn-dispute"
-                                            onClick={() => handleDisputeResolution(selectedComplaint)}
-                                            disabled={isReviewing || !disputeReason.trim()}
-                                        >
-                                            {isReviewing ? <Loader2 size={14} className="complaints-spinner" /> : <ShieldAlert size={14} />}
-                                            Submit Dispute
-                                        </button>
-                                        <button
-                                            className="complaint-review-btn"
-                                            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
-                                            onClick={() => { setShowDisputeModal(false); setDisputeReason(''); }}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* ── Dispute Info (when already disputed) ── */}
-                            {selectedComplaint.status === 'disputed' && selectedComplaint.disputeReason && (
-                                <div className="complaint-dispute-info">
-                                    <div className="complaint-review-header">
-                                        <ShieldAlert size={16} style={{ color: '#ef4444' }} />
-                                        <h4>Your Dispute</h4>
-                                    </div>
-                                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                                        &ldquo;{selectedComplaint.disputeReason}&rdquo;
-                                    </p>
-                                    <p style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 600, marginTop: '0.5rem' }}>
-                                        Waiting for warden to respond. If no response within 48 hours, this will be escalated to management automatically.
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* ── Escalation Info ── */}
-                            {selectedComplaint.status === 'escalated' && (
-                                <div className="complaint-escalated-info">
-                                    <div className="complaint-review-header">
-                                        <AlertTriangle size={16} style={{ color: '#dc2626' }} />
-                                        <h4>Escalated to Management</h4>
-                                    </div>
-                                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                                        {selectedComplaint.escalationReason || 'This complaint has been escalated to management for review.'}
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* ── Complaint History Timeline ── */}
-                            {selectedComplaint.complaintHistory && selectedComplaint.complaintHistory.length > 0 && (
-                                <div className="complaint-history-section">
-                                    <h4 style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                                        <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                        Complaint Timeline
-                                    </h4>
-                                    <div className="complaint-timeline">
-                                        {selectedComplaint.complaintHistory.map((entry, idx) => (
-                                            <div className="complaint-timeline-item" key={idx}>
-                                                <div className="complaint-timeline-dot" />
-                                                <div className="complaint-timeline-content">
-                                                    <span className="complaint-timeline-action">
-                                                        {entry.action === 'created' && 'Complaint Filed'}
-                                                        {entry.action === 'warden_resolved' && 'Warden Marked Resolved'}
-                                                        {entry.action === 'student_accepted' && 'Student Accepted Resolution'}
-                                                        {entry.action === 'student_disputed' && 'Student Disputed Resolution'}
-                                                        {entry.action === 'auto_escalated' && 'Auto-Escalated to Management'}
-                                                    </span>
-                                                    {entry.reason && (
-                                                        <span className="complaint-timeline-reason">{entry.reason}</span>
-                                                    )}
-                                                    <span className="complaint-timeline-time">
-                                                        {new Date(entry.timestamp).toLocaleString('en-IN')}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ComplaintDetailModal
+                complaint={selectedComplaint}
+                onClose={closeDetail}
+                isReviewing={isReviewing}
+                showDisputeModal={showDisputeModal}
+                setShowDisputeModal={setShowDisputeModal}
+                onAcceptResolution={handleAcceptResolution}
+                onDisputeResolution={handleDisputeResolution}
+            />
         </>
     );
 };

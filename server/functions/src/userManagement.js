@@ -1,12 +1,12 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { db, auth } from './config.js';
+import { db, auth, corsOptions } from './config.js';
 import * as logger from 'firebase-functions/logger';
 import { verifyAdmin, verifyManagementAccess } from './helpers.js';
 
 /**
  * Approve a user (Management approves Warden/Student, Owner approves Management)
  */
-export const approveUser = onCall(async (request) => {
+export const approveUser = onCall(corsOptions, async (request) => {
   try {
     logger.info('🔍 approveUser called with data:', request.data);
 
@@ -72,7 +72,7 @@ export const approveUser = onCall(async (request) => {
 /**
  * Deny a user
  */
-export const denyUser = onCall(async (request) => {
+export const denyUser = onCall(corsOptions, async (request) => {
   try {
     logger.info('🔍 denyUser called with data:', request.data);
 
@@ -133,7 +133,7 @@ export const denyUser = onCall(async (request) => {
 /**
  * Get all users for a management user (Wardens and Students)
  */
-export const getCollegeUsers = onCall(async (request) => {
+export const getCollegeUsers = onCall(corsOptions, async (request) => {
   const { collegeId, role, status } = request.data;
 
   if (!collegeId) {
@@ -170,7 +170,7 @@ export const getCollegeUsers = onCall(async (request) => {
 /**
  * Get all management users (Owner only)
  */
-export const getAllManagementUsers = onCall(async (request) => {
+export const getAllManagementUsers = onCall(corsOptions, async (request) => {
   // Verify admin
   await verifyAdmin(request);
 
@@ -193,7 +193,7 @@ export const getAllManagementUsers = onCall(async (request) => {
  * Create a new management user (Owner only)
  * Creates Firebase Auth user and Firestore document
  */
-export const createManagement = onCall(async (request) => {
+export const createManagement = onCall(corsOptions, async (request) => {
   try {
     logger.info('🔍 createManagement called with data:', request.data);
 
@@ -295,7 +295,7 @@ export const createManagement = onCall(async (request) => {
  * Create a new warden (Management only)
  * Creates Firebase Auth user and Firestore document
  */
-export const createWarden = onCall(async (request) => {
+export const createWarden = onCall(corsOptions, async (request) => {
   try {
     logger.info('🔍 createWarden called with data:', request.data);
 

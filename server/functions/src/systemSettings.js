@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { db } from './config.js';
+import { db, corsOptions } from './config.js';
 import * as logger from 'firebase-functions/logger';
 import { verifyAdmin } from './helpers.js';
 
@@ -30,7 +30,7 @@ const DEFAULT_SYSTEM_SETTINGS = {
 /**
  * Get global system settings
  */
-export const getSystemSettings = onCall(async (request) => {
+export const getSystemSettings = onCall(corsOptions, async (request) => {
   try {
     logger.info('📋 getSystemSettings called');
 
@@ -77,7 +77,7 @@ export const getSystemSettings = onCall(async (request) => {
 /**
  * Update global system settings (Owner only)
  */
-export const updateSystemSettings = onCall(async (request) => {
+export const updateSystemSettings = onCall(corsOptions, async (request) => {
   try {
     logger.info('⚙️ updateSystemSettings called with:', request.data);
 
@@ -104,6 +104,13 @@ export const updateSystemSettings = onCall(async (request) => {
       'overdueThresholdHours',
       'smsEscalationAlerts',
       'emailEscalationAlerts',
+      'emailNotifications',
+      'smsNotifications',
+      'criticalAlerts',
+      'activityNotifications',
+      'twoFactorEnabled',
+      'forcePasswordReset',
+      'autoLogoutMinutes',
     ];
 
     const updateData = {};
@@ -162,7 +169,7 @@ export const updateSystemSettings = onCall(async (request) => {
 /**
  * Check if a college has capacity for new users
  */
-export const checkCollegeCapacity = onCall(async (request) => {
+export const checkCollegeCapacity = onCall(corsOptions, async (request) => {
   try {
     const { collegeId, role } = request.data;
 

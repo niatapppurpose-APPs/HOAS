@@ -4,7 +4,9 @@ import GlobalDeleteModal from "./components/OwnerServices/GlobalDeleteModal";
 import { useServerStatus } from "./hooks/useServerStatus";
 import ServerOffline from "./components/ServerOffline/ServerOffline";
 import FirebaseModeIndicator from "./components/FirebaseModeIndicator";
-import { MaintenanceGate } from "./hooks/useSystemSettings.jsx";
+import { MaintenanceGate, useSystemSettings } from "./hooks/useSystemSettings.jsx";
+import { useAutoLogout } from "./hooks/useAutoLogout";
+import ForcePasswordReset from "./Pages/ForcePasswordReset/ForcePasswordReset";
 import { useLocation } from "react-router-dom";
 
 // Public routes that should never be blocked by maintenance mode
@@ -12,8 +14,12 @@ const PUBLIC_ROUTES = ['/', '/login', '/admin-login'];
 
 const App = () => {
   const { isServerOnline, lastChecked } = useServerStatus();
-  const { isAdmin, adminChecked, user } = useAuth();
+  const { isAdmin, adminChecked, user, userData } = useAuth();
+  const { settings } = useSystemSettings();
   const location = useLocation();
+
+  // Auto logout on inactivity (reads autoLogoutMinutes from system settings)
+  useAutoLogout();
 
   // Show server offline screen if server is down
   if (!isServerOnline) {
@@ -38,6 +44,15 @@ const App = () => {
 
   if (isPublicRoute || isAdminUser || isAuthLoading || !user) {
     return content;
+  }
+
+  // Force Password Reset — when enabled, non-admin users must reset before continuing.
+  // Skip if the user has already acknowledged the reset after it was enabled.
+  const forceResetEnabled = settings.forcePasswordReset && user && !isAdminUser;
+  const userAlreadyReset = userData?.lastPasswordResetAt && settings.forcePasswordResetEnabledAt
+    && new Date(userData.lastPasswordResetAt) >= new Date(settings.forcePasswordResetEnabledAt);
+  if (forceResetEnabled && !userAlreadyReset) {
+    return <ForcePasswordReset />;
   }
 
   return <MaintenanceGate>{content}</MaintenanceGate>;

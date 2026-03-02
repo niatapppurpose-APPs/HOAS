@@ -36,7 +36,7 @@
   border-radius: 20px;
   overflow: hidden;
   box-shadow: var(--shadow-lg);
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .kpi-card:hover {
@@ -82,6 +82,7 @@
   backdrop-filter: blur(10px);
   border-radius: 14px;
   margin-bottom: 16px;
+  will-change: backdrop-filter;
 }
 
 .kpi-icon {
@@ -301,8 +302,9 @@
   backdrop-filter: blur(20px);
   border: 1px solid var(--border-primary);
   border-radius: 16px;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   box-shadow: var(--shadow-md);
+  will-change: transform;
 }
 
 .activity-card:hover {
@@ -476,7 +478,7 @@
 
 .status-table tbody tr {
   border-bottom: 1px solid var(--border-primary);
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease;
 }
 
 .status-table tbody tr:hover {
@@ -579,6 +581,7 @@
 
 .progress-circle {
   transition: stroke-dashoffset 1s ease;
+  will-change: stroke-dashoffset;
 }
 
 .progress-content {
@@ -841,5 +844,33 @@
   
   .search-box {
     max-width: none;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY: REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi-card,
+  .activity-card,
+  .btn-view-details,
+  .btn-approve,
+  .btn-approve-inline,
+  .btn-more,
+  .btn-primary,
+  .btn-secondary,
+  .status-table tbody tr {
+    transition: none !important;
+  }
+
+  .kpi-card:hover,
+  .activity-card:hover,
+  .btn-view-details:hover,
+  .btn-approve:hover,
+  .btn-approve-inline:hover,
+  .btn-primary:hover,
+  .btn-secondary:hover {
+    transform: none !important;
   }
 }

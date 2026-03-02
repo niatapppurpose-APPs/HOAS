@@ -1,11 +1,11 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { db } from './config.js';
+import { db, corsOptions } from './config.js';
 import { verifyAdmin, verifyManagementAccess } from './helpers.js';
 
 /**
  * Delete a college and all associated users (cascade delete)
  */
-export const deleteCollege = onCall(async (request) => {
+export const deleteCollege = onCall(corsOptions, async (request) => {
   const { collegeId } = request.data;
 
   if (!collegeId) {
@@ -66,7 +66,7 @@ export const deleteCollege = onCall(async (request) => {
 /**
  * Get college statistics
  */
-export const getCollegeStats = onCall(async (request) => {
+export const getCollegeStats = onCall(corsOptions, async (request) => {
   const { collegeId } = request.data;
 
   if (!collegeId) {

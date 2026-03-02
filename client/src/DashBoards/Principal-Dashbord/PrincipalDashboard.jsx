@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
@@ -8,207 +8,21 @@ import { useToast } from "../../components/Toast";
 import * as cloudFunctions from "../../firebase/cloudFunctions";
 import {
   Building2,
-  Users,
   GraduationCap,
   Shield,
-  ChevronDown,
-  ChevronUp,
-  CheckCircle,
-  XCircle,
-  Clock,
   Loader2,
   UserPlus,
   Home,
 } from "lucide-react";
 import AnimatedLogoutButton from "../../components/AnimatedLogoutButton";
-
-// Avatar Component with fallback to initials
-const Avatar = ({ image, name, size = "md" }) => {
-  const sizeClasses = {
-    sm: "w-8 h-8 text-xs",
-    md: "w-10 h-10 text-sm",
-    lg: "w-12 h-12 text-base",
-    xl: "w-16 h-16 text-xl",
-  };
-
-  const colors = [
-    "bg-blue-500",
-    "bg-green-500",
-    "bg-purple-500",
-    "bg-pink-500",
-    "bg-indigo-500",
-    "bg-teal-500",
-    "bg-orange-500",
-    "bg-cyan-500",
-  ];
-
-
-  const getColorFromName = (name) => {
-    if (!name) return colors[0];
-    const index = name.charCodeAt(0) % colors.length;
-    return colors[index];
-  };
-
-  const getInitials = (name) => {
-    if (!name) return "?";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  if (image) {
-    return (
-      <img
-        src={image}
-        alt={name}
-        className={`${sizeClasses[size]} rounded-full object-cover ring-2 ring-white/20`}
-      />
-    );
-  }
-
-  return (
-    <div
-      className={`${sizeClasses[size]} ${getColorFromName(name)} rounded-full flex items-center justify-center font-semibold text-white ring-2 ring-white/20`}
-    >
-      {getInitials(name)}
-    </div>
-  );
-};
-
-// Status Badge Component
-const StatusBadge = ({ status }) => {
-  const normalizedStatus = status?.toUpperCase() || "PENDING";
-  const statusStyles = {
-    PENDING: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    APPROVED: "bg-green-500/20 text-green-400 border-green-500/30",
-    DENIED: "bg-red-500/20 text-red-400 border-red-500/30",
-  };
-
-  const statusIcons = {
-    PENDING: <Clock className="w-3 h-3" />,
-    APPROVED: <CheckCircle className="w-3 h-3" />,
-    DENIED: <XCircle className="w-3 h-3" />,
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${statusStyles[normalizedStatus] || statusStyles.PENDING}`}
-    >
-      {statusIcons[normalizedStatus] || statusIcons.PENDING}
-      {normalizedStatus}
-    </span>
-  );
-};
-
-// Stats Card Component
-const StatsCard = ({ icon: Icon, title, value, subtitle, gradient }) => {
-  return (
-    <div className={`relative overflow-hidden rounded-2xl p-6 ${gradient}`}>
-      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 rounded-full bg-white/10 blur-2xl" />
-      <div className="relative z-10">
-        <div className="flex items-center justify-between">
-          <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
-            <Icon className="w-6 h-6 text-white" />
-          </div>
-        </div>
-        <div className="mt-4">
-          <h3 className="text-3xl font-bold text-white">{value}</h3>
-          <p className="text-white/80 font-medium mt-1">{title}</p>
-          {subtitle && (
-            <p className="text-white/60 text-sm mt-0.5">{subtitle}</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// User Card Component
-const UserCard = ({ userItem, onStatusChange, type }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const isPending = (userItem.status || "pending").toUpperCase() === "PENDING";
-
-  return (
-    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden hover:border-slate-600/50 transition-all duration-300">
-      <div className="p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Avatar image={userItem.photoURL} name={userItem.displayName} size="md" />
-            <div>
-              <p className="text-white font-medium">{userItem.displayName}</p>
-              <p className="text-slate-400 text-sm">{userItem.email}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {isPending ? (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onStatusChange(userItem.uid, "approved")}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium text-sm transition-colors"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Approve
-                </button>
-                <button
-                  onClick={() => onStatusChange(userItem.uid, "denied")}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium text-sm transition-colors"
-                >
-                  <XCircle className="w-4 h-4" />
-                  Deny
-                </button>
-              </div>
-            ) : (
-              <StatusBadge status={userItem.status} />
-            )}
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 transition-colors"
-            >
-              {isExpanded ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-slate-700/50 space-y-2 animate-fadeIn">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-slate-500">Role</p>
-              <p className="text-slate-300 capitalize">{type}</p>
-            </div>
-            <div>
-              <p className="text-slate-500">Joined</p>
-              <p className="text-slate-300">
-                {userItem.createdAt 
-                  ? (userItem.createdAt.toDate ? userItem.createdAt.toDate().toLocaleDateString() : new Date(userItem.createdAt).toLocaleDateString())
-                  : "N/A"}
-              </p>
-            </div>
-            {userItem.collegeName && (
-              <div className="col-span-2">
-                <p className="text-slate-500">College</p>
-                <p className="text-slate-300">{userItem.collegeName}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+import { Avatar, StatsCard } from "./principalDashboardComponents";
+import UserCard from "./PrincipalUserCard";
 
 // Main Dashboard Component
 const ManagementDashboard = () => {
   const { user, userData, userDataLoading, loading } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [wardens, setWardens] = useState([]);
   const [students, setStudents] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -300,7 +114,7 @@ const ManagementDashboard = () => {
   }, [user?.uid, userData?.role, userData?.status]);
 
   // Handle status change for wardens/students - Call Cloud Function
-  const handleStatusChange = async (userId, newStatus) => {
+  const handleStatusChange = useCallback(async (userId, newStatus) => {
     try {
       if (newStatus === 'approved') {
         await cloudFunctions.approveUser(userId, 'management');
@@ -311,17 +125,17 @@ const ManagementDashboard = () => {
       console.error("Error updating user status:", error);
       toast.error(`Failed to ${newStatus} user: ${error.message}`);
     }
-  };
+  }, [toast]);
 
   // Handle logout
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await signOut(auth);
       navigate("/", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
     }
-  };
+  }, [navigate]);
 
   // Show loading while checking auth
   if (loading || userDataLoading) {
@@ -335,12 +149,14 @@ const ManagementDashboard = () => {
     );
   }
 
-  // Calculate stats
-  const totalWardens = wardens.length;
-  const totalStudents = students.length;
-  const pendingWardens = wardens.filter((w) => (w.status || "pending").toUpperCase() === "PENDING").length;
-  const pendingStudents = students.filter((s) => (s.status || "pending").toUpperCase() === "PENDING").length;
-  const totalPending = pendingWardens + pendingStudents;
+  // Calculate stats (memoised to avoid recalculating on every render)
+  const { totalWardens, totalStudents, pendingWardens, pendingStudents, totalPending } = useMemo(() => {
+    const tw = wardens.length;
+    const ts = students.length;
+    const pw = wardens.filter((w) => (w.status || "pending").toUpperCase() === "PENDING").length;
+    const ps = students.filter((s) => (s.status || "pending").toUpperCase() === "PENDING").length;
+    return { totalWardens: tw, totalStudents: ts, pendingWardens: pw, pendingStudents: ps, totalPending: pw + ps };
+  }, [wardens, students]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">

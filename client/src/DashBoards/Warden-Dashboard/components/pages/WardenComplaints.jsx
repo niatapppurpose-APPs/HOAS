@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import WardenHeader from '../layout/WardenHeader';
 import { db } from '../../../../firebase/firebaseConfig';
+import { STATUS_CONFIG, FILTER_OPTIONS, formatDate, getCategoryLabel } from './wardenComplaintConstants';
+import WardenComplaintDetailModal from './WardenComplaintDetailModal';
 import {
     collection,
     query,
@@ -25,86 +27,12 @@ import {
     Eye,
     ChevronRight,
     User,
-    MessageSquareText,
-    X,
     ArrowRightCircle,
-    AlertTriangle,
     ShieldAlert,
     Flag,
 } from 'lucide-react';
 import './WardenComplaints.css';
 
-// ── Config ───────────────────────────────────────────────────
-const STATUS_CONFIG = {
-    pending: {
-        label: 'Pending',
-        className: 'warden-status-pending',
-    },
-    'in-progress': {
-        label: 'In Progress',
-        className: 'warden-status-in-progress',
-    },
-    'warden-resolved': {
-        label: 'Awaiting Student Review',
-        className: 'warden-status-warden-resolved',
-    },
-    resolved: {
-        label: 'Resolved',
-        className: 'warden-status-resolved',
-    },
-    rejected: {
-        label: 'Rejected',
-        className: 'warden-status-rejected',
-    },
-    disputed: {
-        label: 'DISPUTED',
-        className: 'warden-status-disputed',
-    },
-    escalated: {
-        label: 'Escalated to Management',
-        className: 'warden-status-escalated',
-    },
-};
-
-const CATEGORIES = [
-    { value: 'maintenance', label: '🔧 Maintenance & Repairs' },
-    { value: 'cleanliness', label: '🧹 Cleanliness & Hygiene' },
-    { value: 'electrical', label: '⚡ Electrical Issues' },
-    { value: 'plumbing', label: '🚿 Plumbing & Water' },
-    { value: 'food', label: '🍽️ Food & Mess' },
-    { value: 'security', label: '🔒 Security Concerns' },
-    { value: 'noise', label: '🔊 Noise Disturbance' },
-    { value: 'internet', label: '📶 Internet & WiFi' },
-    { value: 'furniture', label: '🪑 Furniture Issues' },
-    { value: 'other', label: '📌 Other' },
-];
-
-const FILTER_OPTIONS = [
-    { value: 'all', label: 'All' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'disputed', label: '🚩 Disputed' },
-    { value: 'warden-resolved', label: 'Awaiting Review' },
-    { value: 'resolved', label: 'Resolved' },
-    { value: 'escalated', label: 'Escalated' },
-    { value: 'rejected', label: 'Rejected' },
-];
-
-// ── Helpers ──────────────────────────────────────────────────
-const formatDate = (timestamp) => {
-    if (!timestamp) return '—';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
-};
-
-const getCategoryLabel = (value) => {
-    const cat = CATEGORIES.find((c) => c.value === value);
-    return cat ? cat.label : value;
-};
 
 // ══════════════════════════════════════════════════════════════
 // Component
@@ -119,7 +47,6 @@ const WardenComplaints = () => {
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState('all');
     const [selectedComplaint, setSelectedComplaint] = useState(null);
-    const [responseText, setResponseText] = useState('');
     const [isUpdating, setIsUpdating] = useState(false);
 
     // ── Fetch complaints for this warden's college ───────────
@@ -156,21 +83,23 @@ const WardenComplaints = () => {
         return () => unsubscribe();
     }, [userData?.managementId]);
 
-    // ── Filtered ─────────────────────────────────────────────
-    const filteredComplaints =
+    // ── Filtered (memoized) ─────────────────────────────────────────
+    const filteredComplaints = useMemo(() =>
         activeFilter === 'all'
             ? complaints
-            : complaints.filter((c) => c.status === activeFilter);
+            : complaints.filter((c) => c.status === activeFilter),
+        [complaints, activeFilter]
+    );
 
-    // ── Stats ────────────────────────────────────────────────
-    const stats = {
+    // ── Stats (memoized) ────────────────────────────────────────────
+    const stats = useMemo(() => ({
         total: complaints.length,
         pending: complaints.filter((c) => c.status === 'pending').length,
         inProgress: complaints.filter((c) => c.status === 'in-progress').length,
         resolved: complaints.filter((c) => c.status === 'resolved').length,
         disputed: complaints.filter((c) => c.status === 'disputed').length,
         wardenResolved: complaints.filter((c) => c.status === 'warden-resolved').length,
-    };
+    }), [complaints]);
 
     // ── Update complaint status ──────────────────────────────
     const updateStatus = async (complaintId, newStatus, response = null, complaint = null) => {
@@ -217,7 +146,6 @@ const WardenComplaints = () => {
             if (selectedComplaint?.id === complaintId) {
                 setSelectedComplaint((prev) => ({ ...prev, status: newStatus, response: response || prev?.response }));
             }
-            setResponseText('');
         } catch (err) {
             console.error('Error updating complaint:', err);
             toast.error('Failed to update complaint. Please try again.');
@@ -243,28 +171,8 @@ const WardenComplaints = () => {
     };
 
     // ── Modal handlers ───────────────────────────────────────
-    const openDetail = (complaint) => {
-        setSelectedComplaint(complaint);
-        setResponseText(complaint.response || '');
-    };
-    const closeDetail = () => {
-        setSelectedComplaint(null);
-        setResponseText('');
-    };
-
-    const handleModalResolve = () => {
-        if (!selectedComplaint) return;
-        updateStatus(selectedComplaint.id, 'warden-resolved', responseText.trim() || null, selectedComplaint);
-    };
-
-    const handleModalReject = () => {
-        if (!selectedComplaint) return;
-        if (!responseText.trim()) {
-            toast.warning('Please provide a reason for rejection');
-            return;
-        }
-        updateStatus(selectedComplaint.id, 'rejected', responseText.trim(), selectedComplaint);
-    };
+    const openDetail = (complaint) => setSelectedComplaint(complaint);
+    const closeDetail = useCallback(() => setSelectedComplaint(null), []);
 
     // ══════════════════════════════════════════════════════════
     // Render
@@ -487,180 +395,12 @@ const WardenComplaints = () => {
 
             {/* ── Detail / Response Modal ─────────────────── */}
             {selectedComplaint && (
-                <div className="warden-modal-backdrop" onClick={closeDetail}>
-                    <div className="warden-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="warden-modal-header">
-                            <h3>Complaint Details</h3>
-                            <button className="warden-modal-close" onClick={closeDetail}>
-                                <X size={16} />
-                            </button>
-                        </div>
-
-                        <div className="warden-modal-body">
-                            {/* Status */}
-                            <div className="warden-detail-row">
-                                <span className="warden-detail-label">Status</span>
-                                <div style={{ marginTop: '0.25rem' }}>
-                                    {(() => {
-                                        const s = STATUS_CONFIG[selectedComplaint.status] || STATUS_CONFIG.pending;
-                                        return (
-                                            <div className={`warden-status ${s.className}`}>
-                                                <span className="warden-status-dot" />
-                                                {s.label}
-                                            </div>
-                                        );
-                                    })()}
-                                </div>
-                            </div>
-
-                            {/* Student Info */}
-                            <div className="warden-detail-row">
-                                <span className="warden-detail-label">Student</span>
-                                <span className="warden-detail-value">
-                                    {selectedComplaint.studentName || 'Unknown Student'}
-                                    {selectedComplaint.studentEmail && <> · {selectedComplaint.studentEmail}</>}
-                                </span>
-                            </div>
-
-                            {selectedComplaint.roomNumber && (
-                                <div className="warden-detail-row">
-                                    <span className="warden-detail-label">Room Number</span>
-                                    <span className="warden-detail-value">{selectedComplaint.roomNumber}</span>
-                                </div>
-                            )}
-
-                            {/* Title */}
-                            <div className="warden-detail-row">
-                                <span className="warden-detail-label">Title</span>
-                                <span className="warden-detail-value" style={{ fontWeight: 600 }}>
-                                    {selectedComplaint.title}
-                                </span>
-                            </div>
-
-                            {/* Category */}
-                            <div className="warden-detail-row">
-                                <span className="warden-detail-label">Category</span>
-                                <span className="warden-detail-value">
-                                    {getCategoryLabel(selectedComplaint.category)}
-                                </span>
-                            </div>
-
-                            {/* Description */}
-                            <div className="warden-detail-row">
-                                <span className="warden-detail-label">Description</span>
-                                <span className="warden-detail-value" style={{ whiteSpace: 'pre-wrap' }}>
-                                    {selectedComplaint.description}
-                                </span>
-                            </div>
-
-                            {/* Date */}
-                            <div className="warden-detail-row">
-                                <span className="warden-detail-label">Filed on</span>
-                                <span className="warden-detail-value">
-                                    {formatDate(selectedComplaint.createdAt)}
-                                </span>
-                            </div>
-
-                            {/* Image */}
-                            {selectedComplaint.imageUrl && (
-                                <div className="warden-detail-row">
-                                    <span className="warden-detail-label">Attached Image</span>
-                                    <div className="warden-detail-image">
-                                        <img src={selectedComplaint.imageUrl} alt="Complaint attachment" />
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Response Form — show for pending, in-progress, and disputed */}
-                            {(selectedComplaint.status === 'pending' || selectedComplaint.status === 'in-progress' || selectedComplaint.status === 'disputed') && (
-                                <div className={`warden-response-form ${selectedComplaint.status === 'disputed' ? 'warden-response-disputed' : ''}`}>
-                                    {/* Dispute alert in modal */}
-                                    {selectedComplaint.status === 'disputed' && (
-                                        <div className="warden-modal-dispute-alert">
-                                            <div className="warden-modal-dispute-header">
-                                                <ShieldAlert size={16} />
-                                                <strong>Student Disputed Your Resolution!</strong>
-                                            </div>
-                                            {selectedComplaint.disputeReason && (
-                                                <p className="warden-modal-dispute-reason">
-                                                    Student says: &ldquo;{selectedComplaint.disputeReason}&rdquo;
-                                                </p>
-                                            )}
-                                            <p className="warden-modal-dispute-warning">
-                                                <AlertTriangle size={12} />
-                                                If you don&apos;t respond within 48 hours, this complaint will be automatically escalated to management.
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    <label>
-                                        <MessageSquareText size={14} />
-                                        {selectedComplaint.status === 'disputed' ? 'Respond to Dispute' : 'Add a Response'}
-                                    </label>
-                                    <textarea
-                                        className="warden-response-textarea"
-                                        placeholder={selectedComplaint.status === 'disputed'
-                                            ? "Address the student's concern and explain what action you've taken..."
-                                            : "Type your response to the student…"
-                                        }
-                                        value={responseText}
-                                        onChange={(e) => setResponseText(e.target.value)}
-                                        maxLength={500}
-                                    />
-                                    <div className="warden-response-actions">
-                                        {selectedComplaint.status === 'pending' && (
-                                            <button
-                                                className="warden-response-submit"
-                                                style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}
-                                                onClick={() => updateStatus(selectedComplaint.id, 'in-progress', responseText.trim() || null, selectedComplaint)}
-                                                disabled={isUpdating}
-                                            >
-                                                {isUpdating ? <Loader2 size={14} className="warden-spinner" /> : <ArrowRightCircle size={14} />}
-                                                Mark In Progress
-                                            </button>
-                                        )}
-                                        <button
-                                            className="warden-response-submit resolve"
-                                            onClick={handleModalResolve}
-                                            disabled={isUpdating}
-                                        >
-                                            {isUpdating ? <Loader2 size={14} className="warden-spinner" /> : <CheckCircle2 size={14} />}
-                                            {selectedComplaint.status === 'disputed' ? 'Re-Resolve (Send for Review)' : 'Resolve'}
-                                        </button>
-                                        {selectedComplaint.status !== 'disputed' && (
-                                            <button
-                                                className="warden-response-submit reject"
-                                                onClick={handleModalReject}
-                                                disabled={isUpdating}
-                                            >
-                                                {isUpdating ? <Loader2 size={14} className="warden-spinner" /> : <XCircle size={14} />}
-                                                Reject
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Show existing response if resolved/rejected/warden-resolved */}
-                            {(selectedComplaint.status === 'resolved' || selectedComplaint.status === 'rejected' || selectedComplaint.status === 'warden-resolved') && selectedComplaint.response && (
-                                <div className="warden-response-form" style={{ borderColor: selectedComplaint.status === 'resolved' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)' }}>
-                                    <label>
-                                        <MessageSquareText size={14} />
-                                        Response Sent
-                                    </label>
-                                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                                        {selectedComplaint.response}
-                                    </p>
-                                    {selectedComplaint.respondedBy && (
-                                        <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                                            — {selectedComplaint.respondedBy}
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <WardenComplaintDetailModal
+                    complaint={selectedComplaint}
+                    onClose={closeDetail}
+                    onUpdateStatus={updateStatus}
+                    isUpdating={isUpdating}
+                />
             )}
         </>
     );

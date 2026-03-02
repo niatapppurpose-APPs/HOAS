@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { HashLoader } from "react-spinners";
+import { FeatureGate } from "../../hooks/useSystemSettings";
+import FeatureDisabled from "../FeatureDisabled";
 
 // Loading component for lazy loaded routes
 const PageLoader = () => (
@@ -107,7 +109,11 @@ const Routes_path = () => {
                     <Route path="students" element={<ManagementStudents />} />
                     <Route path="hostels" element={<ManagementHostels />} />
                     <Route path="complaints" element={<ManagementComplaints />} />
-                    <Route path="reports" element={<ManagementReports />} />
+                    <Route path="reports" element={
+                        <FeatureGate feature="reports" fallback={<FeatureDisabled feature="reports" />}>
+                            <ManagementReports />
+                        </FeatureGate>
+                    } />
                     <Route path="settings" element={<ManagementSettings_Page />} />
                     <Route path="help" element={<ManagementHelp />} />
                     <Route path="profile" element={<ManagementProfile />} />
@@ -119,9 +125,21 @@ const Routes_path = () => {
                     <Route index element={<OwnersDashboard />} />
                     <Route path="wardens" element={<Wardens />} />
                     <Route path="students" element={<Students />} />
-                    <Route path="analytics" element={<Analytics />} />
-                    <Route path="reports" element={<Reports />} />
-                    <Route path="notifications" element={<Notifications />} />
+                    <Route path="analytics" element={
+                        <FeatureGate feature="analytics" fallback={<FeatureDisabled feature="analytics" />}>
+                            <Analytics />
+                        </FeatureGate>
+                    } />
+                    <Route path="reports" element={
+                        <FeatureGate feature="reports" fallback={<FeatureDisabled feature="reports" />}>
+                            <Reports />
+                        </FeatureGate>
+                    } />
+                    <Route path="notifications" element={
+                        <FeatureGate feature="notifications" fallback={<FeatureDisabled feature="notifications" />}>
+                            <Notifications />
+                        </FeatureGate>
+                    } />
                     <Route path="settings" element={<Settings />} />
                     <Route path="support-tickets" element={<SupportTickets />} />
                 </Route>

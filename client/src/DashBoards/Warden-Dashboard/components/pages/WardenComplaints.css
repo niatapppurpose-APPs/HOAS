@@ -201,7 +201,8 @@
 
 .warden-status-pending .warden-status-dot {
     background: #f59e0b;
-    animation: warden-status-pulse 2s ease-in-out infinite;
+    animation: warden-status-pulse 2s ease-in-out 3;
+    will-change: opacity;
 }
 
 .warden-status-in-progress {
@@ -212,7 +213,8 @@
 
 .warden-status-in-progress .warden-status-dot {
     background: #3b82f6;
-    animation: warden-status-pulse 1.5s ease-in-out infinite;
+    animation: warden-status-pulse 1.5s ease-in-out 3;
+    will-change: opacity;
 }
 
 .warden-status-resolved {
@@ -307,6 +309,7 @@
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(6px);
     animation: warden-modal-fade 0.2s ease;
+    will-change: opacity, backdrop-filter;
 }
 
 .warden-modal {
@@ -641,6 +644,7 @@
 
 .warden-spinner {
     animation: warden-spin 0.8s linear infinite;
+    will-change: transform;
 }
 
 /* ============================================
@@ -656,7 +660,8 @@
 
 .warden-status-warden-resolved .warden-status-dot {
     background: #7c3aed;
-    animation: warden-status-pulse 2s ease-in-out infinite;
+    animation: warden-status-pulse 2s ease-in-out 3;
+    will-change: opacity;
 }
 
 /* DISPUTED — RED FLAG */
@@ -665,12 +670,14 @@
     color: #dc2626;
     border: 2px solid rgba(239, 68, 68, 0.5);
     font-weight: 800;
-    animation: disputed-border-pulse 1.5s ease-in-out infinite;
+    animation: disputed-border-pulse 1.5s ease-in-out 3;
+    will-change: border-color;
 }
 
 .warden-status-disputed .warden-status-dot {
     background: #dc2626;
-    animation: warden-status-pulse 0.6s ease-in-out infinite;
+    animation: warden-status-pulse 0.6s ease-in-out 3;
+    will-change: opacity;
 }
 
 /* Escalated */
@@ -684,10 +691,7 @@
     background: #b91c1c;
 }
 
-@keyframes warden-status-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-}
+/* Removed duplicate warden-status-pulse — already defined above */
 
 @keyframes disputed-border-pulse {
     0%, 100% { border-color: rgba(239, 68, 68, 0.5); }
@@ -702,7 +706,8 @@
     background: rgba(239, 68, 68, 0.25) !important;
     color: #fecaca !important;
     border: 1px solid rgba(239, 68, 68, 0.5) !important;
-    animation: disputed-chip-flash 2s ease-in-out infinite;
+    animation: disputed-chip-flash 2s ease-in-out 3;
+    will-change: background;
 }
 
 @keyframes disputed-chip-flash {
@@ -717,7 +722,8 @@
 .warden-complaint-disputed {
     border: 2px solid rgba(239, 68, 68, 0.4) !important;
     background: rgba(239, 68, 68, 0.03) !important;
-    animation: disputed-card-glow 2s ease-in-out infinite;
+    animation: disputed-card-glow 2s ease-in-out 3;
+    will-change: box-shadow;
 }
 
 @keyframes disputed-card-glow {
@@ -746,7 +752,8 @@
     height: 0.5rem;
     border-radius: 50%;
     background: #ef4444;
-    animation: red-flag-pulse 1s ease-in-out infinite;
+    animation: red-flag-pulse 1s ease-in-out 3;
+    will-change: transform, opacity;
 }
 
 @keyframes red-flag-pulse {
@@ -843,4 +850,23 @@
     font-size: 0.6875rem;
     color: #f59e0b;
     font-weight: 600;
+}
+
+/* ============================================
+   Accessibility: Reduced Motion
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    .warden-status-dot,
+    .warden-status-disputed,
+    .warden-stat-disputed,
+    .warden-complaint-disputed,
+    .warden-red-flag-icon-pulse,
+    .warden-spinner,
+    .warden-complaint-item,
+    .warden-modal-backdrop,
+    .warden-modal {
+        animation: none !important;
+        transition: none !important;
+    }
 }
