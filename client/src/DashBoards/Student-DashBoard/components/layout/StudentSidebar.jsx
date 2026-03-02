@@ -342,7 +342,7 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
             <div className="flex flex-col items-center">
               <img
                 src={collegeLogo ? collegeLogo : Applogo}
-                className="w-full h-32 rounded-lg object-cover border-4 border-blue-500/30 shadow-lg"
+                className="w-full h-full rounded-lg object-contain border-4 border-blue-500/30 shadow-lg"
                 alt={collegeLogo ? "College Logo" : "HOAS Logo"}
               />
               <h2 className="mt-4 text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>

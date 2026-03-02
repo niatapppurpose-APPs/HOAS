@@ -1,6 +1,6 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import PDFDocument from 'pdfkit';
-import { db, corsHandler, corsOptions } from './config.js';
+import { db, corsHandler } from './config.js';
 import { verifyAuthToken } from './helpers.js';
 
 /**
@@ -76,7 +76,7 @@ function addWatermark(doc, watermarkText = 'HOAS') {
 /**
  * Generate and download college report in JSON format
  */
-export const downloadReportJson = onRequest(corsOptions, async (req, res) => {
+export const downloadReportJson = onRequest(async (req, res) => {
   // Handle CORS
   return corsHandler(req, res, async () => {
     try {
@@ -218,7 +218,7 @@ export const downloadReportJson = onRequest(corsOptions, async (req, res) => {
 /**
  * Generate and download college report in PDF format
  */
-export const downloadReportPdf = onRequest(corsOptions, async (req, res) => {
+export const downloadReportPdf = onRequest(async (req, res) => {
   // Handle CORS
   return corsHandler(req, res, async () => {
     try {

@@ -30,11 +30,11 @@
   --student-bg-card: #1e293b;
   --student-bg-sidebar: rgba(15, 23, 42, 0.95);
   --student-bg-header: rgba(15, 23, 42, 0.8);
-  --student-bg-tertiary: #334155;
+  --student-bg-tertiary: #1e293b;
   --student-text-primary: #f8fafc;
   --student-text-secondary: #cbd5e1;
   --student-text-muted: #64748b;
-  --student-border-primary: rgba(51, 65, 85, 0.8);
+  --student-border-primary: rgba(51, 65, 85, 0.5);
   --student-accent-primary: #3b82f6;
   --student-accent-secondary: #6366f1;
   --student-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
@@ -48,7 +48,8 @@
 
 .student-dashboard {
   min-height: 100vh;
-  padding-top: 5rem; /* Account for fixed header */
+  padding-top: 5rem;
+  /* Account for fixed header */
   padding-left: 1rem;
   padding-right: 1rem;
   padding-bottom: 2rem;
@@ -179,8 +180,16 @@
 
 .student-profile-icon {
   color: #3b82f6;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .student-profile-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
 }
 
 /* ============================================
@@ -301,6 +310,12 @@
   }
 }
 
+@media (min-width: 1024px) {
+  .student-profile-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .student-actions-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -318,9 +333,12 @@
    ============================================ */
 
 @keyframes student-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
@@ -349,5 +367,37 @@
 }
 
 .student-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+  background: var(--student-accent-primary);
+}
+
+.student-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--student-text-muted) transparent;
+}
+
+/* ============================================
+   Profile Editing Styles
+   ============================================ */
+
+.student-profile-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--student-accent-primary);
+  color: var(--student-text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 4px 0;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.student-profile-input:focus {
+  border-bottom-color: var(--student-accent-secondary);
+}
+
+.student-profile-input::placeholder {
+  color: var(--student-text-muted);
+  font-weight: 400;
+  font-size: 0.75rem;
 }

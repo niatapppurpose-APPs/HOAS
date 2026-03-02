@@ -8,6 +8,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider } from "./components/Toast";
 import { ErrorProvider } from "./context/ErrorContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { SystemSettingsProvider } from "./hooks/useSystemSettings.jsx";
 import ErrorModal from "./components/ErrorModal";
 import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
@@ -17,17 +18,19 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <ThemeProvider>
       <ToastProvider position="top-right">
         <AuthProvider>
-          <NotificationProvider>
-            <ErrorProvider>
-              {/* Keep ErrorModal outside of ErrorBoundary so it can show even when children crash */}
-              <ErrorModal />
-              <ErrorBoundary>
-                <ModalProvider>
-                  <App />
-                </ModalProvider>
-              </ErrorBoundary>
-            </ErrorProvider>
-          </NotificationProvider>
+          <SystemSettingsProvider>
+            <NotificationProvider>
+              <ErrorProvider>
+                {/* Keep ErrorModal outside of ErrorBoundary so it can show even when children crash */}
+                <ErrorModal />
+                <ErrorBoundary>
+                  <ModalProvider>
+                    <App />
+                  </ModalProvider>
+                </ErrorBoundary>
+              </ErrorProvider>
+            </NotificationProvider>
+          </SystemSettingsProvider>
         </AuthProvider>
       </ToastProvider>
     </ThemeProvider>

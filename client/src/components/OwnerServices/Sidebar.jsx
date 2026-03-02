@@ -12,7 +12,6 @@ import {
   FileText,
   Pin,
   X,
-  Cog,
   Ticket,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -21,7 +20,7 @@ import Avatar from './Avatar'
 import Applogo from '../../assets/Applogo.png'
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,7 +35,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     if (path.includes('/analytics')) return 'analytics';
     if (path.includes('/reports')) return 'reports';
     if (path.includes('/notifications')) return 'notifications';
-    if (path.includes('/system-settings')) return 'system-settings';
     if (path.includes('/settings')) return 'settings';
     if (path.includes('/support-tickets')) return 'support-tickets';
     return 'dashboard';
@@ -84,7 +82,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   const bottomMenuItems = [
     { id: "support-tickets", label: "Support Tickets", icon: Ticket, path: "/OwnersDashboard/support-tickets", tourId: "tour-nav-support" },
-    { id: "system-settings", label: "System Settings", icon: Cog, path: "/OwnersDashboard/system-settings", tourId: "tour-nav-system-settings" },
     { id: "settings", label: "Settings", icon: Settings, path: "/OwnersDashboard/settings", tourId: "tour-nav-settings" },
   ];
 
@@ -278,7 +275,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             </p>
             {bottomMenuItems.map((item) => {
               const Icon = item.icon;
-              const isLogout = item.id === "logout";
+              const isActive = activeItem === item.id;
+
+              const activeStyle = isActive
+                ? { background: `linear-gradient(90deg, var(--owner-accent), var(--owner-accent-2))`, color: '#ffffff' }
+                : {};
 
               return (
                 <button
@@ -290,11 +291,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   }}
                   className={`w-full flex items-center gap-3 px-3 cursor-pointer py-2.5 rounded-xl transition-all duration-200 group
                     ${!showContent ? "lg:justify-center" : ""}
-                    ${isLogout ? "text-red-400 hover:text-red-300 hover:bg-red-500/10" : ""}
                   `}
-                  style={!isLogout ? { color: 'var(--text-secondary)' } : undefined}
+                  style={isActive ? activeStyle : { color: 'var(--text-secondary)' }}
                 >
-                  <Icon className="w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
+                  <Icon
+                    className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : ""}`}
+                    style={{ color: isActive ? '#ffffff' : 'var(--text-secondary)' }}
+                  />
                   <span
                     className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""}`}
                   >
@@ -370,11 +373,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               } : undefined}
             >
               <div className={`flex items-center ${showContent ? "gap-3" : "justify-center"}`}>
-                <Avatar image={user?.photoURL} name={user?.displayName} size="md" objectFit="fill" />
+                <Avatar image={userData?.photoURL || user?.photoURL} name={userData?.displayName || user?.displayName} size="md" objectFit="fill" />
 
                 {showContent && (
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{user?.displayName}</p>
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{userData?.displayName || user?.displayName}</p>
                     <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
                   </div>
                 )}

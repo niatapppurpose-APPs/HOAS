@@ -27,6 +27,7 @@ import LoadingState from "./components/LoadingState";
 import CollegeSelect from "./components/CollegeSelect";
 
 import { Building2, CheckCircle, Clock, GraduationCap, Shield, LayoutDashboard, X, Plus, Eye, EyeOff, Lock, UploadIcon, Image as ImageIcon } from "lucide-react";
+import { HashLoader } from "react-spinners";
 
 // Main Dashboard Component
 const OwnersDashboard = () => {
@@ -64,21 +65,22 @@ const OwnersDashboard = () => {
     password: ''
   });
   const [formError, setFormError] = useState('');
+  const [isAddingManagement, setIsAddingManagement] = useState(false);
 
   // Logo state for Add Management modal
   const [modalLogoFile, setModalLogoFile] = useState(null);
   const [modalLogoPreview, setModalLogoPreview] = useState(null);
 
-  // View Password Modal state
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [selectedManagementForPassword, setSelectedManagementForPassword] = useState(null);
-  const [ownerPassword, setOwnerPassword] = useState('');
-  const [managementPassword, setManagementPassword] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
+  // [PW-STATE] View Password Modal state — all state vars for the "show password" feature
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);           // [PW-1] controls modal open/close
+  const [selectedManagementForPassword, setSelectedManagementForPassword] = useState(null); // [PW-2] which mgmt row was clicked
+  const [ownerPassword, setOwnerPassword] = useState('');                          // [PW-3] owner's own password (for re-auth)
+  const [managementPassword, setManagementPassword] = useState('');                // [PW-4] fetched mgmt password to display
+  const [isVerifying, setIsVerifying] = useState(false);                           // [PW-5] loading spinner while verifying
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);               // [PW-6] toggles between form ↔ password display
+  const [passwordError, setPasswordError] = useState('');                          // [PW-7] inline error message
 
-  // Open password view modal
+  // [PW-FN1] Open password view modal — called when eye-icon is clicked on a management card
   const handleViewPassword = (management) => {
     setSelectedManagementForPassword(management);
     setOwnerPassword('');
@@ -88,7 +90,7 @@ const OwnersDashboard = () => {
     setIsPasswordModalOpen(true);
   };
 
-  // Verify owner password and fetch management password
+  // [PW-FN2] Verify owner password and fetch management password — form submit handler inside the modal
   const handleVerifyAndShowPassword = async (e) => {
     e.preventDefault();
     if (!ownerPassword) {
@@ -125,7 +127,7 @@ const OwnersDashboard = () => {
     }
   };
 
-  // Close password modal
+  // [PW-FN3] Close password modal — resets all PW-STATE vars back to empty
   const closePasswordModal = () => {
     setIsPasswordModalOpen(false);
     setSelectedManagementForPassword(null);
@@ -169,6 +171,8 @@ const OwnersDashboard = () => {
     }
 
 
+    setIsAddingManagement(true);
+
     try {
       // Compress logo if provided
       let logoUrl = null;
@@ -192,6 +196,8 @@ const OwnersDashboard = () => {
       setIsAddModalOpen(false);
     } catch (error) {
       toast.error(`Failed to add management: ${error.message}`);
+    } finally {
+      setIsAddingManagement(false);
     }
   }
 
@@ -674,6 +680,7 @@ const OwnersDashboard = () => {
                   onToggleSelection={toggleUserSelection}
                   onStatusChange={handleStatusChange}
                   onDelete={handleOpenDeleteModal}
+                  // [PW-PROP] Passes the eye-icon handler to each management card — comment out to hide the button
                   onViewPassword={handleViewPassword}
                 />
               ))}
@@ -890,9 +897,15 @@ const OwnersDashboard = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 transition-all"
+                  disabled={isAddingManagement}
+                  className="flex-1 px-4 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Add Management
+                  {isAddingManagement ? (
+                    <div className="flex items-center justify-center gap-2 whitespace-nowrap">
+                      <HashLoader color="#ffffff" size={16} />
+                      <span className="text-sm">Adding Management...</span>
+                    </div>
+                  ) : "Add Management"}
                 </button>
               </div>
             </form>
@@ -900,7 +913,7 @@ const OwnersDashboard = () => {
         </div>
       )}
 
-      {/* View Password Modal */}
+      {/* [PW-MODAL] View Password Modal — the entire modal lives here (lines ~903-1045) */}
       {isPasswordModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Backdrop */}
@@ -949,7 +962,7 @@ const OwnersDashboard = () => {
             )}
 
             {!isPasswordVisible ? (
-              /* Password Verification Form */
+              /* [PW-MODAL-STEP1] Password Verification Form — owner enters their own password here */
               <form onSubmit={handleVerifyAndShowPassword} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
@@ -998,7 +1011,7 @@ const OwnersDashboard = () => {
                 </div>
               </form>
             ) : (
-              /* Password Display */
+              /* [PW-MODAL-STEP2] Password Display — shows the mgmt password + copy button after successful auth */
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>

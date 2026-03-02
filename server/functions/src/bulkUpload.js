@@ -1,7 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db, auth, corsOptions } from './config.js';
 import * as logger from 'firebase-functions/logger';
-import { verifyManagementAccess } from './helpers.js';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 

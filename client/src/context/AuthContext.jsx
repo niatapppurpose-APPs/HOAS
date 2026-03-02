@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, getRedirectResult, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
@@ -17,6 +17,8 @@ export const AuthProvider = ({ children }) => {
   const [claims, setClaims] = useState(null);
   const [adminChecked, setAdminChecked] = useState(false);
   const toast = useToast();
+  const toastRef = useRef(toast);
+  useEffect(() => { toastRef.current = toast; }, [toast]);
 
   // User data from Firestore
   const [userData, setUserData] = useState(null);
@@ -31,11 +33,11 @@ export const AuthProvider = ({ children }) => {
         const result = await getRedirectResult(auth);
         if (result?.user) {
           console.log("Redirect result user:", result.user.email);
-          toast.success('Welcome back! Signing you in...', 3000);
+          toastRef.current.success('Welcome back! Signing you in...', 3000);
         }
       } catch (error) {
         console.error("Redirect error:", error);
-        toast.error('Sign-in failed. Please try again.', 4000);
+        toastRef.current.error('Sign-in failed. Please try again.', 4000);
       }
 
       // Then set up auth state listener
@@ -112,7 +114,7 @@ export const AuthProvider = ({ children }) => {
         unsubscribe();
       }
     };
-  }, [toast]);
+  }, []);
   useEffect(() => {
     if (!user) {
       setUserData(null);

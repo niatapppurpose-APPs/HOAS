@@ -35,7 +35,29 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
 
     const college = collegeName || userData?.collegeName || 'Unknown College';
 
-    // Parse Excel file
+    // Auto-detect column indices from header names
+    const detectColumns = (headerRow) => {
+        let nameCol = -1, studentIdCol = -1, emailCol = -1, snoCol = -1;
+
+        headerRow.forEach((header, idx) => {
+            const h = String(header || '').trim().toLowerCase();
+            if (!h) return;
+
+            if (snoCol === -1 && /^(s\.?\s*no|sl\.?\s*no|sr\.?\s*no|serial|#)$/.test(h)) {
+                snoCol = idx;
+            } else if (nameCol === -1 && /name/.test(h)) {
+                nameCol = idx;
+            } else if (emailCol === -1 && /(e[-\s]?mail|g[-\s]?mail|gmail)/.test(h)) {
+                emailCol = idx;
+            } else if (studentIdCol === -1 && /(student|roll|reg|enrol)/.test(h) && !/mail/.test(h)) {
+                studentIdCol = idx;
+            }
+        });
+
+        return { nameCol, studentIdCol, emailCol, snoCol };
+    };
+
+    // Parse Excel file with smart column detection
     const parseExcel = (fileData) => {
         try {
             const workbook = XLSX.read(fileData, { type: 'array' });
@@ -43,24 +65,49 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
             const worksheet = workbook.Sheets[sheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-            // Skip header row and empty rows
-            const headers = jsonData[0];
-            const students = [];
+            if (jsonData.length < 2) {
+                toast.error('Excel file is empty or has no data rows.');
+                return [];
+            }
 
+            const headerRow = jsonData[0] || [];
+            let { nameCol, studentIdCol, emailCol, snoCol } = detectColumns(headerRow);
+
+            // Fallback to position-based detection if headers not recognized
+            if (nameCol === -1 || emailCol === -1) {
+                const colCount = headerRow.length;
+                if (colCount >= 6) {
+                    // Legacy format: S.No(0), Name(1), (empty)(2), StudentId(3), (empty)(4), G-Mail(5)
+                    snoCol = 0; nameCol = 1; studentIdCol = 3; emailCol = 5;
+                } else {
+                    // Standard format: S.No(0), Name(1), StudentId(2), G-Mail(3)
+                    snoCol = 0; nameCol = 1; studentIdCol = 2; emailCol = 3;
+                }
+                console.warn('Column headers not recognized, using position-based mapping:', { snoCol, nameCol, studentIdCol, emailCol });
+            } else {
+                console.log('Auto-detected columns:', { snoCol, nameCol, studentIdCol, emailCol });
+            }
+
+            // Parse data rows
+            const students = [];
             for (let i = 1; i < jsonData.length; i++) {
                 const row = jsonData[i];
-                if (!row || row.length === 0 || !row[1]) continue; // Skip empty rows
+                if (!row || row.length === 0) continue;
 
-                // Map columns: S.No, Name, (empty), StudentId, (empty), G-Mail
+                const name = String(row[nameCol] || '').trim();
+                const email = String(row[emailCol] || '').trim();
+
+                if (!name || !email) continue; // Skip rows missing required fields
+
                 students.push({
-                    sno: row[0] || i,
-                    name: String(row[1] || '').trim(),
-                    studentId: String(row[3] || '').trim(),
-                    email: String(row[5] || '').trim(),
+                    sno: snoCol >= 0 ? (row[snoCol] || i) : i,
+                    name,
+                    studentId: studentIdCol >= 0 ? String(row[studentIdCol] || '').trim() : '',
+                    email,
                 });
             }
 
-            return students.filter(s => s.name && s.email);
+            return students;
         } catch (err) {
             console.error('Error parsing Excel:', err);
             toast.error('Failed to parse Excel file. Please check the format.');
@@ -93,6 +140,8 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
     }, []);
 
     const handleFileSelect = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const selectedFile = e.target.files?.[0];
         if (selectedFile) {
             processFile(selectedFile);
@@ -136,7 +185,8 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
     };
 
     // Upload and create students
-    const handleUpload = async () => {
+    const handleUpload = async (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
         setStep('uploading');
         startTimer(parsedData.length);
 
@@ -161,7 +211,7 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
             });
 
             stopTimer();
-            setResults(result.results);
+            setResults(result?.results || result || {});
             setStep('done');
 
             if (result.results.created > 0) {
@@ -218,11 +268,12 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
         <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-            onClick={(e) => e.target === e.currentTarget && step !== 'uploading' && handleClose()}
+            onMouseDown={(e) => e.target === e.currentTarget && step !== 'uploading' && handleClose()}
         >
             <div
                 className="w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl"
                 style={{ backgroundColor: bg, border: `1px solid ${border}`, maxHeight: '90vh' }}
+                onMouseDown={(e) => e.stopPropagation()}
             >
                 {/* Header */}
                 <div
@@ -242,6 +293,7 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
                     </div>
                     {step !== 'uploading' && (
                         <button
+                            type="button"
                             onClick={handleClose}
                             className="p-2 rounded-lg transition-colors hover:bg-red-500/10"
                             style={{ color: textSecondary }}
@@ -342,6 +394,7 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
                                     </p>
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={handleReset}
                                     className="text-xs px-3 py-1.5 rounded-lg border transition-colors"
                                     style={{ borderColor: border, color: textSecondary }}
@@ -411,6 +464,7 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
 
                             {/* Upload Button */}
                             <button
+                                type="button"
                                 onClick={handleUpload}
                                 className="w-full py-3.5 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99]"
                                 style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', boxShadow: '0 4px 15px rgba(79,70,229,0.4)' }}
@@ -522,6 +576,7 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
                             {results.errors && results.errors.length > 0 && (
                                 <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isDark ? 'rgba(220,38,38,0.2)' : '#fecaca'}` }}>
                                     <button
+                                        type="button"
                                         onClick={() => setShowErrors(!showErrors)}
                                         className="w-full flex items-center justify-between px-4 py-3 transition-colors"
                                         style={{ backgroundColor: isDark ? 'rgba(220,38,38,0.1)' : '#fef2f2' }}
@@ -565,6 +620,7 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
                             {/* Action Buttons */}
                             <div className="flex gap-3">
                                 <button
+                                    type="button"
                                     onClick={handleReset}
                                     className="flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all border"
                                     style={{ borderColor: border, color: textPrimary, backgroundColor: bgSecondary }}
@@ -573,6 +629,7 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
                                     Upload More
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={handleClose}
                                     className="flex-1 py-3 rounded-xl font-semibold text-white text-sm flex items-center justify-center gap-2 transition-all"
                                     style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}
