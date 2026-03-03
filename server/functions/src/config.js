@@ -51,8 +51,14 @@ export const corsOptions = {
 // Set global options for v2 functions
 // Note: 'cors' and 'invoker' are per-function options, not global options.
 // They are set in corsOptions above and passed to each onCall/onRequest function.
+// maxInstances is set globally to avoid exceeding Cloud Run CPU quota.
+// (default is 100 per function; with ~20 functions that exhausts the free-tier
+//  quota of ~50 total vCPUs. Setting maxInstances:3 keeps total well under 60.)
 setGlobalOptions({
   region: 'us-central1',
+  maxInstances: 1,
+  memory: '256MiB',
+  cpu: 1,
 });
 
 export const db = getFirestore();

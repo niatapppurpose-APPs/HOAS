@@ -168,7 +168,9 @@ async function storeNotification(userId, title, body, data = {}) {
 // ═════════════════════════════════════════════════════════════
 // TRIGGER: When a complaint document is updated
 // ═════════════════════════════════════════════════════════════
-export const onComplaintUpdated = onDocumentUpdated('complaints/{complaintId}', async (event) => {
+export const onComplaintUpdated = onDocumentUpdated(
+  { document: 'complaints/{complaintId}', maxInstances: 10, memory: '256MiB', cpu: 1 },
+  async (event) => {
   try {
     const before = event.data.before.data();
     const after = event.data.after.data();

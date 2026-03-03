@@ -255,7 +255,9 @@ export const onSupportTicketUpdate = onDocumentUpdated('supportTickets/{ticketId
 /**
  * Trigger when a new warden registration needs approval
  */
-export const onNewWardenRegistration = onDocumentCreated('users/{userId}', async (event) => {
+export const onNewWardenRegistration = onDocumentCreated(
+  { document: 'users/{userId}', maxInstances: 10, memory: '256MiB', cpu: 1 },
+  async (event) => {
   try {
     // Check if notifications are enabled
     if (!(await areNotificationsEnabled())) return;
