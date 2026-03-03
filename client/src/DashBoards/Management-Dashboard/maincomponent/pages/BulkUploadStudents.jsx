@@ -1,11 +1,12 @@
 import { useState, useRef, useCallback } from 'react';
-import * as XLSX from 'xlsx';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../../../firebase/firebaseConfig';
 import { bulkCreateStudents } from '../../../../firebase/cloudFunctions';
 import { useAuth } from '../../../../context/AuthContext';
 import { useTheme } from '../../../../context/ThemeContext';
 import { useToast } from '../../../../components/Toast';
+import { parseExcel, formatTime } from './bulkUploadUtils';
+import BulkUploadResults from './BulkUploadResults';
 import {
     Upload, FileSpreadsheet, X, CheckCircle2, AlertTriangle,
     Clock, Users, Loader2, Download, Eye, ChevronDown, ChevronUp
@@ -35,84 +36,28 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
 
     const college = collegeName || userData?.collegeName || 'Unknown College';
 
-    // Auto-detect column indices from header names
-    const detectColumns = (headerRow) => {
-        let nameCol = -1, studentIdCol = -1, emailCol = -1, snoCol = -1;
-
-        headerRow.forEach((header, idx) => {
-            const h = String(header || '').trim().toLowerCase();
-            if (!h) return;
-
-            if (snoCol === -1 && /^(s\.?\s*no|sl\.?\s*no|sr\.?\s*no|serial|#)$/.test(h)) {
-                snoCol = idx;
-            } else if (nameCol === -1 && /name/.test(h)) {
-                nameCol = idx;
-            } else if (emailCol === -1 && /(e[-\s]?mail|g[-\s]?mail|gmail)/.test(h)) {
-                emailCol = idx;
-            } else if (studentIdCol === -1 && /(student|roll|reg|enrol)/.test(h) && !/mail/.test(h)) {
-                studentIdCol = idx;
-            }
-        });
-
-        return { nameCol, studentIdCol, emailCol, snoCol };
-    };
-
-    // Parse Excel file with smart column detection
-    const parseExcel = (fileData) => {
-        try {
-            const workbook = XLSX.read(fileData, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-            if (jsonData.length < 2) {
-                toast.error('Excel file is empty or has no data rows.');
-                return [];
-            }
-
-            const headerRow = jsonData[0] || [];
-            let { nameCol, studentIdCol, emailCol, snoCol } = detectColumns(headerRow);
-
-            // Fallback to position-based detection if headers not recognized
-            if (nameCol === -1 || emailCol === -1) {
-                const colCount = headerRow.length;
-                if (colCount >= 6) {
-                    // Legacy format: S.No(0), Name(1), (empty)(2), StudentId(3), (empty)(4), G-Mail(5)
-                    snoCol = 0; nameCol = 1; studentIdCol = 3; emailCol = 5;
+    const processFile = (selectedFile) => {
+        setFile(selectedFile);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            try {
+                const students = parseExcel(data);
+                if (students.length > 0) {
+                    setParsedData(students);
+                    setStep('preview');
+                    toast.success(`Found ${students.length} students in the file!`);
                 } else {
-                    // Standard format: S.No(0), Name(1), StudentId(2), G-Mail(3)
-                    snoCol = 0; nameCol = 1; studentIdCol = 2; emailCol = 3;
+                    toast.error('No valid student data found in the file.');
+                    setFile(null);
                 }
-                console.warn('Column headers not recognized, using position-based mapping:', { snoCol, nameCol, studentIdCol, emailCol });
-            } else {
-                console.log('Auto-detected columns:', { snoCol, nameCol, studentIdCol, emailCol });
+            } catch (err) {
+                console.error('Error parsing Excel:', err);
+                toast.error('Failed to parse Excel file. Please check the format.');
+                setFile(null);
             }
-
-            // Parse data rows
-            const students = [];
-            for (let i = 1; i < jsonData.length; i++) {
-                const row = jsonData[i];
-                if (!row || row.length === 0) continue;
-
-                const name = String(row[nameCol] || '').trim();
-                const email = String(row[emailCol] || '').trim();
-
-                if (!name || !email) continue; // Skip rows missing required fields
-
-                students.push({
-                    sno: snoCol >= 0 ? (row[snoCol] || i) : i,
-                    name,
-                    studentId: studentIdCol >= 0 ? String(row[studentIdCol] || '').trim() : '',
-                    email,
-                });
-            }
-
-            return students;
-        } catch (err) {
-            console.error('Error parsing Excel:', err);
-            toast.error('Failed to parse Excel file. Please check the format.');
-            return [];
-        }
+        };
+        reader.readAsArrayBuffer(selectedFile);
     };
 
     // Handle file drop
@@ -146,24 +91,6 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
         if (selectedFile) {
             processFile(selectedFile);
         }
-    };
-
-    const processFile = (selectedFile) => {
-        setFile(selectedFile);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result);
-            const students = parseExcel(data);
-            if (students.length > 0) {
-                setParsedData(students);
-                setStep('preview');
-                toast.success(`Found ${students.length} students in the file!`);
-            } else {
-                toast.error('No valid student data found in the file.');
-                setFile(null);
-            }
-        };
-        reader.readAsArrayBuffer(selectedFile);
     };
 
     // Start timer
@@ -247,12 +174,6 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
     const handleClose = () => {
         handleReset();
         onClose();
-    };
-
-    const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
     };
 
     if (!isOpen) return null;
@@ -542,103 +463,19 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
 
                     {/* STEP 4: DONE */}
                     {step === 'done' && results && (
-                        <div className="space-y-4">
-                            {/* Success Banner */}
-                            <div className="text-center py-4">
-                                <div className="w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #16a34a, #22c55e)' }}>
-                                    <CheckCircle2 className="w-8 h-8 text-white" />
-                                </div>
-                                <h3 className="text-xl font-bold" style={{ color: textPrimary }}>
-                                    Upload Complete! 🎉
-                                </h3>
-                                <p className="text-sm mt-1" style={{ color: textSecondary }}>
-                                    Completed in {formatTime(elapsedTime)}
-                                </p>
-                            </div>
-
-                            {/* Stats Grid */}
-                            <div className="grid grid-cols-3 gap-3">
-                                <div className="text-center p-4 rounded-xl" style={{ backgroundColor: isDark ? 'rgba(22,163,74,0.1)' : '#f0fdf4', border: `1px solid ${isDark ? 'rgba(22,163,74,0.2)' : '#bbf7d0'}` }}>
-                                    <p className="text-2xl font-bold" style={{ color: '#16a34a' }}>{results.created}</p>
-                                    <p className="text-xs font-medium" style={{ color: isDark ? '#4ade80' : '#16a34a' }}>Created</p>
-                                </div>
-                                <div className="text-center p-4 rounded-xl" style={{ backgroundColor: isDark ? 'rgba(234,179,8,0.1)' : '#fffbeb', border: `1px solid ${isDark ? 'rgba(234,179,8,0.2)' : '#fde68a'}` }}>
-                                    <p className="text-2xl font-bold" style={{ color: '#eab308' }}>{results.skipped}</p>
-                                    <p className="text-xs font-medium" style={{ color: isDark ? '#fbbf24' : '#d97706' }}>Skipped</p>
-                                </div>
-                                <div className="text-center p-4 rounded-xl" style={{ backgroundColor: isDark ? 'rgba(220,38,38,0.1)' : '#fef2f2', border: `1px solid ${isDark ? 'rgba(220,38,38,0.2)' : '#fecaca'}` }}>
-                                    <p className="text-2xl font-bold" style={{ color: '#dc2626' }}>{results.failed}</p>
-                                    <p className="text-xs font-medium" style={{ color: isDark ? '#f87171' : '#dc2626' }}>Failed</p>
-                                </div>
-                            </div>
-
-                            {/* Errors Accordion */}
-                            {results.errors && results.errors.length > 0 && (
-                                <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isDark ? 'rgba(220,38,38,0.2)' : '#fecaca'}` }}>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowErrors(!showErrors)}
-                                        className="w-full flex items-center justify-between px-4 py-3 transition-colors"
-                                        style={{ backgroundColor: isDark ? 'rgba(220,38,38,0.1)' : '#fef2f2' }}
-                                    >
-                                        <span className="flex items-center gap-2 text-sm font-medium" style={{ color: isDark ? '#f87171' : '#dc2626' }}>
-                                            <AlertTriangle className="w-4 h-4" />
-                                            {results.errors.length} issue{results.errors.length > 1 ? 's' : ''} found
-                                        </span>
-                                        {showErrors ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                                    </button>
-                                    {showErrors && (
-                                        <div className="px-4 py-3 space-y-2">
-                                            {results.errors.map((err, i) => (
-                                                <div key={i} className="flex items-start gap-2 text-xs" style={{ color: textSecondary }}>
-                                                    <span className="font-mono shrink-0">#{err.index}</span>
-                                                    <span className="font-medium" style={{ color: textPrimary }}>{err.name}</span>
-                                                    <span>— {err.reason}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Info Note */}
-                            <div
-                                className="rounded-xl p-4"
-                                style={{
-                                    backgroundColor: isDark ? 'rgba(59,130,246,0.1)' : '#eff6ff',
-                                    border: `1px solid ${isDark ? 'rgba(59,130,246,0.2)' : '#bfdbfe'}`,
-                                    borderLeft: '4px solid #3b82f6'
-                                }}
-                            >
-                                <p className="text-xs" style={{ color: isDark ? '#93c5fd' : '#1e40af' }}>
-                                    <strong>📧 Email sent</strong> to naitapppurpose@gmail.com with the student list and download link.
-                                    <br />
-                                    <strong>🔑 Random passwords</strong> were generated for each student. Check the email for the full credentials list.
-                                </p>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={handleReset}
-                                    className="flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all border"
-                                    style={{ borderColor: border, color: textPrimary, backgroundColor: bgSecondary }}
-                                >
-                                    <Upload className="w-4 h-4" />
-                                    Upload More
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleClose}
-                                    className="flex-1 py-3 rounded-xl font-semibold text-white text-sm flex items-center justify-center gap-2 transition-all"
-                                    style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}
-                                >
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    Done
-                                </button>
-                            </div>
-                        </div>
+                        <BulkUploadResults
+                            results={results}
+                            elapsedTime={elapsedTime}
+                            showErrors={showErrors}
+                            setShowErrors={setShowErrors}
+                            onReset={handleReset}
+                            onClose={handleClose}
+                            isDark={isDark}
+                            textPrimary={textPrimary}
+                            textSecondary={textSecondary}
+                            bgSecondary={bgSecondary}
+                            border={border}
+                        />
                     )}
                 </div>
             </div>

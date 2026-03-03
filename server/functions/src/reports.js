@@ -1,205 +1,33 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import PDFDocument from 'pdfkit';
-import { db, corsHandler } from './config.js';
-import { verifyAuthToken } from './helpers.js';
-
-/**
- * Generate a random alphanumeric code
- * @param {number} length - Length of the code to generate
- * @returns {string} Random alphanumeric code
- */
-function generateRandomCode(length = 8) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  for (let i = 0; i < length; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
-
-/**
- * Add watermark to PDF document
- * @param {PDFDocument} doc - PDFKit document instance
- * @param {string} watermarkText - Text to use as watermark
- */
-function addWatermark(doc, watermarkText = 'HOAS') {
-  // Save current graphics state
-  doc.save();
-  
-  // Get page dimensions
-  const pageWidth = doc.page.width;
-  const pageHeight = doc.page.height;
-  
-  // Set watermark properties for maximum difficulty to remove
-  doc.fontSize(80)
-     .fillColor('#000000', 0.08) // Very light gray with low opacity
-     .opacity(0.08); // Additional opacity setting
-  
-  // Calculate center position
-  const textWidth = doc.widthOfString(watermarkText);
-  const textHeight = doc.currentLineHeight();
-  const x = (pageWidth - textWidth) / 2;
-  const y = (pageHeight - textHeight) / 2;
-  
-  // Add watermark at center with rotation
-  doc.rotate(-45, { origin: [pageWidth / 2, pageHeight / 2] });
-  doc.text(watermarkText, x, y, {
-    lineBreak: false,
-    align: 'center'
-  });
-  
-  // Restore graphics state
-  doc.restore();
-  
-  // Add multiple subtle watermarks across the page for extra security
-  doc.save();
-  doc.fontSize(40)
-     .fillColor('#000000', 0.05)
-     .opacity(0.05);
-  
-  // Top left
-  doc.rotate(-45, { origin: [pageWidth / 4, pageHeight / 4] });
-  doc.text(watermarkText, pageWidth / 4 - 60, pageHeight / 4 - 20, { lineBreak: false });
-  doc.restore();
-  
-  doc.save();
-  doc.fontSize(40)
-     .fillColor('#000000', 0.05)
-     .opacity(0.05);
-  
-  // Bottom right
-  doc.rotate(-45, { origin: [3 * pageWidth / 4, 3 * pageHeight / 4] });
-  doc.text(watermarkText, 3 * pageWidth / 4 - 60, 3 * pageHeight / 4 - 20, { lineBreak: false });
-  doc.restore();
-}
+import { corsHandler } from './config.js';
+import { generateRandomCode, authenticateRequest, fetchReportData } from './reportHelpers.js';
 
 /**
  * Generate and download college report in JSON format
  */
 export const downloadReportJson = onRequest(async (req, res) => {
-  // Handle CORS
   return corsHandler(req, res, async () => {
     try {
       console.log('=== downloadReportJson called ===');
-      console.log('Headers:', req.headers);
-      
-      // Get the authenticated user's data
-      const authHeader = req.headers.authorization;
-      if (!authHeader?.startsWith('Bearer ')) {
-        console.log('No Bearer token found');
-        res.status(401).json({ error: 'Unauthorized - No token provided' });
+
+      const auth = await authenticateRequest(req, res, 'json');
+      if (!auth) return;
+      const { userId, userData } = auth;
+
+      const result = await fetchReportData(userData, userId);
+      if (!result) {
+        res.status(403).json({ error: 'Only admin and management can generate reports' });
         return;
       }
 
-      const token = authHeader.split('Bearer ')[1];
-      console.log('Token received (first 20 chars):', token.substring(0, 20));
-      
-      let decodedToken;
-      try {
-        decodedToken = await verifyAuthToken(token);
-        console.log('✅ Token verified for user:', decodedToken.uid || decodedToken.user_id);
-      } catch (error) {
-        console.error('❌ Token verification failed:', error.message);
-        res.status(401).json({ error: 'Unauthorized - Invalid token', details: error.message });
-        return;
-      }
+      const { reportData } = result;
 
-      // Get user data from Firestore
-      const userId = decodedToken.uid || decodedToken.user_id;
-      const userDoc = await db.collection('users').doc(userId).get();
-      if (!userDoc.exists) {
-        res.status(404).json({ error: 'User profile not found' });
-        return;
-      }
-
-      const userData = userDoc.data();
-
-    // Build report data based on user role
-    let reportData;
-    
-    if (userData.role === 'admin') {
-      // For admin, get all colleges stats
-      const studentsSnapshot = await db.collection('users').where('role', '==', 'student').get();
-      const wardensSnapshot = await db.collection('users').where('role', '==', 'warden').get();
-      const collegesSnapshot = await db.collection('users').where('role', '==', 'management').get();
-      
-      reportData = {
-        reportType: 'Admin Overview',
-        generatedAt: new Date().toISOString(),
-        generatedBy: userData.name || userData.email,
-        totalColleges: collegesSnapshot.size,
-        totalStudents: studentsSnapshot.size,
-        totalWardens: wardensSnapshot.size,
-        colleges: collegesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          name: doc.data().name || doc.data().collegeName || doc.data().email,
-          collegeId: doc.data().uid || doc.id,
-          email: doc.data().email,
-          status: doc.data().status
-        })),
-        students: studentsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          name: doc.data().name,
-          email: doc.data().email,
-          status: doc.data().status,
-          collegeId: doc.data().managementId
-        })),
-        wardens: wardensSnapshot.docs.map(doc => ({
-          id: doc.id,
-          name: doc.data().name,
-          email: doc.data().email,
-          status: doc.data().status,
-          collegeId: doc.data().managementId
-        }))
-      };
-    } else if (userData.role === 'management') {
-      // For management, get their college stats - filter by managementId
-      const studentsSnapshot = await db.collection('users')
-        .where('role', '==', 'student')
-        .where('managementId', '==', userId)
-        .get();
-      const wardensSnapshot = await db.collection('users')
-        .where('role', '==', 'warden')
-        .where('managementId', '==', userId)
-        .get();
-      
-      reportData = {
-        reportType: 'College Report',
-        generatedAt: new Date().toISOString(),
-        generatedBy: userData.name || userData.email,
-        collegeId: userId,
-        collegeName: userData.collegeName || userData.name || userData.email,
-        email: userData.email,
-        location: userData.location,
-        students: studentsSnapshot.size,
-        wardens: wardensSnapshot.size,
-        studentsList: studentsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          name: doc.data().name,
-          email: doc.data().email,
-          status: doc.data().status,
-          phoneNumber: doc.data().phoneNumber,
-          roomNumber: doc.data().roomNumber
-        })),
-        wardensList: wardensSnapshot.docs.map(doc => ({
-          id: doc.id,
-          name: doc.data().name,
-          email: doc.data().email,
-          status: doc.data().status,
-          phoneNumber: doc.data().phoneNumber
-        }))
-      };
-    } else {
-      res.status(403).json({ error: 'Only admin and management can generate reports' });
-      return;
-    }
-
-    // Generate random code for filename
-    const randomCode = generateRandomCode();
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-    const filename = `HOAS-Report-${randomCode}-${timestamp}.json`;
-    
-    console.log('Generated JSON report with filename:', filename);
+      // Generate filename
+      const randomCode = generateRandomCode();
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+      const filename = `HOAS-Report-${randomCode}-${timestamp}.json`;
+      console.log('Generated JSON report with filename:', filename);
     
     // Set headers for download
     res.setHeader('Content-Type', 'application/json');
@@ -219,124 +47,26 @@ export const downloadReportJson = onRequest(async (req, res) => {
  * Generate and download college report in PDF format
  */
 export const downloadReportPdf = onRequest(async (req, res) => {
-  // Handle CORS
   return corsHandler(req, res, async () => {
     try {
       console.log('=== downloadReportPdf called ===');
-      console.log('Headers:', req.headers);
-      
-      // Get the authenticated user's data
-      const authHeader = req.headers.authorization;
-      if (!authHeader?.startsWith('Bearer ')) {
-        console.log('No Bearer token found');
-        res.status(401).send('Unauthorized - No token provided');
+
+      const auth = await authenticateRequest(req, res, 'text');
+      if (!auth) return;
+      const { userId, userData } = auth;
+
+      if (userData.role !== 'admin' && userData.role !== 'management') {
+        res.status(403).send('Only admin and management can generate reports');
         return;
       }
 
-      const token = authHeader.split('Bearer ')[1];
-      console.log('Token received (first 20 chars):', token.substring(0, 20));
-      
-      let decodedToken;
-      try {
-        decodedToken = await verifyAuthToken(token);
-        console.log('✅ Token verified for user:', decodedToken.uid || decodedToken.user_id);
-      } catch (error) {
-        console.error('❌ Token verification failed:', error.message);
-        res.status(401).send(`Unauthorized - Invalid token: ${error.message}`);
+      const result = await fetchReportData(userData, userId);
+      if (!result) {
+        res.status(403).send('Only admin and management can generate reports');
         return;
       }
 
-      // Get user data from Firestore
-      const userId = decodedToken.uid || decodedToken.user_id;
-      const userDoc = await db.collection('users').doc(userId).get();
-      if (!userDoc.exists) {
-        res.status(404).send('User profile not found');
-        return;
-      }
-
-      const userData = userDoc.data();
-
-    // Only admin and management can generate reports
-    if (userData.role !== 'admin' && userData.role !== 'management') {
-      res.status(403).send('Only admin and management can generate reports');
-      return;
-    }
-
-    // Prepare report data - FETCH ALL DATA FIRST BEFORE CREATING PDF
-    let reportTitle, reportData;
-    
-    if (userData.role === 'admin') {
-      const studentsSnapshot = await db.collection('users').where('role', '==', 'student').get();
-      const wardensSnapshot = await db.collection('users').where('role', '==', 'warden').get();
-      const collegesSnapshot = await db.collection('users').where('role', '==', 'management').get();
-      
-      reportTitle = 'Admin Overview Report';
-      reportData = {
-        totalColleges: collegesSnapshot.size,
-        totalStudents: studentsSnapshot.size,
-        totalWardens: wardensSnapshot.size,
-        colleges: collegesSnapshot.docs.map(doc => ({
-          name: doc.data().name || doc.data().collegeName || doc.data().email,
-          collegeId: doc.data().uid || doc.id,
-          email: doc.data().email,
-          status: doc.data().status
-        })),
-        students: studentsSnapshot.docs.map(doc => ({
-          name: doc.data().name,
-          email: doc.data().email,
-          status: doc.data().status,
-          collegeId: doc.data().managementId
-        })),
-        wardens: wardensSnapshot.docs.map(doc => ({
-          name: doc.data().name,
-          email: doc.data().email,
-          status: doc.data().status,
-          collegeId: doc.data().managementId
-        }))
-      };
-    } else {
-      // For management, filter by managementId
-      const studentsSnapshot = await db.collection('users')
-        .where('role', '==', 'student')
-        .where('managementId', '==', userId)
-        .get();
-      const wardensSnapshot = await db.collection('users')
-        .where('role', '==', 'warden')
-        .where('managementId', '==', userId)
-        .get();
-      
-      reportTitle = 'College Report';
-      reportData = {
-        collegeId: userId,
-        collegeName: userData.collegeName || userData.name || userData.email,
-        email: userData.email,
-        location: userData.location,
-        students: studentsSnapshot.size,
-        wardens: wardensSnapshot.size,
-        studentsList: studentsSnapshot.docs.map(doc => ({
-          name: doc.data().name,
-          email: doc.data().email,
-          status: doc.data().status,
-          phoneNumber: doc.data().phoneNumber,
-          roomNumber: doc.data().roomNumber
-        })),
-        wardensList: wardensSnapshot.docs.map(doc => ({
-          name: doc.data().name,
-          email: doc.data().email,
-          status: doc.data().status,
-          phoneNumber: doc.data().phoneNumber
-        }))
-      };
-    }
-
-    // Log the data to verify it's loaded
-    console.log('Report data prepared:', {
-      title: reportTitle,
-      totalStudents: reportData.students || reportData.totalStudents,
-      totalWardens: reportData.wardens || reportData.totalWardens,
-      hasStudentsList: !!(reportData.studentsList || reportData.students),
-      hasWardensList: !!(reportData.wardensList || reportData.wardens)
-    });
+      const { reportTitle, reportData } = result;
 
     // Generate random code for filename
     const randomCode = generateRandomCode();

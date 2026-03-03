@@ -1,7 +1,8 @@
-import { CheckCircle, XCircle, Trash2, CheckSquare, Square, GraduationCap, Shield, Building2, Key, MapPin } from "lucide-react";
+import { CheckCircle, XCircle, Trash2, CheckSquare, Square, Building2, Key, MapPin } from "lucide-react";
 import { HashLoader } from "react-spinners";
 import Avatar from "../../../components/OwnerServices/Avatar";
 import StatusBadge from "../../../components/OwnerServices/StatusBadge";
+import { roleIcons } from "../constants";
 
 const UserCard = ({
   userData,
@@ -18,12 +19,6 @@ const UserCard = ({
   onDelete,
   onViewPassword
 }) => {
-  const roleIcons = {
-    student: GraduationCap,
-    warden: Shield,
-    management: Building2,
-  };
-
   const RoleIcon = roleIcons[userData.role] || Building2;
   const colorClass = roleColors[userData.role] || "from-gray-500 to-gray-600";
 

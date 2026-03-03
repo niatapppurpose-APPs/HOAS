@@ -8,7 +8,7 @@ import crypto from 'crypto';
 /**
  * Approve a user (Management approves Warden/Student, Owner approves Management)
  */
-export const approveUser = onCall(async (request) => {
+export const approveUser = onCall(corsOptions, async (request) => {
   try {
     logger.info('🔍 approveUser called with data:', request.data);
 
@@ -74,7 +74,7 @@ export const approveUser = onCall(async (request) => {
 /**
  * Deny a user
  */
-export const denyUser = onCall(async (request) => {
+export const denyUser = onCall(corsOptions, async (request) => {
   try {
     logger.info('🔍 denyUser called with data:', request.data);
 
@@ -135,7 +135,7 @@ export const denyUser = onCall(async (request) => {
 /**
  * Get all users for a management user (Wardens and Students)
  */
-export const getCollegeUsers = onCall(async (request) => {
+export const getCollegeUsers = onCall(corsOptions, async (request) => {
   const { collegeId, role, status } = request.data;
 
   if (!collegeId) {
@@ -172,7 +172,7 @@ export const getCollegeUsers = onCall(async (request) => {
 /**
  * Get all management users (Owner only)
  */
-export const getAllManagementUsers = onCall(async (request) => {
+export const getAllManagementUsers = onCall(corsOptions, async (request) => {
   // Verify admin
   await verifyAdmin(request);
 

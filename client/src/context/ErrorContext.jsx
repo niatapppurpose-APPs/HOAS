@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const ErrorContext = createContext();
 
@@ -22,22 +22,10 @@ export const ErrorProvider = ({ children }) => {
 
   const clearError = () => setError(null);
 
-  useEffect(() => {
-    const onError = (event) => {
-      // event: ErrorEvent
-      showError({ message: event.message, stack: event.error?.stack || null, extra: { filename: event.filename, lineno: event.lineno, colno: event.colno } });
-    };
-    const onUnhandledRejection = (event) => {
-      // event: PromiseRejectionEvent
-      showError({ message: event.reason?.message || String(event.reason), stack: event.reason?.stack || null, extra: { reason: event.reason } });
-    };
-    window.addEventListener('error', onError);
-    window.addEventListener('unhandledrejection', onUnhandledRejection);
-    return () => {
-      window.removeEventListener('error', onError);
-      window.removeEventListener('unhandledrejection', onUnhandledRejection);
-    };
-  }, []);
+  // NOTE: Global window 'error' / 'unhandledrejection' listeners were removed
+  // so the ErrorModal only appears for React component crashes caught by
+  // ErrorBoundary (scoped to the current page), not for every transient JS
+  // error across all dashboards.
 
   return (
     <ErrorContext.Provider value={{ error, showError, clearError }}>

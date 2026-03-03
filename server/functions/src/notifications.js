@@ -1,6 +1,10 @@
 /**
  * Notifications Cloud Functions
  * Handles automatic push notifications to owners for important events
+ * 
+ * Respects system settings:
+ * - features.notifications: master toggle for all notifications
+ * - emailNotifications, smsNotifications, criticalAlerts, activityNotifications
  */
 
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
@@ -9,6 +13,63 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 
 const db = getFirestore();
+
+/**
+ * Read system settings from Firestore
+ */
+async function getSystemSettings() {
+  try {
+    const doc = await db.collection('systemSettings').doc('global').get();
+    if (doc.exists) {
+      return doc.data();
+    }
+    return {};
+  } catch (error) {
+    logger.warn('Could not read system settings, defaulting to enabled:', error);
+    return {};
+  }
+}
+
+/**
+ * Check if notifications are globally enabled
+ */
+async function areNotificationsEnabled() {
+  const settings = await getSystemSettings();
+  // Check the feature flag – default to true if not set
+  if (settings.features?.notifications === false) {
+    logger.info('Notifications feature is DISABLED globally. Skipping notification.');
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Check if a specific notification type is enabled
+ * @param {'email'|'sms'|'critical'|'activity'} type
+ */
+async function isNotificationTypeEnabled(type) {
+  const settings = await getSystemSettings();
+
+  // Check master toggle first
+  if (settings.features?.notifications === false) {
+    return false;
+  }
+
+  const typeMap = {
+    email: 'emailNotifications',
+    sms: 'smsNotifications',
+    critical: 'criticalAlerts',
+    activity: 'activityNotifications',
+  };
+
+  const key = typeMap[type];
+  if (key && settings[key] === false) {
+    logger.info(`Notification type '${type}' is DISABLED. Skipping.`);
+    return false;
+  }
+
+  return true;
+}
 
 /**
  * Get all owner FCM tokens
@@ -108,6 +169,10 @@ async function sendNotificationToOwners(title, body, data = {}) {
  */
 export const onNewCollegeApproval = onDocumentCreated('ManagementData/{collegeId}', async (event) => {
   try {
+    // Check if notifications are enabled
+    if (!(await areNotificationsEnabled())) return;
+    if (!(await isNotificationTypeEnabled('activity'))) return;
+
     const collegeData = event.data.data();
     
     // Only send notification if status is waiting for approval
@@ -134,6 +199,10 @@ export const onNewCollegeApproval = onDocumentCreated('ManagementData/{collegeId
  */
 export const onNewSupportTicket = onDocumentCreated('supportTickets/{ticketId}', async (event) => {
   try {
+    // Check if notifications are enabled
+    if (!(await areNotificationsEnabled())) return;
+    if (!(await isNotificationTypeEnabled('activity'))) return;
+
     const ticketData = event.data.data();
     
     const title = '🎫 New Support Ticket';
@@ -157,6 +226,10 @@ export const onNewSupportTicket = onDocumentCreated('supportTickets/{ticketId}',
  */
 export const onSupportTicketUpdate = onDocumentUpdated('supportTickets/{ticketId}', async (event) => {
   try {
+    // Check if critical alerts are enabled (urgent tickets = critical)
+    if (!(await areNotificationsEnabled())) return;
+    if (!(await isNotificationTypeEnabled('critical'))) return;
+
     const beforeData = event.data.before.data();
     const afterData = event.data.after.data();
     
@@ -184,6 +257,10 @@ export const onSupportTicketUpdate = onDocumentUpdated('supportTickets/{ticketId
  */
 export const onNewWardenRegistration = onDocumentCreated('users/{userId}', async (event) => {
   try {
+    // Check if notifications are enabled
+    if (!(await areNotificationsEnabled())) return;
+    if (!(await isNotificationTypeEnabled('activity'))) return;
+
     const userData = event.data.data();
     
     // Only send notification for warden role and not approved status

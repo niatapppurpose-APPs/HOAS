@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../../../context/AuthContext';
 import { useTheme } from '../../../../context/ThemeContext';
 import ManagementHeader from '../../components/layout/ManagementHeader';
+import { CONTENT_MAP, FAQS, GETTING_STARTED_STEPS } from './helpSupportData';
+import BugReportModal from './BugReportModal';
+import TopicContentModal from './TopicContentModal';
 import {
   HelpCircle,
   Search,
@@ -15,17 +18,9 @@ import {
   ChevronRight,
   Shield,
   FileText,
-  AlertCircle,
   Bug,
-  CheckCircle2,
   Rocket,
-  Users,
-  Upload,
-  MapPin,
-  UserPlus,
   X,
-  Send,
-  Loader2,
   Info
 } from 'lucide-react';
 
@@ -39,9 +34,6 @@ const ManagementHelpSupport = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [showBugReport, setShowBugReport] = useState(false);
-  const [bugDescription, setBugDescription] = useState('');
-  const [bugSubmitted, setBugSubmitted] = useState(false);
-  const [bugSubmitting, setBugSubmitting] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(() => {
     return !localStorage.getItem('hoas_management_help_guide_dismissed');
   });
@@ -51,176 +43,21 @@ const ManagementHelpSupport = () => {
     localStorage.setItem('hoas_management_help_guide_dismissed', 'true');
   };
 
-  // ── Content for modals ──
-  const contentMap = {
-    policy: {
-      title: "Policy Guide",
-      icon: FileText,
-      color: "blue",
-      content: (
-        <div className="space-y-4">
-          <section>
-            <h3 className="font-semibold text-lg mb-2">1. Approval Workflow</h3>
-            <ul className="list-disc pl-5 space-y-1 text-sm opacity-80">
-              <li>All new Warden and Student registrations enter a <strong>Pending</strong> state.</li>
-              <li>As a Management user, you are responsible for verifying their identity before approval.</li>
-              <li>Avoid denying requests without a valid reason (e.g., invalid ID, duplicate account).</li>
-            </ul>
-          </section>
-          <section>
-            <h3 className="font-semibold text-lg mb-2">2. Data Privacy</h3>
-            <ul className="list-disc pl-5 space-y-1 text-sm opacity-80">
-              <li>Student contact information is strictly confidential.</li>
-              <li>Access is limited to <strong>Management</strong> and the assigned <strong>Warden</strong> only.</li>
-              <li>Do not share login credentials.</li>
-            </ul>
-          </section>
-          <section>
-            <h3 className="font-semibold text-lg mb-2">3. Hostel Assignments</h3>
-            <p className="text-sm opacity-80">Updates to room allocation should be reflected immediately in the system. Ensure capacity limits are not exceeded.</p>
-          </section>
-        </div>
-      )
-    },
-    rules: {
-      title: "Admin Rules",
-      icon: Shield,
-      color: "purple",
-      content: (
-        <div className="space-y-4">
-          <section>
-            <h3 className="font-semibold text-lg mb-2">Hierarchical Access Control</h3>
-            <p className="text-sm opacity-80 mb-2">The system follows a strict hierarchy:</p>
-            <ol className="list-decimal pl-5 space-y-1 text-sm opacity-80">
-              <li><strong>Owner (Super Admin)</strong>: Controls all colleges.</li>
-              <li><strong>Management (You)</strong>: Administrators for your specific college.</li>
-              <li><strong>Warden</strong>: Operational in-charge of hostel blocks.</li>
-              <li><strong>Student</strong>: Hostel residents.</li>
-            </ol>
-          </section>
-          <section>
-            <h3 className="font-semibold text-lg mb-2">Your Responsibilities</h3>
-            <ul className="list-disc pl-5 space-y-1 text-sm opacity-80">
-              <li><strong>Response Time</strong>: Aim to process pending approvals within 24 hours.</li>
-              <li><strong>Monitoring</strong>: Regularly check the Hostels tab for occupancy stats.</li>
-              <li><strong>Reporting</strong>: Generate and review monthly status reports regarding warden performance.</li>
-            </ul>
-          </section>
-        </div>
-      )
-    },
-    manual: {
-      title: "Documentation",
-      icon: Book,
-      color: "emerald",
-      content: (
-        <div className="space-y-4">
-          <section>
-            <h3 className="font-semibold text-lg mb-2">Dashboard Overview</h3>
-            <p className="text-sm opacity-80">The top section displays 4 Key Performance Indicators (KPIs):</p>
-            <ul className="list-disc pl-5 space-y-1 text-sm opacity-80 mt-2">
-              <li><strong>Total Wardens</strong>: Active and pending warden counts.</li>
-              <li><strong>Total Students</strong>: Active and pending student counts.</li>
-              <li><strong>Pending Approvals</strong>: Action items requiring your attention.</li>
-              <li><strong>Hostels</strong>: Total number of hostel blocks managed.</li>
-            </ul>
-          </section>
-          <section>
-            <h3 className="font-semibold text-lg mb-2">User Management</h3>
-            <p className="text-sm opacity-80">Navigate to <strong>Wardens</strong> or <strong>Students</strong> pages to view lists, filter by status, and approve/deny requests.</p>
-          </section>
-          <section>
-            <h3 className="font-semibold text-lg mb-2">Reports</h3>
-            <p className="text-sm opacity-80">Use the <strong>Reports</strong> tab to generate PDF/Excel summaries for Attendance, Occupancy, or Incidents.</p>
-          </section>
-        </div>
-      )
-    }
-  };
-
-  const handleOpenContent = (topic) => {
-    setSelectedTopic(topic);
-  };
-
-  const closeModal = () => {
-    setSelectedTopic(null);
-  };
-
-  // ── FAQs ──
-  const faqs = [
-    {
-      id: 1,
-      question: "How do I approve a new warden?",
-      answer: "Navigate to the Wardens section from the sidebar. You'll see a list of pending warden requests. Click on the 'Approve' button next to the warden request you wish to authorize."
-    },
-    {
-      id: 2,
-      question: "Can I manage hostel assignments directly?",
-      answer: "Yes, go to the Hostels page. You can view current occupancy and assign students to specific rooms or blocks. Wardens typically handle day-to-day assignments, but you have override permissions."
-    },
-    {
-      id: 3,
-      question: "How do I generate monthly attendance reports?",
-      answer: "Go to the Reports section. Select 'Attendance' from the report type dropdown, choose the date range (e.g., last month), and click 'Generate Report'. You can export this as PDF or Excel."
-    },
-    {
-      id: 4,
-      question: "A student is reporting login issues. What should I do?",
-      answer: "Verify their status in the Students list. Ensure their account is 'Active' and not 'Pending' or 'Suspended'. If issues persist, verify their email address matches the one registered in the system."
-    },
-    {
-      id: 5,
-      question: "How do I bulk upload students?",
-      answer: "Go to the Students page and click the 'Bulk Upload' button. Download the CSV template, fill in student details (name, email, room number, etc.), and upload the completed file. The system will create accounts and email login credentials to each student automatically."
-    },
-    {
-      id: 6,
-      question: "How do I change the college logo?",
-      answer: "Navigate to Settings from the sidebar. In the 'College Logo' section, click the dropzone or drag & drop an image. The logo will be auto-compressed to under 200 KB. Click 'Save Logo' to update it across the dashboard and profile."
-    },
-    {
-      id: 7,
-      question: "How do I add a new warden?",
-      answer: "Go to the Wardens page and click the 'Add Warden' button. Fill in the warden's details including name, email, phone, and assigned hostel block. The warden will receive an email invitation to set up their account."
-    },
-    {
-      id: 8,
-      question: "Where can I see pending approvals?",
-      answer: "Pending approvals are shown on the main Dashboard as a KPI card. You can also see them in the Quick Approval section below the stats. Click on any pending item to review and approve/deny it directly."
-    }
-  ];
+  const handleOpenContent = useCallback((topic) => setSelectedTopic(topic), []);
+  const closeModal = useCallback(() => setSelectedTopic(null), []);
+  const closeBugReport = useCallback(() => setShowBugReport(false), []);
 
   const toggleFaq = (id) => {
     setExpandedFaq(expandedFaq === id ? null : id);
   };
 
-  const filteredFaqs = faqs.filter(faq =>
-    faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredFaqs = useMemo(() =>
+    FAQS.filter(faq =>
+      faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    [searchQuery]
   );
-
-  // ── Bug report handler ──
-  const handleBugSubmit = () => {
-    if (!bugDescription.trim()) return;
-    setBugSubmitting(true);
-    // Simulate submission (no backend)
-    setTimeout(() => {
-      setBugSubmitting(false);
-      setBugSubmitted(true);
-      setTimeout(() => {
-        setShowBugReport(false);
-        setBugSubmitted(false);
-        setBugDescription('');
-      }, 2000);
-    }, 1200);
-  };
-
-  // ── Getting Started steps ──
-  const gettingStartedSteps = [
-    { icon: UserPlus, label: "Add your first warden", description: "Go to Wardens → Add Warden" },
-    { icon: Upload, label: "Bulk upload students", description: "Go to Students → Bulk Upload" },
-    { icon: MapPin, label: "Set your college location", description: "Go to Settings → College Location" },
-  ];
 
   return (
     <>
@@ -279,7 +116,7 @@ const ManagementHelpSupport = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {gettingStartedSteps.map((step, idx) => {
+              {GETTING_STARTED_STEPS.map((step, idx) => {
                 const StepIcon = step.icon;
                 return (
                   <div
@@ -342,7 +179,7 @@ const ManagementHelpSupport = () => {
                 </a>
 
                 <button
-                  onClick={() => { setShowBugReport(true); setBugSubmitted(false); setBugDescription(''); }}
+                  onClick={() => { setShowBugReport(true); }}
                   className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-opacity-80 transition-all font-medium text-sm cursor-pointer group"
                   style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' }}
                 >
@@ -515,167 +352,17 @@ const ManagementHelpSupport = () => {
       </div>
 
       {/* ── Topic Content Modal ── */}
-      {selectedTopic && contentMap[selectedTopic] && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-          onClick={closeModal}
-        >
-          <div
-            className="w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden"
-            style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="px-6 py-4 flex items-center justify-between border-b" style={{ borderColor: 'var(--border-color)' }}>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg" style={{
-                  backgroundColor: isDark
-                    ? `rgba(${contentMap[selectedTopic].color === 'blue' ? '59,130,246' : contentMap[selectedTopic].color === 'purple' ? '168,85,247' : '16,185,129'}, 0.15)`
-                    : `rgba(${contentMap[selectedTopic].color === 'blue' ? '59,130,246' : contentMap[selectedTopic].color === 'purple' ? '168,85,247' : '16,185,129'}, 0.1)`
-                }}>
-                  {(() => {
-                    const Icon = contentMap[selectedTopic].icon;
-                    const colorVal = contentMap[selectedTopic].color === 'blue' ? '#3b82f6' : contentMap[selectedTopic].color === 'purple' ? '#a855f7' : '#10b981';
-                    return <Icon className="w-5 h-5" style={{ color: colorVal }} />;
-                  })()}
-                </div>
-                <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                  {contentMap[selectedTopic].title}
-                </h2>
-              </div>
-              <button
-                onClick={closeModal}
-                className="p-2 rounded-full transition-colors"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 max-h-[70vh] overflow-y-auto" style={{ color: 'var(--text-secondary)' }}>
-              {contentMap[selectedTopic].content}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-6 py-4 border-t flex justify-end" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
-                style={{
-                  backgroundColor: 'var(--bg-primary)',
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--text-primary)'
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+      {selectedTopic && (
+        <TopicContentModal
+          topic={selectedTopic}
+          contentMap={CONTENT_MAP}
+          onClose={closeModal}
+        />
       )}
 
       {/* ── Bug Report Modal ── */}
       {showBugReport && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-          onClick={() => { if (!bugSubmitting) setShowBugReport(false); }}
-        >
-          <div
-            className="w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
-            style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-6 py-4 flex items-center justify-between border-b" style={{ borderColor: 'var(--border-color)' }}>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}>
-                  <Bug className="w-5 h-5 text-red-500" />
-                </div>
-                <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Report a Bug</h2>
-              </div>
-              <button
-                onClick={() => setShowBugReport(false)}
-                className="p-2 rounded-full transition-colors"
-                style={{ color: 'var(--text-secondary)' }}
-                disabled={bugSubmitting}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-6">
-              {bugSubmitted ? (
-                <div className="text-center py-6">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
-                    <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Bug Report Submitted!</h3>
-                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Thank you for helping us improve HOAS. We'll review your report shortly.</p>
-                </div>
-              ) : (
-                <>
-                  <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                    Describe the issue you're experiencing. Include steps to reproduce if possible.
-                  </p>
-                  <textarea
-                    value={bugDescription}
-                    onChange={(e) => setBugDescription(e.target.value)}
-                    placeholder="Describe the bug in detail..."
-                    rows={5}
-                    className="w-full rounded-xl border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition-all resize-none"
-                    style={{
-                      backgroundColor: 'var(--bg-secondary)',
-                      borderColor: 'var(--border-color)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
-                  <div className="flex items-center gap-2 mt-3">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      Your report will include your name ({userData?.displayName || 'N/A'}) and college ({userData?.collegeName || 'N/A'}) for context.
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Footer */}
-            {!bugSubmitted && (
-              <div className="px-6 py-4 border-t flex justify-end gap-3" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
-                <button
-                  onClick={() => setShowBugReport(false)}
-                  disabled={bugSubmitting}
-                  className="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
-                  style={{
-                    backgroundColor: 'var(--bg-primary)',
-                    borderColor: 'var(--border-color)',
-                    color: 'var(--text-primary)'
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleBugSubmit}
-                  disabled={bugSubmitting || !bugDescription.trim()}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    background: bugDescription.trim() ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'var(--bg-tertiary)',
-                    boxShadow: bugDescription.trim() ? '0 4px 15px rgba(239, 68, 68, 0.3)' : 'none',
-                    color: bugDescription.trim() ? '#fff' : 'var(--text-muted)'
-                  }}
-                >
-                  {bugSubmitting ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
-                  ) : (
-                    <><Send className="w-4 h-4" /> Submit Report</>
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <BugReportModal userData={userData} onClose={closeBugReport} />
       )}
     </>
   );
