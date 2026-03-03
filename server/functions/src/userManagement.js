@@ -1,7 +1,9 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { db, auth } from './config.js';
+import { db, auth, corsOptions } from './config.js';
 import * as logger from 'firebase-functions/logger';
 import { verifyAdmin, verifyManagementAccess } from './helpers.js';
+import { sendManagementWelcomeEmail, sendWardenWelcomeEmail } from './email/emailService.js';
+import crypto from 'crypto';
 
 /**
  * Approve a user (Management approves Warden/Student, Owner approves Management)
@@ -191,9 +193,10 @@ export const getAllManagementUsers = onCall(async (request) => {
 
 /**
  * Create a new management user (Owner only)
- * Creates Firebase Auth user and Firestore document
+ * Creates Firebase Auth user and Firestore document.
+ * Uses throwaway password + password reset link (no plaintext passwords stored or emailed).
  */
-export const createManagement = onCall(async (request) => {
+export const createManagement = onCall(corsOptions, async (request) => {
   try {
     logger.info('🔍 createManagement called with data:', request.data);
 
@@ -205,11 +208,11 @@ export const createManagement = onCall(async (request) => {
     // Verify admin
     await verifyAdmin(request);
 
-    const { collegeName, principalName, email, phone, password, collegeLogo } = request.data;
+    const { collegeName, principalName, email, phone, collegeLogo } = request.data;
 
     // Validate required fields
-    if (!collegeName || !principalName || !email || !password) {
-      throw new HttpsError('invalid-argument', 'collegeName, principalName, email, and password are required');
+    if (!collegeName || !principalName || !email) {
+      throw new HttpsError('invalid-argument', 'collegeName, principalName, and email are required');
     }
 
     // Check if user with this email already exists
@@ -219,26 +222,34 @@ export const createManagement = onCall(async (request) => {
         throw new HttpsError('already-exists', 'A user with this email already exists');
       }
     } catch (error) {
-      // User doesn't exist - this is what we want
       if (error.code !== 'auth/user-not-found') {
         throw error;
       }
     }
 
-    // Use the password from client (generated with college name)
-    const userPassword = password;
+    // Throwaway password — never stored, never transmitted
+    const throwawayPassword = crypto.randomUUID();
 
     // Create user in Firebase Auth
     const userRecord = await auth.createUser({
       email: email,
-      password: userPassword,
+      password: throwawayPassword,
       displayName: principalName,
-      emailVerified: false
+      emailVerified: false,
     });
 
     logger.info('✅ Firebase Auth user created:', userRecord.uid);
 
-    // Create Firestore document (store password hash reference, NOT plain text)
+    // Generate secure password reset link
+    let resetLink = null;
+    try {
+      resetLink = await auth.generatePasswordResetLink(email);
+      logger.info('✅ Password reset link generated for:', email);
+    } catch (linkError) {
+      logger.warn('⚠️ Could not generate password reset link:', linkError.message);
+    }
+
+    // Create Firestore document — NO password stored
     await db.collection('users').doc(userRecord.uid).set({
       uid: userRecord.uid,
       email: email,
@@ -250,36 +261,29 @@ export const createManagement = onCall(async (request) => {
       status: 'approved',
       createdBy: request.auth.uid,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    });
-
-    // Store password securely in a separate collection (only accessible by owner)
-    await db.collection('managementCredentials').doc(userRecord.uid).set({
-      managementId: userRecord.uid,
-      email: email,
-      collegeName: collegeName,
-      password: password, // Store temporarily - owner can view once
-      createdBy: request.auth.uid,
-      createdAt: new Date().toISOString(),
-      isViewed: false
+      updatedAt: new Date().toISOString(),
     });
 
     logger.info('✅ Firestore document created for:', userRecord.uid);
 
-    // Generate password reset link and send email
-    try {
-      const resetLink = await auth.generatePasswordResetLink(email);
-      logger.info('✅ Password reset link generated for:', email);
-      // Note: Firebase will automatically send the email
-    } catch (emailError) {
-      logger.warn('⚠️ Could not generate password reset link:', emailError.message);
-      // Continue anyway - admin can manually reset password
+    // Send welcome email with password reset link
+    let emailSent = false;
+    if (resetLink) {
+      emailSent = await sendManagementWelcomeEmail({
+        name: principalName,
+        email,
+        collegeName,
+        resetLink,
+      });
     }
 
     return {
       success: true,
       uid: userRecord.uid,
-      message: 'Management user created successfully. Password reset email sent.'
+      emailSent,
+      message: emailSent
+        ? 'Management user created successfully. Welcome email sent.'
+        : 'Management user created successfully. Welcome email could not be sent.',
     };
 
   } catch (error) {
@@ -293,9 +297,10 @@ export const createManagement = onCall(async (request) => {
 
 /**
  * Create a new warden (Management only)
- * Creates Firebase Auth user and Firestore document
+ * Creates Firebase Auth user and Firestore document.
+ * Uses throwaway password + password reset link (no plaintext passwords stored or emailed).
  */
-export const createWarden = onCall(async (request) => {
+export const createWarden = onCall(corsOptions, async (request) => {
   try {
     logger.info('🔍 createWarden called with data:', request.data);
 
@@ -304,11 +309,11 @@ export const createWarden = onCall(async (request) => {
       throw new HttpsError('unauthenticated', 'User must be authenticated');
     }
 
-    const { fullName, email, phone, password, hostelBlock, collegeName, managementId } = request.data;
+    const { fullName, email, phone, hostelBlock, collegeName, managementId } = request.data;
 
     // Validate required fields
-    if (!fullName || !email || !password) {
-      throw new HttpsError('invalid-argument', 'fullName, email, and password are required');
+    if (!fullName || !email) {
+      throw new HttpsError('invalid-argument', 'fullName and email are required');
     }
 
     // Check if user with this email already exists
@@ -323,17 +328,29 @@ export const createWarden = onCall(async (request) => {
       }
     }
 
+    // Throwaway password — never stored, never transmitted
+    const throwawayPassword = crypto.randomUUID();
+
     // Create user in Firebase Auth
     const userRecord = await auth.createUser({
       email: email,
-      password: password,
+      password: throwawayPassword,
       displayName: fullName,
-      emailVerified: false
+      emailVerified: false,
     });
 
     logger.info('✅ Firebase Auth warden created:', userRecord.uid);
 
-    // Create Firestore document
+    // Generate secure password reset link
+    let resetLink = null;
+    try {
+      resetLink = await auth.generatePasswordResetLink(email);
+      logger.info('✅ Password reset link generated for warden:', email);
+    } catch (linkError) {
+      logger.warn('⚠️ Could not generate password reset link for warden:', linkError.message);
+    }
+
+    // Create Firestore document — NO password stored
     await db.collection('users').doc(userRecord.uid).set({
       uid: userRecord.uid,
       email: email,
@@ -348,15 +365,30 @@ export const createWarden = onCall(async (request) => {
       isOnline: false,
       createdBy: request.auth.uid,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     });
 
     logger.info('✅ Warden Firestore document created:', userRecord.uid);
 
+    // Send welcome email
+    let emailSent = false;
+    if (resetLink) {
+      emailSent = await sendWardenWelcomeEmail({
+        name: fullName,
+        email,
+        institution: collegeName || '',
+        hostelBlock: hostelBlock || '',
+        resetLink,
+      });
+    }
+
     return {
       success: true,
       uid: userRecord.uid,
-      message: `Warden "${fullName}" created successfully`
+      emailSent,
+      message: emailSent
+        ? `Warden "${fullName}" created successfully. Welcome email sent.`
+        : `Warden "${fullName}" created successfully. Welcome email could not be sent.`,
     };
 
   } catch (error) {

@@ -1,32 +1,34 @@
+/**
+ * Bulk Upload Cloud Functions
+ * Secure bulk student creation from Excel data with per-student welcome emails.
+ *
+ * SECURITY: No passwords are generated, stored, or transmitted.
+ * Each student receives a Firebase password reset link via email.
+ */
+
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db, auth, corsOptions } from './config.js';
 import * as logger from 'firebase-functions/logger';
-import nodemailer from 'nodemailer';
+import { sendStudentWelcomeEmail, sendBulkUploadSummaryEmail } from './email/emailService.js';
 import crypto from 'crypto';
 
 /**
- * Generate a random password: 8 chars, mix of uppercase, lowercase, and digits
- */
-function generatePassword() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-  let password = '';
-  const bytes = crypto.randomBytes(8);
-  for (let i = 0; i < 8; i++) {
-    password += chars[bytes[i] % chars.length];
-  }
-  return password;
-}
-
-/**
- * Bulk create students from Excel data
- * Management uploads Excel → parsed data sent here → creates Auth users + Firestore docs
- * Sends email notification to naitapppurpose@gmail.com with summary
+ * Bulk create students from Excel data.
+ * Management uploads Excel → parsed data sent here → creates Auth users + Firestore docs + sends emails.
+ *
+ * For each student:
+ * 1. Create Auth user with throwaway password
+ * 2. Generate secure password reset link
+ * 3. Write Firestore document
+ * 4. Send personal welcome email
+ *
+ * Then send a summary email to the management user.
  */
 export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }, async (request) => {
   try {
     logger.info('📋 bulkCreateStudents called');
 
-    // Check authentication
+    // ─── Authentication ──────────────────────────────────────
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'User must be authenticated');
     }
@@ -49,10 +51,10 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
       failed: 0,
       skipped: 0,
       errors: [],
-      createdStudents: []
+      createdStudents: [],
     };
 
-    // Process each student
+    // ─── Process Each Student ─────────────────────────────────
     for (let i = 0; i < students.length; i++) {
       const student = students[i];
       const { name, studentId, email } = student;
@@ -64,16 +66,12 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
         continue;
       }
 
-      // Generate random password for this student
-      const defaultPassword = generatePassword();
-
       try {
-        // Check if user already exists
+        // Check for existing user
         let existingUser = null;
         try {
           existingUser = await auth.getUserByEmail(email);
         } catch (e) {
-          // User doesn't exist - good, we'll create them
           if (e.code !== 'auth/user-not-found') {
             throw e;
           }
@@ -85,13 +83,22 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
           continue;
         }
 
-        // Create Firebase Auth user
+        // Create Firebase Auth user with throwaway password
+        const throwawayPassword = crypto.randomUUID();
         const userRecord = await auth.createUser({
           email: email,
-          password: defaultPassword,
+          password: throwawayPassword,
           displayName: name,
-          emailVerified: false
+          emailVerified: false,
         });
+
+        // Generate secure password reset link
+        let resetLink = null;
+        try {
+          resetLink = await auth.generatePasswordResetLink(email);
+        } catch (linkError) {
+          logger.warn(`⚠️ Could not generate reset link for ${email}:`, linkError.message);
+        }
 
         // Create Firestore document
         await db.collection('users').doc(userRecord.uid).set({
@@ -108,18 +115,35 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
           createdBy: request.auth.uid,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          bulkUploaded: true
+          bulkUploaded: true,
         });
+
+        // Send welcome email
+        let emailSent = false;
+        if (resetLink) {
+          emailSent = await sendStudentWelcomeEmail({
+            name,
+            studentId: studentId || '',
+            email,
+            institution: collegeName,
+            resetLink,
+          });
+        }
 
         results.created++;
         results.createdStudents.push({
           name,
           email,
           studentId: studentId || '',
-          defaultPassword: defaultPassword
+          emailSent,
         });
 
-        logger.info(`✅ Created student ${i + 1}/${students.length}: ${name} (${email})`);
+        logger.info(`✅ Created student ${i + 1}/${students.length}: ${name} (${email}) — emailSent: ${emailSent}`);
+
+        // Brief delay between students to avoid SMTP throttling
+        if (i < students.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
 
       } catch (err) {
         results.failed++;
@@ -128,7 +152,7 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
       }
     }
 
-    // Store bulk upload record in Firestore (including credentials for management reference)
+    // ─── Store Bulk Upload Record ─────────────────────────────
     const uploadRecord = {
       uploadedBy: request.auth.uid,
       uploadedByEmail: request.auth.token?.email || 'unknown',
@@ -139,19 +163,24 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
       skippedCount: results.skipped,
       downloadUrl: downloadUrl || '',
       errors: results.errors,
-      createdStudents: results.createdStudents, // includes name, email, studentId, defaultPassword
-      createdAt: new Date().toISOString()
+      // NOTE: No passwords stored — only name, email, studentId, emailSent status
+      createdStudents: results.createdStudents,
+      createdAt: new Date().toISOString(),
     };
 
     await db.collection('bulkUploads').add(uploadRecord);
 
-    // Send email notification
+    // ─── Send Summary Email to Management ─────────────────────
     try {
-      await sendBulkUploadEmail(results, collegeName, downloadUrl, request.auth.token?.email);
-      logger.info('📧 Email notification sent successfully');
+      await sendBulkUploadSummaryEmail({
+        results,
+        collegeName,
+        uploaderEmail: request.auth.token?.email || '',
+        downloadUrl,
+      });
+      logger.info('📧 Bulk upload summary email sent successfully');
     } catch (emailErr) {
-      logger.warn('⚠️ Failed to send email notification:', emailErr.message);
-      // Don't fail the entire operation just because email failed
+      logger.warn('⚠️ Failed to send bulk summary email:', emailErr.message);
     }
 
     logger.info(`📋 Bulk upload complete: ${results.created} created, ${results.failed} failed, ${results.skipped} skipped`);
@@ -159,7 +188,7 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
     return {
       success: true,
       message: `Successfully created ${results.created} out of ${results.total} students`,
-      results
+      results,
     };
 
   } catch (error) {
@@ -170,107 +199,3 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
     throw new HttpsError('internal', `Failed to bulk create students: ${error.message}`);
   }
 });
-
-/**
- * Send email notification about bulk upload
- */
-async function sendBulkUploadEmail(results, collegeName, downloadUrl, uploaderEmail) {
-  // Create a transporter using Gmail
-  // Note: For production, set up App Password in Firebase environment config
-  // firebase functions:config:set gmail.email="naitapppurpose@gmail.com" gmail.password="your-app-password"
-
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_EMAIL || 'naitapppurpose@gmail.com',
-      pass: process.env.GMAIL_APP_PASSWORD || '' // App password required
-    }
-  });
-
-  const studentListHtml = results.createdStudents.map((s, i) => `
-    <tr style="border-bottom: 1px solid #eee;">
-      <td style="padding: 8px 12px;">${i + 1}</td>
-      <td style="padding: 8px 12px;">${s.name}</td>
-      <td style="padding: 8px 12px;">${s.studentId}</td>
-      <td style="padding: 8px 12px;">${s.email}</td>
-      <td style="padding: 8px 12px; font-family: monospace;">${s.defaultPassword}</td>
-    </tr>
-  `).join('');
-
-  const errorListHtml = results.errors.length > 0
-    ? `<h3 style="color: #e53e3e;">⚠️ Errors (${results.errors.length})</h3>
-       <ul>${results.errors.map(e => `<li><strong>${e.name}</strong>: ${e.reason}</li>`).join('')}</ul>`
-    : '';
-
-  const mailOptions = {
-    from: `"HOAS System" <${process.env.GMAIL_EMAIL || 'naitapppurpose@gmail.com'}>`,
-    to: 'naitapppurpose@gmail.com',
-    subject: `📋 HOAS Bulk Upload - ${collegeName} (${results.created} students)`,
-    html: `
-      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 700px; margin: 0 auto; background: #f8fafc; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #4f46e5, #7c3aed); padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 24px;">📋 HOAS Bulk Student Upload</h1>
-          <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0;">Student accounts created successfully</p>
-        </div>
-        
-        <div style="background: white; padding: 24px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0;">
-          <h2 style="color: #1e293b; border-bottom: 2px solid #4f46e5; padding-bottom: 8px;">Upload Summary</h2>
-          
-          <div style="display: flex; gap: 16px; margin: 16px 0;">
-            <div style="flex: 1; background: #f0fdf4; padding: 16px; border-radius: 8px; text-align: center;">
-              <div style="font-size: 28px; font-weight: bold; color: #16a34a;">${results.created}</div>
-              <div style="color: #4ade80; font-size: 12px;">Created</div>
-            </div>
-            <div style="flex: 1; background: #fef2f2; padding: 16px; border-radius: 8px; text-align: center;">
-              <div style="font-size: 28px; font-weight: bold; color: #dc2626;">${results.failed}</div>
-              <div style="color: #f87171; font-size: 12px;">Failed</div>
-            </div>
-            <div style="flex: 1; background: #fffbeb; padding: 16px; border-radius: 8px; text-align: center;">
-              <div style="font-size: 28px; font-weight: bold; color: #d97706;">${results.skipped}</div>
-              <div style="color: #fbbf24; font-size: 12px;">Skipped</div>
-            </div>
-          </div>
-
-          <p><strong>College:</strong> ${collegeName}</p>
-          <p><strong>Uploaded by:</strong> ${uploaderEmail || 'Management'}</p>
-          <p><strong>Date:</strong> ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
-          
-          ${downloadUrl ? `<p><strong>📎 Excel File:</strong> <a href="${downloadUrl}" style="color: #4f46e5;">Download Original Sheet</a></p>` : ''}
-          
-          <h3 style="color: #1e293b; margin-top: 24px;">👨‍🎓 Created Students</h3>
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-              <thead>
-                <tr style="background: #f1f5f9;">
-                  <th style="padding: 10px 12px; text-align: left;">#</th>
-                  <th style="padding: 10px 12px; text-align: left;">Name</th>
-                  <th style="padding: 10px 12px; text-align: left;">Student ID</th>
-                  <th style="padding: 10px 12px; text-align: left;">Email</th>
-                  <th style="padding: 10px 12px; text-align: left;">Default Password</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${studentListHtml}
-              </tbody>
-            </table>
-          </div>
-
-          ${errorListHtml}
-          
-          <div style="margin-top: 24px; padding: 16px; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-            <p style="margin: 0; color: #1e40af; font-size: 13px;">
-              <strong>ℹ️ Note:</strong> Students can log in using their email and the randomly generated password shown above. 
-              They should change their password after first login.
-            </p>
-          </div>
-        </div>
-        
-        <p style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 16px;">
-          HOAS — Hostel Operations Accountability System
-        </p>
-      </div>
-    `
-  };
-
-  await transporter.sendMail(mailOptions);
-}
