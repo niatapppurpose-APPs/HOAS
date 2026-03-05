@@ -9,7 +9,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useRegistrationCheck } from "../../hooks/useSystemSettings";
 
 const Login = () => {
-  const { user, userData, userDataLoading, loading } = useAuth();
+  const { user, userData, userDataLoading, loading, isAdmin, claims } = useAuth();
   const navigate = useNavigate();
   const { isDark } = useTheme()
   const [showRedirecting, setShowRedirecting] = useState(false);
@@ -72,7 +72,13 @@ const Login = () => {
             navigate("/waiting-approval", { replace: true });
           }
         } else {
-          navigate("/waiting-approval", { replace: true });
+          // No userData yet — if the user has admin/owner claim we can bypass waiting
+          const claimsRole = claims?.role;
+          if (isAdmin || claimsRole === 'admin' || claimsRole === 'owner') {
+            navigate('/OwnersDashboard', { replace: true });
+          } else {
+            navigate("/waiting-approval", { replace: true });
+          }
         }
       }
     }
@@ -80,10 +86,15 @@ const Login = () => {
 
   // Show redirecting page only for fresh logins, while waiting for data or delay
   if (showRedirecting && user && (userDataLoading || !minDelayPassed)) {
+    // choose display name from various sources in priority order
+    const nameFromAuth = user?.displayName;
+    const nameFromFirestore = userData?.displayName;
+    const fallbackName = user?.email ? user.email.split('@')[0] : 'User';
+    const firstName = (nameFromAuth || nameFromFirestore || fallbackName || 'User').split(' ')[0];
+
     return (
       <RedirectingPage
-        userName={user?.displayName?.split(' ')[0] || 'User'}
-        message="Please do not go back or reload the page"
+        userName={firstName}
       />
     );
   }

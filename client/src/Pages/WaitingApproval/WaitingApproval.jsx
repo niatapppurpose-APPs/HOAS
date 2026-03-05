@@ -29,6 +29,8 @@ const WaitingApproval = () => {
           navigate("/dashboard/warden", { replace: true });
         } else if (userData.role === "student") {
           navigate("/dashboard/student", { replace: true });
+        } else if (userData.role === "admin" || userData.role === "owner") {
+          navigate("/OwnersDashboard", { replace: true });
         }
       } else if (status === "denied") {
         // Stay on this page but show denied message

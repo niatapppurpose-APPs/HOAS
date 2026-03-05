@@ -1,8 +1,19 @@
 import { useAuth } from '../../context/AuthContext';
 // ProtectedRoute component for role-based route protection
 const ProtectedRoute = ({ roles, children }) => {
-    const { user, userData } = useAuth();
+    const { user, loading, userData, userDataLoading, isAdmin, claims } = useAuth();
+    const claimsRole = claims?.role;
+    // While authentication state is initializing, don't render anything (avoids premature redirects)
+    if (loading || userDataLoading) {
+        return null; // could show a loader if desired
+    }
+    // After initialization, if there's no authenticated user, send to login
     if (!user) return <Navigate to="/login" replace />;
+    // Allow admin/owner access for any route that includes admin or owner in roles
+    if ((roles.includes('admin') || roles.includes('owner')) && (isAdmin || claimsRole === 'admin' || claimsRole === 'owner')) {
+        return children;
+    }
+    // If we still don't have userData or role doesn't match, redirect to login
     if (!userData || !roles.includes(userData.role)) return <Navigate to="/login" replace />;
     return children;
 };

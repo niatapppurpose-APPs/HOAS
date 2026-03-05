@@ -8,11 +8,6 @@ import { Eye, EyeOff, Mail, Lock, IdCard } from "lucide-react";
 import { HashLoader } from 'react-spinners';
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-// Detect if user is on mobile device
-const isMobileDevice = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-    (window.innerWidth <= 768);
-};
 
 const normalizeStudentIdentifier = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
 
@@ -68,7 +63,6 @@ const LoginButton = () => {
   const [changeToggle, setChangeToggle] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const toast = useToast();
-const {user} = useAuth()
 
   // Pre-fill email from ?email= query param (e.g. when arriving from welcome email link)
   useEffect(() => {

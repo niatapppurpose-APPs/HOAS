@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import './RedirectingPage.css';
+import { useToast } from '../../components/Toast';
 
 /**
  * RedirectingPage - A loading page shown after login while redirecting to dashboard
@@ -9,6 +10,12 @@ import './RedirectingPage.css';
  * @param {string} props.message - Custom message (optional)
  */
 const RedirectingPage = ({ userName = 'User', message }) => {
+  const toast = useToast();
+  // show toast when page appears (backup in case LoginButton toast was missed)
+  useEffect(() => {
+    toast.success(`Welcome back ${userName} 👋`, 3000);
+  }, [toast, userName]);
+
   // Prevent back navigation and page reload
   useEffect(() => {
     const handleBeforeUnload = (e) => {

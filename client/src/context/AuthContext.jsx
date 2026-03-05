@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
               const tokenResult = await currentUser.getIdTokenResult(false);
               const userClaims = tokenResult.claims;
               setClaims(userClaims);
-              const adminStatus = userClaims.admin === true || userClaims.role === 'admin';
+              const adminStatus = userClaims.admin === true || userClaims.role === 'admin' || userClaims.role === 'owner';
               setIsAdmin(adminStatus);
               setAdminChecked(true);
 
@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }) => {
               currentUser.getIdTokenResult(true).then(freshToken => {
                 const freshClaims = freshToken.claims;
                 setClaims(freshClaims);
-                const freshAdmin = freshClaims.admin === true || freshClaims.role === 'admin';
+                const freshAdmin = freshClaims.admin === true || freshClaims.role === 'admin' || freshClaims.role === 'owner';
                 setIsAdmin(freshAdmin);
               }).catch(e => console.error("Background token refresh error:", e));
 
@@ -133,6 +133,16 @@ export const AuthProvider = ({ children }) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setUserData(data);
+        // If role implies admin/owner and we haven't already marked admin,
+        // update isAdmin accordingly. This covers cases where custom
+        // claims aren't set but Firestore has the correct role.
+        if (!isAdmin && (data.role === 'admin' || data.role === 'owner')) {
+          setIsAdmin(true);
+        }
+        // Ensure adminChecked is true once we know the role from Firestore.
+        if (!adminChecked) {
+          setAdminChecked(true);
+        }
       } else {
         // Document does not exist — user was provisioned via Auth but
         // their Firestore profile is missing. Keep userData null so UI
@@ -160,8 +170,8 @@ export const AuthProvider = ({ children }) => {
         const tokenResult = await user.getIdTokenResult(true);
         const userClaims = tokenResult.claims;
         setClaims(userClaims);
-        setIsAdmin(userClaims.role === 'admin');
-        return userClaims.role === 'admin';
+        setIsAdmin(userClaims.role === 'admin' || userClaims.role === 'owner');
+        return userClaims.role === 'admin' || userClaims.role === 'owner';
       } catch (error) {
         console.error("Error refreshing admin status:", error);
         return false;

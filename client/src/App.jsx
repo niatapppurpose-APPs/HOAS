@@ -8,6 +8,7 @@ import ServerOffline from "./components/ServerOffline/ServerOffline";
 import { MaintenanceGate, useSystemSettings } from "./hooks/useSystemSettings.jsx";
 import ForcePasswordReset from "./Pages/ForcePasswordReset/ForcePasswordReset";
 import { useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 // Public routes that should never be blocked by maintenance mode
 const PUBLIC_ROUTES = ['/', '/login', '/admin-login', '/firebase-mode'];
@@ -19,7 +20,26 @@ const App = () => {
   const location = useLocation();
 
 
-  // Show server offline screen if server is down
+  // Track online/offline status to force re-render on network change
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Show 404 (Yeti) if browser is offline (network disconnected)
+  if (!isOnline) {
+    const NotFound = require('./Pages/NotFound').default;
+    return <NotFound />;
+  }
+
+  // Show server offline screen if server is down (but browser is online)
   if (!isServerOnline) {
     return <ServerOffline lastChecked={lastChecked} />;
   }

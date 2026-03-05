@@ -4,21 +4,29 @@ import { useAuth } from '../../context/AuthContext';
 
 const Dashboard = () => {
   // userData contains the Firestore role; user is the Firebase Auth object (no role field).
-  const { user, userData, loading, userDataLoading, isAdmin } = useAuth();
+  const { user, userData, loading, userDataLoading, isAdmin, claims, adminChecked } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Wait for both auth AND Firestore data before deciding where to redirect.
-    if (loading || userDataLoading) return;
+    // Wait for auth claims and Firestore data before deciding where to redirect.
+    if (loading || userDataLoading || !adminChecked) return;
 
     if (!user) {
       navigate('/login', { replace: true });
       return;
     }
 
-    // Prefer Firestore userData, but fallback to isAdmin if missing
+    // BULLETPROOF: Always allow admin/owner to OwnersDashboard, even if userData is missing
+    const claimsRole = claims?.role;
+    if (isAdmin || claimsRole === 'admin' || claimsRole === 'owner') {
+      // eslint-disable-next-line no-console
+      console.log('[Dashboard Redirect - BULLETPROOF] user:', user?.email, '| claimsRole:', claimsRole, '| isAdmin:', isAdmin, '| userData:', userData);
+      navigate('/OwnersDashboard', { replace: true });
+      return;
+    }
+
     const role = userData?.role;
-    if (isAdmin || role === 'admin' || role === 'owner') {
+    if (role === 'admin' || role === 'owner') {
       navigate('/OwnersDashboard', { replace: true });
     } else if (role === 'management') {
       navigate('/dashboard/management', { replace: true });
@@ -30,7 +38,7 @@ const Dashboard = () => {
       // No role assigned yet — await owner/management provisioning
       navigate('/waiting-approval', { replace: true });
     }
-  }, [user, userData, loading, userDataLoading, navigate]);
+  }, [user, userData, loading, userDataLoading, isAdmin, claims, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
