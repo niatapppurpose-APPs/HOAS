@@ -83,8 +83,8 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
           continue;
         }
 
-        // Create Firebase Auth user with throwaway password
-        const throwawayPassword = crypto.randomUUID();
+        // Create Firebase Auth user with throwaway password (short & readable)
+        const throwawayPassword = crypto.randomBytes(6).toString('hex');
         const userRecord = await auth.createUser({
           email: email,
           password: throwawayPassword,
@@ -120,15 +120,14 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
 
         // Send welcome email
         let emailSent = false;
-        if (resetLink) {
-          emailSent = await sendStudentWelcomeEmail({
-            name,
-            studentId: studentId || '',
-            email,
-            institution: collegeName,
-            resetLink,
-          });
-        }
+        emailSent = await sendStudentWelcomeEmail({
+          name,
+          studentId: studentId || '',
+          email,
+          institution: collegeName,
+          password: throwawayPassword,
+          resetLink,
+        });
 
         results.created++;
         results.createdStudents.push({

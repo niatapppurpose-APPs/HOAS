@@ -55,6 +55,21 @@ export const denyUser = async (userId, reason = '') => {
 };
 
 /**
+ * Delete a user from Firebase Authentication and Firestore (Owner / Management only)
+ */
+export const deleteUserAccount = async (userId) => {
+  const callable = httpsCallable(functions, 'deleteUserAccount');
+  try {
+    const result = await callable({ userId });
+    return result.data;
+  } catch (error) {
+    console.error('Error deleting user account:', error);
+    const message = error.message || error.code || 'Unknown error';
+    throw new Error(message);
+  }
+};
+
+/**
  * Get all management users (Owner only)
  */
 export const getAllManagementUsers = async () => {
@@ -181,9 +196,25 @@ export const createWarden = async (wardenData) => {
   }
 };
 
+/**
+ * Create a new student manually (Management)
+ */
+export const createStudent = async (studentData) => {
+  const callable = httpsCallable(functions, 'createStudent');
+  try {
+    const result = await callable(studentData);
+    return result.data;
+  } catch (error) {
+    console.error('Error creating student:', error);
+    const message = error.message || error.code || 'Unknown error';
+    throw new Error(message);
+  }
+};
+
 export default {
   approveUser,
   denyUser,
+  deleteUserAccount,
   getAllManagementUsers,
   createManagement,
   deleteCollege,
@@ -192,4 +223,5 @@ export default {
   checkCollegeCapacity,
   bulkCreateStudents,
   createWarden,
+  createStudent,
 };

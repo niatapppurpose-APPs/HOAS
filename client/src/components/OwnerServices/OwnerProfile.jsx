@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, auth } from "../../firebase/firebaseConfig";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../Toast";
@@ -16,7 +15,6 @@ import {
   Save,
   ShieldCheck,
   Calendar,
-  Camera,
   Key,
   Eye,
   EyeOff,
@@ -24,7 +22,6 @@ import {
   X,
   User,
   BadgeCheck,
-  Upload,
 } from "lucide-react";
 import { HashLoader } from "react-spinners";
 
@@ -33,8 +30,6 @@ const OwnerProfile = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const fileRef = useRef(null);
-
   const [profileData, setProfileData] = useState({
     displayName: "",
     email: "",
@@ -46,7 +41,6 @@ const OwnerProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
-  const [uploading, setUploading] = useState(false);
 
   /* ── Password Modal ── */
   const [showPwModal, setShowPwModal] = useState(false);
@@ -134,34 +128,6 @@ const OwnerProfile = () => {
     }
   };
 
-  /* ── Photo Upload ── */
-  const handlePhotoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast.error("Image must be under 2 MB"); return; }
-    setUploading(true);
-    try {
-      const storage = getStorage();
-      const storageRef = ref(storage, `profiles/${user.uid}/avatar-${Date.now()}.${file.name.split(".").pop()}`);
-      const task = uploadBytesResumable(storageRef, file);
-      task.on("state_changed", null,
-        () => { toast.error("Upload failed"); setUploading(false); },
-        async () => {
-          const url = await getDownloadURL(task.snapshot.ref);
-          // Save to both admins and users collections
-          await setDoc(doc(db, "admins", user.uid), { photoURL: url, updatedAt: new Date().toISOString() }, { merge: true });
-          await setDoc(doc(db, "users", user.uid), { photoURL: url, updatedAt: new Date().toISOString() }, { merge: true });
-          setProfileData(p => ({ ...p, photoURL: url }));
-          toast.success("Photo updated");
-          setUploading(false);
-        }
-      );
-    } catch {
-      toast.error("Upload failed");
-      setUploading(false);
-    }
-  };
-
   /* ── Change Password ── */
   const handleChangePw = async () => {
     if (pwForm.newPass !== pwForm.confirm) { toast.error("Passwords do not match"); return; }
@@ -226,30 +192,18 @@ const OwnerProfile = () => {
 
           {/* ── Profile Top: Avatar + Info ── */}
           <div className="flex flex-col md:flex-row md:items-center gap-6 border-b pb-6" style={{ borderColor: "var(--border-primary)" }}>
-            {/* Avatar with upload button */}
-            <div className="relative group flex-shrink-0">
-              <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-indigo-500/30 shadow-lg shadow-indigo-500/10">
-                {profileData.photoURL ? (
-                  <img src={profileData.photoURL} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <Avatar
-                    image={user?.photoURL}
-                    name={profileData.displayName || user?.displayName}
-                    size={24}
-                    rounded="2xl"
-                    objectFit="cover"
-                  />
-                )}
-              </div>
-              <button
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-                className="absolute -bottom-1.5 -right-1.5 w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg hover:bg-indigo-500 transition cursor-pointer"
-              >
-                {uploading ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Camera className="w-4 h-4 text-white" />}
-              </button>
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-            </div>
+            {/* Avatar with hover upload */}
+            <Avatar
+              uid={user?.uid}
+              image={profileData.photoURL}
+              name={profileData.displayName || user?.displayName}
+              email={user?.email}
+              size="xl"
+              rounded="2xl"
+              collections={["admins", "users"]}
+              editable
+              onUpload={(url) => setProfileData(p => ({ ...p, photoURL: url }))}
+            />
 
             <div className="flex-1 min-w-0">
               <h2 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
@@ -285,12 +239,6 @@ const OwnerProfile = () => {
                 onChange={e => setProfileData({ ...profileData, phone: e.target.value })} placeholder="+91 XXXXX XXXXX" />
             </InfoCard>
 
-            {/* Organization */}
-            <InfoCard title="Institution" icon={<Building2 size={18} />}>
-              <Input label="Organization" value={profileData.organization}
-                onChange={e => setProfileData({ ...profileData, organization: e.target.value })} />
-            </InfoCard>
-
             {/* Account Status */}
             <InfoCard title="Account Status" icon={<ShieldCheck size={18} />}>
               <div className="space-y-2">
@@ -302,19 +250,6 @@ const OwnerProfile = () => {
                   <span className="flex items-center gap-2"><Calendar size={14} /> Last Login</span>
                   <span>{new Date(user.metadata.lastSignInTime).toLocaleDateString()}</span>
                 </p>
-              </div>
-            </InfoCard>
-
-            {/* Upload Photo Card */}
-            <InfoCard title="Profile Photo" icon={<Camera size={18} />}>
-              <div className="flex items-center justify-center w-full py-4 border-2 border-dashed rounded-xl cursor-pointer"
-                style={{ borderColor: "var(--border-primary)" }}
-                onClick={() => fileRef.current?.click()}>
-                <div className="text-center">
-                  <Upload className="mx-auto h-6 w-6 mb-1" style={{ color: "var(--text-muted)" }} />
-                  <p className="text-xs font-medium text-indigo-500">Click to upload</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>PNG, JPG up to 2 MB</p>
-                </div>
               </div>
             </InfoCard>
 

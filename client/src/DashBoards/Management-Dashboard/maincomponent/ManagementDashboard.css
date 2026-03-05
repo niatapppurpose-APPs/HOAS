@@ -781,69 +781,504 @@
    RESPONSIVE DESIGN
    ======================================== */
 
+/* --- Large desktops / wide screens (≤ 1400px) --- */
 @media (max-width: 1400px) {
   .management-bottom-row {
     grid-template-columns: 1fr;
   }
-  
+
   .management-viz-wrapper {
-    display: none;
+    /* Show as horizontal row instead of hiding */
+    width: 100%;
+  }
+
+  .status-visualization-section {
+    flex-direction: row;
+    justify-content: center;
+    gap: 48px;
   }
 }
 
+/* --- Desktops / small laptops (≤ 1200px) --- */
 @media (max-width: 1200px) {
   .management-top-row {
     grid-template-columns: 1fr;
   }
-  
+
   .kpi-cards-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
+/* --- Tablets (≤ 992px) --- */
 @media (max-width: 992px) {
   .kpi-cards-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
+  .kpi-card {
+    padding: 22px;
+  }
+
+  .kpi-value {
+    font-size: 28px;
+  }
+
   .activity-meta {
     flex-wrap: wrap;
     gap: 8px;
   }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  .management-table-wrapper,
+  .management-viz-wrapper,
+  .quick-approval-card {
+    padding: 22px;
+  }
+
+  .content-card {
+    padding: 28px;
+  }
+
+  .circular-progress {
+    width: 160px;
+    height: 160px;
+  }
+
+  .circular-progress svg {
+    width: 160px;
+    height: 160px;
+  }
 }
 
+/* --- Small tablets / large phones (≤ 768px) --- */
 @media (max-width: 768px) {
   .kpi-cards-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
-  
+
+  .kpi-card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .kpi-value {
+    font-size: 24px;
+  }
+
+  .kpi-title {
+    font-size: 14px;
+  }
+
+  .kpi-subtitle {
+    font-size: 12px;
+  }
+
+  .kpi-icon-wrapper {
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+
   .activity-card {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 14px;
   }
-  
+
   .activity-meta {
     width: 100%;
   }
-  
+
   .activity-actions {
     width: 100%;
     justify-content: flex-end;
   }
-  
+
+  .activity-name {
+    font-size: 15px;
+  }
+
   .page-header {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
+  .page-title {
+    font-size: 20px;
+  }
+
   .toolbar {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-box {
     max-width: none;
+  }
+
+  .management-table-wrapper,
+  .management-viz-wrapper,
+  .quick-approval-card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .content-card {
+    padding: 24px;
+    border-radius: 16px;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+
+  .section-subtitle {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .status-table th {
+    padding: 10px 8px;
+    font-size: 11px;
+  }
+
+  .status-table td {
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+
+  .status-visualization-section {
+    flex-direction: row;
+    gap: 24px;
+  }
+
+  .circular-progress {
+    width: 140px;
+    height: 140px;
+  }
+
+  .circular-progress svg {
+    width: 140px;
+    height: 140px;
+  }
+
+  .progress-label {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .progress-stats {
+    gap: 16px;
+  }
+
+  .quick-approval-title {
+    font-size: 16px;
+  }
+
+  .user-name {
+    font-size: 16px;
+  }
+
+  .management-top-row,
+  .management-bottom-row {
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .recent-activity-section {
+    margin-bottom: 24px;
+  }
+}
+
+/* --- Mobile phones (≤ 480px) --- */
+@media (max-width: 480px) {
+  .kpi-cards-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .kpi-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .kpi-value {
+    font-size: 22px;
+  }
+
+  .kpi-title {
+    font-size: 12px;
+  }
+
+  .kpi-subtitle {
+    font-size: 11px;
+  }
+
+  .kpi-icon-wrapper {
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+
+  .kpi-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .activity-card {
+    padding: 14px;
+    gap: 10px;
+    border-radius: 12px;
+  }
+
+  .activity-list {
+    gap: 10px;
+  }
+
+  .activity-user-info {
+    gap: 10px;
+  }
+
+  .activity-name {
+    font-size: 14px;
+  }
+
+  .activity-email {
+    font-size: 12px;
+  }
+
+  .activity-role,
+  .activity-status {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .activity-date {
+    font-size: 11px;
+  }
+
+  .btn-approve-inline {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .management-table-wrapper,
+  .management-viz-wrapper,
+  .quick-approval-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .content-card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .section-title {
+    font-size: 16px;
+  }
+
+  .section-subtitle {
+    font-size: 12px;
+    margin-bottom: 14px;
+  }
+
+  .status-table th {
+    padding: 8px 6px;
+    font-size: 10px;
+  }
+
+  .status-table td {
+    padding: 10px 6px;
+    font-size: 12px;
+  }
+
+  .table-user-info {
+    gap: 8px;
+  }
+
+  .table-user-name {
+    font-size: 13px;
+  }
+
+  .table-email {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .status-chip {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .pagination-info {
+    font-size: 11px;
+  }
+
+  .status-visualization-section {
+    flex-direction: column;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .circular-progress {
+    width: 140px;
+    height: 140px;
+  }
+
+  .circular-progress svg {
+    width: 140px;
+    height: 140px;
+  }
+
+  .progress-label {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 16px;
+  }
+
+  .quick-approval-title {
+    font-size: 15px;
+  }
+
+  .pending-count {
+    font-size: 12px;
+  }
+
+  .user-name {
+    font-size: 15px;
+  }
+
+  .user-email {
+    font-size: 12px;
+  }
+
+  .user-date {
+    font-size: 11px;
+  }
+
+  .btn-view-details,
+  .btn-approve {
+    padding: 10px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  .management-top-row,
+  .management-bottom-row {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .recent-activity-section {
+    margin-bottom: 20px;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .page-icon {
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  .empty-state {
+    padding: 40px 16px;
+  }
+
+  .empty-state h3 {
+    font-size: 17px;
+  }
+
+  .empty-state p {
+    font-size: 13px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 10px 16px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+}
+
+/* --- Very small phones (≤ 380px) --- */
+@media (max-width: 380px) {
+  .kpi-cards-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .kpi-card {
+    padding: 12px;
+  }
+
+  .kpi-value {
+    font-size: 20px;
+  }
+
+  .kpi-title {
+    font-size: 11px;
+  }
+
+  .kpi-subtitle {
+    font-size: 10px;
+  }
+
+  .kpi-icon-wrapper {
+    padding: 6px;
+    margin-bottom: 8px;
+  }
+
+  .circular-progress {
+    width: 120px;
+    height: 120px;
+  }
+
+  .circular-progress svg {
+    width: 120px;
+    height: 120px;
+  }
+
+  .progress-label {
+    font-size: 12px;
+  }
+
+  .stat-value {
+    font-size: 14px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+  }
+
+  .progress-stats {
+    gap: 12px;
   }
 }
 

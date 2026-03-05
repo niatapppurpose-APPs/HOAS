@@ -55,7 +55,7 @@ const ManagementLayout = () => {
 
         <main className={`transition-all duration-300 ease-in-out ml-0 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-72'
           }`}>
-          <Outlet context={{ isCollapsed }} />
+          <Outlet context={{ isCollapsed, setIsCollapsed }} />
         </main>
       </div>
     </div>

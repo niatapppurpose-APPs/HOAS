@@ -10,6 +10,7 @@ import { db } from '../../../firebase/firebaseConfig';
 import { StatusBadge, ToggleSwitch, SectionCard, SettingRow } from './components/SettingsComponents';
 import AccessLogsModal from './components/AccessLogsModal';
 import { DEFAULT_SETTINGS, roleColor } from './settingsConstants';
+import { RefreshButton } from './components/SettingsComponents';
 import {
   Settings,
   Shield,
@@ -60,7 +61,7 @@ const THEME_MODES = [
    MAIN SETTINGS PAGE
    ══════════════════════════════════════════════════════════════════════════════ */
 const GlobalSystemSettings = () => {
-  const { isCollapsed } = useOutletContext();
+  const { isCollapsed, setIsCollapsed } = useOutletContext();
   const { user, logout, userData } = useAuth();
   const { theme, mode, setLightMode, setDarkMode, setSystemMode, isDark, isSystemMode } = useTheme();
   const toast = useToast();
@@ -101,12 +102,12 @@ const GlobalSystemSettings = () => {
     finally { setLoading(false); }
   }, [toast, initialLoad]);
 
-  const loadUsers = useCallback(async () => {
-    setMgmtLoading(true);
-    try { const r = await cloudFunctions.getAllManagementUsers(); setMgmtUsers(r?.users || []); }
-    catch { setMgmtUsers([]); }
-    finally { setMgmtLoading(false); }
-  }, []);
+ const loadUsers = useCallback(async () => {
+      setMgmtLoading(true);
+      try { const r = await cloudFunctions.getAllManagementUsers(); setMgmtUsers(r?.users || []); }
+      catch { setMgmtUsers([]); }
+      finally { setMgmtLoading(false); }
+    }, []);
 
   useEffect(() => { loadData(false); loadUsers(); }, []);
 
@@ -163,7 +164,7 @@ const GlobalSystemSettings = () => {
 
   return (
     <>
-      <Header title="Settings" handleLogout={handleLogout} isCollapsed={isCollapsed} />
+      <Header title="Settings" handleLogout={handleLogout} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       <div className="flex pt-24 p-4 min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
 
 
@@ -192,15 +193,10 @@ const GlobalSystemSettings = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-6xl">
 
             {/* ── 1. Role & Access Management ── */}
-            <SectionCard title="Role & Access" icon={Shield} accent="#f59e0b" status="active">
+            <SectionCard title="Role & Access" icon={Shield} accent="#f59e0b" status="active" headerExtra={<RefreshButton onRefresh={loadUsers} loading={mgmtLoading} />}>
               <div className="space-y-3">
                 <div className="flex items-center justify-start">
                   <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Manage accounts & permissions</p>
-                  <button onClick={loadUsers} disabled={mgmtLoading}
-                    className="flex items-center gap-1.5 px-3 py-2.5 border rounded-xl text-xs font-medium cursor-pointer"
-                    style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)', border: '1px solid var(--border-muted)' }}>
-                    <RefreshCw className={`w-4 h-4 ${mgmtLoading ? 'animate-spin' : ''}`} />
-                  </button>
                 </div>
 
                 {mgmtLoading ? (

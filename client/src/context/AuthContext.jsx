@@ -27,87 +27,90 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let unsubscribe;
     
-    // Handle redirect result from Google Sign-In first
-    const handleAuth = async () => {
-      try {
-        const result = await getRedirectResult(auth);
+    // Handle redirect result in background — don't block auth state listener
+    getRedirectResult(auth)
+      .then((result) => {
         if (result?.user) {
           console.log("Redirect result user:", result.user.email);
           toastRef.current.success('Welcome back! Signing you in...', 3000);
         }
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error("Redirect error:", error);
         toastRef.current.error('Sign-in failed. Please try again.', 4000);
-      }
+      });
 
-      // Then set up auth state listener
-      unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    // Set up auth state listener immediately (no waiting for getRedirectResult)
+    unsubscribe = onAuthStateChanged(auth, (currentUser) => {
         setUser(currentUser);
-        setAdminChecked(false);
 
         if (currentUser) {
-          // Get the ID token result to check custom claims
-          try {
-            const tokenResult = await currentUser.getIdTokenResult(true); // Force refresh
-            const userClaims = tokenResult.claims;
-            setClaims(userClaims);
-            // Check both possible admin claim formats
-            const adminStatus = userClaims.admin === true || userClaims.role === 'admin';
-            setIsAdmin(adminStatus);
-            setAdminChecked(true);
+          // Mark auth as loaded immediately — don't block on network calls
+          setLoading(false);
 
-            // Check if user document exists, if not create it
+          // Check claims & sync profile in the background (non-blocking)
+          (async () => {
             try {
-              const userDocRef = doc(db, "users", currentUser.uid);
-              const userSnapshot = await getDoc(userDocRef);
+              // Use cached token first (false = no force refresh) for instant claims check.
+              // Then refresh in the background for freshness.
+              const tokenResult = await currentUser.getIdTokenResult(false);
+              const userClaims = tokenResult.claims;
+              setClaims(userClaims);
+              const adminStatus = userClaims.admin === true || userClaims.role === 'admin';
+              setIsAdmin(adminStatus);
+              setAdminChecked(true);
 
-              if (!userSnapshot.exists()) {
-                if (adminStatus) {
-                  // If the user is an admin and doesn't have a doc, create one
-                  const adminProfileData = {
-                    uid: currentUser.uid,
-                    email: currentUser.email,
-                    displayName: currentUser.displayName,
-                    photoURL: currentUser.photoURL,
-                    role: 'admin',
-                    status: 'approved',
-                    isOnline: true,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                  };
-                  await setDoc(userDocRef, adminProfileData);
-                  console.log("Admin user document created automatically.");
+              // Sync profile to Firestore in the background — don't block UI
+              const userDocRef = doc(db, "users", currentUser.uid);
+              getDoc(userDocRef).then(async (userSnapshot) => {
+                if (!userSnapshot.exists()) {
+                  if (adminStatus) {
+                    await setDoc(userDocRef, {
+                      uid: currentUser.uid,
+                      email: currentUser.email,
+                      displayName: currentUser.displayName,
+                      photoURL: currentUser.photoURL,
+                      role: 'admin',
+                      status: 'approved',
+                      isOnline: true,
+                      createdAt: new Date().toISOString(),
+                      updatedAt: new Date().toISOString(),
+                    });
+                  }
                 } else {
-                  // For non-admins, role self-selection is disabled — wait for owner/management provisioning
-                  console.log("New user detected — awaiting admin/owner provisioning (role selection disabled).");
+                  setDoc(userDocRef, {
+                    isOnline: true,
+                    updatedAt: new Date().toISOString(),
+                    ...(currentUser.photoURL && { photoURL: currentUser.photoURL }),
+                    ...(currentUser.displayName && { displayName: currentUser.displayName }),
+                  }, { merge: true }).catch(e => console.error("Profile sync error:", e));
                 }
-              } else {
-                // User exists - update isOnline to true
-              await setDoc(userDocRef, { isOnline: true, updatedAt: new Date().toISOString() }, { merge: true });
+              }).catch(e => console.error("Error checking user document:", e));
+
+              // Refresh token in the background for fresh claims (doesn't block UI)
+              currentUser.getIdTokenResult(true).then(freshToken => {
+                const freshClaims = freshToken.claims;
+                setClaims(freshClaims);
+                const freshAdmin = freshClaims.admin === true || freshClaims.role === 'admin';
+                setIsAdmin(freshAdmin);
+              }).catch(e => console.error("Background token refresh error:", e));
+
+            } catch (error) {
+              console.error("Error getting token claims:", error);
+              setIsAdmin(false);
+              setClaims(null);
+              setAdminChecked(true);
             }
-          } catch (firestoreError) {
-            console.error("Error checking/creating user document:", firestoreError);
-            // Don't block login if Firestore fails, just log it
-          }
-        } catch (error) {
-          console.error("Error getting token claims:", error);
+          })();
+        } else {
           setIsAdmin(false);
           setClaims(null);
           setAdminChecked(true);
+          setUserData(null);
+          setUserDataLoading(false);
+          setLoading(false);
         }
-      } else {
-        setIsAdmin(false);
-        setClaims(null);
-        setAdminChecked(true);
-        setUserData(null);
-        setUserDataLoading(false);
-      }
-
-      setLoading(false);
     });
-    };
-    
-    handleAuth();
 
     return () => {
       if (unsubscribe) {
@@ -131,10 +134,18 @@ export const AuthProvider = ({ children }) => {
         const data = docSnap.data();
         setUserData(data);
       } else {
+        // Document does not exist — user was provisioned via Auth but
+        // their Firestore profile is missing. Keep userData null so UI
+        // shows defaults instead of crashing, and log for debugging.
+        console.warn(`[AuthContext] No Firestore document found for uid=${user.uid}. Profile may not have been provisioned yet.`);
         setUserData(null);
       }
       setUserDataLoading(false);
     }, (error) => {
+      // Surface Firestore errors instead of silently swallowing them.
+      // Common cause: security rules denying the read (e.g., user doc not yet provisioned).
+      console.error(`[AuthContext] Firestore onSnapshot error for uid=${user.uid}:`, error.code, error.message);
+      setUserData(null);
       setUserDataLoading(false);
     });
 
@@ -229,13 +240,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {loading ? (
-        <div className="flex items-center justify-center min-h-screen bg-slate-900">
-          <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </AuthContext.Provider>
   );
 };

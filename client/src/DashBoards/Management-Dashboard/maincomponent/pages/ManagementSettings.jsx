@@ -47,7 +47,7 @@ function compressImage(file, maxKB = 200) {
 const ManagementSettings = () => {
     const { user, userData } = useAuth();
     const { isDark } = useTheme();
-    const { isCollapsed } = useOutletContext();
+    const { isCollapsed, setIsCollapsed } = useOutletContext();
     const toast = useToast();
 
     // ── Location state ──
@@ -160,9 +160,10 @@ const ManagementSettings = () => {
             <ManagementHeader
                 title="Settings"
                 isCollapsed={isCollapsed}
+                setIsCollapsed={setIsCollapsed}
             />
 
-            <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
+            <div className="pt-20 sm:pt-24 px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
                 {/* Page Header */}
                 <div className="mb-8">
                     <h2

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useOutletContext, Link } from 'react-router-dom';
 import { db } from '../../firebase/firebaseConfig';
-import { collection, query, where, onSnapshot, limit, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useToast } from '../../components/Toast';
 import WardenHeader from './components/layout/WardenHeader';
 import './WardenDashboard.css';
@@ -28,7 +28,7 @@ import {
 import Avatar from '../../components/OwnerServices/Avatar';
 
 const WardenDashboard = () => {
-    const { userData, userDataLoading, logout } = useAuth();
+    const { user, userData, userDataLoading, logout } = useAuth();
     const navigate = useNavigate();
     const toast = useToast();
     const { isCollapsed, setIsCollapsed } = useOutletContext();
@@ -55,19 +55,26 @@ const WardenDashboard = () => {
     useEffect(() => {
         if (!userData?.managementId) return;
 
+        setLoading(true);
         const q = query(
             collection(db, 'complaints'),
             where('managementId', '==', userData.managementId),
-            orderBy('createdAt', 'desc'),
         );
 
         let isInitialLoad = true;
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+            // Skip empty cache results — wait for the real network response
+            if (snapshot.metadata.fromCache && snapshot.empty) return;
+
             const list = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
-            }));
+            })).sort((a, b) => {
+                const tA = a.createdAt?.toMillis?.() ?? 0;
+                const tB = b.createdAt?.toMillis?.() ?? 0;
+                return tB - tA;
+            });
 
             // Notification Logic for Warden
             if (!isInitialLoad) {
@@ -93,10 +100,14 @@ const WardenDashboard = () => {
             // Count pending
             const pending = list.filter(c => c.status === 'pending').length;
             setPendingCount(pending);
+        }, (error) => {
+            console.error('Complaints fetch error:', error);
+            setLoading(false);
         });
 
         return () => unsubscribe();
-    }, [userData?.managementId, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userData?.managementId]);
 
     const handleLogout = async () => {
         await logout();
@@ -264,11 +275,12 @@ const WardenDashboard = () => {
                                         <p className="mt-3 md:mt-4 text-xs md:text-sm font-medium animate-pulse" style={{ color: 'var(--text-muted)' }}>Syncing data...</p>
                                     </div>
                                 ) : complaints.length === 0 ? (
-                                    <div className="p-12 md:p-16 text-center">
-                                        <div className="w-12 h-12 md:w-16 md:h-16 bg-orange-500/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-orange-500/10">
-                                            <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-orange-500 opacity-20" />
+                                    <div className="p-10 md:p-12 text-center">
+                                        <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-500/5 rounded-full flex items-center justify-center mx-auto mb-3 border border-orange-500/10">
+                                            <MessageSquare className="w-5 h-5 md:w-6 md:h-6 text-orange-500 opacity-30" />
                                         </div>
-                                        <p className="text-xs md:text-sm font-bold" style={{ color: 'var(--text-muted)' }}>No active grievances found.</p>
+                                        <p className="text-xs md:text-sm font-bold" style={{ color: 'var(--text-muted)' }}>No Complaints</p>
+                                        <p className="text-[10px] md:text-xs mt-1" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>No complaints have been raised yet.</p>
                                     </div>
                                 ) : (
                                     complaints.map((c) => (
@@ -309,7 +321,7 @@ const WardenDashboard = () => {
                             <div className="flex flex-col items-center text-center">
                                 <div className="w-20 h-20 rounded-lg md:w-24 md:h-24 p-1 mb-4 md:mb-6 shadow-xl hover:rotate-0 ">
                                     <div className="w-full h-full flex items-center justify-center">
-                                        <Avatar name={userData?.displayName} image={userData.photoURL} alt="Admin" className="w-full h-full object-cover" />
+                                        <Avatar name={userData?.fullName || userData?.displayName} image={userData?.photoURL || user?.photoURL} email={userData?.email || user?.email} alt="Warden" className="w-full h-full object-cover" />
                                     </div>
                                 </div>
                                 <h3 className="font-black text-xl md:text-2xl" style={{ color: 'var(--text-primary)' }}>{userData.fullName}</h3>

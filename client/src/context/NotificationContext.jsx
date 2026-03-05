@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+﻿import { createContext, useContext, useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, orderBy, limit, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from './AuthContext';
@@ -15,7 +15,7 @@ export const useNotifications = () => {
 };
 
 export const NotificationProvider = ({ children }) => {
-  const { user, isAdmin } = useAuth();
+  const { user, userData, isAdmin } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [permissionGranted, setPermissionGranted] = useState(
@@ -23,28 +23,25 @@ export const NotificationProvider = ({ children }) => {
       ? Notification.permission === 'granted'
       : false
   );
+  const role = userData?.role || null;
 
-  // Request notification permission and setup FCM token
+  // â”€â”€â”€ FCM setup for ALL logged-in users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
-    const setupNotifications = async () => {
-      if (user && isAdmin) {
-        const token = await notificationService.getFCMToken();
-        if (token) {
-          await notificationService.saveFCMToken(db, user.uid, token);
-          setPermissionGranted(true);
-        }
+    if (!user) return;
+    const setup = async () => {
+      const token = await notificationService.getFCMToken();
+      if (token) {
+        await notificationService.saveFCMToken(db, user.uid, token);
+        setPermissionGranted(true);
       }
     };
+    setup();
+  }, [user]);
 
-    setupNotifications();
-  }, [user, isAdmin]);
-
-  // Listen for foreground messages
+  // â”€â”€â”€ Foreground FCM messages for ALL users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
-    if (!user || !isAdmin) return;
-
+    if (!user) return;
     const unsubscribe = notificationService.onForegroundMessage((payload) => {
-      // Add to local notifications list
       const newNotification = {
         id: Date.now().toString(),
         title: payload.notification?.title || 'New Notification',
@@ -52,235 +49,355 @@ export const NotificationProvider = ({ children }) => {
         type: payload.data?.type || 'general',
         createdAt: new Date(),
         read: false,
-        data: payload.data
+        data: payload.data,
       };
-
       setNotifications(prev => [newNotification, ...prev]);
       setUnreadCount(prev => prev + 1);
     });
-
     return unsubscribe;
-  }, [user, isAdmin]);
+  }, [user]);
 
-  // Listen to Firestore for pending approvals
+  // â”€â”€â”€ Firestore notifications collection (ALL users) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  useEffect(() => {
+    if (!user) return;
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', user.uid),
+      orderBy('timestamp', 'desc'),
+      limit(50)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          notificationService.showNotification(d.title, { body: d.body, tag: change.doc.id, data: d });
+          setNotifications(prev => [{
+            id: change.doc.id,
+            title: d.title,
+            body: d.body,
+            type: d.type || 'general',
+            createdAt: d.timestamp?.toDate?.() || new Date(),
+            read: d.read || false,
+            data: d.data || {},
+          }, ...prev]);
+          if (!d.read) setUnreadCount(prev => prev + 1);
+        }
+      });
+    }, (err) => console.debug('notifications listener error:', err));
+    return unsub;
+  }, [user]);
+
+  // â”€â”€â”€ Student: complaint status updates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  useEffect(() => {
+    if (!user || role !== 'student') return;
+    const isInitial = { v: true };
+    const q = query(
+      collection(db, 'complaints'),
+      where('studentId', '==', user.uid),
+      orderBy('updatedAt', 'desc'),
+      limit(20)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) { isInitial.v = false; return; }
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'modified') {
+          const d = change.doc.data();
+          const statusLabel = d.status === 'in-progress' ? 'In Progress' : d.status === 'resolved' ? 'Resolved' : d.status;
+          const title = `Complaint Updated`;
+          const body = `"${d.title}" is now ${statusLabel}`;
+          notificationService.showNotification(title, { body, tag: `complaint-${change.doc.id}` });
+          setNotifications(prev => [{
+            id: `complaint-${change.doc.id}-${Date.now()}`,
+            title,
+            body,
+            type: 'complaint',
+            createdAt: new Date(),
+            read: false,
+            data: { complaintId: change.doc.id },
+          }, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        }
+      });
+    }, (err) => console.debug('student complaint listener error:', err));
+    return unsub;
+  }, [user, role]);
+
+  // â”€â”€â”€ Warden: new complaints in their college â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  useEffect(() => {
+    if (!user || role !== 'warden' || !userData?.managementId) return;
+    const isInitial = { v: true };
+    const q = query(
+      collection(db, 'complaints'),
+      where('managementId', '==', userData.managementId),
+      where('status', '==', 'pending'),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) { isInitial.v = false; return; }
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          const title = `New Complaint`;
+          const body = `${d.title} â€” Room ${d.roomNumber || 'N/A'}`;
+          notificationService.showNotification(title, { body, tag: `warden-complaint-${change.doc.id}` });
+          setNotifications(prev => [{
+            id: `warden-complaint-${change.doc.id}`,
+            title,
+            body,
+            type: 'new-complaint',
+            createdAt: new Date(),
+            read: false,
+            data: { complaintId: change.doc.id },
+          }, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        }
+      });
+    }, (err) => console.debug('warden complaint listener error:', err));
+    return unsub;
+  }, [user, role, userData?.managementId]);
+
+  // ——— Student & Warden: new announcements browser notifications ————————————
+  useEffect(() => {
+    if (!user || !userData?.managementId) return;
+    if (role !== 'student' && role !== 'warden') return;
+    const isInitial = { v: true };
+    const q = query(
+      collection(db, 'announcements'),
+      where('managementId', '==', userData.managementId),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) { isInitial.v = false; return; }
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          const priorityEmoji = d.priority === 'urgent' ? '🔴' : d.priority === 'important' ? '🟡' : '📢';
+          const title = `${priorityEmoji} New Announcement`;
+          const body = d.title || 'A new notice has been posted';
+          notificationService.showNotification(title, {
+            body,
+            tag: `announcement-${change.doc.id}`,
+          });
+          setNotifications(prev => [{
+            id: `announcement-${change.doc.id}`,
+            title,
+            body,
+            type: 'announcement',
+            createdAt: new Date(),
+            read: false,
+            data: { announcementId: change.doc.id, priority: d.priority },
+          }, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        }
+      });
+    }, (err) => console.debug('announcements listener error:', err));
+    return unsub;
+  }, [user, role, userData?.managementId]);
+
+  // ——— Student: leave request status updates ———————————————————————————————
+  useEffect(() => {
+    if (!user || role !== 'student') return;
+    const isInitial = { v: true };
+    const q = query(
+      collection(db, 'leaveRequests'),
+      where('studentId', '==', user.uid),
+      orderBy('updatedAt', 'desc'),
+      limit(20)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) { isInitial.v = false; return; }
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'modified') {
+          const d = change.doc.data();
+          const statusEmoji = d.status === 'approved' ? '✅' : d.status === 'denied' ? '❌' : '📋';
+          const title = `${statusEmoji} Leave Request Updated`;
+          const body = `Your ${d.leaveType?.replace('_', ' ') || 'leave'} request is now ${d.status}`;
+          notificationService.showNotification(title, { body, tag: `leave-${change.doc.id}` });
+          setNotifications(prev => [{
+            id: `leave-${change.doc.id}-${Date.now()}`,
+            title,
+            body,
+            type: 'leave-update',
+            createdAt: new Date(),
+            read: false,
+            data: { leaveId: change.doc.id, status: d.status },
+          }, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        }
+      });
+    }, (err) => console.debug('leave request listener error:', err));
+    return unsub;
+  }, [user, role]);
+
+  // ——— Warden: new leave requests from students ————————————————————————————
+  useEffect(() => {
+    if (!user || role !== 'warden' || !userData?.managementId) return;
+    const isInitial = { v: true };
+    const q = query(
+      collection(db, 'leaveRequests'),
+      where('managementId', '==', userData.managementId),
+      where('status', '==', 'pending'),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) { isInitial.v = false; return; }
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          const title = '📋 New Leave Request';
+          const body = `${d.studentName || 'A student'} — ${d.leaveType?.replace('_', ' ') || 'Leave'} (Room ${d.roomNumber || 'N/A'})`;
+          notificationService.showNotification(title, { body, tag: `warden-leave-${change.doc.id}` });
+          setNotifications(prev => [{
+            id: `warden-leave-${change.doc.id}`,
+            title,
+            body,
+            type: 'new-leave-request',
+            createdAt: new Date(),
+            read: false,
+            data: { leaveId: change.doc.id },
+          }, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        }
+      });
+    }, (err) => console.debug('warden leave request listener error:', err));
+    return unsub;
+  }, [user, role, userData?.managementId]);
+
+  // â”€â”€â”€ Management: new warden added or student complaints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  useEffect(() => {
+    if (!user || role !== 'management' || !userData?.managementId) return;
+    const isInitial = { v: true };
+    const q = query(
+      collection(db, 'complaints'),
+      where('managementId', '==', userData.managementId),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) { isInitial.v = false; return; }
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          const title = `New Complaint Filed`;
+          const body = `${d.title} â€” by ${d.studentName || 'Student'}`;
+          notificationService.showNotification(title, { body, tag: `mgmt-complaint-${change.doc.id}` });
+          setNotifications(prev => [{
+            id: `mgmt-complaint-${change.doc.id}`,
+            title,
+            body,
+            type: 'new-complaint',
+            createdAt: new Date(),
+            read: false,
+            data: { complaintId: change.doc.id },
+          }, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        }
+      });
+    }, (err) => console.debug('management complaint listener error:', err));
+    return unsub;
+  }, [user, role, userData?.managementId]);
+
+  // â”€â”€â”€ Admin only: pending management approvals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!user || !isAdmin) return;
-
-    const usersQuery = query(
+    const q = query(
       collection(db, 'users'),
       where('role', '==', 'management'),
       where('status', '==', 'pending'),
       orderBy('createdAt', 'desc'),
       limit(50)
     );
-
-    const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
+    const unsub = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
-          const userData = change.doc.data();
-
-          // Show notification
+          const d = change.doc.data();
           notificationService.showNotification('New Approval Request', {
-            body: `${userData.displayName || 'A college'} is requesting approval`,
+            body: `${d.displayName || 'A college'} is requesting approval`,
             tag: `approval-${change.doc.id}`,
-            data: {
-              type: 'approval',
-              userId: change.doc.id,
-              url: '/OwnersDashboard'
-            }
           });
-
-          // Add to notifications list
           setNotifications(prev => [{
             id: change.doc.id,
             title: 'New Approval Request',
-            body: `${userData.displayName || 'A college'} is requesting approval`,
+            body: `${d.displayName || 'A college'} is requesting approval`,
             type: 'approval',
-            createdAt: userData.createdAt?.toDate ? userData.createdAt.toDate() : (userData.createdAt ? new Date(userData.createdAt) : new Date()),
+            createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : (d.createdAt ? new Date(d.createdAt) : new Date()),
             read: false,
-            data: {
-              userId: change.doc.id,
-              userName: userData.displayName
-            }
+            data: { userId: change.doc.id, userName: d.displayName },
           }, ...prev]);
-
           setUnreadCount(prev => prev + 1);
         }
       });
     });
-
-    return unsubscribe;
+    return unsub;
   }, [user, isAdmin]);
 
-  // Listen to Firestore for support tickets (if collection exists)
+  // â”€â”€â”€ Admin only: support tickets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!user || !isAdmin) return;
-
-    const ticketsQuery = query(
+    const q = query(
       collection(db, 'supportTickets'),
       where('status', '==', 'open'),
       orderBy('createdAt', 'desc'),
       limit(50)
     );
-
-    const unsubscribe = onSnapshot(ticketsQuery, (snapshot) => {
+    const unsub = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
-          const ticketData = change.doc.data();
-
-          // Show notification
+          const d = change.doc.data();
           notificationService.showNotification('New Support Ticket', {
-            body: ticketData.subject || 'A new support ticket has been created',
+            body: d.subject || 'A new support ticket has been created',
             tag: `ticket-${change.doc.id}`,
-            data: {
-              type: 'support',
-              ticketId: change.doc.id,
-              url: '/OwnersDashboard/support-tickets'
-            }
           });
-
-          // Add to notifications list
           setNotifications(prev => [{
             id: `ticket-${change.doc.id}`,
             title: 'New Support Ticket',
-            body: ticketData.subject || 'A new support ticket has been created',
+            body: d.subject || 'A new support ticket has been created',
             type: 'support',
-            createdAt: ticketData.createdAt?.toDate ? ticketData.createdAt.toDate() : (ticketData.createdAt ? new Date(ticketData.createdAt) : new Date()),
+            createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : (d.createdAt ? new Date(d.createdAt) : new Date()),
             read: false,
-            data: {
-              ticketId: change.doc.id,
-              subject: ticketData.subject
-            }
+            data: { ticketId: change.doc.id, subject: d.subject },
           }, ...prev]);
-
           setUnreadCount(prev => prev + 1);
         }
       });
-    }, (error) => {
-      // Silently handle if supportTickets collection doesn't exist
-      console.debug('Support tickets collection not available:', error.code);
-    });
-
-    return unsubscribe;
+    }, (err) => console.debug('Support tickets collection not available:', err.code));
+    return unsub;
   }, [user, isAdmin]);
 
-  // Listen to Firestore notifications collection created by backend
-  useEffect(() => {
-    if (!user || !isAdmin) return;
-
-    const notificationsQuery = query(
-      collection(db, 'notifications'),
-      where('userId', '==', user.uid),
-      orderBy('timestamp', 'desc'),
-      limit(50)
-    );
-
-    const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          const notifData = change.doc.data();
-
-          // Show browser notification
-          notificationService.showNotification(notifData.title, {
-            body: notifData.body,
-            tag: change.doc.id,
-            data: notifData
-          });
-
-          // Add to notifications list
-          setNotifications(prev => [{
-            id: change.doc.id,
-            title: notifData.title,
-            body: notifData.body,
-            type: notifData.type || 'general',
-            createdAt: notifData.timestamp?.toDate() || new Date(),
-            read: notifData.read || false,
-            data: notifData.data || {}
-          }, ...prev]);
-
-          if (!notifData.read) {
-            setUnreadCount(prev => prev + 1);
-          }
-        }
-      });
-    }, (error) => {
-      console.debug('Notifications collection error:', error);
-    });
-
-    return unsubscribe;
-  }, [user, isAdmin]);
-
-  // Mark notification as read
+  // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const markAsRead = async (notificationId) => {
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === notificationId ? { ...notif, read: true } : notif
-      )
-    );
-
+    setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
-
-    // Update in Firestore if it exists
-    try {
-      const notifRef = doc(db, 'notifications', notificationId);
-      await updateDoc(notifRef, { read: true });
-    } catch (error) {
-      console.debug('Error updating notification read status:', error);
-    }
+    try { await updateDoc(doc(db, 'notifications', notificationId), { read: true }); } catch { }
   };
 
-  // Mark all as read
   const markAllAsRead = async () => {
-    setNotifications(prev =>
-      prev.map(notif => ({ ...notif, read: true }))
-    );
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
-
-    // Update all in Firestore
     try {
-      const updates = notifications
-        .filter(n => !n.read)
-        .map(async (notif) => {
-          const notifRef = doc(db, 'notifications', notif.id);
-          await updateDoc(notifRef, { read: true });
-        });
-      await Promise.all(updates);
-    } catch (error) {
-      console.debug('Error marking all as read:', error);
-    }
+      await Promise.all(
+        notifications.filter(n => !n.read).map(n => updateDoc(doc(db, 'notifications', n.id), { read: true }))
+      );
+    } catch { }
   };
 
-  // Clear all notifications
-  const clearAll = () => {
-    setNotifications([]);
-    setUnreadCount(0);
-  };
+  const clearAll = () => { setNotifications([]); setUnreadCount(0); };
 
-  // Request notification permission
   const requestPermission = async () => {
     const granted = await notificationService.requestNotificationPermission();
-    if (granted && user && isAdmin) {
+    if (granted && user) {
       const token = await notificationService.getFCMToken();
-      if (token) {
-        await notificationService.saveFCMToken(db, user.uid, token);
-      }
+      if (token) await notificationService.saveFCMToken(db, user.uid, token);
     }
     setPermissionGranted(granted);
     return granted;
   };
 
-  const value = {
-    notifications,
-    unreadCount,
-    permissionGranted,
-    markAsRead,
-    markAllAsRead,
-    clearAll,
-    requestPermission
-  };
-
   return (
-    <NotificationContext.Provider value={value}>
+    <NotificationContext.Provider value={{ notifications, unreadCount, permissionGranted, markAsRead, markAllAsRead, clearAll, requestPermission, role }}>
       {children}
     </NotificationContext.Provider>
   );

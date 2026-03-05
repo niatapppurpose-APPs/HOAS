@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import {signInWithEmailAndPassword } from "firebase/auth";
+import React, { useState, useEffect } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { auth, provider, db } from "../../firebase/firebaseConfig";
 import { useToast } from "../../components/Toast";
@@ -14,6 +14,51 @@ const isMobileDevice = () => {
     (window.innerWidth <= 768);
 };
 
+const normalizeStudentIdentifier = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+
+const resolveStudentEmailByIdentifier = async (identifier) => {
+  const rawInput = String(identifier || '').trim();
+  const normalizedInput = normalizeStudentIdentifier(rawInput);
+
+  if (!rawInput) return null;
+
+  const usersRef = collection(db, "users");
+
+  // Fast path: exact match on common identifier fields
+  const exactMatchFields = ["studentId", "rollNumber", "idNumber", "registrationNumber", "regNo", "admissionNumber"];
+  for (const field of exactMatchFields) {
+    const exactQuery = query(usersRef, where(field, "==", rawInput), limit(1));
+    const exactSnapshot = await getDocs(exactQuery);
+    if (!exactSnapshot.empty) {
+      const docData = exactSnapshot.docs[0].data();
+      if (docData?.email) return docData.email;
+    }
+  }
+
+  // Fallback: normalize and match in-memory against a bounded student set
+  const studentsQuery = query(usersRef, where("role", "==", "student"), limit(300));
+  const studentsSnapshot = await getDocs(studentsQuery);
+
+  for (const studentDoc of studentsSnapshot.docs) {
+    const student = studentDoc.data();
+    const candidateIdentifiers = [
+      student?.studentId,
+      student?.rollNumber,
+      student?.idNumber,
+      student?.registrationNumber,
+      student?.regNo,
+      student?.admissionNumber,
+    ];
+
+    const matched = candidateIdentifiers.some((candidate) => normalizeStudentIdentifier(candidate) === normalizedInput);
+    if (matched && student?.email) {
+      return student.email;
+    }
+  }
+
+  return null;
+};
+
 const LoginButton = () => {
   const { isDark } = useTheme();
   const [email, setEmail] = useState("");
@@ -24,6 +69,13 @@ const LoginButton = () => {
   const [focusedField, setFocusedField] = useState(null);
   const toast = useToast();
 const {user} = useAuth()
+
+  // Pre-fill email from ?email= query param (e.g. when arriving from welcome email link)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const emailParam = params.get('email');
+    if (emailParam) setEmail(emailParam);
+  }, []);
   const handleLogin = async (event) => {
     event.preventDefault();
     if (!email || !password) {
@@ -37,30 +89,13 @@ const {user} = useAuth()
 
       // If logging in as Student (using ID), find their email first
       if (changeToggle) {
-        const usersRef = collection(db, "users");
-        // Create a query against the collection.
-        // limit(1) to be efficient since ID should be unique
-        const q = query(usersRef, where("studentId", "==", email), limit(1));
-        const querySnapshot = await getDocs(q);
+        const resolvedEmail = await resolveStudentEmailByIdentifier(email);
 
-        if (querySnapshot.empty) {
-          // Check if it might be an email entered by mistake in ID field
-          if (email.includes('@')) {
-            // Proceed as email, maybe
-            // But strictly speaking, if toggle is ID, we expect ID. 
-            // Let's just fail if ID not found.
-          }
+        if (!resolvedEmail) {
           throw { code: "auth/user-not-found", message: "Student ID not found" };
         }
 
-        const userDoc = querySnapshot.docs[0];
-        const userData = userDoc.data();
-
-        if (!userData.email) {
-          throw { code: "auth/invalid-email", message: "No email linked to this Student ID" };
-        }
-
-        loginEmail = userData.email;
+        loginEmail = resolvedEmail;
         console.log("Found student email:", loginEmail);
       }
 
@@ -78,7 +113,13 @@ const {user} = useAuth()
       } else if (code === "auth/too-many-requests") {
         errorMsg = "Too many attempts. Try again later.";
       } else if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/invalid-email") {
-        errorMsg = "Invalid credentials ⚠️";
+        const isTunnelHost = /(?:^|\.)((ngrok-free\.dev)|(ngrok\.io)|(loca\.lt)|(localhost\.run))$/i.test(window.location.hostname);
+        const emulatorFlag = localStorage.getItem('VITE_USE_FIREBASE_EMULATOR') === 'true';
+        if (isTunnelHost && emulatorFlag) {
+          errorMsg = "This ngrok link uses production Firebase. Use a production account/password (or disable emulator mode locally before sharing).";
+        } else {
+          errorMsg = "Invalid credentials ⚠️";
+        }
       } else if (code === "auth/network-request-failed") {
         errorMsg = "Network error. Check your internet connection and try again.";
       } else if (code === "auth/internal-error") {
@@ -111,8 +152,8 @@ const {user} = useAuth()
   return (
     <>
       {/* Pill-shaped Email/ID Toggle */}
-      <div className="flex justify-center  mb-6">
-        <div className="relative flex rounded-full p-[3px] gap-10"
+      <div className="flex justify-center mb-6">
+        <div className="relative w-full max-w-sm grid grid-cols-2 rounded-full p-[3px]"
           style={{
             backgroundColor: isDark ? 'rgba(15, 23, 42, 0.6)' : 'rgba(241, 245, 249, 0.8)',
             border: isDark ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(99, 102, 241, 0.2)'
@@ -121,7 +162,7 @@ const {user} = useAuth()
           <div
             className="absolute top-[3px] bottom-[3px] rounded-full transition-all duration-100 ease-out"
             style={{
-              width: 'calc(60% - 1px)',
+              width: 'calc(50% - 3px)',
               left: !changeToggle ? '3px' : 'calc(50%)',
               background: isDark
                 ? 'linear-gradient(135deg, #4f46e5, #7c3aed)'
@@ -133,11 +174,9 @@ const {user} = useAuth()
           />
 
           <button
-            className="relative z-10 px-6 py-2 rounded-full text-sm font-semibold transition-colors duration-200 flex items-center gap-2"
+            className="relative z-10 px-3 py-2 rounded-full text-xs sm:text-sm font-semibold transition-colors duration-200 flex items-center justify-center gap-1.5 sm:gap-2"
             style={{
               color: !changeToggle ? '#ffffff' : (isDark ? '#94a3b8' : '#64748b'),
-              minWidth: '90px',
-              justifyContent: 'center'
             }}
             type="button"
             onClick={() => {
@@ -152,11 +191,9 @@ const {user} = useAuth()
           </button>
 
           <button
-            className="relative z-10 px-6 py-2 rounded-full text-sm font-semibold transition-colors duration-200 flex items-center gap-2"
+            className="relative z-10 px-3 py-2 rounded-full text-xs sm:text-sm font-semibold transition-colors duration-200 flex items-center justify-center gap-1.5 sm:gap-2"
             style={{
               color: changeToggle ? '#ffffff' : (isDark ? '#94a3b8' : '#64748b'),
-              minWidth: '90px',
-              justifyContent: 'center'
             }}
             type="button"
             onClick={() => {
@@ -167,7 +204,7 @@ const {user} = useAuth()
             aria-pressed={changeToggle}
           >
             <IdCard className="w-4 h-3.5" />
-            Student
+            Student ID
           </button>
         </div>
       </div>

@@ -1,10 +1,11 @@
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, Menu } from "lucide-react";
 import { useNavigate } from "react-router";
 import { ThemeToggle } from "../../../../components/ThemeToggle";
 import { useAuth } from "../../../../context/AuthContext";
 import AnimatedLogoutButton from "../../../../components/AnimatedLogoutButton";
+import NotificationBell from "../../../../components/OwnerServices/NotificationBell";
 
-const ManagementHeader = ({ pendingCount = 0, title = "Dashboard · Management", isCollapsed = true }) => {
+const ManagementHeader = ({ pendingCount = 0, title = "Dashboard · Management", isCollapsed = true, setIsCollapsed }) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -21,32 +22,50 @@ const ManagementHeader = ({ pendingCount = 0, title = "Dashboard · Management",
   return (
     <header
       style={{ backgroundColor: 'var(--bg-header)', borderColor: 'var(--border-primary)' }}
-      className={`fixed top-0 right-0 border-b backdrop-blur-xl z-30 h-20 transition-all duration-300 ${isCollapsed ? 'left-0 lg:left-20' : 'left-0 lg:left-72'}`}
+      className={`fixed top-0 right-0 border-b backdrop-blur-xl z-30 h-16 sm:h-20 transition-all duration-300 ${isCollapsed ? 'left-0 lg:left-20' : 'left-0 lg:left-72'}`}
     >
-      <div className="mx-auto px-4 pl-14 sm:pl-6 lg:px-8 h-full">
-        <div className="flex items-center justify-between h-full">
-          <div className="flex items-center gap-3">
-            
-            <LayoutDashboard size={28} style={{ color: 'var(--text-primary)' }} />
-            <h1 style={{ color: 'var(--text-primary)' }} className="text-lg sm:text-xl font-bold truncate">{title}</h1>
+      <div className="mx-auto px-3 sm:px-6 lg:px-8 h-full">
+        <div className="flex items-center justify-between h-full gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+            {/* Mobile menu button */}
+            {setIsCollapsed && (
+              <button
+                onClick={() => setIsCollapsed(false)}
+                className="lg:hidden p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0"
+                style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            )}
+            <LayoutDashboard size={24} style={{ color: 'var(--text-primary)' }} className="hidden sm:block flex-shrink-0" />
+            <h1 style={{ color: 'var(--text-primary)' }} className="text-sm sm:text-lg lg:text-xl font-bold truncate">{title}</h1>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
             {pendingCount > 0 && (
-              <span className="px-2 sm:px-5 py-1 rounded-full bg-red-500/20 text-red-400 text-xs sm:text-sm font-medium border border-red-500/30 animate-pulse">
+              <span className="px-2 sm:px-4 py-1 rounded-full bg-red-500/20 text-red-400 text-[10px] sm:text-sm font-medium border border-red-500/30 animate-pulse flex-shrink-0">
                 <span className="hidden sm:inline">{pendingCount} Pending</span>
                 <span className="sm:hidden">{pendingCount}</span>
               </span>
             )}
 
+            {/* Notification Bell */}
+            <div className="flex-shrink-0">
+              <NotificationBell />
+            </div>
+
             {/* Theme Toggle Button */}
-            <ThemeToggle size="md" />
+            <div className="flex-shrink-0">
+              <ThemeToggle size="sm" />
+            </div>
 
             {/* Logout Button */}
-            <AnimatedLogoutButton 
-              onLogout={handleLogout}
-              variant="dark"
-              text="Log Out"
-            />
+            <div className="flex-shrink-0">
+              <AnimatedLogoutButton 
+                onLogout={handleLogout}
+                variant="dark"
+                text="Log Out"
+              />
+            </div>
           </div>
         </div>
       </div>

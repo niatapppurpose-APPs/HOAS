@@ -6,7 +6,7 @@ import "../ManagementDashboard.css";
 
 const Hostels = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { isCollapsed } = useOutletContext();
+  const { isCollapsed, setIsCollapsed } = useOutletContext();
 
   return (
     <>
@@ -15,10 +15,11 @@ const Hostels = () => {
         title="Hostels · Management"
         pendingCount={0}
         isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
       />
       
       {/* Main Content */}
-      <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
+      <div className="pt-20 sm:pt-24 px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
         {/* Page Header */}
         <div className="page-header">
           <div className="page-header-left">

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation, useOutletContext } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from "../../../../firebase/firebaseConfig";
 import ManagementHeader from "../../components/layout/ManagementHeader";
@@ -11,51 +11,42 @@ import Avatar from "../../../../components/OwnerServices/Avatar";
 import { useTheme } from "../../../../context/ThemeContext";
 import EmptyState from "../../../../components/OwnerServices/EmptyState";
 import BulkUploadStudents from './BulkUploadStudents';
+import AddStudentModal from './AddStudentModal';
 import NoDataLight from '../../../../assets/No-Data.avif';
 import NoDataDark from '../../../../assets/NoDataDark.png';
 const Students = () => {
-  const location = useLocation();
-  const { isCollapsed } = useOutletContext();
+  const { isCollapsed, setIsCollapsed } = useOutletContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null)
   const searchInputRef = useRef(null);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showAddStudent, setShowAddStudent] = useState(false);
   const { isDark } = useTheme()
-  // Read optional collegeId from URL query params (e.g. ?collegeId=COL123)
-  const searchParams = new URLSearchParams(location.search);
-  const initialCollegeId = searchParams.get('collegeId') ?? null;
 
-  // Use Auth context to get user's college if provided (management user assigned to a college)
+  // Use Auth context — management user's own UID is the tenant key
   const { userData, user } = useAuth();
 
-  // Extract stable primitive values for useEffect deps (avoids re-running when userData object reference changes)
-  const userCollegeId = userData?.collegeId;
-  const userCollegeName = userData?.collegeName;
-
-  // Determine college filter: URL param takes precedence, otherwise use user's collegeId/collegeName
-  const getCollegeFilter = () => {
-    if (initialCollegeId) return { field: 'collegeId', value: initialCollegeId };
-    if (userCollegeId) return { field: 'collegeId', value: userCollegeId };
-    if (userCollegeName) return { field: 'collegeName', value: userCollegeName };
-    return null;
-  };
+  // The management user's UID is stored as `managementId` on every student/warden they own.
+  // This is the most reliable tenant-isolation filter.
+  const managementUid = user?.uid;
 
   useEffect(() => {
+    if (!managementUid) return; // wait until auth resolves
     let timer;
-    const collegeFilter = getCollegeFilter();
 
-    const q = collegeFilter
-      ? query(collection(db, 'users'), where('role', '==', 'student'), where(collegeFilter.field, '==', collegeFilter.value))
-      : query(collection(db, 'users'), where('role', '==', 'student'));
+    const q = query(
+      collection(db, 'users'),
+      where('role', '==', 'student'),
+      where('managementId', '==', managementUid)
+    );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
         const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setStudents(list);
-        // small artificial delay for UX (spinner)
         timer = setTimeout(() => setLoading(false), 1000);
       },
       (error) => {
@@ -68,7 +59,7 @@ const Students = () => {
       unsubscribe();
       if (timer) clearTimeout(timer);
     };
-  }, [initialCollegeId, userCollegeId, userCollegeName]);
+  }, [managementUid]);
 
   // Helper function to get role badge color
   const getRoleBadgeColor = (user) => {
@@ -84,13 +75,14 @@ const Students = () => {
 
 
   const handleRefresh = async () => {
+    if (!managementUid) return;
     setLoading(true);
     try {
-      const collegeFilter = getCollegeFilter();
-      const q = collegeFilter
-        ? query(collection(db, 'users'), where('role', '==', 'student'), where(collegeFilter.field, '==', collegeFilter.value))
-        : query(collection(db, 'users'), where('role', '==', 'student'));
-
+      const q = query(
+        collection(db, 'users'),
+        where('role', '==', 'student'),
+        where('managementId', '==', managementUid)
+      );
       const snapshot = await getDocs(q);
       const studentList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setStudents(studentList);
@@ -121,10 +113,11 @@ const Students = () => {
         title="Students · Management"
         pendingCount={0}
         isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
       />
 
       {/* Main Content */}
-      <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
+      <div className="pt-20 sm:pt-24 px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
         {/* Page Header */}
         <div className="page-header">
           <div className="page-header-left">
@@ -136,10 +129,16 @@ const Students = () => {
               <p className="page-subtitle">Manage and monitor all students</p>
             </div>
           </div>
-          <button type="button" className="btn-primary" onClick={() => setShowBulkUpload(true)}>
-            <FileSpreadsheet size={20} />
-            Bulk Upload
-          </button>
+          <div className="flex gap-3">
+            <button type="button" className="btn-primary" onClick={() => setShowAddStudent(true)} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
+              <Plus size={20} />
+              Add Student
+            </button>
+            <button type="button" className="btn-primary" onClick={() => setShowBulkUpload(true)}>
+              <FileSpreadsheet size={20} />
+              Bulk Upload
+            </button>
+          </div>
         </div>
 
         {/* Search and Filter */}
@@ -226,7 +225,7 @@ const Students = () => {
                 <div className="flex-1 min-w-0 " >
 
                   {/* Name and Badge */}
-                  <div className="flex items-center gap-8 mb-1 flex-wrap">
+                  <div className="flex items-center gap-2 sm:gap-8 mb-1 flex-wrap">
                     <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
                       {student.fullName || 'Unknown Student'}
                     </h3>
@@ -266,6 +265,13 @@ const Students = () => {
       <BulkUploadStudents
         isOpen={showBulkUpload}
         onClose={() => setShowBulkUpload(false)}
+        collegeName={userData?.collegeName}
+      />
+      
+      {/* Add Single Student Modal */}
+      <AddStudentModal
+        isOpen={showAddStudent}
+        onClose={() => setShowAddStudent(false)}
         collegeName={userData?.collegeName}
       />
     </>

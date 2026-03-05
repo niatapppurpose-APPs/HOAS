@@ -98,8 +98,7 @@ const Login = () => {
             : 'linear-gradient(135deg, #f8fafc, #eef2ff, #f1f5f9)'
         }}>
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mx-auto mb-4" />
-          <p className="text-lg" style={{ color: isDark ? '#d1d5db' : '#4b5563' }}>Loading...</p>
+          <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mx-auto" />
         </div>
       </div>
     );

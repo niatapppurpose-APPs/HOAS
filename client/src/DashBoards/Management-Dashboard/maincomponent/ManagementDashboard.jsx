@@ -23,7 +23,7 @@ const ManagementDashboard = () => {
   const { user, userData, logout } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
-  const { isCollapsed } = useOutletContext();
+  const { isCollapsed, setIsCollapsed } = useOutletContext();
 
   // State
   const [wardens, setWardens] = useState([]);
@@ -182,7 +182,7 @@ const ManagementDashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Loading...</div>
+        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -194,17 +194,18 @@ const ManagementDashboard = () => {
         pendingCount={stats.totalPending}
         title="Dashboard · Management Overview"
         isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
         collegeLogo={collegeLogo}
       />
 
       {/* Main Content */}
-      <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
+      <div className="pt-20 sm:pt-24 px-3 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-x-hidden">
         {/* Top Row: KPI Cards + Quick Approval */}
-        <div className="management-top-row">
-          <div className="kpi-section">
+        <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 mb-8">
+          <div className="flex-1 w-full min-w-0">
             <KPICards stats={stats} />
           </div>
-          <div className="quick-approval-section">
+          <div className="w-full xl:w-[400px] flex-shrink-0 flex flex-col gap-4">
             <QuickApproval
               pendingUser={firstPendingUser}
               onApprove={() => handleApprove(firstPendingUser?.id)}
@@ -213,10 +214,8 @@ const ManagementDashboard = () => {
             />
             <div>
               <AddWarden />
-
             </div>
           </div>
-
         </div>
 
         {/* Recent Activity */}
@@ -227,8 +226,8 @@ const ManagementDashboard = () => {
         />
 
         {/* Bottom Row: Status Table + Visualization */}
-        <div className="management-bottom-row">
-          <div className="management-table-wrapper">
+        <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 mt-4 sm:mt-8">
+          <div className="flex-1 w-full min-w-0 overflow-x-auto">
             <StatusTable
               users={paginatedUsers}
               currentPage={currentPage}
@@ -236,7 +235,7 @@ const ManagementDashboard = () => {
               onPageChange={setCurrentPage}
             />
           </div>
-          <div className="management-viz-wrapper">
+          <div className="w-full xl:w-[400px] 2xl:w-[500px] flex-shrink-0">
             <StatusVisualization
               wardens={wardensViz}
               students={studentsViz}

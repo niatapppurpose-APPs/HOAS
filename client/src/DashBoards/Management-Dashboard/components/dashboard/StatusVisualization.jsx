@@ -13,15 +13,15 @@ const StatusVisualization = ({ wardens, students }) => {
     const offset = circumference - (percentage / 100) * circumference;
 
     return (
-      <div className="circular-progress">
-        <svg width="200" height="200" viewBox="0 0 200 200">
+      <div className="relative flex flex-col items-center justify-center p-4">
+        <svg width="180" height="180" viewBox="0 0 200 200" className="sm:w-[200px] sm:h-[200px]">
           {/* Background Circle */}
           <circle
             cx="100"
             cy="100"
             r={radius}
             fill="none"
-            stroke="rgba(255, 255, 255, 0.1)"
+            stroke="var(--border-primary)"
             strokeWidth="12"
           />
           {/* Progress Circle */}
@@ -36,19 +36,19 @@ const StatusVisualization = ({ wardens, students }) => {
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             transform="rotate(-90 100 100)"
-            className="progress-circle"
+            className="transition-all duration-1000 ease-out drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]"
           />
         </svg>
-        <div className="progress-content">
-          <div className="progress-label">{label}</div>
-          <div className="progress-stats">
-            <div className="stat-item">
-              <span className="stat-value">{active}</span>
-              <span className="stat-label">Active</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div className="text-sm sm:text-base font-bold text-[var(--text-primary)] mb-2 uppercase tracking-widest">{label}</div>
+          <div className="flex gap-4">
+            <div className="flex flex-col items-center">
+              <span className="text-base sm:text-lg font-bold text-emerald-400">{active}</span>
+              <span className="text-[10px] sm:text-xs text-[var(--text-muted)] uppercase tracking-wide">Active</span>
             </div>
-            <div className="stat-item">
-              <span className="stat-value">{pending}</span>
-              <span className="stat-label">Pending</span>
+            <div className="flex flex-col items-center">
+              <span className="text-base sm:text-lg font-bold text-amber-400">{pending}</span>
+              <span className="text-[10px] sm:text-xs text-[var(--text-muted)] uppercase tracking-wide">Pending</span>
             </div>
           </div>
         </div>
@@ -57,7 +57,7 @@ const StatusVisualization = ({ wardens, students }) => {
   };
 
   return (
-    <div className="status-visualization-section">
+    <div className="flex flex-col sm:flex-row justify-around items-center gap-6 sm:gap-8 bg-[var(--bg-card)] backdrop-blur-xl border border-[var(--border-primary)] rounded-2xl p-6 shadow-lg mb-6 sm:mb-8">
       <CircularProgress
         percentage={wardensPercentage}
         color="#8B5CF6"

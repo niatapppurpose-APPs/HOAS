@@ -28,7 +28,7 @@ import { useToast } from '../../../../components/Toast';
 
 const ManagementComplaints = () => {
     const { userData } = useAuth();
-    const { isCollapsed } = useOutletContext();
+    const { isCollapsed, setIsCollapsed } = useOutletContext();
     const toast = useToast();
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -126,9 +126,10 @@ const ManagementComplaints = () => {
             <ManagementHeader
                 title="Complaints & Escalations"
                 isCollapsed={isCollapsed}
+                setIsCollapsed={setIsCollapsed}
             />
 
-            <div className="pt-24 px-4 sm:px-6 lg:px-8 pb-8">
+            <div className="pt-20 sm:pt-24 px-3 sm:px-4 lg:px-8 py-4 sm:pb-8">
                 {/* Stats Overview */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
                     <div className="p-4 rounded-2xl border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>

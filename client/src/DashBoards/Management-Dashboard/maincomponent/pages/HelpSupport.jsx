@@ -27,7 +27,7 @@ import {
 const ManagementHelpSupport = () => {
   const { isDark } = useTheme();
   const { userData } = useAuth();
-  const { isCollapsed } = useOutletContext();
+  const { isCollapsed, setIsCollapsed } = useOutletContext();
 
   const [activeTab, setActiveTab] = useState('faq');
   const [expandedFaq, setExpandedFaq] = useState(null);
@@ -64,9 +64,10 @@ const ManagementHelpSupport = () => {
       <ManagementHeader
         title="Help & Support"
         isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
       />
 
-      <div className="pt-24 px-4 sm:px-6 lg:px-8 pb-8">
+      <div className="pt-20 sm:pt-24 px-3 sm:px-4 lg:px-8 py-4 sm:pb-8">
         {/* Page Header */}
         <div className="mb-6">
           <h2

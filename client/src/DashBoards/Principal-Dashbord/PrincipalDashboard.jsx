@@ -14,8 +14,10 @@ import {
   UserPlus,
   Home,
 } from "lucide-react";
+import Avatar from "../../components/OwnerServices/Avatar";
 import AnimatedLogoutButton from "../../components/AnimatedLogoutButton";
-import { Avatar, StatsCard } from "./principalDashboardComponents";
+import NotificationBell from "../../components/OwnerServices/NotificationBell";
+import { StatsCard } from "./principalDashboardComponents";
 import UserCard from "./PrincipalUserCard";
 
 // Main Dashboard Component
@@ -162,37 +164,51 @@ const ManagementDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
       <header className="border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600">
-                <Building2 className="w-6 h-6 text-white" />
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <div className="p-1.5 sm:p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex-shrink-0">
+                <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-xl font-bold text-white truncate">
                   {userData?.collegeName || "Co-Admin Dashboard"}
                 </h1>
-                <p className="text-xs text-slate-400">Management Panel</p>
+                <p className="text-[10px] sm:text-xs text-slate-400 hidden sm:block">Management Panel</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5 sm:gap-4 flex-shrink-0">
               {totalPending > 0 && (
-                <span className="px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-sm font-medium border border-yellow-500/30">
-                  {totalPending} Pending
+                <span className="px-2 sm:px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-[10px] sm:text-sm font-medium border border-yellow-500/30 flex-shrink-0">
+                  <span className="hidden sm:inline">{totalPending} Pending</span>
+                  <span className="sm:hidden">{totalPending}</span>
                 </span>
               )}
-              
-              <AnimatedLogoutButton 
-                onLogout={handleLogout}
-                variant="dark"
-                text="Log Out"
-              />
 
-              <Avatar
-                image={user?.photoURL}
-                name={user?.displayName || "Management"}
-                size="md"
-              />
+              <div className="flex-shrink-0">
+                <NotificationBell />
+              </div>
+
+              <div className="flex-shrink-0">
+                <AnimatedLogoutButton 
+                  onLogout={handleLogout}
+                  variant="dark"
+                  text="Log Out"
+                />
+              </div>
+
+              <div className="flex-shrink-0 hidden sm:block">
+                <Avatar
+                  uid={user?.uid}
+                  image={userData?.photoURL || user?.photoURL}
+                  name={user?.displayName || "Management"}
+                  email={user?.email}
+                  size="md"
+                  rounded="full"
+                  collections={["users"]}
+                  editable
+                />
+              </div>
             </div>
           </div>
         </div>

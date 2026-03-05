@@ -11,19 +11,14 @@ export default defineConfig({
       'hoas-demo-2026.loca.lt',
       '.loca.lt',
       '.ngrok.io',
-      '.localhost.run'
+      '.localhost.run',
+      '.ngrok-free.dev'
     ]
   },
   // Build optimizations for better performance
   build: {
-    // Enable minification
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true, // Remove console.log in production
-        drop_debugger: true
-      }
-    },
+    // Use esbuild (built-in, no extra install) instead of terser
+    minify: 'esbuild',
     // Code splitting for better caching
     rollupOptions: {
       output: {

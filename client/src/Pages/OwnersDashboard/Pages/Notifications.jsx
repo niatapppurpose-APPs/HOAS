@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 const Notifications = () => {
-  const { isCollapsed } = useOutletContext();
+  const { isCollapsed, setIsCollapsed } = useOutletContext();
   const {
     notifications,
     unreadCount,
@@ -92,7 +92,7 @@ const Notifications = () => {
 
   return (
     <>
-      <Header title="Notifications" isCollapsed={isCollapsed} />
+      <Header title="Notifications" isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
         {!permissionGranted && (
           <motion.div

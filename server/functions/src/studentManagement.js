@@ -29,7 +29,20 @@ export const createStudent = onCall(corsOptions, async (request) => {
             throw new HttpsError('unauthenticated', 'User must be authenticated');
         }
 
-        const { name, studentId, email, collegeName, managementId } = request.data;
+        const { 
+            name, 
+            studentId, 
+            email, 
+            collegeName, 
+            managementId, 
+            phone, 
+            course, 
+            branch, 
+            year, 
+            hostelRoom, 
+            fatherName,
+            address
+        } = request.data;
 
         // ─── 2. Input Validation ───────────────────────────────────
         if (!name || !email) {
@@ -59,8 +72,8 @@ export const createStudent = onCall(corsOptions, async (request) => {
         }
 
         // ─── 5. Create Firebase Auth User ─────────────────────────
-        // Throwaway password: never stored, never logged, never transmitted
-        const throwawayPassword = crypto.randomUUID();
+        // Throwaway password: short & readable, never stored or logged
+        const throwawayPassword = crypto.randomBytes(6).toString('hex');
 
         const userRecord = await auth.createUser({
             email: email,
@@ -93,6 +106,13 @@ export const createStudent = onCall(corsOptions, async (request) => {
                 status: 'approved',
                 collegeName: collegeName,
                 managementId: effectiveManagementId,
+                phone: phone || '',
+                course: course || '',
+                branch: branch || '',
+                year: year || '',
+                hostelRoom: hostelRoom || '',
+                fatherName: fatherName || '',
+                address: address || '',
                 isOnline: false,
                 createdBy: request.auth.uid,
                 createdAt: new Date().toISOString(),
@@ -114,17 +134,14 @@ export const createStudent = onCall(corsOptions, async (request) => {
 
         // ─── 8. Send Welcome Email ────────────────────────────────
         let emailSent = false;
-        if (resetLink) {
-            emailSent = await sendStudentWelcomeEmail({
-                name,
-                studentId: studentId || '',
-                email,
-                institution: collegeName,
-                resetLink,
-            });
-        } else {
-            logger.warn(`⚠️ Skipping welcome email — no reset link available for ${email}`);
-        }
+        emailSent = await sendStudentWelcomeEmail({
+            name,
+            studentId: studentId || '',
+            email,
+            institution: collegeName,
+            password: throwawayPassword,
+            resetLink,
+        });
 
         // ─── 9. Return Response ───────────────────────────────────
         logger.info(`✅ Student created successfully: ${name} (${email}) — emailSent: ${emailSent}`);

@@ -24,31 +24,39 @@ export const storage = getStorage(app);
 
 // Initialize Cloud Messaging (only if supported by browser)
 let messaging = null;
-try {
-  if (await isSupported()) {
-    messaging = getMessaging(app);
+const messagingReady = (async () => {
+  try {
+    if (await isSupported()) {
+      messaging = getMessaging(app);
+    }
+  } catch (err) {
+    console.warn('⚠️ Firebase Messaging not supported in this browser:', err);
   }
-} catch (err) {
-  console.warn('⚠️ Firebase Messaging not supported in this browser:', err);
-}
-export { messaging };
+})();
+export { messaging, messagingReady };
 // Track emulator status for other modules
 // Default to false to avoid accidentally using emulators in production
 export let isEmulatorConnected = false;
 
 // Enable persistence so user stays logged in after page reload
-try {
-  // Await persistence so it's applied before auth state is restored
-  await setPersistence(auth, browserLocalPersistence);
-} catch (err) {
-  console.warn('⚠️ Failed to set auth persistence:', err);
-}
+(async () => {
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+  } catch (err) {
+    console.warn('⚠️ Failed to set auth persistence:', err);
+  }
+})();
 
 // Check for emulator mode from localStorage (user toggle) or environment variable
 const localStorageEmulatorFlag = localStorage.getItem('VITE_USE_FIREBASE_EMULATOR');
-const useEmulator = localStorageEmulatorFlag !== null
+const requestedEmulatorMode = localStorageEmulatorFlag !== null
   ? localStorageEmulatorFlag === 'true'
   : import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
+
+// When sharing the app through tunnels (ngrok/localtunnel), remote users cannot access
+// localhost emulators. Force production Firebase in that scenario to avoid login/network errors.
+const isTunnelHost = typeof window !== 'undefined' && /(?:^|\.)((ngrok-free\.dev)|(ngrok\.io)|(loca\.lt)|(localhost\.run))$/i.test(window.location.hostname);
+const useEmulator = requestedEmulatorMode && !isTunnelHost;
 
 // Check for a debug override (e.g., via debugUtils.forceProductionMode())
 const forceProd = (typeof window !== 'undefined') && localStorage.getItem('forceProductionFirebase') === 'true';
@@ -61,6 +69,9 @@ const lastMode = localStorage.getItem(LAST_MODE_KEY);
 // Connect to emulators when explicitly requested and not forced into production
 if (forceProd) {
   console.log('🔒 Production mode forced via localStorage (forceProductionFirebase=true) - skipping emulator connections');
+  isEmulatorConnected = false;
+} else if (isTunnelHost && requestedEmulatorMode) {
+  console.log('🌐 Tunnel host detected; skipping localhost Firebase emulators and using production services');
   isEmulatorConnected = false;
 } else if (import.meta.env.DEV && useEmulator) {
   try {
@@ -86,19 +97,24 @@ if (forceProd) {
   isEmulatorConnected = false;
 }
 
-// Detect emulator→production switch and clear stale auth state
-// When switching from emulator to production, any cached emulator credentials/tokens
-// are invalid against the real Firebase Auth backend, causing silent login failures.
-if (lastMode === 'emulator' && currentMode === 'production') {
-  console.warn('🔄 Detected switch from EMULATOR → PRODUCTION. Clearing stale auth session...');
+// Detect emulator→production switch and clear stale auth state.
+// ONLY do this in DEV mode — in production there are no emulators, so a
+// stale 'emulator' flag in localStorage (left over from local dev) must
+// NOT sign production users out automatically.
+if (import.meta.env.DEV && lastMode === 'emulator' && currentMode === 'production') {
+  console.warn('🔄 [DEV] Detected switch from EMULATOR → PRODUCTION. Clearing stale auth session...');
   try {
-    // Sign out the stale emulator user so a fresh login can happen against production
     const { signOut } = await import('firebase/auth');
     await signOut(auth);
     console.log('✅ Stale emulator session cleared. You can now log in with production credentials.');
   } catch (err) {
     console.warn('⚠️ Failed to clear stale session (may already be signed out):', err);
   }
+} else if (!import.meta.env.DEV && lastMode === 'emulator') {
+  // In production, silently correct any stale localStorage emulator flag
+  // so it never triggers a false signOut on next load.
+  localStorage.setItem(LAST_MODE_KEY, 'production');
+  console.log('🔒 Production: corrected stale emulator mode flag in localStorage.');
 }
 
 // Persist the current mode for next reload

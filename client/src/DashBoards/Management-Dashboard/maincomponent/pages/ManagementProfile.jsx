@@ -15,7 +15,7 @@ import AppLogo4k from "../../../../assets/AppLogo4k.png";
 
 
 const ManagementProfile = () => {
-    const { user, userData } = useAuth();
+    const { user, userData, userDataLoading } = useAuth();
     const { isDark } = useTheme();
     const navigate = useNavigate();
     const [teamMembers, setTeamMembers] = useState([]);
@@ -53,6 +53,19 @@ const ManagementProfile = () => {
     const textColor = isDark ? "#f1f5f9" : "#0f172a";
     const subBg = isDark ? "rgba(255,255,255,0.07)" : "rgba(241,245,249,0.85)";
     const itemBorder = isDark ? "rgba(255,255,255,0.12)" : "rgba(148,163,184,0.35)";
+
+    // Show a spinner while Firestore user data is still loading so fields
+    // never render as "—" when data is simply in-flight.
+    if (userDataLoading) {
+        return (
+            <div
+                className="min-h-screen flex items-center justify-center"
+                style={{ background: isDark ? "linear-gradient(135deg,#030712,#0c0a1e,#050816)" : "linear-gradient(135deg,#f8fafc,#eef2ff,#f1f5f9)" }}
+            >
+                <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div
@@ -134,7 +147,7 @@ const ManagementProfile = () => {
                         <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 mb-4">
 
                             {/* Logo — only this element overlaps the banner */}
-                            <div className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 -mt-10 sm:-mt-14">
+                            <div className="relative flex-shrink-0 w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 -mt-8 sm:-mt-14">
                                 <div
                                     className="w-full h-full rounded-2xl overflow-hidden border-4 shadow-xl"
                                     style={{ borderColor: isDark ? "#1e293b" : "#fff" }}
@@ -184,7 +197,7 @@ const ManagementProfile = () => {
                             {[
                                 { icon: Building2, label: "Institution", value: userData?.collegeName || "—" },
                                 { icon: MapPin, label: "Location", value: userData?.collegeLocation || "—" },
-                                { icon: Mail, label: "Email", value: user?.email || "—" },
+                                { icon: Mail, label: "Email", value: userData?.email || user?.email || "—" },
                                 { icon: Calendar, label: "Member Since", value: userData?.createdAt ? new Date(userData.createdAt).getFullYear() : "—" },
                                 { icon: Award, label: "Status", value: userData?.status === "approved" ? "Approved ✓" : userData?.status || "—" },
                             ].map(({ icon: Icon, label, value }, idx) => (
@@ -222,7 +235,7 @@ const ManagementProfile = () => {
                     <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5">
                         {/* Avatar */}
                         <div className="flex-shrink-0">
-                            <Avatar image={user?.photoURL} name={user?.displayName} size="xl" rounded="xl" />
+                            <Avatar uid={user?.uid} image={userData?.photoURL || user?.photoURL} name={user?.displayName} email={user?.email} size="xl" rounded="xl" collections={["users"]} editable />
                         </div>
 
                         {/* Details */}

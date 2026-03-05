@@ -26,7 +26,7 @@ import { HashLoader } from "react-spinners";
 import { useTheme } from "../../../context/ThemeContext";
 
 const SupportTickets = () => {
-    const { isCollapsed } = useOutletContext();
+    const { isCollapsed, setIsCollapsed } = useOutletContext();
     const { isDark } = useTheme();
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -97,10 +97,13 @@ const SupportTickets = () => {
     // Filter tickets
     const filteredTickets = tickets.filter(ticket => {
         const matchesSearch =
+            ticket.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ticket.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             ticket.errorMessage?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             ticket.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             ticket.userEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.fileName?.toLowerCase().includes(searchTerm.toLowerCase());
+            ticket.fileName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ticket.category?.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesStatus = filterStatus === "all" || ticket.status === filterStatus;
         const matchesType = filterType === "all" || ticket.type === filterType;
@@ -161,9 +164,15 @@ const SupportTickets = () => {
         });
     };
 
+    const getTicketTitle = (ticket) =>
+        ticket.subject || ticket.errorMessage || ticket.description || 'No message';
+
+    const getTicketMeta = (ticket) =>
+        ticket.fileName || ticket.category || 'General';
+
     return (
         <>
-            <Header title="Support Tickets" isCollapsed={isCollapsed} />
+            <Header title="Support Tickets" isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
             <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
                 {/* Page Header */}
@@ -266,7 +275,11 @@ const SupportTickets = () => {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {filteredTickets.map((ticket) => (
+                        {filteredTickets.map((ticket) => {
+                            const ticketTitle = getTicketTitle(ticket);
+                            const ticketMeta = getTicketMeta(ticket);
+
+                            return (
                             <div
                                 key={ticket.id}
                                 className="p-4 rounded-xl cursor-pointer hover:scale-[1.01] transition-all"
@@ -285,8 +298,8 @@ const SupportTickets = () => {
                                         <div className="flex items-center gap-2 mb-1">
                                             {getPriorityBadge(ticket.priority)}
                                             <h3 className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
-                                                {ticket.errorMessage?.substring(0, 60) || "No message"}
-                                                {ticket.errorMessage?.length > 60 && "..."}
+                                                {ticketTitle.substring(0, 60)}
+                                                {ticketTitle.length > 60 && "..."}
                                             </h3>
                                         </div>
 
@@ -297,7 +310,7 @@ const SupportTickets = () => {
                                             </span>
                                             <span className="flex items-center gap-1">
                                                 <FileCode className="w-3 h-3" />
-                                                {ticket.fileName || "Unknown"}
+                                                {ticketMeta}
                                             </span>
                                             <span className="flex items-center gap-1">
                                                 <Calendar className="w-3 h-3" />
@@ -311,7 +324,8 @@ const SupportTickets = () => {
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
@@ -410,23 +424,42 @@ const SupportTickets = () => {
                             </div>
                         </div>
 
-                        {/* Error Details */}
+                        {/* Ticket Details */}
                         <div className="mb-6">
                             <h3 className="font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                                <Bug className="w-4 h-4" /> Error Details
+                                <Bug className="w-4 h-4" /> {selectedTicket.type === 'bug_report' ? 'Error Details' : 'Message Details'}
                             </h3>
                             <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 text-sm font-medium">
-                                        <FileCode className="w-4 h-4" /> {selectedTicket.fileName}
-                                    </span>
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-100 text-orange-700 text-sm font-medium">
-                                        <Hash className="w-4 h-4" /> Line {selectedTicket.lineNumber}
-                                    </span>
-                                </div>
-                                <div className="p-4 rounded-lg bg-gray-900 text-red-400 text-sm font-mono overflow-x-auto shadow-inner">
-                                    {selectedTicket.errorMessage}
-                                </div>
+                                {selectedTicket.type === 'bug_report' ? (
+                                    <>
+                                        <div className="flex items-center gap-2">
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 text-sm font-medium">
+                                                <FileCode className="w-4 h-4" /> {selectedTicket.fileName || 'Unknown'}
+                                            </span>
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-100 text-orange-700 text-sm font-medium">
+                                                <Hash className="w-4 h-4" /> Line {selectedTicket.lineNumber || 'Unknown'}
+                                            </span>
+                                        </div>
+                                        <div className="p-4 rounded-lg bg-gray-900 text-red-400 text-sm font-mono overflow-x-auto shadow-inner">
+                                            {selectedTicket.errorMessage || 'No error message'}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                                            <p className="text-xs font-semibold uppercase mb-1" style={{ color: 'var(--text-muted)' }}>Subject</p>
+                                            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                                                {selectedTicket.subject || 'No subject'}
+                                            </p>
+                                        </div>
+                                        <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                                            <p className="text-xs font-semibold uppercase mb-1" style={{ color: 'var(--text-muted)' }}>Description</p>
+                                            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                                                {selectedTicket.description || 'No description provided'}
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -449,12 +482,14 @@ const SupportTickets = () => {
                         )}
 
                         {/* Stack Trace */}
-                        <div>
-                            <h3 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Stack Trace</h3>
-                            <pre className="text-xs p-4 rounded-lg bg-gray-900 text-gray-300 overflow-x-auto max-h-48 scrollbar-thin scrollbar-thumb-gray-700">
-                                {selectedTicket.stackTrace}
-                            </pre>
-                        </div>
+                        {selectedTicket.stackTrace && (
+                            <div>
+                                <h3 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Stack Trace</h3>
+                                <pre className="text-xs p-4 rounded-lg bg-gray-900 text-gray-300 overflow-x-auto max-h-48 scrollbar-thin scrollbar-thumb-gray-700">
+                                    {selectedTicket.stackTrace}
+                                </pre>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

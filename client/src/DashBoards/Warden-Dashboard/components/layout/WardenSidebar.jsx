@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Users,
   FileText,
+  CalendarDays,
   Bell,
   Settings,
   HelpCircle,
@@ -16,7 +17,8 @@ import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from '../../../../components/OwnerServices/Avatar';
 import AppLogo4k from '../../../../assets/AppLogo4k.png';
-
+import NewBadge from "../../../../components/NewBadge";
+import { isNavItemNew, dismissNavItemFeatures } from "../../../../data/newFeatures";
 const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementData }) => {
   const { user, userData } = useAuth();
   const { isDark } = useTheme();
@@ -24,12 +26,20 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
   const location = useLocation();
   const [isPinned, setIsPinned] = useState(false);
   const [showLogoPopup, setShowLogoPopup] = useState(false);
-
+  const [, forceUpdate] = useState(0);
+  const [profileData, setProfileData] = useState({
+    displayName: "",
+    email: "",
+    phone: "",
+    organization: "",
+    photoURL: "",
+  });
   // Get active item from current path
   const getActiveItem = () => {
     const path = location.pathname;
     if (path.includes('/students')) return 'students';
     if (path.includes('/complaints')) return 'complaints';
+    if (path.includes('/leave-requests')) return 'leave-requests';
     if (path.includes('/announcements')) return 'announcements';
     if (path.includes('/settings')) return 'settings';
     if (path.includes('/help')) return 'help';
@@ -66,6 +76,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/warden" },
     { id: "students", label: "Students", icon: Users, path: "/dashboard/warden/students" },
     { id: "complaints", label: "Complaints", icon: FileText, path: "/dashboard/warden/complaints" },
+    { id: "leave-requests", label: "Leave Requests", icon: CalendarDays, path: "/dashboard/warden/leave-requests" },
     { id: "announcements", label: "Announcements", icon: Bell, path: "/dashboard/warden/announcements" },
   ];
 
@@ -203,13 +214,19 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${!showContent ? "lg:justify-center" : ""}`}
                   style={isActive ? activeStyle : { color: 'var(--text-secondary)' }}
                 >
-                  <Icon
-                    className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110`}
-                    style={{ color: isActive ? '#ffffff' : 'var(--text-secondary)' }}
-                  />
+                  <span className="relative flex-shrink-0">
+                    <Icon
+                      className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110`}
+                      style={{ color: isActive ? '#ffffff' : 'var(--text-secondary)' }}
+                    />
+                    {isNavItemNew(item.id) && !showContent && <NewBadge dot />}
+                  </span>
                   <span className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""}`}>
                     {item.label}
                   </span>
+                  {isNavItemNew(item.id) && showContent && (
+                    <NewBadge onDismiss={() => { dismissNavItemFeatures(item.id); forceUpdate(n => n + 1); }} />
+                  )}
 
                   {/* Tooltip for collapsed state */}
                   {!showContent && (
@@ -253,13 +270,19 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${!showContent ? "lg:justify-center" : ""}`}
                   style={{ color: 'var(--text-secondary)' }}
                 >
-                  <Icon
-                    className="w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
-                    style={{ color: 'var(--text-secondary)' }}
-                  />
+                  <span className="relative flex-shrink-0">
+                    <Icon
+                      className="w-5 h-5 transition-transform duration-300 group-hover:scale-110"
+                      style={{ color: 'var(--text-secondary)' }}
+                    />
+                    {isNavItemNew(item.id) && !showContent && <NewBadge dot />}
+                  </span>
                   <span className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""}`}>
                     {item.label}
                   </span>
+                  {isNavItemNew(item.id) && showContent && (
+                    <NewBadge onDismiss={() => { dismissNavItemFeatures(item.id); forceUpdate(n => n + 1); }} />
+                  )}
 
                   {/* Tooltip for collapsed state */}
                   {!showContent && (
@@ -294,7 +317,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
               } : undefined}
             >
               <div className={`flex items-center ${showContent ? "gap-3" : "justify-center"}`}>
-                <Avatar image={user?.photoURL} name={user?.displayName} size="sm" rounded="full" />
+                <Avatar image={userData?.photoURL || user?.photoURL} name={userData?.displayName || user?.displayName} size="sm" rounded="full" />
                 {showContent && (
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>

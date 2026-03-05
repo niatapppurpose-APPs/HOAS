@@ -136,7 +136,8 @@ const Home = () => {
                         </motion.div>
 
                         {/* Mobile Menu Toggle */}
-                        <div className="flex md:hidden items-center z-50">
+                        <div className="flex md:hidden items-center gap-2 z-50">
+                            <ThemeToggle size="sm" className="bg-white/10 hover:bg-white/20 border border-white/15" />
                             <button
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                                 className="p-2 transition-colors active:scale-90"
@@ -155,31 +156,31 @@ const Home = () => {
                     {isMobileMenuOpen && (
                         <motion.div
                             initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: '100vh' }}
+                            animate={{ opacity: 1, height: '100dvh' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.3, ease: 'easeInOut' }}
-                            className="absolute top-0 left-0 w-full pt-24 px-6 md:hidden flex flex-col gap-6 overflow-hidden"
+                            className="absolute top-0 left-0 w-full pt-20 px-5 pb-6 md:hidden flex flex-col overflow-y-auto"
                             style={{ backgroundColor: isDark ? '#020617' : '#f8fafc' }}>
                             <motion.div
                                 variants={containerVariants}
                                 initial="hidden"
                                 animate="visible"
-                                className="flex flex-col gap-6 text-center"
+                                className="flex flex-col gap-4 text-center"
                             >
                                 <motion.div
                                     variants={itemVariants}
-                                    className="flex flex-col items-center gap-6 mb-8"
+                                    className="flex flex-col items-center gap-4 mb-5"
                                 >
                                     <motion.div
                                         animate={{ y: [0, -10, 0], rotate: [0, 1, 0, -1, 0] }}
                                         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                                        className="w-24 h-24 bg-indigo-600 rounded-2xl p-2.5 flex items-center justify-center shadow-[0_0_40px_rgba(79,70,229,0.3)] border border-white/10"
+                                        className="w-20 h-20 bg-indigo-600 rounded-2xl p-2.5 flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.3)] border border-white/10"
                                     >
                                         <div className="w-full h-full bg-white rounded-xl overflow-hidden flex items-center justify-center">
                                             <img src={AppLogo} alt="AppLogo" className="w-full h-full object-contain animate-logo-glow" />
                                         </div>
                                     </motion.div>
-                                    <span className="text-3xl font-black uppercase tracking-[0.3em] bg-clip-text text-transparent bg-gradient-to-b"
+                                    <span className="text-2xl font-black uppercase tracking-[0.2em] bg-clip-text text-transparent bg-gradient-to-b"
                                         style={{
                                             backgroundImage: isDark
                                                 ? 'linear-gradient(to bottom, #ffffff, #94a3b8)'
@@ -187,28 +188,32 @@ const Home = () => {
                                         }}>HOAS</span>
                                 </motion.div>
                                 <motion.button variants={itemVariants} onClick={() => scrollToSection('roles')}
-                                    className="text-lg font-medium py-2 border-b w-full transition-colors"
+                                    className="text-base font-semibold py-3 rounded-xl border w-full transition-colors"
                                     style={{
                                         color: isDark ? '#cbd5e1' : '#475569',
-                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+                                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.65)'
                                     }}>Roles</motion.button>
                                 <motion.button variants={itemVariants} onClick={() => scrollToSection('features')}
-                                    className="text-lg font-medium py-2 border-b w-full transition-colors"
+                                    className="text-base font-semibold py-3 rounded-xl border w-full transition-colors"
                                     style={{
                                         color: isDark ? '#cbd5e1' : '#475569',
-                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+                                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.65)'
                                     }}>Features</motion.button>
                                 <motion.button variants={itemVariants} onClick={() => scrollToSection('workflow')}
-                                    className="text-lg font-medium py-2 border-b w-full transition-colors"
+                                    className="text-base font-semibold py-3 rounded-xl border w-full transition-colors"
                                     style={{
                                         color: isDark ? '#cbd5e1' : '#475569',
-                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+                                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.65)'
                                     }}>Workflow</motion.button>
                                 <motion.button variants={itemVariants} onClick={() => { setIsMobileMenuOpen(false); setIsAboutOpen(true); }}
-                                    className="text-lg font-medium py-2 border-b w-full flex items-center justify-center gap-2 transition-colors"
+                                    className="text-base font-semibold py-3 rounded-xl border w-full flex items-center justify-center gap-2 transition-colors"
                                     style={{
                                         color: isDark ? '#cbd5e1' : '#475569',
-                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)'
+                                        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+                                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.65)'
                                     }}>
                                     <Info className="w-5 h-5" /> About App
                                 </motion.button>
@@ -218,20 +223,15 @@ const Home = () => {
                                 variants={containerVariants}
                                 initial="hidden"
                                 animate="visible"
-                                className="flex flex-col gap-4 mt-4"
+                                className="flex flex-col gap-4 mt-5 pb-4"
                             >
-                                {/* Mobile Theme Toggle */}
-                                <div className="flex justify-center">
-                                    <ThemeToggle size="md" className="bg-white/5 hover:bg-white/10 border border-white/10" />
-                                </div>
-
                                 <motion.button
                                     variants={itemVariants}
                                     onClick={() => {
                                         setIsMobileMenuOpen(false);
                                         handleNavigate();
                                     }}
-                                    className="w-full py-4 text-base font-semibold rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
+                                    className="w-full py-3.5 text-base font-semibold rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
                                     style={{
                                         backgroundColor: '#6366f1',
                                         color: '#ffffff',

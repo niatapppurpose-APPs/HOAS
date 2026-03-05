@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useOutletContext, Link } from 'react-router-dom';
 import { db } from '../../firebase/firebaseConfig';
-import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import StudentHeader from './components/layout/StudentHeader';
 import StatsCard from '../../components/OwnerServices/StatsCard';
 import { useToast } from '../../components/Toast';
@@ -66,23 +66,32 @@ const StudentDashboard = () => {
     useEffect(() => {
         if (!user?.uid) return;
 
+        setComplaintsLoading(true);
         const q = query(
             collection(db, 'complaints'),
-            where('studentId', '==', user.uid),
-            orderBy('createdAt', 'desc'),
-            limit(5)
+            where('studentId', '==', user.uid)
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+            // Skip empty cache results — wait for the real network response
+            if (snapshot.metadata.fromCache && snapshot.empty) return;
+
             const list = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
-            }));
+            })).sort((a, b) => {
+                const tA = a.createdAt?.toMillis?.() ?? 0;
+                const tB = b.createdAt?.toMillis?.() ?? 0;
+                return tB - tA;
+            }).slice(0, 5);
             setComplaints(list);
 
             // Re-fetch all to get total pending count if needed, or filter current list if limit is enough
             const pending = list.filter(c => c.status === 'pending').length;
             setPendingCount(pending);
+            setComplaintsLoading(false);
+        }, (error) => {
+            console.error('Complaints fetch error:', error);
             setComplaintsLoading(false);
         });
 
@@ -209,7 +218,7 @@ const StudentDashboard = () => {
                             </h1>
                             <p className="mt-2 text-sm md:text-base opacity-70" style={{ color: 'var(--text-secondary)' }}>Your quick overview and hostel status</p>
                             <div className="mt-6 flex flex-wrap gap-3 justify-center md:justify-start">
-                                <button onClick={() => navigate('complaint-form')} className="px-4 md:px-5 py-2 md:py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs md:text-sm shadow-lg shadow-blue-500/30 hover:scale-105 transition-transform flex items-center gap-2">
+                                <button onClick={() => navigate('help')} className="px-4 md:px-5 py-2 md:py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs md:text-sm shadow-lg shadow-blue-500/30 hover:scale-105 transition-transform flex items-center gap-2">
                                     <FileText size={14} className="md:w-4 md:h-4" /> Need Help?
                                 </button>
                                 <button onClick={() => navigate('profile')} className="px-4 md:px-5 py-2 md:py-2.5 rounded-xl border font-bold text-xs md:text-sm hover:bg-blue-500/5 transition-all flex items-center gap-2" style={{ borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}>
@@ -287,11 +296,12 @@ const StudentDashboard = () => {
                                         <p className="mt-3 md:mt-4 text-[10px] md:text-xs font-bold uppercase tracking-widest animate-pulse" style={{ color: 'var(--text-muted)' }}>Syncing Activity Feed...</p>
                                     </div>
                                 ) : complaints.length === 0 ? (
-                                    <div className="p-12 md:p-16 text-center">
-                                        <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-500/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/10">
-                                            <MessageSquare className="w-6 h-6 md:w-8 md:h-8 text-blue-500 opacity-20" />
+                                    <div className="p-10 md:p-12 text-center">
+                                        <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-500/5 rounded-full flex items-center justify-center mx-auto mb-3 border border-blue-500/10">
+                                            <MessageSquare className="w-5 h-5 md:w-6 md:h-6 text-blue-500 opacity-30" />
                                         </div>
-                                        <p className="text-[10px] md:text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>No recent activity records found.</p>
+                                        <p className="text-xs md:text-sm font-bold" style={{ color: 'var(--text-muted)' }}>No Complaints</p>
+                                        <p className="text-[10px] md:text-xs mt-1" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>You haven't raised any complaints yet.</p>
                                     </div>
                                 ) : (
                                     complaints.map((c) => (
@@ -331,7 +341,7 @@ const StudentDashboard = () => {
                         <div className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 md:p-8 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
                             <div className="flex flex-col items-center text-center mb-6">
                                 <div className="w-20 h-20 rounded-xl overflow-hidden mb-4 shadow-xl border-2 border-blue-500/20">
-                                    <Avatar name={userData?.fullName} image={userData.photoURL} className="w-full h-full object-cover" />
+                                    <Avatar name={userData?.fullName} image={userData?.photoURL || user?.photoURL} email={userData?.email || user?.email} className="w-full h-full object-cover" />
                                 </div>
                                 <h3 className="text-xl font-black uppercase tracking-tighter" style={{ color: 'var(--text-primary)' }}>{userData.fullName}</h3>
                                 <div className="mt-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 text-[10px] font-black uppercase tracking-widest">

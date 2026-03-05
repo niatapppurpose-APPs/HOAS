@@ -10,8 +10,8 @@ import "../ManagementDashboard.css";
 
 const Reports = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { isCollapsed } = useOutletContext();
-  const { userData } = useAuth();
+  const { isCollapsed, setIsCollapsed } = useOutletContext();
+  const { userData, user } = useAuth();
 
   const [uploads, setUploads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,15 +36,15 @@ const Reports = () => {
 
   // Fetch bulk upload history
   useEffect(() => {
-    if (!userData?.collegeName) return;
+    if (!user?.uid) return;
 
-    // Query: Get uploads for this college, ordered by newest first
-    console.log("Fetching uploads for college:", userData.collegeName);
+    // Filter by the uploader's UID — most reliable tenant isolation
+    console.log("Fetching uploads for management:", user.uid);
 
     try {
       const q = query(
         collection(db, "bulkUploads"),
-        where("collegeName", "==", userData.collegeName),
+        where("uploadedBy", "==", user.uid),
         orderBy("createdAt", "desc")
       );
 
@@ -88,7 +88,7 @@ const Reports = () => {
           console.log("Index missing, retrying without sort...");
           const simpleQ = query(
             collection(db, "bulkUploads"),
-            where("collegeName", "==", userData.collegeName)
+            where("uploadedBy", "==", user.uid)
           );
           onSnapshot(simpleQ, async (snap) => {
             const dataPromises = snap.docs.map(async d => {
@@ -119,7 +119,7 @@ const Reports = () => {
       console.error("Setup error:", err);
       setLoading(false);
     }
-  }, [userData?.collegeName]);
+  }, [user?.uid]);
 
   const filteredUploads = uploads.filter(upload =>
     upload.uploadedByEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -131,9 +131,10 @@ const Reports = () => {
       <ManagementHeader
         title="Reports"
         isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
       />
 
-      <div className="pt-24 px-4 sm:px-6 lg:px-8 pb-8">
+      <div className="pt-20 sm:pt-24 px-3 sm:px-4 lg:px-8 py-4 sm:pb-8">
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>

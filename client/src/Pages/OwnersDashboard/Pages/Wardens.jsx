@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, where, onSnapshot, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { deleteUserAccount } from '../../../firebase/cloudFunctions';
 import { db } from '../../../firebase/firebaseConfig';
 import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
@@ -13,7 +14,7 @@ import NoDataLight from '../../../assets/No-Data.avif';
 import NoDataDark from '../../../assets/NoDataDark.png';
 const Wardens = () => {
     const { isDark } = useTheme();
-    const { isCollapsed } = useOutletContext();
+    const { isCollapsed, setIsCollapsed } = useOutletContext();
     const location = useLocation();
     const navigate = useNavigate();
     const [wardens, setWardens] = useState([]);
@@ -145,6 +146,7 @@ const Wardens = () => {
             <Header
                 title="Hostel Wardens"
                 isCollapsed={isCollapsed}
+                setIsCollapsed={setIsCollapsed}
                 onProfileClick={savePageState}
             />
 
@@ -399,7 +401,7 @@ const Wardens = () => {
                     if (!deleteModal.warden) return;
                     setIsDeleting(true);
                     try {
-                        await deleteDoc(doc(db, 'users', deleteModal.warden.id));
+                        await deleteUserAccount(deleteModal.warden.id);
                         setDeleteModal({ isOpen: false, warden: null });
                         setError(null);
                     } catch (err) {

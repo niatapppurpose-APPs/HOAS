@@ -27,7 +27,7 @@ import LoadingState from "./components/LoadingState";
 
 // Import extracted modals
 import AddManagementModal from "./modals/AddManagementModal";
-import ViewPasswordModal from "./modals/ViewPasswordModal";
+
 
 // Import constants (hoisted outside component)
 import { roleColors } from "./constants";
@@ -36,7 +36,7 @@ import { Building2, CheckCircle, Clock, Plus } from "lucide-react";
 
 // Main Dashboard Component
 const OwnersDashboard = () => {
-  const { isCollapsed } = useOutletContext();
+  const { isCollapsed, setIsCollapsed } = useOutletContext();
   const { user, isAdmin, loading, adminChecked, logout } = useAuth();
   const { isApprovalsEnabled } = useSystemSettings();
   const navigate = useNavigate();
@@ -64,21 +64,7 @@ const OwnersDashboard = () => {
   // Add Management Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // [PW-STATE] View Password Modal state
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [selectedManagementForPassword, setSelectedManagementForPassword] = useState(null);
 
-  // [PW-FN1] Open password view modal
-  const handleViewPassword = useCallback((management) => {
-    setSelectedManagementForPassword(management);
-    setIsPasswordModalOpen(true);
-  }, []);
-
-  // [PW-FN3] Close password modal
-  const closePasswordModal = useCallback(() => {
-    setIsPasswordModalOpen(false);
-    setSelectedManagementForPassword(null);
-  }, []);
 
   // Tour Driver Effect
   useEffect(() => {
@@ -422,7 +408,7 @@ const OwnersDashboard = () => {
   return (
     <>
       {/* Header */}
-      <Header pendingCount={pendingCount} handleLogout={handleLogout} user={user} title="Dashboard · Admin Overview" isCollapsed={isCollapsed} />
+      <Header pendingCount={pendingCount} handleLogout={handleLogout} user={user} title="Dashboard · Admin Overview" isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
       {/* Main Content */}
       <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
@@ -514,8 +500,6 @@ const OwnersDashboard = () => {
                   onToggleSelection={toggleUserSelection}
                   onStatusChange={handleStatusChange}
                   onDelete={handleOpenDeleteModal}
-                  // [PW-PROP] Passes the eye-icon handler to each management card — comment out to hide the button
-                  onViewPassword={handleViewPassword}
                 />
               ))}
             </div>
@@ -539,14 +523,6 @@ const OwnersDashboard = () => {
         isDark={isDark}
       />
 
-      {/* View Password Modal */}
-      <ViewPasswordModal
-        isOpen={isPasswordModalOpen}
-        onClose={closePasswordModal}
-        user={user}
-        selectedManagement={selectedManagementForPassword}
-        isDark={isDark}
-      />
     </>
   );
 };

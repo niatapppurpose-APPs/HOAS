@@ -10,7 +10,7 @@ import ProfileBanner from "../../../../components/ProfileBanner";
 import AppLogo4k from "../../../../assets/AppLogo4k.png";
 
 const StudentProfile = () => {
-    const { user, userData } = useAuth();
+    const { user, userData, userDataLoading } = useAuth();
     const { isDark } = useTheme();
     const navigate = useNavigate();
     const { collegeLogo: layoutLogo, managementData } = useOutletContext() || {};
@@ -27,6 +27,18 @@ const StudentProfile = () => {
     const textColor = isDark ? "#f1f5f9" : "#0f172a";
     const subBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)";
     const accentColor = "#3b82f6"; // blue for student
+
+    // Show spinner while loading to prevent blank "—" fields
+    if (userDataLoading) {
+        return (
+            <div
+                className="min-h-screen flex items-center justify-center"
+                style={{ background: isDark ? "linear-gradient(135deg,#030712,#0c0a1e,#050816)" : "linear-gradient(135deg,#f8fafc,#eff6ff,#f1f5f9)" }}
+            >
+                <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div
@@ -108,7 +120,7 @@ const StudentProfile = () => {
                         My Profile
                     </h2>
                     <div className="flex flex-col sm:flex-row items-start gap-5">
-                        <Avatar image={user?.photoURL} name={user?.displayName} size="xl" rounded="xl" />
+                        <Avatar uid={user?.uid} image={userData?.photoURL || user?.photoURL} name={user?.displayName} email={user?.email} size="xl" rounded="xl" collections={["users"]} editable />
                         <div className="flex-1 min-w-0 space-y-3">
                             <div>
                                 <h3 className="text-xl font-bold" style={{ color: textColor }}>{user?.displayName || "Student"}</h3>

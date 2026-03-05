@@ -30,6 +30,7 @@ import {
     ArrowRightCircle,
     ShieldAlert,
     Flag,
+    MessageSquareText,
 } from 'lucide-react';
 import './WardenComplaints.css';
 

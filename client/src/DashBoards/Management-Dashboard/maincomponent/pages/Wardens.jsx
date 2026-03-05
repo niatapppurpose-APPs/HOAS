@@ -17,21 +17,28 @@ import NoDataDark from '../../../../assets/NoDataDark.png';
 
 const Wardens = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { isCollapsed } = useOutletContext();
+  const { isCollapsed, setIsCollapsed } = useOutletContext();
   const [getwarden, setGetAllwarden] = useState([])
   const [loading, setLoading] = useState(null)
   const [error, setError] = useState(null)
   const searchInputRef = useRef(null);
   const [showAddWarden, setShowAddWarden] = useState(false);
   const { isDark } = useTheme()
-  const { userData } = useAuth()
+  const { userData, user } = useAuth();
+  const managementUid = user?.uid;
+
   const handleRefresh = async () => {
+    if (!managementUid) return;
     setLoading(true);
     try {
-      const q = query(collection(db, 'users'), where('role', '==', 'warden'));
+      const q = query(
+        collection(db, 'users'),
+        where('role', '==', 'warden'),
+        where('managementId', '==', managementUid)
+      );
       const snapshot = await getDocs(q);
       const wardenList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      setGetAllwarden(wardenList)
+      setGetAllwarden(wardenList);
       setError(null);
     } catch (err) {
       console.error('Failed to refresh wardens:', err);
@@ -50,8 +57,14 @@ const Wardens = () => {
   };
 
   useEffect(() => {
+    if (!managementUid) return; // wait until auth resolves
     let timer;
-    const q = query(collection(db, 'users'), where('role', '==', 'warden'));
+
+    const q = query(
+      collection(db, 'users'),
+      where('role', '==', 'warden'),
+      where('managementId', '==', managementUid)
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const wardenlist = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -63,7 +76,7 @@ const Wardens = () => {
       unsubscribe();
       if (timer) clearTimeout(timer);
     };
-  }, []);
+  }, [managementUid]);
   const clearSearchWarden = () => {
     setSearchTerm('');
     searchInputRef.current?.focus();
@@ -101,10 +114,11 @@ const Wardens = () => {
         title="Wardens · Management"
         pendingCount={0}
         isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
       />
 
       {/* Main Content */}
-      <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
+      <div className="pt-20 sm:pt-24 px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
         {/* Page Header */}
         <div className="page-header">
           <div className="page-header-left">
@@ -210,7 +224,7 @@ const Wardens = () => {
 
                 <div className="flex-1 min-w-0">
                   {/* Name and Badge */}
-                  <div className="flex items-center gap-8 mb-1 flex-wrap">
+                  <div className="flex items-center gap-2 sm:gap-8 mb-1 flex-wrap">
                     <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
                       {warden.fullName || 'Unknown Warden'}
                     </h3>

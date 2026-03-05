@@ -35,6 +35,7 @@ const WardenDashboard = lazy(() => import("../../DashBoards/Warden-Dashboard/War
 const WardenLayout = lazy(() => import("../../DashBoards/Warden-Dashboard/components/layout/WardenLayout"));
 const WardenStudents = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenStudents"));
 const WardenComplaints = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenComplaints"));
+const WardenLeaveRequests = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenLeaveRequests"));
 const WardenAnnouncements = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenAnnouncements"));
 const WardenSettings = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenSettings"));
 const WardenHelpSupport = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenHelpSupport"));
@@ -51,6 +52,9 @@ const ManagementComplaints = lazy(() => import("../../DashBoards/Management-Dash
 const ManagementHelp = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/HelpSupport"));
 const ManagementSettings_Page = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/ManagementSettings"));
 const ManagementProfile = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/ManagementProfile"));
+
+// Firebase Mode Page - public, lazy loaded
+const FirebaseModePage = lazy(() => import("../../Pages/FirebaseModePage/FirebaseModePage"));
 
 // Owner Dashboard - lazy loaded
 const OwnersDashboard = lazy(() => import("../../Pages/OwnersDashboard/ownersdashbord"));
@@ -73,6 +77,7 @@ const Routes_path = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/waiting-approval" element={<WaitingApproval />} />
+                <Route path="/firebase-mode" element={<FirebaseModePage />} />
 
                 {/* ------------------------------ Profile Pages ----------------------------------------- */}
                 <Route path="/profile/student-profile" element={<StudentProfile />} />
@@ -96,6 +101,7 @@ const Routes_path = () => {
                     <Route index element={<WardenDashboard />} />
                     <Route path="students" element={<WardenStudents />} />
                     <Route path="complaints" element={<WardenComplaints />} />
+                    <Route path="leave-requests" element={<WardenLeaveRequests />} />
                     <Route path="announcements" element={<WardenAnnouncements />} />
                     <Route path="settings" element={<WardenSettings />} />
                     <Route path="help" element={<WardenHelpSupport />} />

@@ -13,7 +13,8 @@ const NotificationBell = () => {
     markAsRead,
     markAllAsRead,
     clearAll,
-    requestPermission
+    requestPermission,
+    role,
   } = useNotifications();
   const { isDark } = useTheme();
   const navigate = useNavigate();
@@ -40,16 +41,18 @@ const NotificationBell = () => {
   const handleNotificationClick = (notification) => {
     markAsRead(notification.id);
 
-    // Navigate based on notification type
-    switch (notification.type) {
-      case 'approval':
-        navigate('/OwnersDashboard');
-        break;
-      case 'support':
-        navigate('/OwnersDashboard/support-tickets');
-        break;
-      default:
-        navigate('/OwnersDashboard');
+    // Navigate based on role + type
+    if (role === 'student') {
+      navigate('/dashboard/student/complaints');
+    } else if (role === 'warden' || role === 'management') {
+      navigate(role === 'warden' ? '/dashboard/warden/complaints' : '/dashboard/management/complaints');
+    } else {
+      // admin / owner
+      switch (notification.type) {
+        case 'approval': navigate('/OwnersDashboard'); break;
+        case 'support':  navigate('/OwnersDashboard/support-tickets'); break;
+        default:         navigate('/OwnersDashboard');
+      }
     }
 
     setIsOpen(false);
@@ -123,7 +126,7 @@ const NotificationBell = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-96 rounded-xl shadow-2xl border z-50 overflow-hidden"
+            className="fixed top-16 left-2 right-2 mt-0 rounded-xl shadow-2xl border z-50 overflow-hidden sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-96"
             style={{
               backgroundColor: isDark ? '#1e293b' : '#ffffff',
               borderColor: isDark ? '#334155' : '#e2e8f0'

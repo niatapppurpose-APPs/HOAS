@@ -1,5 +1,7 @@
 import React from 'react';
-
+import { useState, useCallback } from 'react';
+import { RefreshCw } from 'lucide-react';
+import * as cloudFunctions from '../../../../firebase/cloudFunctions';
 /* ── Status Badge ── */
 export const StatusBadge = React.memo(({ status }) => {
   const cfg = {
@@ -21,6 +23,18 @@ export const StatusBadge = React.memo(({ status }) => {
 });
 StatusBadge.displayName = 'StatusBadge';
 
+// Refresh Button 
+
+export const RefreshButton = ({ onRefresh, loading = false }) => {
+  return (
+    <button onClick={onRefresh} disabled={loading}
+      className="flex items-center gap-1.5 px-3 py-2.5 border rounded-xl text-xs font-medium cursor-pointer"
+      style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)', border: '1px solid var(--border-muted)' }}>
+      <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+    </button>
+  );
+}
+
 /* ── Toggle Switch ── */
 export const ToggleSwitch = React.memo(({ enabled, onChange, disabled = false, size = 'md' }) => {
   const s = size === 'sm'
@@ -38,7 +52,7 @@ export const ToggleSwitch = React.memo(({ enabled, onChange, disabled = false, s
 ToggleSwitch.displayName = 'ToggleSwitch';
 
 /* ── Section Card (static – no dropdown) ── */
-export const SectionCard = React.memo(({ title, icon: Icon, accent = '#6366f1', status, children }) => (
+export const SectionCard = React.memo(({ title, icon: Icon, accent = '#6366f1', status, headerExtra, children }) => (
   <div className="rounded-2xl border overflow-hidden transition-shadow duration-300 hover:shadow-lg"
     style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
     {/* Header bar */}
@@ -49,7 +63,10 @@ export const SectionCard = React.memo(({ title, icon: Icon, accent = '#6366f1', 
         </div>
         <h3 className="font-semibold text-[15px] tracking-tight" style={{ color: 'var(--text-primary)' }}>{title}</h3>
       </div>
-      {status && <StatusBadge status={status} />}
+      <div className="flex items-center gap-2">
+        {status && <StatusBadge status={status} />}
+        {headerExtra}
+      </div>
     </div>
     {/* Body */}
     <div className="p-5">{children}</div>

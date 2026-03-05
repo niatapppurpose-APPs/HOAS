@@ -1,35 +1,58 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { doc, setDoc } from "firebase/firestore";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { updateProfile } from "firebase/auth";
+import { db, auth } from "../../firebase/firebaseConfig";
+import { useToast } from "../Toast";
+import { Camera, Loader2 } from "lucide-react";
 
-// Random name generator for users without names
-const generateRandomName = () => {
-  const firstNames = [
-    "Alex", "Jordan", "Taylor", "Morgan", "Casey", "Riley", "Avery", "Skylar",
-    "Quinn", "Reese", "Sage", "Rowan", "Phoenix", "River", "Dakota", "Harper",
-    "Emerson", "Finley", "Kai", "Eden", "Charlie", "Drew", "Blair", "Cameron"
-  ];
-  
-  const lastNames = [
-    "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
-    "Rodriguez", "Martinez", "Hernandez", "Lopez", "Wilson", "Anderson", "Thomas"
-  ];
-  
-  const randomFirst = firstNames[Math.floor(Math.random() * firstNames.length)];
-  const randomLast = lastNames[Math.floor(Math.random() * lastNames.length)];
-  
-  return `${randomFirst} ${randomLast}`;
-};
-
-// Reusable Avatar Component with fallback to initials
-const Avatar = ({ image, name, size = "md", rounded = "xl", user, objectFit = "cover" }) => {
+// Reusable Avatar Component with fallback chain: image → initials
+const Avatar = ({
+  image,
+  name,
+  size = "md",
+  rounded = "xl",
+  user,
+  objectFit = "cover",
+  className,
+  email,
+  editable = false,
+  uid,
+  collections = ["users"],
+  onUpload,
+}) => {
   // If user prop is provided, extract image and name from it
-  const avatarImage = image || user?.photoURL || user?.image;
-  const providedName = name || user?.displayName || user?.name;
-  
-  // Generate a random name only once if no name is provided
-  const randomName = useMemo(() => generateRandomName(), []);
+  const directImage = image || user?.photoURL || user?.image;
+  const providedName  = name || user?.displayName || user?.name;
+  const resolvedEmail = email || user?.email;
+  const resolvedUid = uid || user?.uid || auth.currentUser?.uid;
+
+  const randomName = useMemo(() => {
+    const firstNames = ["Alex","Jordan","Taylor","Morgan","Casey","Riley","Avery","Skylar","Quinn","Reese","Sage","Rowan","Phoenix","River","Dakota","Harper","Emerson","Finley","Kai","Eden","Charlie","Drew","Blair","Cameron"];
+    const lastNames  = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez","Hernandez","Lopez","Wilson","Anderson","Thomas"];
+    return `${firstNames[Math.floor(Math.random()*firstNames.length)]} ${lastNames[Math.floor(Math.random()*lastNames.length)]}`;
+  }, []);
   const avatarName = providedName || randomName;
-  
-  const [imageError, setImageError] = useState(false);
+
+  const [imageError, setImageError]   = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [photoURL, setPhotoURL] = useState(directImage || null);
+  const fileRef = useRef(null);
+  const uploadedUrlRef = useRef(null);
+  const toast = useToast();
+
+  // The final image to attempt: direct photoURL only (Gravatar removed to avoid noisy 404s)
+  const avatarImage = photoURL || directImage;
+
+  // Reset error whenever the resolved URL changes
+  useEffect(() => {
+    setImageError(false);
+  }, [avatarImage]);
+
+  useEffect(() => {
+    if (directImage === uploadedUrlRef.current) return;
+    setPhotoURL(directImage || null);
+  }, [directImage]);
 
 
   const sizeClasses = {
@@ -41,6 +64,7 @@ const Avatar = ({ image, name, size = "md", rounded = "xl", user, objectFit = "c
 
   const roundedClasses = {
     full: "rounded-full",
+    "2xl": "rounded-2xl",
     xl: "rounded-xl",
     lg: "rounded-lg",
     md: "rounded-md",
@@ -74,11 +98,14 @@ const Avatar = ({ image, name, size = "md", rounded = "xl", user, objectFit = "c
   };
   const getHighQualityImage = (url) => {
     if (!url) return url;
-
     if (url.includes("googleusercontent.com")) {
-      return url.replace(/=s\d+(-c)?/g, "=s2000-c");
+      // Replace any existing size param, or append one — use s400 (safe max for Google profile photos)
+      if (/=s\d+(-c)?/.test(url)) {
+        return url.replace(/=s\d+(-c)?/g, "=s400-c");
+      }
+      // No size param in URL, just return as-is
+      return url;
     }
-
     return url;
   };
 
@@ -86,28 +113,116 @@ const Avatar = ({ image, name, size = "md", rounded = "xl", user, objectFit = "c
   const shouldShowInitials = !avatarImage || imageError;
   const initials = getInitials(avatarName);
 
+  // If className is passed (e.g. "w-full h-full"), use it instead of the size preset
+  const sizeClass = className || sizeClasses[size];
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !resolvedUid) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be under 2 MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const storage = getStorage();
+      const ext = file.name.split(".").pop();
+      const storageRef = ref(storage, `profiles/${resolvedUid}/avatar-${Date.now()}.${ext}`);
+      const task = uploadBytesResumable(storageRef, file);
+
+      task.on(
+        "state_changed",
+        null,
+        () => {
+          toast.error("Upload failed");
+          setUploading(false);
+        },
+        async () => {
+          const url = await getDownloadURL(task.snapshot.ref);
+
+          if (auth.currentUser) {
+            await updateProfile(auth.currentUser, { photoURL: url });
+          }
+
+          await Promise.all(
+            collections.map((col) =>
+              setDoc(
+                doc(db, col, resolvedUid),
+                { photoURL: url, updatedAt: new Date().toISOString() },
+                { merge: true }
+              )
+            )
+          );
+
+          uploadedUrlRef.current = url;
+          setPhotoURL(url);
+          onUpload?.(url);
+          toast.success("Photo updated");
+          setUploading(false);
+        }
+      );
+    } catch {
+      toast.error("Upload failed");
+      setUploading(false);
+    }
+  };
+
+  const avatarNode = shouldShowInitials ? (
+    <div
+      className={`${sizeClass} ${getColorFromName(avatarName)} ${roundedClasses[rounded] || roundedClasses.xl} flex items-center justify-center font-semibold text-white ring-2 ring-white/50`}
+    >
+      {initials}
+    </div>
+  ) : (
+    <img
+      src={getHighQualityImage(avatarImage)}
+      alt={avatarName}
+      referrerPolicy="no-referrer"
+      onError={() => setImageError(true)}
+      width={100}
+      height={100}
+      className={`${sizeClass} ${roundedClasses[rounded] || roundedClasses.xl} object-${objectFit} ring-2 ring-white/50`}
+    />
+  );
+
+  if (!editable) {
+    return avatarNode;
+  }
+
   return (
-    <>
-      {shouldShowInitials ? (
-        <div
-          className={`${sizeClasses[size]} ${getColorFromName(
-            avatarName
-          )} ${roundedClasses[rounded]} flex items-center justify-center font-semibold p-8 text-white ring-2 ring-white/50`}
-        >
-          {initials}
-        </div>
-      ) : (
-        <img
-          src={getHighQualityImage(avatarImage)}
-          alt={avatarName}
-          referrerPolicy="no-referrer"
-          onError={() => setImageError(true)}
-          width={100}
-          height={100}
-          className={`${sizeClasses[size]} ${roundedClasses[rounded]} object-${objectFit} ring-2 ring-white/50`}
-        />
-      )}
-    </>
+    <div
+      className="relative group inline-block cursor-pointer flex-shrink-0"
+      onClick={() => !uploading && fileRef.current?.click()}
+      title="Click to change photo"
+    >
+      {avatarNode}
+
+      <div
+        className={`absolute inset-0 ${roundedClasses[rounded] || roundedClasses.xl} bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-1 pointer-events-none`}
+      >
+        {uploading ? (
+          <Loader2 className="w-5 h-5 text-white animate-spin" />
+        ) : (
+          <>
+            <Camera className="w-5 h-5 text-white drop-shadow" />
+            <span className="text-[9px] font-semibold text-white/90 uppercase tracking-wider leading-none">
+              Upload
+            </span>
+          </>
+        )}
+      </div>
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleUpload}
+      />
+    </div>
   )
 };
 

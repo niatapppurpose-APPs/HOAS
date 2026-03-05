@@ -300,3 +300,52 @@
   width: 100%;
   justify-content: flex-start;
 }
+
+/* Responsive sizing - auto scale down on mobile */
+@media (max-width: 640px) {
+  .animated-logout-button {
+    height: 32px;
+    width: 110px;
+    font-size: 12px;
+    padding: 0 0 0 16px;
+  }
+
+  .animated-logout-button .figure {
+    width: 24px;
+    right: 14px;
+    bottom: 4px;
+  }
+
+  .animated-logout-button .door,
+  .animated-logout-button .doorway {
+    width: 26px;
+    right: 10px;
+    bottom: 3px;
+  }
+}
+
+@media (max-width: 380px) {
+  .animated-logout-button {
+    height: 28px;
+    width: 85px;
+    font-size: 10px;
+    padding: 0 0 0 10px;
+  }
+
+  .animated-logout-button .figure {
+    width: 20px;
+    right: 10px;
+    bottom: 3px;
+  }
+
+  .animated-logout-button .door,
+  .animated-logout-button .doorway {
+    width: 22px;
+    right: 8px;
+    bottom: 3px;
+  }
+
+  .animated-logout-button .button-text {
+    font-size: 10px;
+  }
+}

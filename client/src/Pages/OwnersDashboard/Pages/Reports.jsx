@@ -144,7 +144,7 @@ async function downloadReport(type, password) {
 }
 // -------------------------------------------------------------------------------------------------------------------------
 export default function Reports() {
-  const { isCollapsed } = useOutletContext();
+  const { isCollapsed, setIsCollapsed } = useOutletContext();
   const location = useLocation();
   const { user } = useAuth();
   const toast = useToast();
@@ -330,6 +330,7 @@ export default function Reports() {
       <Header 
         title="Reports Board" 
         isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
         onProfileClick={savePageState}
       />
       

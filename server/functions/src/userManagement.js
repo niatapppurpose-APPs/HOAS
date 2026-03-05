@@ -227,27 +227,19 @@ export const createManagement = onCall(corsOptions, async (request) => {
       }
     }
 
-    // Throwaway password — never stored, never transmitted
-    const throwawayPassword = crypto.randomUUID();
+    // Use admin-provided password if supplied, otherwise generate a short readable one
+    const { password: providedPassword } = request.data;
+    const accountPassword = providedPassword || crypto.randomBytes(6).toString('hex');
 
     // Create user in Firebase Auth
     const userRecord = await auth.createUser({
       email: email,
-      password: throwawayPassword,
+      password: accountPassword,
       displayName: principalName,
       emailVerified: false,
     });
 
     logger.info('✅ Firebase Auth user created:', userRecord.uid);
-
-    // Generate secure password reset link
-    let resetLink = null;
-    try {
-      resetLink = await auth.generatePasswordResetLink(email);
-      logger.info('✅ Password reset link generated for:', email);
-    } catch (linkError) {
-      logger.warn('⚠️ Could not generate password reset link:', linkError.message);
-    }
 
     // Create Firestore document — NO password stored
     await db.collection('users').doc(userRecord.uid).set({
@@ -266,16 +258,14 @@ export const createManagement = onCall(corsOptions, async (request) => {
 
     logger.info('✅ Firestore document created for:', userRecord.uid);
 
-    // Send welcome email with password reset link
+    // Send welcome email with account credentials
     let emailSent = false;
-    if (resetLink) {
-      emailSent = await sendManagementWelcomeEmail({
-        name: principalName,
-        email,
-        collegeName,
-        resetLink,
-      });
-    }
+    emailSent = await sendManagementWelcomeEmail({
+      name: principalName,
+      email,
+      collegeName,
+      password: accountPassword,
+    });
 
     return {
       success: true,
@@ -298,7 +288,7 @@ export const createManagement = onCall(corsOptions, async (request) => {
 /**
  * Create a new warden (Management only)
  * Creates Firebase Auth user and Firestore document.
- * Uses throwaway password + password reset link (no plaintext passwords stored or emailed).
+ * Uses management-provided password (or generated fallback) and emails credentials.
  */
 export const createWarden = onCall(corsOptions, async (request) => {
   try {
@@ -309,11 +299,15 @@ export const createWarden = onCall(corsOptions, async (request) => {
       throw new HttpsError('unauthenticated', 'User must be authenticated');
     }
 
-    const { fullName, email, phone, hostelBlock, collegeName, managementId } = request.data;
+    const { fullName, email, phone, hostelBlock, collegeName, managementId, password: providedPassword } = request.data;
 
     // Validate required fields
     if (!fullName || !email) {
       throw new HttpsError('invalid-argument', 'fullName and email are required');
+    }
+
+    if (providedPassword && providedPassword.length < 6) {
+      throw new HttpsError('invalid-argument', 'Password must be at least 6 characters');
     }
 
     // Check if user with this email already exists
@@ -328,27 +322,18 @@ export const createWarden = onCall(corsOptions, async (request) => {
       }
     }
 
-    // Throwaway password — never stored, never transmitted
-    const throwawayPassword = crypto.randomUUID();
+    // Use admin-provided password if supplied, otherwise generate a short readable one
+    const accountPassword = providedPassword || crypto.randomBytes(6).toString('hex');
 
     // Create user in Firebase Auth
     const userRecord = await auth.createUser({
       email: email,
-      password: throwawayPassword,
+      password: accountPassword,
       displayName: fullName,
       emailVerified: false,
     });
 
     logger.info('✅ Firebase Auth warden created:', userRecord.uid);
-
-    // Generate secure password reset link
-    let resetLink = null;
-    try {
-      resetLink = await auth.generatePasswordResetLink(email);
-      logger.info('✅ Password reset link generated for warden:', email);
-    } catch (linkError) {
-      logger.warn('⚠️ Could not generate password reset link for warden:', linkError.message);
-    }
 
     // Create Firestore document — NO password stored
     await db.collection('users').doc(userRecord.uid).set({
@@ -372,15 +357,13 @@ export const createWarden = onCall(corsOptions, async (request) => {
 
     // Send welcome email
     let emailSent = false;
-    if (resetLink) {
-      emailSent = await sendWardenWelcomeEmail({
-        name: fullName,
-        email,
-        institution: collegeName || '',
-        hostelBlock: hostelBlock || '',
-        resetLink,
-      });
-    }
+    emailSent = await sendWardenWelcomeEmail({
+      name: fullName,
+      email,
+      institution: collegeName || '',
+      hostelBlock: hostelBlock || '',
+      password: accountPassword,
+    });
 
     return {
       success: true,
@@ -397,6 +380,77 @@ export const createWarden = onCall(corsOptions, async (request) => {
       throw error;
     }
     throw new HttpsError('internal', `Failed to create warden: ${error.message}`);
+  }
+});
+
+/**
+ * Delete a user from both Firebase Authentication and Firestore.
+ * Only admin (owner) or management can call this function.
+ */
+export const deleteUserAccount = onCall(corsOptions, async (request) => {
+  try {
+    logger.info('🗑️ deleteUserAccount called', { caller: request.auth?.uid });
+
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    const { userId } = request.data;
+    if (!userId) {
+      throw new HttpsError('invalid-argument', 'userId is required');
+    }
+
+    // Fetch the target user document so we can check their role/managementId
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (!userDoc.exists) {
+      throw new HttpsError('not-found', 'User not found');
+    }
+
+    const targetUser = userDoc.data();
+
+    // Verify caller has permission (admin or the management that owns this user)
+    try {
+      if (targetUser.role === 'management') {
+        // Only admin (owner) can delete a management user
+        await verifyAdmin(request);
+      } else {
+        // Admin or management of that college can delete warden/student
+        await verifyManagementAccess(request, targetUser.managementId);
+      }
+    } catch (permError) {
+      logger.error('Permission check failed for deleteUserAccount:', permError.message);
+      throw permError;
+    }
+
+    // Delete from Firebase Authentication
+    try {
+      await auth.deleteUser(userId);
+      logger.info('✅ Firebase Auth user deleted:', userId);
+    } catch (authError) {
+      // If the Auth user doesn't exist, log a warning but continue to clean Firestore
+      if (authError.code === 'auth/user-not-found') {
+        logger.warn('⚠️ Auth user not found (already deleted?):', userId);
+      } else {
+        throw new HttpsError('internal', `Failed to delete auth user: ${authError.message}`);
+      }
+    }
+
+    // Delete Firestore document
+    await db.collection('users').doc(userId).delete();
+    logger.info('✅ Firestore user document deleted:', userId);
+
+    return {
+      success: true,
+      uid: userId,
+      message: 'User deleted from Authentication and Firestore.',
+    };
+
+  } catch (error) {
+    logger.error('❌ Error in deleteUserAccount:', error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError('internal', `Failed to delete user: ${error.message}`);
   }
 });
 

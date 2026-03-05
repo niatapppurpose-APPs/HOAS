@@ -17,6 +17,8 @@ import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from '../../../../components/OwnerServices/Avatar';
 import Applogo from '../../../../assets/AppLogo4k.png';
+import NewBadge from "../../../../components/NewBadge";
+import { isNavItemNew, dismissNavItemFeatures } from "../../../../data/newFeatures";
 
 const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementData }) => {
   const { user, userData } = useAuth();
@@ -25,6 +27,7 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
   const location = useLocation();
   const [isPinned, setIsPinned] = useState(false);
   const [showLogoPopup, setShowLogoPopup] = useState(false);
+  const [, forceUpdate] = useState(0);
 
   // Get active item from current path
   const getActiveItem = () => {
@@ -204,13 +207,19 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${!showContent ? "lg:justify-center" : ""}`}
                   style={isActive ? activeStyle : { color: 'var(--text-secondary)' }}
                 >
-                  <Icon
-                    className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110`}
-                    style={{ color: isActive ? '#ffffff' : 'var(--text-secondary)' }}
-                  />
+                  <span className="relative flex-shrink-0">
+                    <Icon
+                      className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110`}
+                      style={{ color: isActive ? '#ffffff' : 'var(--text-secondary)' }}
+                    />
+                    {isNavItemNew(item.id) && !showContent && <NewBadge dot />}
+                  </span>
                   <span className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""}`}>
                     {item.label}
                   </span>
+                  {isNavItemNew(item.id) && showContent && (
+                    <NewBadge onDismiss={() => { dismissNavItemFeatures(item.id); forceUpdate(n => n + 1); }} />
+                  )}
 
                   {/* Tooltip for collapsed state */}
                   {!showContent && (
@@ -254,13 +263,19 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${!showContent ? "lg:justify-center" : ""}`}
                   style={{ color: 'var(--text-secondary)' }}
                 >
-                  <Icon
-                    className="w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
-                    style={{ color: 'var(--text-secondary)' }}
-                  />
+                  <span className="relative flex-shrink-0">
+                    <Icon
+                      className="w-5 h-5 transition-transform duration-300 group-hover:scale-110"
+                      style={{ color: 'var(--text-secondary)' }}
+                    />
+                    {isNavItemNew(item.id) && !showContent && <NewBadge dot />}
+                  </span>
                   <span className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""}`}>
                     {item.label}
                   </span>
+                  {isNavItemNew(item.id) && showContent && (
+                    <NewBadge onDismiss={() => { dismissNavItemFeatures(item.id); forceUpdate(n => n + 1); }} />
+                  )}
 
                   {/* Tooltip for collapsed state */}
                   {!showContent && (
@@ -295,7 +310,7 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
               } : undefined}
             >
               <div className={`flex items-center ${showContent ? "gap-3" : "justify-center"}`}>
-                <Avatar image={user?.photoURL} name={user?.displayName} size="sm" rounded="full" />
+                <Avatar image={userData?.photoURL || user?.photoURL} name={user?.displayName} size="sm" rounded="full" />
                 {showContent && (
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>

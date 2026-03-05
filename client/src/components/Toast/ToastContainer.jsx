@@ -1,4 +1,4 @@
-import { useState, useCallback, createContext, useContext } from 'react';
+import { useState, useCallback, useMemo, createContext, useContext } from 'react';
 import Toast from './Toast';
 import ConfirmToast from './ConfirmToast';
 
@@ -47,14 +47,14 @@ export const ToastProvider = ({ children, position = 'top-right' }) => {
     });
   }, []);
 
-  // Convenience methods
-  const toast = {
+  // Convenience methods — memoized so consumers don't get a new reference on every render
+  const toast = useMemo(() => ({
     success: (message, duration) => showToast(message, 'success', duration),
     error: (message, duration) => showToast(message, 'error', duration),
     warning: (message, duration) => showToast(message, 'warning', duration),
     info: (message, duration) => showToast(message, 'info', duration),
     confirm: showConfirm,
-  };
+  }), [showToast, showConfirm]);
 
   return (
     <ToastContext.Provider value={toast}>

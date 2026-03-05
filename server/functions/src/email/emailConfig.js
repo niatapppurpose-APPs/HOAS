@@ -23,19 +23,15 @@ export function getSmtpConfig() {
   const config = {
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: false, // true for 465, false for other ports (STARTTLS)
+    secure: false,
     auth: {
-      user: process.env.SMTP_USER || process.env.GMAIL_EMAIL || '',
-      pass: process.env.SMTP_PASSWORD || process.env.GMAIL_APP_PASSWORD || '',
+      user: process.env.SMTP_USER || '',
+      pass: process.env.SMTP_PASSWORD || '',
     },
   };
 
-  // Validate required credentials
   if (!config.auth.user || !config.auth.pass) {
-    logger.error(
-      '❌ SMTP credentials missing. Set SMTP_USER and SMTP_PASSWORD environment variables. ' +
-      'For Gmail, you can also use GMAIL_EMAIL and GMAIL_APP_PASSWORD.'
-    );
+    logger.error('❌ SMTP credentials missing. Set SMTP_USER and SMTP_PASSWORD environment variables.');
     throw new Error('SMTP credentials not configured. Email sending is disabled.');
   }
 
@@ -47,7 +43,7 @@ export function getSmtpConfig() {
  */
 export function getFromAddress() {
   const name = process.env.SMTP_FROM_NAME || 'HOAS System';
-  const email = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || process.env.GMAIL_EMAIL || '';
+  const email = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || '';
   return `"${name}" <${email}>`;
 }
 

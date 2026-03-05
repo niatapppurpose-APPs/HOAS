@@ -66,15 +66,25 @@ Built with **React 19**, **Firebase Cloud Functions v2**, **Firestore**, and **T
 - Glassmorphism UI with purple-blue gradient theme
 
 ### Warden Dashboard
-- Monitor assigned students and hostel operations
+- **Warden Overview** — welcome banner, quick actions, real-time complaint feed, warden info card
+- **Student Directory** — real-time student list with search, sort (name/room/hostel), status filter, and student detail modal
+- **Complaint Management** — view, manage, and update complaint statuses with notification logic
+- **Announcements (CRUD)** — create, edit, delete announcements with 4 priority levels (Urgent/Important/Normal/Info), pin-to-top, and search
+- **Leave Request Review** — view and manage incoming student leave requests
+- **Settings** — theme toggle (dark/light), password change with Firebase re-authentication, 6 notification toggles (new complaints, sound alerts, leave requests, etc.)
+- **Help & Support** — 16 warden-specific FAQs across 5 categories, support ticket submission, quick contact actions
+- **Profile** — view warden profile information
 - AI-powered translation system (multilingual support via i18next)
-- Update student statuses and manage hostel activities
 - Real-time notifications and alerts
 
 ### Student Dashboard
-- View hostel information and personal profile
-- Submit requests and view approval status
-- Access hostel rules and announcements
+- **Student Overview** — welcome banner, quick actions (File Complaint, My Complaints, Apply Leave, Notice Board), recent activity feed, profile summary card
+- **Complaint System** — file, view, and track complaints with image uploads, drag-and-drop, and detailed complaint views
+- **Leave Requests** — submit leave/outing requests (7 types: Home Visit, Medical, Family Emergency, Academic, Personal, Day Outing, Other) with date range, destination, contact info, real-time status tracking, and cancel pending requests
+- **Announcements** — real-time notice board with priority badges, pinned notices, search & filter, expandable detail views
+- **Settings** — theme toggle, password change with Firebase re-authentication, notification preference toggles, account info display
+- **Help & Support** — 12 searchable FAQs in 4 categories, support ticket submission to Firestore, quick contact actions
+- **Profile** — view and edit profile information
 
 ### Platform-Wide Features
 - 🎨 **Dark/Light Theme** — auto-detect system preference or manual toggle
@@ -88,6 +98,8 @@ Built with **React 19**, **Firebase Cloud Functions v2**, **Firestore**, and **T
 - 🌐 **Internationalization** — multi-language support with i18next
 - 📊 **Data Visualization** — charts and graphs powered by Recharts
 - 🔔 **Push Notifications** — Firebase Cloud Messaging with Firestore triggers
+- 📢 **Announcement Browser Notifications** — real-time browser push notifications for any new announcement (Student & Warden)
+- 📋 **Leave Request Notifications** — students notified on status changes; wardens notified on new requests
 
 ---
 
@@ -179,7 +191,33 @@ HOAS/
 │   │   │   ├── Management-Dashboard/    # Principal/Co-Admin dashboard
 │   │   │   ├── Principal-Dashbord/      # Principal view
 │   │   │   ├── Student-DashBoard/       # Student view
+│   │   │   │   ├── StudentDashboard.jsx          # Main dashboard
+│   │   │   │   └── components/
+│   │   │   │       ├── layout/
+│   │   │   │       │   ├── StudentLayout.jsx     # Layout wrapper
+│   │   │   │       │   ├── StudentSidebar.jsx    # Navigation sidebar
+│   │   │   │       │   └── StudentHeader.jsx     # Top header bar
+│   │   │   │       └── pages/
+│   │   │   │           ├── StudentComplaints.jsx  # Complaint filing & tracking
+│   │   │   │           ├── StudentLeaveRequests.jsx # Leave/outing applications ✨NEW
+│   │   │   │           ├── StudentAnnouncements.jsx # Notice board viewer ✨NEW
+│   │   │   │           ├── StudentSettings.jsx    # Preferences & security ✨NEW
+│   │   │   │           ├── StudentHelpSupport.jsx # FAQs & support tickets ✨NEW
+│   │   │   │           └── StudentProfile.jsx     # Profile management
 │   │   │   └── Warden-Dashboard/        # Warden view
+│   │   │       ├── WardenDashboard.jsx           # Main dashboard
+│   │   │       └── components/
+│   │   │           ├── layout/
+│   │   │           │   ├── WardenLayout.jsx      # Layout wrapper
+│   │   │           │   ├── WardenSidebar.jsx     # Navigation sidebar
+│   │   │           │   └── WardenHeader.jsx      # Top header bar
+│   │   │           └── pages/
+│   │   │               ├── WardenStudents.jsx     # Student directory ✨NEW
+│   │   │               ├── WardenComplaints.jsx   # Complaint management
+│   │   │               ├── WardenAnnouncements.jsx # Announcement CRUD ✨NEW
+│   │   │               ├── WardenSettings.jsx     # Preferences & security ✨NEW
+│   │   │               ├── WardenHelpSupport.jsx  # FAQs & support tickets ✨NEW
+│   │   │               └── WardenProfile.jsx      # Profile view
 │   │   ├── firebase/
 │   │   │   ├── cloudFunctions.js        # Backend API client (11 functions)
 │   │   │   ├── debugUtils.js            # Debug/logging utilities
@@ -479,7 +517,7 @@ The app supports **dark and light modes** with automatic system preference detec
 - Support ticketing system with resolution workflow
 - Premium error reporting (Firestore + email fallback)
 
-### Phase 9: Cleanup & Optimization (Current)
+### Phase 9: Cleanup & Optimization
 - Removed unused cloud functions (17 functions cleaned from server & client)
 - Deleted deprecated modules (`admin.js`, `triggers.js`, `utility.js`)
 - Streamlined `systemSettings.js` (952 → 217 lines)
@@ -487,11 +525,29 @@ The app supports **dark and light modes** with automatic system preference detec
 - Settings page redesigned to 6-card grid layout
 - Enhanced Owner Profile with photo upload & password change modal
 
+### Phase 10: Dashboard Feature Completion & Notifications (Current — March 2026)
+- **Student Dashboard** — fully implemented 4 new pages:
+  - **Leave Requests** — submit leave/outing requests (7 types), date range picker, destination, contacts, real-time status tracking, cancel pending
+  - **Announcements** — real-time notice board with priority badges, pinned notices, expandable details, search & filter
+  - **Settings** — theme toggle, password change (Firebase re-auth), notification preference toggles, account info
+  - **Help & Support** — 12 searchable FAQs in 4 categories, support ticket submission, quick contact actions
+- **Warden Dashboard** — fully implemented 4 new pages:
+  - **Student Directory** — real-time Firestore student list, search/sort/filter, student detail modal with full info
+  - **Announcements (CRUD)** — create, edit, delete hostel notices with 4 priority levels, pin-to-top, search
+  - **Settings** — theme toggle, password change, 6 warden-specific notification toggles (new complaints, leave requests, sound alerts, etc.)
+  - **Help & Support** — 16 warden-specific FAQs in 5 categories, support ticket submission, quick actions
+- **Browser Push Notifications** — real-time browser notifications for:
+  - 📢 New announcements (Student & Warden) — triggers on any announcement posted to their college
+  - 📋 Leave request status updates (Student) — notified when approved, denied, or cancelled
+  - 📋 New leave requests (Warden) — notified when students submit pending leave requests
+- All new pages use real-time Firestore `onSnapshot` listeners, consistent UI design with CSS variables, responsive layouts
+
 ### Summary
 - **Active Development**: December 2024 – Present
 - **Total PRs**: 27+
 - **Documentation Files**: 28
 - **Backend Functions**: 15 (10 callable + 2 HTTP + 3 triggers + helpers)
+- **Notification Listeners**: 10 real-time Firestore listeners for push notifications across all roles
 
 ---
 
@@ -539,10 +595,15 @@ Developed and maintained by **niatapppurpose-APPs**.
 - [ ] Hostel inventory management
 - [ ] Fee payment integration
 - [ ] Room allocation automation
-- [ ] Attendance tracking
+- [x] ~~Attendance tracking~~ (dashboard quick action available)
 - [ ] Parent portal
 - [ ] Audit logging and activity history
 - [ ] Data export scheduling
+- [x] ~~Student leave request system~~ ✅ Implemented
+- [x] ~~Announcement system with browser notifications~~ ✅ Implemented
+- [x] ~~Warden student directory~~ ✅ Implemented
+- [x] ~~Settings pages for Student & Warden~~ ✅ Implemented
+- [x] ~~Help & Support with FAQs~~ ✅ Implemented
 
 ---
 

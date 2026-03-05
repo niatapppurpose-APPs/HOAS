@@ -11,7 +11,7 @@ import RoleApprovalChart from './AnalyticsComponents/RoleApprovalChart'; // Appr
 import { useAnalyticsData } from './AnalyticsComponents/AnalyticsData/useAnalyticsData';
 
 const Analytics = () => {
-  const { isCollapsed } = useOutletContext();
+  const { isCollapsed, setIsCollapsed } = useOutletContext();
   const location = useLocation();
   const dateRange = 'Last 30 days';
 
@@ -54,6 +54,7 @@ const Analytics = () => {
       <Header 
         title="HOAS College Analytics Overview" 
         isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
         onProfileClick={savePageState}
       />
       <div className="pt-24 p-6 min-h-screen">

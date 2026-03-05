@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, where, onSnapshot, doc, deleteDoc, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { deleteUserAccount } from '../../../firebase/cloudFunctions';
 import { db } from '../../../firebase/firebaseConfig';
 import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
@@ -15,7 +16,7 @@ import NoDataLight from '../../../assets/No-Data.avif';
 import NoDataDark from '../../../assets/NoDataDark.png';
 
 const Students = () => {
-    const { isCollapsed } = useOutletContext();
+    const { isCollapsed, setIsCollapsed } = useOutletContext();
     const location = useLocation();
     const navigate = useNavigate();
     const [students, setStudents] = useState([]);
@@ -128,6 +129,7 @@ const Students = () => {
             <Header
                 title="Hostel Students"
                 isCollapsed={isCollapsed}
+                setIsCollapsed={setIsCollapsed}
                 onProfileClick={savePageState}
             />
 
@@ -385,7 +387,7 @@ const Students = () => {
                     if (!deleteModal.student) return;
                     setIsDeleting(true);
                     try {
-                        await deleteDoc(doc(db, 'users', deleteModal.student.id));
+                        await deleteUserAccount(deleteModal.student.id);
                         setDeleteModal({ isOpen: false, student: null });
                     } catch (err) {
                         console.error('Failed to delete student:', err);

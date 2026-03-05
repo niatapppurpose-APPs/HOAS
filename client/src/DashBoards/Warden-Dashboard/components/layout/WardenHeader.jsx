@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "../../../../components/ThemeToggle";
 import { useAuth } from "../../../../context/AuthContext";
 import AnimatedLogoutButton from "../../../../components/AnimatedLogoutButton";
+import NotificationBell from "../../../../components/OwnerServices/NotificationBell";
 
 const WardenHeader = ({ pendingCount = 0, title = "Dashboard · Warden Portal", isCollapsed = true, setIsCollapsed }) => {
   const { logout, userData } = useAuth();
@@ -47,6 +48,11 @@ const WardenHeader = ({ pendingCount = 0, title = "Dashboard · Warden Portal", 
                 <span className="sm:hidden">{pendingCount} P</span>
               </span>
             )}
+
+            {/* Notification Bell */}
+            <div className="flex-shrink-0">
+              <NotificationBell />
+            </div>
 
             {/* Theme Toggle Button */}
             <div className="flex-shrink-0">

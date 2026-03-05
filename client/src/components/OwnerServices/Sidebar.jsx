@@ -6,7 +6,6 @@ import {
   Users,
   Settings,
   ChevronLeft,
-  ChevronRight,
   Bell,
   BarChart3,
   FileText,
@@ -18,7 +17,10 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import Avatar from './Avatar'
 import Applogo from '../../assets/Applogo.png'
-
+import NewBadge from "../NewBadge";
+import { isNavItemNew, dismissNavItemFeatures } from "../../data/newFeatures";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../../firebase/firebaseConfig";
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { user, userData } = useAuth();
   const { isDark } = useTheme();
@@ -26,6 +28,29 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const location = useLocation();
   const [isPinned, setIsPinned] = useState(false);
   const [showLogoPopup, setShowLogoPopup] = useState(false);
+  const [ownerProfile, setOwnerProfile] = useState(null);
+  const [, forceUpdate] = useState(0);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setOwnerProfile(null);
+      return;
+    }
+
+    const adminRef = doc(db, "admins", user.uid);
+    const unsubscribe = onSnapshot(
+      adminRef,
+      (snapshot) => {
+        setOwnerProfile(snapshot.exists() ? snapshot.data() : null);
+      },
+      (error) => {
+        console.error("Owner sidebar admin profile sync error:", error);
+        setOwnerProfile(null);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user?.uid]);
 
   // Get active item from current path
   const getActiveItem = () => {
@@ -235,15 +260,21 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   className={`w-full flex items-center gap-3 px-3 cursor-pointer py-2.5 rounded-xl transition-all duration-200 group ${!showContent ? "lg:justify-center" : ""}`}
                   style={isActive ? activeStyle : { color: 'var(--text-secondary)' }}
                 >
-                  <Icon
-                    className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : ""}`}
-                    style={{ color: isActive ? '#ffffff' : 'var(--text-secondary)' }}
-                  />
+                  <span className="relative flex-shrink-0">
+                    <Icon
+                      className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : ""}`}
+                      style={{ color: isActive ? '#ffffff' : 'var(--text-secondary)' }}
+                    />
+                    {isNavItemNew(item.id) && !showContent && <NewBadge dot />}
+                  </span>
                   <span
                     className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""}`}
                   >
                     {item.label}
                   </span>
+                  {isNavItemNew(item.id) && showContent && (
+                    <NewBadge onDismiss={() => { dismissNavItemFeatures(item.id); forceUpdate(n => n + 1); }} />
+                  )}
 
                   {/* Tooltip for collapsed state */}
                   {!showContent && (
@@ -294,15 +325,21 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   `}
                   style={isActive ? activeStyle : { color: 'var(--text-secondary)' }}
                 >
-                  <Icon
-                    className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : ""}`}
-                    style={{ color: isActive ? '#ffffff' : 'var(--text-secondary)' }}
-                  />
+                  <span className="relative flex-shrink-0">
+                    <Icon
+                      className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : ""}`}
+                      style={{ color: isActive ? '#ffffff' : 'var(--text-secondary)' }}
+                    />
+                    {isNavItemNew(item.id) && !showContent && <NewBadge dot />}
+                  </span>
                   <span
                     className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""}`}
                   >
                     {item.label}
                   </span>
+                  {isNavItemNew(item.id) && showContent && (
+                    <NewBadge onDismiss={() => { dismissNavItemFeatures(item.id); forceUpdate(n => n + 1); }} />
+                  )}
 
                   {/* Tooltip for collapsed state */}
                   {!showContent && (
@@ -373,12 +410,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               } : undefined}
             >
               <div className={`flex items-center ${showContent ? "gap-3" : "justify-center"}`}>
-                <Avatar image={userData?.photoURL || user?.photoURL} name={userData?.displayName || user?.displayName} size="md" objectFit="fill" />
-
+                <Avatar image={ownerProfile?.photoURL || userData?.photoURL || user?.photoURL} email={ownerProfile?.email || userData?.email || user?.email} name={ownerProfile?.displayName || userData?.fullName || userData?.displayName || user?.displayName} size="md" objectFit="fill" />
                 {showContent && (
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{userData?.displayName || user?.displayName}</p>
-                    <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{ownerProfile?.displayName || userData?.displayName || user?.displayName}</p>
+                    <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{ownerProfile?.email || user?.email}</p>
                   </div>
                 )}
               </div>
@@ -399,19 +435,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
         </nav>
       </aside>
-
-      {/* Mobile Toggle Button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`fixed top-5 left-4 z-50 lg:hidden p-2.5 rounded-xl backdrop-blur-sm border shadow-lg transition-all duration-200 ${!isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"}`}
-        style={{
-          backgroundColor: 'var(--bg-card)',
-          borderColor: 'var(--border-primary)',
-          color: 'var(--text-secondary)'
-        }}
-      >
-        <ChevronRight className="w-5 h-5" />
-      </button>
 
       {/* Logo Popup Modal */}
       {showLogoPopup && (
