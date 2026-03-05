@@ -13,10 +13,10 @@ import { functions, isEmulatorConnected } from './firebaseConfig';
 export const getApiBaseUrl = () => {
   if (isEmulatorConnected) {
     console.log('🔧 Using Firebase Emulator for Cloud Functions');
-    return 'http://127.0.0.1:5001/hoas-65dee/us-central1';
+    return 'http://127.0.0.1:5001/hoas-65dee/asia-south1';
   } else {
     console.log('🌐 Using Production Firebase Cloud Functions');
-    return 'https://us-central1-hoas-65dee.cloudfunctions.net';
+    return 'https://asia-south1-hoas-65dee.cloudfunctions.net';
   }
 };
 

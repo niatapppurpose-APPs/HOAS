@@ -104,8 +104,8 @@ function credentialBox(emailVal, passwordVal) {
 /* =====================================================
    1. STUDENT WELCOME EMAIL
    ===================================================== */
-export function studentWelcomeTemplate({ name, studentId, email, institution, password, resetLink, appUrl }) {
-    const loginUrl = appUrl || APP_URL;
+export function studentWelcomeTemplate({ name, studentId, email, institution, password, resetLink }) {
+    const loginUrl = APP_URL;
 
     const resetSection = resetLink
         ? `${sectionTitle('Change Your Password')}
@@ -155,8 +155,8 @@ export function studentWelcomeTemplate({ name, studentId, email, institution, pa
 /* =====================================================
    2. WARDEN WELCOME EMAIL
    ===================================================== */
-export function wardenWelcomeTemplate({ name, email, institution, hostelBlock, password, appUrl }) {
-    const loginUrl = appUrl || APP_URL;
+export function wardenWelcomeTemplate({ name, email, institution, hostelBlock, password }) {
+const loginUrl = APP_URL
 
     const body = `
       <p style="font-size:16px;color:#1e293b;margin:0 0 6px;">Dear <strong>${name}</strong>,</p>
@@ -195,8 +195,8 @@ export function wardenWelcomeTemplate({ name, email, institution, hostelBlock, p
 /* =====================================================
    3. MANAGEMENT WELCOME EMAIL
    ===================================================== */
-export function managementWelcomeTemplate({ name, email, collegeName, password, appUrl }) {
-    const loginUrl = appUrl || APP_URL;
+export function managementWelcomeTemplate({ name, email, collegeName, password }) {
+const loginUrl = APP_URL
 
     const body = `
       <p style="font-size:16px;color:#1e293b;margin:0 0 6px;">Dear <strong>${name}</strong>,</p>
