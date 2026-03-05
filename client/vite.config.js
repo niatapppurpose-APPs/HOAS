@@ -19,7 +19,7 @@ export default defineConfig({
   build: {
     minify: 'esbuild',
     esbuild: {
-      drop: ['console', 'debugger']
+      drop: ['console', 'debugger', 'console.info', 'console.warn', 'console.error']
     },
     rollupOptions: {
       output: {

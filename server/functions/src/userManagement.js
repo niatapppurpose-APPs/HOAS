@@ -422,12 +422,39 @@ export const deleteUserAccount = onCall(corsOptions, async (request) => {
       throw permError;
     }
 
-    // Delete from Firebase Authentication
+
+    // If deleting a management user, also delete all wardens and students belonging to that managementId
+    if (targetUser.role === 'management') {
+      logger.info('Deleting all wardens and students for managementId:', userId);
+      const usersToDelete = [];
+      const usersSnapshot = await db.collection('users')
+        .where('managementId', '==', userId)
+        .where('role', 'in', ['warden', 'student'])
+        .get();
+      usersSnapshot.forEach(doc => {
+        usersToDelete.push({ id: doc.id, ...doc.data() });
+      });
+      for (const u of usersToDelete) {
+        try {
+          await auth.deleteUser(u.id);
+          logger.info('✅ Firebase Auth user deleted (cascade):', u.id);
+        } catch (authError) {
+          if (authError.code === 'auth/user-not-found') {
+            logger.warn('⚠️ Auth user not found (already deleted?):', u.id);
+          } else {
+            logger.error('❌ Failed to delete auth user (cascade):', u.id, authError.message);
+          }
+        }
+        await db.collection('users').doc(u.id).delete();
+        logger.info('✅ Firestore user document deleted (cascade):', u.id);
+      }
+    }
+
+    // Delete from Firebase Authentication (main user)
     try {
       await auth.deleteUser(userId);
       logger.info('✅ Firebase Auth user deleted:', userId);
     } catch (authError) {
-      // If the Auth user doesn't exist, log a warning but continue to clean Firestore
       if (authError.code === 'auth/user-not-found') {
         logger.warn('⚠️ Auth user not found (already deleted?):', userId);
       } else {
@@ -435,14 +462,16 @@ export const deleteUserAccount = onCall(corsOptions, async (request) => {
       }
     }
 
-    // Delete Firestore document
+    // Delete Firestore document (main user)
     await db.collection('users').doc(userId).delete();
     logger.info('✅ Firestore user document deleted:', userId);
 
     return {
       success: true,
       uid: userId,
-      message: 'User deleted from Authentication and Firestore.',
+      message: targetUser.role === 'management'
+        ? 'Management user and all associated wardens and students deleted from Authentication and Firestore.'
+        : 'User deleted from Authentication and Firestore.',
     };
 
   } catch (error) {

@@ -322,43 +322,18 @@ const OwnersDashboard = () => {
 
 
   //---------------------------------------- Open delete confirmation modal with context -------------------------------------------------
-  const handleOpenDeleteModal = async (college) => {
-    setIsDeleteLoading(college.id);
+  // Handles delete for management users (calls deleteUserAccount)
+  const handleOpenDeleteModal = async (user) => {
+    setIsDeleteLoading(user.id);
     try {
-      // Fetch actual counts first (using managementId as the field name)
-      const wardensQuery = query(
-        collection(db, "users"),
-        where("role", "==", "warden"),
-        where("managementId", "==", college.id)
-      );
-      const studentsQuery = query(
-        collection(db, "users"),
-        where("role", "==", "student"),
-        where("managementId", "==", college.id)
-      );
-
-      const [wardensSnapshot, studentsSnapshot] = await Promise.all([
-        getDocs(wardensQuery),
-        getDocs(studentsQuery)
-      ]);
-
-      const wardenCount = wardensSnapshot.size;
-      const studentCount = studentsSnapshot.size;
-
-      // Open modal with actual counts
-      openDeleteModal({
-        college: college,
-        wardenCount: wardenCount,
-        studentCount: studentCount,
-        onConfirm: async () => {
-          const collegeId = college.id;
-          await cloudFunctions.deleteCollege(collegeId);
-          toast.success('College deleted successfully!');
-        }
-      });
+      // Confirm deletion
+      const confirmed = await toast.confirm(`Are you sure you want to delete management user "${user.displayName || user.email}"? This will remove their account from both Authentication and Firestore.`);
+      if (!confirmed) return;
+      await cloudFunctions.deleteUserAccount(user.id);
+      toast.success('Management user deleted successfully!');
     } catch (error) {
-      toast.error('Failed to load college data');
-      console.error('Delete modal error:', error);
+      toast.error('Failed to delete management user');
+      console.error('Delete management user error:', error);
     } finally {
       setIsDeleteLoading(null);
     }
