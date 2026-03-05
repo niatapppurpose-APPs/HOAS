@@ -308,8 +308,7 @@ const GlobalSystemSettings = () => {
                   <SettingRow icon={LogOut} title="Auto Logout Timer" description="Logout after inactivity">
                     <div className="flex items-center gap-2">
                       {/* Auto logout removed */}
-                        className="w-20 py-1.5 px-2 rounded-lg border text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
-                        style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }} />
+                       
                       <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>min</span>
                     </div>
                   </SettingRow>
