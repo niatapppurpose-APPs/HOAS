@@ -50,7 +50,7 @@ export const getFCMToken = async () => {
     const token = await getToken(messaging, { vapidKey: VAPID_KEY });
 
     if (token) {
-      console.log('✅ FCM Token:', token);
+     
       return token;
     } else {
       console.log('❌ No registration token available');
@@ -140,7 +140,7 @@ export const saveFCMToken = async (db, userId, token) => {
       lastTokenUpdate: new Date()
     });
 
-    console.log('✅ FCM token saved to Firestore');
+   
   } catch (error) {
     console.error('Error saving FCM token:', error);
   }

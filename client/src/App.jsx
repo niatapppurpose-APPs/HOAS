@@ -6,7 +6,6 @@ import GlobalDeleteModal from "./components/OwnerServices/GlobalDeleteModal";
 import { useServerStatus } from "./hooks/useServerStatus";
 import ServerOffline from "./components/ServerOffline/ServerOffline";
 import { MaintenanceGate, useSystemSettings } from "./hooks/useSystemSettings.jsx";
-import { useAutoLogout } from "./hooks/useAutoLogout";
 import ForcePasswordReset from "./Pages/ForcePasswordReset/ForcePasswordReset";
 import { useLocation } from "react-router-dom";
 
@@ -19,8 +18,6 @@ const App = () => {
   const { settings } = useSystemSettings();
   const location = useLocation();
 
-  // Auto logout on inactivity (reads autoLogoutMinutes from system settings)
-  useAutoLogout();
 
   // Show server offline screen if server is down
   if (!isServerOnline) {

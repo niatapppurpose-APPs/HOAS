@@ -93,7 +93,7 @@ if (forceProd) {
     isEmulatorConnected = false;
   }
 } else {
-  console.log('🌐 Using production Firebase services');
+
   isEmulatorConnected = false;
 }
 
