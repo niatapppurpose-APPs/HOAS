@@ -29,12 +29,15 @@ export const allowedOrigins = [
   'http://127.0.0.1:3000',
   'https://hoas-65dee.web.app',
   'https://hoas-65dee.firebaseapp.com',
+  'https://hoas-client-4n13.vercel.app',
   // Allow any localhost port for development
   /^http:\/\/localhost:\d+$/,
   /^http:\/\/127\.0\.0\.1:\d+$/,
   // Allow local network IPs for mobile testing
   /^http:\/\/192\.168\.\d+\.\d+:\d+$/,
   /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,
+  // Allow Vercel preview deployments
+  /^https:\/\/hoas-client[a-z0-9-]*\.vercel\.app$/,
 ];
 
 // CORS options for v2 callable functions
