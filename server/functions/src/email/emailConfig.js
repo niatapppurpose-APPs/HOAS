@@ -51,5 +51,5 @@ export function getFromAddress() {
  * Get the HOAS application URL (for email CTAs and links).
  */
 export function getAppUrl() {
-  return process.env.HOAS_APP_URL || 'https://hoas-65dee.web.app';
+  return process.env.HOAS_APP_URL || 'https://hoas-client-4n13.vercel.app';
 }

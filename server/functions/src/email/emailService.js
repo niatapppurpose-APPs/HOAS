@@ -45,7 +45,7 @@ export async function sendStudentWelcomeEmail({ name, studentId, email, institut
             from: getFromAddress(),
             to: email,
             subject: `Your HOAS Student Account Has Been Created`,
-            text: studentWelcomeTemplate({ name, studentId, email, institution, password, resetLink, appUrl }),
+            html: studentWelcomeTemplate({ name, studentId, email, institution, password, resetLink, appUrl }),
         };
 
         await transporter.sendMail(mailOptions);
@@ -77,7 +77,7 @@ export async function sendWardenWelcomeEmail({ name, email, institution, hostelB
             from: getFromAddress(),
             to: email,
             subject: `Your HOAS Warden Account Has Been Created`,
-            text: wardenWelcomeTemplate({ name, email, institution, hostelBlock, password, appUrl }),
+            html: wardenWelcomeTemplate({ name, email, institution, hostelBlock, password, appUrl }),
         };
 
         await transporter.sendMail(mailOptions);
@@ -108,7 +108,7 @@ export async function sendManagementWelcomeEmail({ name, email, collegeName, pas
             from: getFromAddress(),
             to: email,
             subject: `Your HOAS Management Account Has Been Created`,
-            text: managementWelcomeTemplate({ name, email, collegeName, password, appUrl }),
+            html: managementWelcomeTemplate({ name, email, collegeName, password, appUrl }),
         };
 
         await transporter.sendMail(mailOptions);
@@ -138,7 +138,7 @@ export async function sendBulkUploadSummaryEmail({ results, collegeName, uploade
             from: getFromAddress(),
             to: uploaderEmail,
             subject: `HOAS Bulk Upload Report — ${collegeName} (${results.created} students created)`,
-            text: bulkUploadSummaryTemplate({ results, collegeName, uploaderEmail, downloadUrl }),
+            html: bulkUploadSummaryTemplate({ results, collegeName, uploaderEmail, downloadUrl }),
         };
 
         await transporter.sendMail(mailOptions);
