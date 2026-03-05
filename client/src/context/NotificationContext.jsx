@@ -1,4 +1,9 @@
-﻿import { createContext, useContext, useState, useEffect } from 'react';
+﻿// Sanitize notification strings to prevent XSS
+function sanitize(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[<>]/g, '');
+}
+import { createContext, useContext, useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, orderBy, limit, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from './AuthContext';
@@ -44,9 +49,9 @@ export const NotificationProvider = ({ children }) => {
     const unsubscribe = notificationService.onForegroundMessage((payload) => {
       const newNotification = {
         id: Date.now().toString(),
-        title: payload.notification?.title || 'New Notification',
-        body: payload.notification?.body || '',
-        type: payload.data?.type || 'general',
+        title: sanitize(payload.notification?.title || 'New Notification'),
+        body: sanitize(payload.notification?.body || ''),
+        type: sanitize(payload.data?.type || 'general'),
         createdAt: new Date(),
         read: false,
         data: payload.data,
@@ -73,9 +78,9 @@ export const NotificationProvider = ({ children }) => {
           notificationService.showNotification(d.title, { body: d.body, tag: change.doc.id, data: d });
           setNotifications(prev => [{
             id: change.doc.id,
-            title: d.title,
-            body: d.body,
-            type: d.type || 'general',
+            title: sanitize(d.title),
+            body: sanitize(d.body),
+            type: sanitize(d.type || 'general'),
             createdAt: d.timestamp?.toDate?.() || new Date(),
             read: d.read || false,
             data: d.data || {},
@@ -108,8 +113,8 @@ export const NotificationProvider = ({ children }) => {
           notificationService.showNotification(title, { body, tag: `complaint-${change.doc.id}` });
           setNotifications(prev => [{
             id: `complaint-${change.doc.id}-${Date.now()}`,
-            title,
-            body,
+            title: sanitize(title),
+            body: sanitize(body),
             type: 'complaint',
             createdAt: new Date(),
             read: false,

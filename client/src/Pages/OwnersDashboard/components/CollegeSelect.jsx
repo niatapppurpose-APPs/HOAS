@@ -77,8 +77,8 @@ const CollegeSelect = ({ value, onChange, isDark, placeholder }) => {
                 // Fetch universities from hipolabs AND add a country=India filter
                 // for more relevant results (can be removed for global)
                 const urls = [
-                    `http://universities.hipolabs.com/search?name=${encodeURIComponent(value)}`,
-                    `http://universities.hipolabs.com/search?name=${encodeURIComponent(value)}&country=india`,
+                    `https://universities.hipolabs.com/search?name=${encodeURIComponent(value)}`,
+                    `https://universities.hipolabs.com/search?name=${encodeURIComponent(value)}&country=india`,
                 ];
 
                 const responses = await Promise.allSettled(urls.map(u => fetch(u)));

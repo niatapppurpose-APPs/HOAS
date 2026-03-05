@@ -4,13 +4,15 @@ import { verifyAuthToken } from './helpers.js';
 /**
  * Generate a random alphanumeric code for filenames / report IDs.
  * @param {number} length - Length of the code (default 8)
- * @returns {string}
+ * @returns {Promise<string>}
  */
-export function generateRandomCode(length = 8) {
+export async function generateRandomCode(length = 8) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const crypto = await import('crypto');
+  const bytes = crypto.randomBytes(length);
   let code = '';
   for (let i = 0; i < length; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+    code += chars.charAt(bytes[i] % chars.length);
   }
   return code;
 }

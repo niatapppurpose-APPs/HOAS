@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db, corsOptions } from './config.js';
+import { FieldValue } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { verifyAdmin } from './helpers.js';
 
@@ -137,26 +138,28 @@ export const updateSystemSettings = onCall(corsOptions, async (request) => {
     updateData.updatedAt = new Date().toISOString();
     updateData.updatedBy = request.auth.uid;
 
-    const currentDoc = await db.collection('systemSettings').doc('global').get();
-    updateData.version = (currentDoc.exists ? currentDoc.data().version || 0 : 0) + 1;
+    // Use atomic increment for version
+    await db.collection('systemSettings').doc('global').set({
+      ...updateData,
+      version: FieldValue.increment(1)
+    }, { merge: true });
 
-    await db.collection('systemSettings').doc('global').set(updateData, { merge: true });
-
-    // Audit log
+    // Audit log (version will be incremented after write, so fetch again)
+    const newDoc = await db.collection('systemSettings').doc('global').get();
     await db.collection('systemSettingsAudit').add({
       action: 'UPDATE_SETTINGS',
       changes: updateData,
       performedBy: request.auth.uid,
       performedAt: new Date().toISOString(),
-      previousVersion: updateData.version - 1,
-      newVersion: updateData.version,
+      previousVersion: (newDoc.data().version || 1) - 1,
+      newVersion: newDoc.data().version || 1,
     });
 
     logger.info('✅ System settings updated successfully');
     return {
       success: true,
       message: 'System settings updated successfully',
-      version: updateData.version
+      version: newDoc.data().version || 1
     };
 
   } catch (error) {
@@ -172,9 +175,26 @@ export const updateSystemSettings = onCall(corsOptions, async (request) => {
 export const checkCollegeCapacity = onCall(corsOptions, async (request) => {
   try {
     const { collegeId, role } = request.data;
-
+    // --- Authentication check ---
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'User must be authenticated');
+    }
     if (!collegeId || !role) {
       throw new HttpsError('invalid-argument', 'collegeId and role are required');
+    }
+    // --- College relationship validation ---
+    // Only allow if user is management/admin for the college, or student/warden of that college
+    const userId = request.auth.uid;
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (!userDoc.exists) {
+      throw new HttpsError('not-found', 'User not found');
+    }
+    const user = userDoc.data();
+    const isAdmin = user.role === 'admin';
+    const isManagement = user.role === 'management' && userId === collegeId;
+    const isRelated = user.managementId === collegeId || userId === collegeId;
+    if (!(isAdmin || isManagement || isRelated)) {
+      throw new HttpsError('permission-denied', 'User not authorized for this college');
     }
 
     const limitsDoc = await db.collection('collegeLimits').doc(collegeId).get();

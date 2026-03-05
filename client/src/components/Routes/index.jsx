@@ -1,3 +1,11 @@
+import { useAuth } from '../../context/AuthContext';
+// ProtectedRoute component for role-based route protection
+const ProtectedRoute = ({ roles, children }) => {
+    const { user, userData } = useAuth();
+    if (!user) return <Navigate to="/login" replace />;
+    if (!userData || !roles.includes(userData.role)) return <Navigate to="/login" replace />;
+    return children;
+};
 import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { HashLoader } from "react-spinners";
@@ -86,7 +94,9 @@ const Routes_path = () => {
 
                 {/* ------------------------------ Dashboards ---------------------------------------------*/}
                 {/* Student Dashboard with Layout */}
-                <Route path="/dashboard/student" element={<StudentLayout />}>
+                                <Route path="/dashboard/student" element={
+                                    <ProtectedRoute roles={["student"]}><StudentLayout /></ProtectedRoute>
+                                }>
                     <Route index element={<StudentDashboard />} />
                     <Route path="complaints" element={<StudentComplaints />} />
                     <Route path="leave" element={<StudentLeaveRequests />} />
@@ -97,7 +107,9 @@ const Routes_path = () => {
                 </Route>
 
                 {/* Warden Dashboard with Layout */}
-                <Route path="/dashboard/warden" element={<WardenLayout />}>
+                                <Route path="/dashboard/warden" element={
+                                    <ProtectedRoute roles={["warden"]}><WardenLayout /></ProtectedRoute>
+                                }>
                     <Route index element={<WardenDashboard />} />
                     <Route path="students" element={<WardenStudents />} />
                     <Route path="complaints" element={<WardenComplaints />} />
@@ -109,7 +121,9 @@ const Routes_path = () => {
                 </Route>
 
                 {/* Management Dashboard with Layout */}
-                <Route path="/dashboard/management" element={<ManagementLayout />}>
+                                <Route path="/dashboard/management" element={
+                                    <ProtectedRoute roles={["management","admin"]}><ManagementLayout /></ProtectedRoute>
+                                }>
                     <Route index element={<ManagementDashboard />} />
                     <Route path="wardens" element={<ManagementWardens />} />
                     <Route path="students" element={<ManagementStudents />} />
@@ -127,7 +141,9 @@ const Routes_path = () => {
 
                 {/* --------------------------------------- Owners Page ------------------------------------- */}
                 <Route path="/admin-login" element={<Navigate to="/login" replace />} />
-                <Route path="/OwnersDashboard" element={<OwnersLayout />}>
+                                <Route path="/OwnersDashboard" element={
+                                    <ProtectedRoute roles={["admin"]}><OwnersLayout /></ProtectedRoute>
+                                }>
                     <Route index element={<OwnersDashboard />} />
                     <Route path="wardens" element={<Wardens />} />
                     <Route path="students" element={<Students />} />

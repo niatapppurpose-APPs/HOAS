@@ -1,3 +1,5 @@
+// Safe Firestore Timestamp to JS Date conversion
+const toDate = (v) => v?.toDate?.() ?? new Date(v);
 import { useAuth } from "./context/AuthContext";
 import Routes_path from "./components/Routes/index";
 import GlobalDeleteModal from "./components/OwnerServices/GlobalDeleteModal";
@@ -48,7 +50,7 @@ const App = () => {
   // Skip if the user has already acknowledged the reset after it was enabled.
   const forceResetEnabled = settings.forcePasswordReset && user && !isAdminUser;
   const userAlreadyReset = userData?.lastPasswordResetAt && settings.forcePasswordResetEnabledAt
-    && new Date(userData.lastPasswordResetAt) >= new Date(settings.forcePasswordResetEnabledAt);
+    && toDate(userData.lastPasswordResetAt) >= toDate(settings.forcePasswordResetEnabledAt);
   if (forceResetEnabled && !userAlreadyReset) {
     return <ForcePasswordReset />;
   }

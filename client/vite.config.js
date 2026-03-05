@@ -17,24 +17,21 @@ export default defineConfig({
   },
   // Build optimizations for better performance
   build: {
-    // Use esbuild (built-in, no extra install) instead of terser
     minify: 'esbuild',
-    // Code splitting for better caching
+    esbuild: {
+      drop: ['console', 'debugger']
+    },
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor chunks - these rarely change, so they cache well
           vendor: ['react', 'react-dom', 'react-router-dom'],
           firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
           ui: ['lucide-react', 'react-spinners']
         }
       }
     },
-    // Increase chunk size warning limit (reduces warnings)
     chunkSizeWarningLimit: 1000,
-    // Enable source maps for debugging (optional, set to false for smaller builds)
     sourcemap: false,
-    // Target modern browsers for smaller bundle
     target: 'es2020'
   },
   // Optimize dependencies
