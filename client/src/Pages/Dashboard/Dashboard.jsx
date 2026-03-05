@@ -16,16 +16,25 @@ const Dashboard = () => {
       return;
     }
 
-    // Role is stored in Firestore userData, NOT on the Firebase Auth user object.
+    // Prefer Firestore userData, but fallback to claims if missing
     const role = userData?.role;
-    if (role === 'management') {
+    // Fallback: get claims from AuthContext (if available)
+    let claimsRole = null;
+    try {
+      // Try to get claims from AuthContext (if available)
+      const { claims } = require('../../context/AuthContext').useAuth();
+      claimsRole = claims?.role;
+    } catch {}
+
+    // If admin/owner by claims, always send to owner dashboard
+    if (role === 'admin' || role === 'owner' || claimsRole === 'admin' || claimsRole === 'owner') {
+      navigate('/OwnersDashboard', { replace: true });
+    } else if (role === 'management') {
       navigate('/dashboard/management', { replace: true });
     } else if (role === 'warden') {
       navigate('/dashboard/warden', { replace: true });
     } else if (role === 'student') {
       navigate('/dashboard/student', { replace: true });
-    } else if (role === 'admin' || role === 'owner') {
-      navigate('/dashboard/owner', { replace: true });
     } else {
       // No role assigned yet — await owner/management provisioning
       navigate('/waiting-approval', { replace: true });

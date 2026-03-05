@@ -156,8 +156,8 @@ const GlobalSystemSettings = () => {
   };
 
   const secStatus = useMemo(() =>
-    settings.twoFactorEnabled ? 'secured' : (settings.autoLogoutMinutes > 0 ? 'active' : 'warning'),
-    [settings.twoFactorEnabled, settings.autoLogoutMinutes]
+    settings.twoFactorEnabled ? 'secured' : 'warning',
+    [settings.twoFactorEnabled]
   );
 
   const themeSetters = useMemo(() => ({ light: setLightMode, dark: setDarkMode, system: setSystemMode }), [setLightMode, setDarkMode, setSystemMode]);
@@ -307,7 +307,7 @@ const GlobalSystemSettings = () => {
                   </SettingRow>
                   <SettingRow icon={LogOut} title="Auto Logout Timer" description="Logout after inactivity">
                     <div className="flex items-center gap-2">
-                      <input type="number" value={settings.autoLogoutMinutes || 30} onChange={e => update({ autoLogoutMinutes: parseInt(e.target.value) || 30 })} min={5} max={480} disabled={saving}
+                      {/* Auto logout removed */}
                         className="w-20 py-1.5 px-2 rounded-lg border text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                         style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }} />
                       <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>min</span>
@@ -326,7 +326,7 @@ const GlobalSystemSettings = () => {
                   {[
                     { label: '2FA', on: settings.twoFactorEnabled ?? false, icon: Fingerprint },
                     { label: 'Force Reset', on: settings.forcePasswordReset ?? false, icon: Key },
-                    { label: 'Auto Logout', on: (settings.autoLogoutMinutes || 0) > 0, icon: LogOut },
+                    // Auto Logout removed
                     { label: 'Logs', on: true, icon: ScrollText },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-2 p-2 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
