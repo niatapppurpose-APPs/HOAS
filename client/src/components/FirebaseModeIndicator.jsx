@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { getFirebaseMode } from '../firebase/debugUtils';
 
 const FirebaseModeIndicator = () => {
   const [mode, setMode] = useState(null);
@@ -8,8 +7,9 @@ const FirebaseModeIndicator = () => {
   const [isToggling, setIsToggling] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMode(getFirebaseMode());
+    const timer = setTimeout(async () => {
+      const m = await import('../firebase/debugUtils');
+      setMode(m.getFirebaseMode());
     }, 2500);
     return () => clearTimeout(timer);
   }, []);
@@ -28,10 +28,11 @@ const FirebaseModeIndicator = () => {
     });
   };
 
-  const handleToggleMode = () => {
+  const handleToggleMode = async () => {
     setIsToggling(true);
 
     // Check the CURRENT running mode (not just localStorage)
+    const { getFirebaseMode } = await import('../firebase/debugUtils');
     const currentMode = getFirebaseMode();
     const isCurrentlyUsingEmulator = currentMode.auth.isUsingEmulator;
 
