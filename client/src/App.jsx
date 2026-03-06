@@ -4,8 +4,9 @@ import { useAuth } from "./context/AuthContext";
 import Routes_path from "./components/Routes/index";
 import GlobalDeleteModal from "./components/OwnerServices/GlobalDeleteModal";
 import { useServerStatus } from "./hooks/useServerStatus";
-import ServerOffline from "./components/ServerOffline/ServerOffline";
 import { MaintenanceGate, useSystemSettings } from "./hooks/useSystemSettings.jsx";
+import NotFound from "./Pages/NotFound"; // 404 page
+
 import ForcePasswordReset from "./Pages/ForcePasswordReset/ForcePasswordReset";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -35,13 +36,12 @@ const App = () => {
 
   // Show 404 (Yeti) if browser is offline (network disconnected)
   if (!isOnline) {
-    const NotFound = require('./Pages/NotFound').default;
     return <NotFound />;
   }
 
-  // Show server offline screen if server is down (but browser is online)
+  // Show 404 page if server is down (but browser is online)
   if (!isServerOnline) {
-    return <ServerOffline lastChecked={lastChecked} />;
+    return <NotFound />;
   }
 
   const content = (

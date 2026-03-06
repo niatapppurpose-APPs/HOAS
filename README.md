@@ -177,7 +177,6 @@ HOAS/
 │   │   │   │   ├── StatsCard.jsx
 │   │   │   │   └── StatusBadge.jsx
 │   │   │   ├── Routes/                  # App routing configuration
-│   │   │   ├── ServerOffline/           # Offline detection UI
 │   │   │   ├── ThemeToggle/             # Dark/Light mode toggle
 │   │   │   ├── Toast/                   # Toast notification system
 │   │   │   └── UserServices/            # Role-based UI utilities
