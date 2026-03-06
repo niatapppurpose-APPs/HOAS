@@ -29,6 +29,11 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
         address: ''
     });
     const [hostels, setHostels] = useState([]);
+
+    // wardens list is populated when a hostel block is entered
+    const [availableWardens, setAvailableWardens] = useState([]);
+    const [selectedWarden, setSelectedWarden] = useState('');
+
     const college = collegeName || userData?.collegeName || '';
 
     // fetch hostels for suggestions
