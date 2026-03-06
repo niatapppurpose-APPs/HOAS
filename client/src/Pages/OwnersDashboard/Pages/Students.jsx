@@ -37,7 +37,7 @@ const Students = () => {
     const contextInfo = {
         collegeName: "Professional Institution",
         collegeLocation: "Bangalore, Karnataka",
-        hostelName: "Premium Hostel – Block A",
+        hostelBlock: "Premium Hostel – Block A",
         hostelId: "HST-2024-001"
     };
 
@@ -286,7 +286,7 @@ const Students = () => {
                             <EmptyState
                                 title="No Students Assigned"
                                 subtitle="This hostel is awaiting student assignments"
-                                description={`No students have been linked to ${contextInfo.hostelName} yet. Students will appear here once they are assigned to this hostel through the admin portal or registration process.`}
+                                description={`No students have been linked to ${contextInfo.hostelBlock} yet. Students will appear here once they are assigned to this hostel through the admin portal or registration process.`}
                                 ctaLabel="Open Search"
                                 onCta={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
                                 videoSrc={!isDark ? NoDataLight : NoDataDark}
@@ -350,7 +350,7 @@ const Students = () => {
                                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                                         </svg>
-                                                        {student.hostelBlock || contextInfo.hostelName}
+                                                        {student.hostelBlock || '—'}
                                                         <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold">
                                                             ★
                                                         </span>

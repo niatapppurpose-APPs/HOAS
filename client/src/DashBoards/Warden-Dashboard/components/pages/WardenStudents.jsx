@@ -73,7 +73,7 @@ const WardenStudents = () => {
                 s.email?.toLowerCase().includes(q) ||
                 s.roomNumber?.toLowerCase().includes(q) ||
                 s.studentId?.toLowerCase().includes(q) ||
-                s.hostelName?.toLowerCase().includes(q) ||
+                s.hostelBlock?.toLowerCase().includes(q) ||
                 s.phone?.toLowerCase().includes(q)
             );
         }
@@ -167,7 +167,7 @@ const WardenStudents = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {['fullName', 'roomNumber', 'hostelName'].map(field => (
+                        {['fullName', 'roomNumber', 'hostelBlock'].map(field => (
                             <button
                                 key={field}
                                 onClick={() => toggleSort(field)}
@@ -238,9 +238,9 @@ const WardenStudents = () => {
                                                     <Home className="w-3 h-3" /> Room {student.roomNumber}
                                                 </span>
                                             )}
-                                            {student.hostelName && (
+                                            {student.hostelBlock && (
                                                 <span className="text-[10px] md:text-xs font-medium flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                                                    <Building2 className="w-3 h-3" /> {student.hostelName}
+                                                    <Building2 className="w-3 h-3" /> {student.hostelBlock}
                                                 </span>
                                             )}
                                             {student.studentId && (
@@ -299,7 +299,7 @@ const WardenStudents = () => {
                                 { icon: Mail, label: 'Email', value: selectedStudent.email },
                                 { icon: Phone, label: 'Phone', value: selectedStudent.phone },
                                 { icon: Home, label: 'Room Number', value: selectedStudent.roomNumber },
-                                { icon: Building2, label: 'Hostel', value: selectedStudent.hostelName },
+                                { icon: Building2, label: 'Hostel Block', value: selectedStudent.hostelBlock },
                                 { icon: Hash, label: 'Student ID', value: selectedStudent.studentId },
                                 { icon: GraduationCap, label: 'College', value: selectedStudent.collegeName },
                                 { icon: Calendar, label: 'Joined', value: formatDate(selectedStudent.createdAt) },

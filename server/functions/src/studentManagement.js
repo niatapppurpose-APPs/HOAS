@@ -39,9 +39,11 @@ export const createStudent = onCall(corsOptions, async (request) => {
             course, 
             branch, 
             year, 
+            hostelBlock,
             hostelRoom, 
             fatherName,
-            address
+            address,
+            wardenId // optional explicit assignment
         } = request.data;
 
         // ─── 2. Input Validation ───────────────────────────────────
@@ -96,7 +98,7 @@ export const createStudent = onCall(corsOptions, async (request) => {
 
         // ─── 7. Write to Firestore ────────────────────────────────
         try {
-            await db.collection('users').doc(userRecord.uid).set({
+            const studentData = {
                 uid: userRecord.uid,
                 email: email,
                 displayName: name,
@@ -110,6 +112,7 @@ export const createStudent = onCall(corsOptions, async (request) => {
                 course: course || '',
                 branch: branch || '',
                 year: year || '',
+                hostelBlock: hostelBlock || '',
                 hostelRoom: hostelRoom || '',
                 fatherName: fatherName || '',
                 address: address || '',
@@ -117,9 +120,34 @@ export const createStudent = onCall(corsOptions, async (request) => {
                 createdBy: request.auth.uid,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
-            });
+            };
+            if (wardenId) {
+                studentData.wardenId = wardenId;
+            }
+            await db.collection('users').doc(userRecord.uid).set(studentData);
 
             logger.info(`✅ Firestore document created for: ${userRecord.uid}`);
+
+            // add hostel block to hostels collection if not already present
+            if (hostelBlock && collegeName) {
+                try {
+                    const existing = await db.collection('hostels')
+                        .where('name', '==', hostelBlock)
+                        .where('collegeName', '==', collegeName)
+                        .limit(1)
+                        .get();
+                    if (existing.empty) {
+                        await db.collection('hostels').add({
+                            name: hostelBlock,
+                            block: hostelBlock,
+                            collegeName,
+                            createdAt: new Date().toISOString(),
+                        });
+                    }
+                } catch (hostelErr) {
+                    logger.warn('⚠️ failed to add hostel block record:', hostelErr.message);
+                }
+            }
         } catch (firestoreError) {
             // Firestore failed — clean up the auth user to avoid orphans
             logger.error(`❌ Firestore write failed for ${userRecord.uid}. Cleaning up auth user.`, firestoreError.message);
@@ -132,7 +160,26 @@ export const createStudent = onCall(corsOptions, async (request) => {
             throw new HttpsError('internal', 'Failed to create student profile. Auth user has been cleaned up.');
         }
 
-        // ─── 8. Send Welcome Email ────────────────────────────────
+        // ─── 8. Attempt warden assignment based on block if not explicitly set ─
+        if (!wardenId && hostelBlock && collegeName) {
+            try {
+                const wardenSnap = await db.collection('users')
+                    .where('role', '==', 'warden')
+                    .where('collegeName', '==', collegeName)
+                    .where('hostelBlock', '==', hostelBlock)
+                    .limit(1)
+                    .get();
+                if (!wardenSnap.empty) {
+                    const assigned = wardenSnap.docs[0].id;
+                    await db.collection('users').doc(userRecord.uid).update({ wardenId: assigned });
+                    logger.info(`➡️ Assigned warden ${assigned} to student ${userRecord.uid}`);
+                }
+            } catch (assignErr) {
+                logger.warn('⚠️ Failed to auto-assign warden:', assignErr.message);
+            }
+        }
+
+        // ─── 9. Send Welcome Email ────────────────────────────────
         let emailSent = false;
         emailSent = await sendStudentWelcomeEmail({
             name,
@@ -143,7 +190,7 @@ export const createStudent = onCall(corsOptions, async (request) => {
             resetLink,
         });
 
-        // ─── 9. Return Response ───────────────────────────────────
+        // ─── 10. Return Response ──────────────────────────────────
         logger.info(`✅ Student created successfully: ${name} (${email}) — emailSent: ${emailSent}`);
 
         return {
@@ -154,7 +201,6 @@ export const createStudent = onCall(corsOptions, async (request) => {
                 ? `Student "${name}" created successfully. Welcome email sent.`
                 : `Student "${name}" created successfully. Welcome email could not be sent — the student can use "Forgot Password" to set their password.`,
         };
-
     } catch (error) {
         logger.error('❌ Error in createStudent:', error);
         if (error instanceof HttpsError) {

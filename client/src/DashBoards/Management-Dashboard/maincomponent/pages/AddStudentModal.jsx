@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createStudent } from '../../../../firebase/cloudFunctions';
 import { useAuth } from '../../../../context/AuthContext';
 import { useTheme } from '../../../../context/ThemeContext';
 import { useToast } from '../../../../components/Toast';
+import { db } from '../../../../firebase/firebaseConfig';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import {
     X, User, Mail, Phone, BookOpen, Building2, CheckCircle2,
     GraduationCap, Briefcase
@@ -21,19 +23,71 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
         course: '',
         branch: '',
         year: '',
+        hostelBlock: '',
         hostelRoom: '',
         fatherName: '',
         address: ''
     });
+    const [hostels, setHostels] = useState([]);
+    const college = collegeName || userData?.collegeName || '';
+
+    // fetch hostels for suggestions
+    useEffect(() => {
+        if (!college) return;
+        const fetch = async () => {
+            try {
+                const q = query(
+                    collection(db, 'hostels'),
+                    where('collegeName', '==', college)
+                );
+                const snap = await getDocs(q);
+                setHostels(snap.docs.map(d => d.data().block || d.data().name));
+            } catch (err) {
+                console.error('error loading hostels', err);
+            }
+        };
+        fetch();
+    }, [college]);
+
 
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
 
-    const college = collegeName || userData?.collegeName || '';
+    // Whenever the block changes, fetch matching wardens
+    useEffect(() => {
+        if (!formData.hostelBlock.trim() || !college) {
+            setAvailableWardens([]);
+            setSelectedWarden('');
+            return;
+        }
+        const fetchWardens = async () => {
+            try {
+                const q = query(
+                    collection(db, 'users'),
+                    where('role', '==', 'warden'),
+                    where('collegeName', '==', college),
+                    where('hostelBlock', '==', formData.hostelBlock.trim())
+                );
+                const snap = await getDocs(q);
+                const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                setAvailableWardens(list);
+                if (list.length === 1) {
+                    setSelectedWarden(list[0].id);
+                }
+            } catch (err) {
+                console.error('Failed to fetch wardens for block:', err);
+            }
+        };
+        fetchWardens();
+    }, [formData.hostelBlock, college]);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        if (field === 'hostelBlock') {
+            // clear warden selection when block changes
+            setSelectedWarden('');
+        }
         setError('');
     };
 
@@ -66,11 +120,13 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
                 course: formData.course.trim(),
                 branch: formData.branch.trim(),
                 year: formData.year.trim(),
+                hostelBlock: formData.hostelBlock.trim(),
                 hostelRoom: formData.hostelRoom.trim(),
                 fatherName: formData.fatherName.trim(),
                 address: formData.address.trim(),
                 collegeName: college,
                 managementId: userData?.uid || user?.uid,
+                wardenId: selectedWarden || undefined,
             });
 
             setSuccess(true);
@@ -88,7 +144,7 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
     const handleReset = () => {
         setFormData({ 
             fullName: '', email: '', studentId: '', phone: '', 
-            course: '', branch: '', year: '', hostelRoom: '', 
+            course: '', branch: '', year: '', hostelBlock: '', hostelRoom: '', 
             fatherName: '', address: '' 
         });
         setSuccess(false);
@@ -293,6 +349,44 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
                                     </div>
                                 </div>
 
+                                {/* Hostel Block and Room */}
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium" style={{ color: textPrimary }}>Hostel Block</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            list="hostel-blocks"
+                                            value={formData.hostelBlock}
+                                            onChange={(e) => handleChange('hostelBlock', e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none transition-all placeholder-opacity-50"
+                                            style={{ backgroundColor: inputBg, border: `1px solid ${inputBorder}`, color: textPrimary }}
+                                            placeholder="Block A"
+                                        />
+                                        <datalist id="hostel-blocks">
+                                            {hostels.map((b, idx) => (
+                                                <option key={idx} value={b} />
+                                            ))}
+                                        </datalist>
+                                        <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: textSecondary }} />
+                                    </div>
+                                </div>
+
+                                {availableWardens.length > 0 && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium" style={{ color: textPrimary }}>Assign Warden</label>
+                                        <select
+                                            value={selectedWarden}
+                                            onChange={(e) => setSelectedWarden(e.target.value)}
+                                            className="w-full px-3 py-2 rounded-xl border text-sm"
+                                            style={{ backgroundColor: inputBg, borderColor: inputBorder, color: textPrimary }}
+                                        >
+                                            <option value="">Auto (based on block)</option>
+                                            {availableWardens.map(w => (
+                                                <option key={w.id} value={w.id}>{w.fullName || w.email || 'Unnamed'}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium" style={{ color: textPrimary }}>Hostel & Room</label>
                                     <div className="relative">
@@ -302,7 +396,7 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
                                             onChange={(e) => handleChange('hostelRoom', e.target.value)}
                                             className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none transition-all placeholder-opacity-50"
                                             style={{ backgroundColor: inputBg, border: `1px solid ${inputBorder}`, color: textPrimary }}
-                                            placeholder="Block A - Room 101"
+                                            placeholder="Room 101"
                                         />
                                         <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: textSecondary }} />
                                     </div>

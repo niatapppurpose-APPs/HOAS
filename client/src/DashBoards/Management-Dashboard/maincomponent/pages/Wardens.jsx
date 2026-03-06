@@ -53,7 +53,7 @@ const Wardens = () => {
 
   const contextInfo = {
     collegeName: "Professional Institution",
-    hostelName: "Premium Hostel – Block A"
+    hostelBlock: "Premium Hostel – Block A"
   };
 
   useEffect(() => {

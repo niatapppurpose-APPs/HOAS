@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from "../../../../firebase/firebaseConfig";
 import ManagementHeader from "../../components/layout/ManagementHeader";
@@ -17,6 +17,7 @@ import NoDataDark from '../../../../assets/NoDataDark.png';
 const Students = () => {
   const { isCollapsed, setIsCollapsed } = useOutletContext();
   const [searchTerm, setSearchTerm] = useState("");
+  const [blockFilter, setBlockFilter] = useState("");
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null)
@@ -32,15 +33,28 @@ const Students = () => {
   // This is the most reliable tenant-isolation filter.
   const managementUid = user?.uid;
 
+  // parse query param for block filter
+  const navigate = useNavigate();
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const block = params.get('block');
+    if (block) setBlockFilter(block);
+  }, [location.search]);
+
   useEffect(() => {
     if (!managementUid) return; // wait until auth resolves
     let timer;
 
-    const q = query(
-      collection(db, 'users'),
+    const constraints = [
       where('role', '==', 'student'),
       where('managementId', '==', managementUid)
-    );
+    ];
+    if (blockFilter) {
+      constraints.push(where('hostelBlock', '==', blockFilter));
+    }
+
+    const q = query(collection(db, 'users'), ...constraints);
 
     const unsubscribe = onSnapshot(
       q,
@@ -59,7 +73,7 @@ const Students = () => {
       unsubscribe();
       if (timer) clearTimeout(timer);
     };
-  }, [managementUid]);
+  }, [managementUid, blockFilter]);
 
   // Helper function to get role badge color
   const getRoleBadgeColor = (user) => {
@@ -104,7 +118,7 @@ const Students = () => {
 
   const contextInfo = {
     collegeName: "Professional Institution",
-    hostelName: "Premium Hostel – Block A"
+    hostelBlock: "Premium Hostel – Block A"
   };
   return (
     <>
@@ -235,8 +249,14 @@ const Students = () => {
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-600/90 to-indigo-600/90 text-white text-xs font-semibold shadow-lg border border-purple-500/30">
                         <Building2 className="w-3.5 h-3.5" />
                         {student.collegeName || contextInfo.collegeName}
-
                       </span>
+                      {/* Hostel block badge */}
+                      {student.hostelBlock && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500/90 to-teal-500/90 text-white text-xs font-semibold shadow-lg border border-green-500/30">
+                          <Building2 className="w-3.5 h-3.5" />
+                          {student.hostelBlock}
+                        </span>
+                      )}
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r ${getRoleBadgeColor(student)} text-white text-xs font-medium shadow-md`}>
                         <GraduationCap className="w-3.5 h-3.5" />
                         {student.role || 'Student'}

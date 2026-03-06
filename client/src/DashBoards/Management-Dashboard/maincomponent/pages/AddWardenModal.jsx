@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createWarden } from '../../../../firebase/cloudFunctions';
 import { useAuth } from '../../../../context/AuthContext';
 import { useTheme } from '../../../../context/ThemeContext';
 import { useToast } from '../../../../components/Toast';
+import { db } from '../../../../firebase/firebaseConfig';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, limit } from 'firebase/firestore';
 import {
     X, User, Mail, Lock, Phone, Building2, Eye, EyeOff,
     ShieldCheck, Loader2, CheckCircle2, AlertTriangle
@@ -23,12 +25,31 @@ const AddWardenModal = ({ isOpen, onClose, collegeName }) => {
         password: '',
         hostelBlock: '',
     });
+    const [hostels, setHostels] = useState([]);
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
 
     const college = collegeName || userData?.collegeName || '';
+
+    // fetch existing hostels for dropdown suggestions
+    useEffect(() => {
+        if (!college) return;
+        const fetch = async () => {
+            try {
+                const q = query(
+                    collection(db, 'hostels'),
+                    where('collegeName', '==', college)
+                );
+                const snap = await getDocs(q);
+                setHostels(snap.docs.map(d => d.data().block || d.data().name));
+            } catch (err) {
+                console.error('error loading hostels', err);
+            }
+        };
+        fetch();
+    }, [college]);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -57,15 +78,49 @@ const AddWardenModal = ({ isOpen, onClose, collegeName }) => {
         setError('');
 
         try {
-            await createWarden({
+            // try to resolve hostel name from block
+            let hostelNameVal = '';
+            if (formData.hostelBlock.trim()) {
+                try {
+                    const q2 = query(
+                        collection(db, 'hostels'),
+                        where('block', '==', formData.hostelBlock.trim()),
+                        where('collegeName', '==', college),
+                        limit(1)
+                    );
+                    const snap2 = await getDocs(q2);
+                    if (!snap2.empty) {
+                        hostelNameVal = snap2.docs[0].data().name;
+                    }
+                } catch (e) {
+                    console.warn('failed to lookup hostel name', e);
+                }
+            }
+
+        await createWarden({
                 fullName: formData.fullName.trim(),
                 email: formData.email.trim().toLowerCase(),
                 phone: formData.phone.trim(),
                 password: formData.password,
                 hostelBlock: formData.hostelBlock.trim(),
+                hostelName: hostelNameVal,
                 collegeName: college,
                 managementId: userData?.uid || user?.uid,
             });
+
+            // if hostelBlock is new, add to hostels collection
+            const block = formData.hostelBlock.trim();
+            if (block && college && !hostels.includes(block)) {
+                try {
+                    await addDoc(collection(db, 'hostels'), {
+                        name: block,
+                        collegeName: college,
+                        createdAt: serverTimestamp(),
+                    });
+                } catch (e) {
+                    console.warn('failed to add new hostel block', e);
+                }
+            }
 
             setSuccess(true);
             toast.success(`Warden "${formData.fullName}" created successfully! 🎉`);
@@ -266,6 +321,7 @@ const AddWardenModal = ({ isOpen, onClose, collegeName }) => {
                                         <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: textSecondary }} />
                                         <input
                                             type="text"
+                                            list="hostel-blocks"
                                             placeholder="Block A"
                                             value={formData.hostelBlock}
                                             onChange={(e) => handleChange('hostelBlock', e.target.value)}
@@ -273,6 +329,11 @@ const AddWardenModal = ({ isOpen, onClose, collegeName }) => {
                                             style={{ backgroundColor: inputBg, borderColor: inputBorder, color: textPrimary }}
                                             disabled={loading}
                                         />
+                                        <datalist id="hostel-blocks">
+                                            {hostels.map((b, idx) => (
+                                                <option key={idx} value={b} />
+                                            ))}
+                                        </datalist>
                                     </div>
                                 </div>
                             </div>

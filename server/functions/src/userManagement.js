@@ -299,7 +299,7 @@ export const createWarden = onCall(corsOptions, async (request) => {
       throw new HttpsError('unauthenticated', 'User must be authenticated');
     }
 
-    const { fullName, email, phone, hostelBlock, collegeName, managementId, password: providedPassword } = request.data;
+    const { fullName, email, phone, hostelBlock, hostelName, collegeName, managementId, password: providedPassword } = request.data;
 
     // Validate required fields
     if (!fullName || !email) {
@@ -345,6 +345,7 @@ export const createWarden = onCall(corsOptions, async (request) => {
       role: 'warden',
       status: 'approved',
       hostelBlock: hostelBlock || '',
+      hostelName: hostelName || '',
       collegeName: collegeName || '',
       managementId: managementId || request.auth.uid,
       isOnline: false,
@@ -352,6 +353,26 @@ export const createWarden = onCall(corsOptions, async (request) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
+
+    // if a new hostelBlock was provided, add it to hostels collection if missing
+    if (hostelBlock && collegeName) {
+      try {
+        const existing = await db.collection('hostels')
+          .where('name', '==', hostelBlock)
+          .where('collegeName', '==', collegeName)
+          .limit(1)
+          .get();
+        if (existing.empty) {
+          await db.collection('hostels').add({
+            name: hostelBlock,
+            collegeName,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      } catch (hErr) {
+        logger.warn('⚠️ failed to add hostel block record for warden:', hErr.message);
+      }
+    }
 
     logger.info('✅ Warden Firestore document created:', userRecord.uid);
 

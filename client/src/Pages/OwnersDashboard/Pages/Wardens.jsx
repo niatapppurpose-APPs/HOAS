@@ -59,7 +59,7 @@ const Wardens = () => {
     const contextInfo = {
         collegeName: "Professional Institution",
         collegeLocation: "Bangalore, Karnataka",
-        hostelName: "Premium Hostel – Block A",
+        hostelBlock: "Premium Hostel – Block A",
         hostelId: "HST-2024-001"
     };
 
@@ -302,7 +302,7 @@ const Wardens = () => {
                             <EmptyState
                                 title="No Wardens Assigned"
                                 subtitle="This hostel needs warden supervision"
-                                description={`No wardens have been assigned to ${contextInfo.hostelName} yet. Assign a warden to help manage students, handle daily operations, and maintain hostel discipline.`}
+                                description={`No wardens have been assigned to ${contextInfo.hostelBlock} yet. Assign a warden to help manage students, handle daily operations, and maintain hostel discipline.`}
                                 ctaLabel="Assign Warden"
                                 onCta={assignWarden}
                                 videoSrc={!isDark ? NoDataLight : NoDataDark}
@@ -365,7 +365,7 @@ const Wardens = () => {
                                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                                         </svg>
-                                                        {warden.hostelBlock || contextInfo.hostelName}
+                                                        {warden.hostelBlock || '—'}
                                                         <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold">
                                                             ★
                                                         </span>

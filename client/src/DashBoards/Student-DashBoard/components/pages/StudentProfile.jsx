@@ -92,7 +92,7 @@ const StudentProfile = () => {
                             {[
                                 { icon: Building2, label: "Institution", value: collegeName },
                                 { icon: MapPin, label: "Location", value: collegeLocation },
-                                { icon: Home, label: "Hostel", value: userData?.hostelName || "—" },
+                                { icon: Home, label: "Hostel Block", value: userData?.hostelBlock || "—" },
                                 { icon: BookOpen, label: "Student ID", value: userData?.studentId || "—" },
                                 { icon: Calendar, label: "Joined", value: userData?.createdAt ? new Date(userData.createdAt).getFullYear() : "—" },
                                 { icon: Award, label: "Status", value: userData?.status === "approved" ? "Approved ✓" : userData?.status || "—" },
@@ -131,7 +131,7 @@ const StudentProfile = () => {
                                     { icon: GraduationCap, label: "Role", value: "Student" },
                                     { icon: Building2, label: "College", value: collegeName },
                                     { icon: BookOpen, label: "Student ID", value: userData?.studentId || "—" },
-                                    { icon: Home, label: "Hostel", value: userData?.hostelName || "—" },
+                                    { icon: Home, label: "Hostel Block", value: userData?.hostelBlock || "—" },
                                 ].map(({ icon: Icon, label, value }) => (
                                     <div key={label} className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: subBg }}>
                                         <Icon className="w-4 h-4 flex-shrink-0" style={{ color: accentColor }} />

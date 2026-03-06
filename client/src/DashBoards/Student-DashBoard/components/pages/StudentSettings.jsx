@@ -212,7 +212,7 @@ const StudentSettings = () => {
                                 { label: 'Role', value: 'Student' },
                                 { label: 'College', value: userData?.collegeName || '—' },
                                 { label: 'Room', value: userData?.roomNumber || '—' },
-                                { label: 'Hostel', value: userData?.hostelName || '—' },
+                                { label: 'Hostel Block', value: userData?.hostelBlock || '—' },
                             ].map((item, i) => (
                                 <div key={i} className="flex items-center justify-between py-1.5">
                                     <span className="text-xs font-bold uppercase tracking-widest opacity-50" style={{ color: 'var(--text-muted)' }}>{item.label}</span>

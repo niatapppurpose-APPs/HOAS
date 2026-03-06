@@ -1,10 +1,13 @@
 import { useNavigate, useOutletContext } from "react-router-dom";
+import { useState, useEffect } from 'react';
 import {
     Building2, Mail, MapPin, Shield, ArrowLeft,
     Calendar, Award, Users, Home, BookOpen
 } from "lucide-react";
 import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
+import { db } from "../../../../firebase/firebaseConfig";
+import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { ThemeToggle } from "../../../../components/ThemeToggle";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 import ProfileBanner from "../../../../components/ProfileBanner";
@@ -21,6 +24,31 @@ const WardenProfile = () => {
     const collegeLogo = layoutLogo || userData?.collegeLogo || null;
     const collegeName = managementData?.collegeName || userData?.collegeName || "Your College";
     const collegeLocation = managementData?.collegeLocation || userData?.collegeLocation || "Location not set";
+
+    const [hostelName, setHostelName] = useState('');
+
+    // fetch hostel document to display proper name
+    useEffect(() => {
+        const block = userData?.hostelBlock;
+        if (!block || !collegeName) return;
+        const fetchHostel = async () => {
+            try {
+                const q = query(
+                    collection(db, 'hostels'),
+                    where('name', '==', block),
+                    where('collegeName', '==', collegeName),
+                    limit(1)
+                );
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    setHostelName(snap.docs[0].data().name);
+                }
+            } catch (err) {
+                console.error('Failed to fetch hostel name for warden profile', err);
+            }
+        };
+        fetchHostel();
+    }, [userData?.hostelBlock, collegeName]);
 
 
     const cardBg = isDark ? "rgba(15,23,42,0.8)" : "rgba(255,255,255,0.9)";
@@ -89,7 +117,8 @@ const WardenProfile = () => {
                             {[
                                 { icon: Building2, label: "Institution", value: collegeName },
                                 { icon: MapPin, label: "Location", value: collegeLocation },
-                                { icon: Home, label: "Hostel", value: userData?.hostelName || "—" },
+                                { icon: Home, label: "Hostel Block", value: userData?.hostelBlock || "—" },
+                                { icon: Home, label: "Hostel Name", value: userData?.hostelName || hostelName || "—" },
                                 { icon: Mail, label: "Email", value: user?.email || "—" },
                                 { icon: Calendar, label: "Joined", value: userData?.createdAt ? new Date(userData.createdAt).getFullYear() : "—" },
                                 { icon: Award, label: "Status", value: userData?.status === "approved" ? "Approved ✓" : userData?.status || "—" },
@@ -127,7 +156,7 @@ const WardenProfile = () => {
                                 {[
                                     { icon: Shield, label: "Role", value: "Warden" },
                                     { icon: Building2, label: "College", value: collegeName },
-                                    { icon: Home, label: "Hostel", value: userData?.hostelName || "—" },
+                                    { icon: Home, label: "Hostel Block", value: userData?.hostelBlock || "—" },
                                     { icon: Award, label: "Status", value: userData?.status === "approved" ? "Approved" : userData?.status || "—" },
                                 ].map(({ icon: Icon, label, value }) => (
                                     <div key={label} className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: subBg }}>

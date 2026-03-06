@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import StudentHeader from '../layout/StudentHeader';
 import { db } from '../../../../firebase/firebaseConfig';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from 'firebase/firestore';
 import {
     HelpCircle, LifeBuoy, MessageCircle, ChevronDown,
     ChevronUp, Send, Loader2, BookOpen, Phone,
@@ -32,7 +32,7 @@ const FAQ_DATA = [
     {
         category: 'Account & Profile',
         questions: [
-            { q: 'How do I update my profile information?', a: 'Click on your profile card in the sidebar or navigate to the Profile page. Click the edit button to update your phone number, room number, hostel name, and other details.' },
+            { q: 'How do I update my profile information?', a: 'Click on your profile card in the sidebar or navigate to the Profile page. Click the edit button to update your phone number, room number, hostel block, and other details.' },
             { q: 'How do I change my password?', a: 'Go to Settings from the sidebar, then click "Change Password" under the Security section. You will need to enter your current password and then set a new one.' },
             { q: 'Can I change my email address?', a: 'Email addresses cannot be changed as they are linked to your authentication account. Contact your warden or management if you need to update your email.' },
         ]
@@ -55,6 +55,9 @@ const StudentHelpSupport = () => {
     const [expandedFaq, setExpandedFaq] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [showTicketForm, setShowTicketForm] = useState(false);
+    const [showWardens, setShowWardens] = useState(false);
+    const [wardens, setWardens] = useState([]);
+    const [wardensLoading, setWardensLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [ticketData, setTicketData] = useState({
         subject: '',
@@ -104,6 +107,26 @@ const StudentHelpSupport = () => {
         })).filter(cat => cat.questions.length > 0)
         : FAQ_DATA;
 
+    // fetch wardens for contact list
+    useEffect(() => {
+        if (!userData?.collegeName) return;
+        setWardensLoading(true);
+        const q = query(
+            collection(db, 'users'),
+            where('role', '==', 'warden'),
+            where('collegeName', '==', userData.collegeName)
+        );
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            setWardens(list);
+            setWardensLoading(false);
+        }, (err) => {
+            console.error('Failed to fetch wardens:', err);
+            setWardensLoading(false);
+        });
+        return () => unsubscribe();
+    }, [userData?.collegeName]);
+
     return (
         <>
             <StudentHeader
@@ -140,8 +163,11 @@ const StudentHelpSupport = () => {
                         </div>
                     </button>
 
-                    <div className="flex items-center gap-3 p-4 rounded-2xl border"
-                        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                    <button
+                        onClick={() => setShowWardens(v => !v)}
+                        className="flex items-center gap-3 p-4 rounded-2xl border transition-all hover:scale-[1.02] hover:shadow-lg text-left"
+                        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
+                    >
                         <div className="p-2.5 rounded-xl bg-green-500/10">
                             <Phone className="w-5 h-5 text-green-500" />
                         </div>
@@ -149,7 +175,7 @@ const StudentHelpSupport = () => {
                             <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Contact Warden</p>
                             <p className="text-[10px] opacity-60" style={{ color: 'var(--text-muted)' }}>Reach your warden directly</p>
                         </div>
-                    </div>
+                    </button>
 
                     <div className="flex items-center gap-3 p-4 rounded-2xl border"
                         style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
@@ -162,6 +188,33 @@ const StudentHelpSupport = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Warden Contact List */}
+                {showWardens && (
+                    <div className="rounded-2xl border p-6 md:p-8 mb-6 shadow-lg"
+                        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                        <h3 className="text-lg font-black mb-4" style={{ color: 'var(--text-primary)' }}>
+                            <Phone className="inline w-5 h-5 text-green-500 mr-2 -mt-0.5" />
+                            Warden Contacts
+                        </h3>
+                        {wardensLoading ? (
+                            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading wardens...</p>
+                        ) : wardens.length === 0 ? (
+                            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No wardens assigned yet.</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {wardens.map(w => (
+                                    <div key={w.id} className="p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                                        <p className="font-bold" style={{ color: 'var(--text-primary)' }}>{w.fullName || w.displayName || w.email}</p>
+                                        <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Block: {w.hostelBlock || 'N/A'}</p>
+                                        {w.phone && <p className="text-[10px]"><a href={`tel:${w.phone}`} className="underline">{w.phone}</a></p>}
+                                        {w.email && <p className="text-[10px]"><a href={`mailto:${w.email}`} className="underline">{w.email}</a></p>}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Support Ticket Form */}
                 {showTicketForm && (

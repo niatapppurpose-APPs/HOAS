@@ -109,7 +109,7 @@ const StudentLeaveRequests = () => {
                 studentName: userData?.fullName || user?.displayName || '',
                 studentEmail: user.email,
                 roomNumber: userData?.roomNumber || '',
-                hostelName: userData?.hostelName || '',
+                hostelBlock: userData?.hostelBlock || '',
                 collegeName: userData?.collegeName || '',
                 managementId: userData?.managementId || '',
                 wardenId: userData?.wardenId || '',

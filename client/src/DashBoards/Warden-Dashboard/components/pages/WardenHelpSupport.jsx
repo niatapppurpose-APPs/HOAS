@@ -24,7 +24,7 @@ const FAQ_DATA = [
     {
         category: 'Student Management',
         questions: [
-            { q: 'How do I view my students?', a: 'The Students page shows all students registered under your college/management. You can search by name, room number, student ID, or hostel name. Click on any student to view their full details.' },
+            { q: 'How do I view my students?', a: 'The Students page shows all students registered under your college/management. You can search by name, room number, student ID, or hostel block. Click on any student to view their full details.' },
             { q: 'How do I track student attendance?', a: 'The attendance feature can be accessed from the dashboard quick actions. It allows you to mark daily hostel presence for your assigned students.' },
             { q: 'What should I do when a new student registers?', a: 'When a new student registers, they will appear with "Pending" status. Management (Principal) handles approvals for new registrations.' },
         ]

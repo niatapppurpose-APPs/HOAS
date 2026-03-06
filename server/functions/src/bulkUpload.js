@@ -57,7 +57,7 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
     // ─── Process Each Student ─────────────────────────────────
     for (let i = 0; i < students.length; i++) {
       const student = students[i];
-      const { name, studentId, email } = student;
+      const { name, studentId, email, hostelBlock } = student;
 
       // Validate required fields
       if (!name || !email) {
@@ -111,12 +111,34 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
           status: 'approved',
           collegeName: collegeName,
           managementId: managementId || request.auth.uid,
+          hostelBlock: hostelBlock || '',
           isOnline: false,
           createdBy: request.auth.uid,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           bulkUploaded: true,
         });
+
+        // attempt to ensure hostel block exists in hostels collection
+        if (hostelBlock) {
+          try {
+            const existing = await db.collection('hostels')
+              .where('name', '==', hostelBlock)
+              .where('collegeName', '==', collegeName)
+              .limit(1)
+              .get();
+            if (existing.empty) {
+              await db.collection('hostels').add({
+                name: hostelBlock,
+                block: hostelBlock,
+                collegeName,
+                createdAt: new Date().toISOString(),
+              });
+            }
+          } catch (hErr) {
+            logger.warn('⚠️ bulk upload failed to add hostel block:', hErr.message);
+          }
+        }
 
         // Send welcome email
         let emailSent = false;

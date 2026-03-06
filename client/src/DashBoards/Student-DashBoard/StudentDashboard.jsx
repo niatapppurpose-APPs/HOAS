@@ -46,7 +46,7 @@ const StudentDashboard = () => {
         roomNumber: '',
         collegeName: '',
         studentId: '',
-        hostelName: '',
+        hostelBlock: '',
     });
 
     useEffect(() => {
@@ -57,7 +57,7 @@ const StudentDashboard = () => {
                 roomNumber: userData.roomNumber || '',
                 collegeName: userData.collegeName || '',
                 studentId: userData.studentId || '',
-                hostelName: userData.hostelName || '',
+                hostelBlock: userData.hostelBlock || '',
             });
         }
     }, [userData]);
@@ -412,15 +412,15 @@ const StudentDashboard = () => {
                                                 />
                                                 <input
                                                     type="text"
-                                                    name="hostelName"
-                                                    value={formData.hostelName}
+                                                    name="hostelBlock"
+                                                    value={formData.hostelBlock}
                                                     onChange={handleChange}
                                                     className="student-profile-input"
-                                                    placeholder="Hostel"
+                                                    placeholder="Block A"
                                                 />
                                             </div>
                                         ) : (
-                                            <p className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>{userData.roomNumber || 'N/A'} · {userData.hostelName || '—'}</p>
+                                            <p className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>{userData.roomNumber || 'N/A'} · {userData.hostelBlock || '—'}</p>
                                         )}
                                     </div>
                                 </div>
