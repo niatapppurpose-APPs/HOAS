@@ -68,7 +68,7 @@ const LoginButton = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const emailParam = params.get('email');
-    if (emailParam) setEmail(emailParam);
+    if (emailParam) setEmail(emailParam.trim().replace(/\s+/g, ''));
   }, []);
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -224,7 +224,13 @@ const LoginButton = () => {
               
                 type={changeToggle ? "text" : "email"}
                 value={email}
-                onChange={(e) => setEmail(e.target.value.trim())}
+                onChange={(e) => setEmail(e.target.value.replace(/\s+/g, ''))}
+                onKeyDown={(e) => { if (e.key === ' ') e.preventDefault(); }}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const pasted = e.clipboardData.getData('text').trim();
+                  setEmail(pasted);
+                }}
                 onFocus={() => setFocusedField('email')}
                 onBlur={() => setFocusedField(null)}
                 placeholder={changeToggle ? 'Enter your ID' : 'you@example.com'}
