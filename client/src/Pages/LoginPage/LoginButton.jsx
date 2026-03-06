@@ -221,9 +221,10 @@ const LoginButton = () => {
                   style={{ color: focusedField === 'email' ? (isDark ? '#818cf8' : '#4f46e5') : (isDark ? '#475569' : '#94a3b8') }} />
               )}
               <input
+              
                 type={changeToggle ? "text" : "email"}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value.trim())}
                 onFocus={() => setFocusedField('email')}
                 onBlur={() => setFocusedField(null)}
                 placeholder={changeToggle ? 'Enter your ID' : 'you@example.com'}
@@ -248,7 +249,7 @@ const LoginButton = () => {
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value.trim())}
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
                 placeholder="Enter your password"

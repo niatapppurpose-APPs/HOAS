@@ -78,5 +78,5 @@ export const socialLinks = [
     { icon: Twitter, href: 'https://twitter.com', label: 'Twitter', hoverColor: '#1DA1F2' },
     { icon: Github, href: 'https://github.com', label: 'GitHub', hoverColor: '#333333' },
     { icon: Instagram, href: 'https://instagram.com', label: 'Instagram', hoverColor: '#E4405F' },
-    { icon: Mail, href: 'mailto:support@hoas.app', label: 'Email', hoverColor: '#6366f1' },
+    { icon: Mail, href: 'https://mail.google.com/mail/?view=cm&fs=1&to=niatapppurpose@gmail.com', label: 'Email', hoverColor: '#6366f1' },
 ];
