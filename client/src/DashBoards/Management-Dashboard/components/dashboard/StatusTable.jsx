@@ -1,7 +1,10 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Avatar from "../../../../components/OwnerServices/Avatar";
-
-const StatusTable = ({ users, currentPage, totalPages, onPageChange }) => {
+import ThemeContext from "../../../../context/ThemeContext";
+import { useContext } from 'react';
+const StatusTable = ({ users, currentPage, totalPages, onPageChange, searchTerm = '', onSearchChange }) => {
+  // read theme context so we can adjust styling
+  const { isDark } = useContext(ThemeContext);
   // Helper function to get role badge color
   const getRoleBadgeColor = (role) => {
     if (role === 'student') {
@@ -14,14 +17,21 @@ const StatusTable = ({ users, currentPage, totalPages, onPageChange }) => {
 
   return (
     <div className="mb-6 sm:mb-8 bg-[var(--bg-card)] backdrop-blur-xl border border-[var(--border-primary)] rounded-2xl p-4 sm:p-6 shadow-lg">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      {/* header with search bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
         <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] m-0">Wardens & Students Status</h2>
-        <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] p-1.5 px-3 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-lg">
-          {currentPage} - {totalPages} {totalPages}
-          <ChevronRight className="w-4 h-4" />
+        <div className="mt-3 sm:mt-0">
+          <input
+            type="text"
+            placeholder="Search Students By Wardens..."
+            value={searchTerm}
+            onChange={e => onSearchChange?.(e.target.value)}
+            className={`w-full sm:w-64 px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] text-sm border ${isDark ? 'border-white text-white' : 'border-black text-black'}`}
+          />
         </div>
       </div>
 
+      {/* table */}
       <div className="w-full overflow-x-auto rounded-xl border border-[var(--border-primary)]">
         <table className="w-full min-w-[600px] border-collapse">
           <thead>
@@ -58,6 +68,31 @@ const StatusTable = ({ users, currentPage, totalPages, onPageChange }) => {
           </tbody>
         </table>
       </div>
+
+      {/* pagination footer */}
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-center gap-4 text-sm text-[var(--text-muted)]">
+          <button
+            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage <= 1}
+            className={`p-2 rounded-full hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-100 border border-1 ${isDark ? 'border-white text-white' : 'border-black text-black'}`}
+            title="Previous page"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <span className="px-4 py-1 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-lg">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage >= totalPages}
+            className={`p-2 rounded-full hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50 border ${isDark ? 'border-white text-white' : 'border-black text-black'}`}
+            title="Next page"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
