@@ -30,15 +30,26 @@ const ManagementDashboard = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3;
+  const itemsPerPage = 5; // show 10 users per page in status table
 
   // College logo (from colleges collection)
   const [collegeLogo, setCollegeLogo] = useState(null);
 
-  // Fetch wardens and students
+  // Fetch wardens and students belonging to this management only
   useEffect(() => {
-    const wardensQuery = query(collection(db, "users"), where("role", "==", "warden"));
-    const studentsQuery = query(collection(db, "users"), where("role", "==", "student"));
+    if (!userData?.uid) return; // wait until we know who the current management is
+
+    const baseConstraints = [where("managementId", "==", userData.uid)];
+    const wardensQuery = query(
+      collection(db, "users"),
+      where("role", "==", "warden"),
+      ...baseConstraints
+    );
+    const studentsQuery = query(
+      collection(db, "users"),
+      where("role", "==", "student"),
+      ...baseConstraints
+    );
 
     const unsubscribeWardens = onSnapshot(wardensQuery, (snapshot) => {
       const wardensData = snapshot.docs.map(doc => ({
@@ -61,7 +72,7 @@ const ManagementDashboard = () => {
       unsubscribeWardens();
       unsubscribeStudents();
     };
-  }, []);
+  }, [userData?.uid]);
 
   // Subscribe to college doc to get logo (if user has a collegeName)
   // First check userData.collegeLogo (from profile registration), then colleges collection
@@ -92,6 +103,9 @@ const ManagementDashboard = () => {
     return () => unsubscribe();
   }, [userData]);
 
+  // search state for status table
+  const [statusSearch, setStatusSearch] = useState('');
+
   // Calculate statistics
   const stats = {
     totalWardens: wardens.length,
@@ -113,7 +127,8 @@ const ManagementDashboard = () => {
     return dateB - dateA;
   });
 
-  const recentUsers = allPendingUsers.slice(0, 3);
+  // keep full list for RecentActivity so it can paginate internally
+  const recentUsers = allPendingUsers;
   const firstPendingUser = allPendingUsers[0] || null;
 
   // Get users for table
@@ -123,7 +138,16 @@ const ManagementDashboard = () => {
     return dateB - dateA;
   });
 
-  const paginatedUsers = allUsers.slice(
+  // apply status table search filter
+  const filteredUsers = allUsers.filter(u => {
+    const tokens = statusSearch.toLowerCase().split(/\s+/).filter(t => t);
+    if (tokens.length === 0) return true;
+    const name = u.displayName?.toLowerCase() || '';
+    const mail = u.email?.toLowerCase() || '';
+    return tokens.every(tok => name.includes(tok) || mail.includes(tok));
+  });
+
+  const paginatedUsers = filteredUsers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -231,8 +255,10 @@ const ManagementDashboard = () => {
             <StatusTable
               users={paginatedUsers}
               currentPage={currentPage}
-              totalPages={Math.ceil(allUsers.length / itemsPerPage)}
+              totalPages={Math.ceil(filteredUsers.length / itemsPerPage)}
               onPageChange={setCurrentPage}
+              searchTerm={statusSearch}
+              onSearchChange={setStatusSearch}
             />
           </div>
           <div className="w-full xl:w-[400px] 2xl:w-[500px] flex-shrink-0">

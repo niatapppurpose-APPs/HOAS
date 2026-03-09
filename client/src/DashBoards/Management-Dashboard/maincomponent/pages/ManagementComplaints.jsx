@@ -249,8 +249,17 @@ const ManagementComplaints = () => {
                                     <tr>
                                         <td colSpan="5" className="px-6 py-20 text-center">
                                             <div className="flex flex-col items-center gap-2 opacity-30">
-                                                <MessageSquare size={48} />
-                                                <p className="text-sm font-bold">No complaints found</p>
+                                                {filter === 'escalated' ? (
+                                                    <>
+                                                        <AlertTriangle size={48} />
+                                                        <p className="text-sm font-bold">No escalated complaints</p>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <MessageSquare size={48} />
+                                                        <p className="text-sm font-bold">No complaints found</p>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

@@ -30,6 +30,47 @@ export const NotificationProvider = ({ children }) => {
   );
   const role = userData?.role || null;
 
+  // helper to play the custom notification sound
+  const playSound = () => {
+    if (!userData?.notifPrefs?.soundAlerts) return;
+    // generate a short two‑note tone resembling the HOAS notification sound
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.02);
+      gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 0.32);
+      gain.connect(ctx.destination);
+
+      const playFreq = (freq, start) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, start);
+        osc.connect(gain);
+        osc.start(start);
+        osc.stop(start + 0.16);
+      };
+
+      const now = ctx.currentTime;
+      playFreq(1000.25, now);          // C5
+      playFreq(800.25, now + 0.30);   // E5
+
+      // close context after tone finishes
+      setTimeout(() => ctx.close(), 1000);
+    } catch (e) {
+      console.warn('notification sound failed', e);
+    }
+  };
+
+  // wrapper used throughout the context so that every notification uses
+  // the shared playing logic and respects the sound preference.
+  const triggerNotification = (title, options) => {
+    notificationService.showNotification(title, options);
+    playSound();
+  };
+
   // â”€â”€â”€ FCM setup for ALL logged-in users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!user) return;
@@ -47,6 +88,11 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     if (!user) return;
     const unsubscribe = notificationService.onForegroundMessage((payload) => {
+      const prefs = userData?.notifPrefs || {};
+      if (prefs.systemAlerts === false) {
+        // drop all generic/system messages
+        return;
+      }
       const newNotification = {
         id: Date.now().toString(),
         title: sanitize(payload.notification?.title || 'New Notification'),
@@ -60,11 +106,12 @@ export const NotificationProvider = ({ children }) => {
       setUnreadCount(prev => prev + 1);
     });
     return unsubscribe;
-  }, [user]);
+  }, [user, userData?.notifPrefs]);
 
   // â”€â”€â”€ Firestore notifications collection (ALL users) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!user) return;
+    const prefs = userData?.notifPrefs || {};
     const q = query(
       collection(db, 'notifications'),
       where('userId', '==', user.uid),
@@ -74,8 +121,9 @@ export const NotificationProvider = ({ children }) => {
     const unsub = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
+          if (prefs.systemAlerts === false) return; // ignore generic notifications
           const d = change.doc.data();
-          notificationService.showNotification(d.title, { body: d.body, tag: change.doc.id, data: d });
+          triggerNotification(d.title, { body: d.body, tag: change.doc.id, data: d });
           setNotifications(prev => [{
             id: change.doc.id,
             title: sanitize(d.title),
@@ -90,7 +138,7 @@ export const NotificationProvider = ({ children }) => {
       });
     }, (err) => console.debug('notifications listener error:', err));
     return unsub;
-  }, [user]);
+  }, [user, userData?.notifPrefs]);
 
   // â”€â”€â”€ Student: complaint status updates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
@@ -104,13 +152,15 @@ export const NotificationProvider = ({ children }) => {
     );
     const unsub = onSnapshot(q, (snapshot) => {
       if (isInitial.v) { isInitial.v = false; return; }
+      const prefs = userData?.notifPrefs || {};
+      if (!prefs.complaints) return; // student opted out of complaint updates
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'modified') {
           const d = change.doc.data();
           const statusLabel = d.status === 'in-progress' ? 'In Progress' : d.status === 'resolved' ? 'Resolved' : d.status;
           const title = `Complaint Updated`;
           const body = `"${d.title}" is now ${statusLabel}`;
-          notificationService.showNotification(title, { body, tag: `complaint-${change.doc.id}` });
+          triggerNotification(title, { body, tag: `complaint-${change.doc.id}` });
           setNotifications(prev => [{
             id: `complaint-${change.doc.id}-${Date.now()}`,
             title: sanitize(title),
@@ -125,12 +175,13 @@ export const NotificationProvider = ({ children }) => {
       });
     }, (err) => console.debug('student complaint listener error:', err));
     return unsub;
-  }, [user, role]);
+  }, [user, role, userData?.notifPrefs]);
 
   // â”€â”€â”€ Warden: new complaints in their college â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!user || role !== 'warden' || !userData?.managementId) return;
     const isInitial = { v: true };
+    const prefs = userData?.notifPrefs || {};
     const q = query(
       collection(db, 'complaints'),
       where('managementId', '==', userData.managementId),
@@ -140,12 +191,13 @@ export const NotificationProvider = ({ children }) => {
     );
     const unsub = onSnapshot(q, (snapshot) => {
       if (isInitial.v) { isInitial.v = false; return; }
+      if (!prefs.newComplaints) return; // warden opted out of new complaint alerts
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const d = change.doc.data();
           const title = `New Complaint`;
           const body = `${d.title} â€” Room ${d.roomNumber || 'N/A'}`;
-          notificationService.showNotification(title, { body, tag: `warden-complaint-${change.doc.id}` });
+          triggerNotification(title, { body, tag: `warden-complaint-${change.doc.id}` });
           setNotifications(prev => [{
             id: `warden-complaint-${change.doc.id}`,
             title,
@@ -160,13 +212,14 @@ export const NotificationProvider = ({ children }) => {
       });
     }, (err) => console.debug('warden complaint listener error:', err));
     return unsub;
-  }, [user, role, userData?.managementId]);
+  }, [user, role, userData?.managementId, userData?.notifPrefs]);
 
   // ——— Student & Warden: new announcements browser notifications ————————————
   useEffect(() => {
     if (!user || !userData?.managementId) return;
     if (role !== 'student' && role !== 'warden') return;
     const isInitial = { v: true };
+    const prefs = userData?.notifPrefs || {};
     const q = query(
       collection(db, 'announcements'),
       where('managementId', '==', userData.managementId),
@@ -175,13 +228,14 @@ export const NotificationProvider = ({ children }) => {
     );
     const unsub = onSnapshot(q, (snapshot) => {
       if (isInitial.v) { isInitial.v = false; return; }
+      if (!prefs.announcements) return; // skip announcements if turned off
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const d = change.doc.data();
           const priorityEmoji = d.priority === 'urgent' ? '🔴' : d.priority === 'important' ? '🟡' : '📢';
           const title = `${priorityEmoji} New Announcement`;
           const body = d.title || 'A new notice has been posted';
-          notificationService.showNotification(title, {
+          triggerNotification(title, {
             body,
             tag: `announcement-${change.doc.id}`,
           });
@@ -199,12 +253,13 @@ export const NotificationProvider = ({ children }) => {
       });
     }, (err) => console.debug('announcements listener error:', err));
     return unsub;
-  }, [user, role, userData?.managementId]);
+  }, [user, role, userData?.managementId, userData?.notifPrefs]);
 
   // ——— Student: leave request status updates ———————————————————————————————
   useEffect(() => {
     if (!user || role !== 'student') return;
     const isInitial = { v: true };
+    const prefs = userData?.notifPrefs || {};
     const q = query(
       collection(db, 'leaveRequests'),
       where('studentId', '==', user.uid),
@@ -213,13 +268,14 @@ export const NotificationProvider = ({ children }) => {
     );
     const unsub = onSnapshot(q, (snapshot) => {
       if (isInitial.v) { isInitial.v = false; return; }
+      if (!prefs.leaveUpdates) return; // student disabled leave updates
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'modified') {
           const d = change.doc.data();
           const statusEmoji = d.status === 'approved' ? '✅' : d.status === 'denied' ? '❌' : '📋';
           const title = `${statusEmoji} Leave Request Updated`;
           const body = `Your ${d.leaveType?.replace('_', ' ') || 'leave'} request is now ${d.status}`;
-          notificationService.showNotification(title, { body, tag: `leave-${change.doc.id}` });
+          triggerNotification(title, { body, tag: `leave-${change.doc.id}` });
           setNotifications(prev => [{
             id: `leave-${change.doc.id}-${Date.now()}`,
             title,
@@ -234,12 +290,13 @@ export const NotificationProvider = ({ children }) => {
       });
     }, (err) => console.debug('leave request listener error:', err));
     return unsub;
-  }, [user, role]);
+  }, [user, role, userData?.notifPrefs]);
 
   // ——— Warden: new leave requests from students ————————————————————————————
   useEffect(() => {
     if (!user || role !== 'warden' || !userData?.managementId) return;
     const isInitial = { v: true };
+    const prefs = userData?.notifPrefs || {};
     const q = query(
       collection(db, 'leaveRequests'),
       where('managementId', '==', userData.managementId),
@@ -249,12 +306,13 @@ export const NotificationProvider = ({ children }) => {
     );
     const unsub = onSnapshot(q, (snapshot) => {
       if (isInitial.v) { isInitial.v = false; return; }
+      if (!prefs.leaveRequests) return; // warden disabled leave request alerts
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const d = change.doc.data();
           const title = '📋 New Leave Request';
           const body = `${d.studentName || 'A student'} — ${d.leaveType?.replace('_', ' ') || 'Leave'} (Room ${d.roomNumber || 'N/A'})`;
-          notificationService.showNotification(title, { body, tag: `warden-leave-${change.doc.id}` });
+          triggerNotification(title, { body, tag: `warden-leave-${change.doc.id}` });
           setNotifications(prev => [{
             id: `warden-leave-${change.doc.id}`,
             title,
@@ -269,7 +327,7 @@ export const NotificationProvider = ({ children }) => {
       });
     }, (err) => console.debug('warden leave request listener error:', err));
     return unsub;
-  }, [user, role, userData?.managementId]);
+  }, [user, role, userData?.managementId, userData?.notifPrefs]);
 
   // â”€â”€â”€ Management: new warden added or student complaints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
@@ -288,7 +346,7 @@ export const NotificationProvider = ({ children }) => {
           const d = change.doc.data();
           const title = `New Complaint Filed`;
           const body = `${d.title} â€” by ${d.studentName || 'Student'}`;
-          notificationService.showNotification(title, { body, tag: `mgmt-complaint-${change.doc.id}` });
+          triggerNotification(title, { body, tag: `mgmt-complaint-${change.doc.id}` });
           setNotifications(prev => [{
             id: `mgmt-complaint-${change.doc.id}`,
             title,
@@ -319,7 +377,7 @@ export const NotificationProvider = ({ children }) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const d = change.doc.data();
-          notificationService.showNotification('New Approval Request', {
+          triggerNotification('New Approval Request', {
             body: `${d.displayName || 'A college'} is requesting approval`,
             tag: `approval-${change.doc.id}`,
           });
@@ -352,7 +410,7 @@ export const NotificationProvider = ({ children }) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const d = change.doc.data();
-          notificationService.showNotification('New Support Ticket', {
+          triggerNotification('New Support Ticket', {
             body: d.subject || 'A new support ticket has been created',
             tag: `ticket-${change.doc.id}`,
           });
@@ -391,6 +449,10 @@ export const NotificationProvider = ({ children }) => {
 
   const clearAll = () => { setNotifications([]); setUnreadCount(0); };
 
+  // expose helpers so UI can play sound or send a notification manually
+  // useful for testing or custom triggers
+  
+
   const requestPermission = async () => {
     const granted = await notificationService.requestNotificationPermission();
     if (granted && user) {
@@ -401,8 +463,35 @@ export const NotificationProvider = ({ children }) => {
     return granted;
   };
 
+  // play sound once immediately (for manual testing).
+  // this bypasses the user's soundAlerts preference so you can always hear it.
+  const playOnce = () => {
+    // temporarily override pref
+    const original = userData?.notifPrefs?.soundAlerts;
+    if (userData && userData.notifPrefs) {
+      userData.notifPrefs.soundAlerts = true;
+    }
+    playSound();
+    if (userData && userData.notifPrefs) {
+      userData.notifPrefs.soundAlerts = original;
+    }
+  };
+
+
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, permissionGranted, markAsRead, markAllAsRead, clearAll, requestPermission, role }}>
+    <NotificationContext.Provider value={{
+      notifications,
+      unreadCount,
+      permissionGranted,
+      markAsRead,
+      markAllAsRead,
+      clearAll,
+      requestPermission,
+      role,
+      playSound,
+      triggerNotification,
+      playOnce
+    }}>
       {children}
     </NotificationContext.Provider>
   );

@@ -44,9 +44,9 @@ const KPICards = ({ stats }) => {
                 <Icon className="text-white w-6 h-6" />
               </div>
               <div className="text-white">
-                <h3 className="text-3xl sm:text-4xl font-extrabold mb-1 leading-none">{card.value}</h3>
-                <p className="text-sm sm:text-base font-semibold mb-1 opacity-95">{card.title}</p>
-                {card.subtitle && <p className="text-xs sm:text-sm m-0 opacity-80">{card.subtitle}</p>}
+                <h3 className="text-3xl sm:text-4xl font-extrabold mb-1 leading-none break-words truncate">{card.value}</h3>
+                <p className="text-sm sm:text-base font-semibold mb-1 opacity-95 break-words whitespace-normal max-w-full">{card.title}</p>
+                {card.subtitle && <p className="text-xs sm:text-sm m-0 opacity-80 break-words whitespace-normal max-w-full">{card.subtitle}</p>}
               </div>
             </div>
           </div>

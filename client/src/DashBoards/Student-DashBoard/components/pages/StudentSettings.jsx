@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import { useTheme } from '../../../../context/ThemeContext';
 import StudentHeader from '../layout/StudentHeader';
-import { auth } from '../../../../firebase/firebaseConfig';
+import { auth, db } from '../../../../firebase/firebaseConfig';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+// import { useNotifications } from '../../../../context/NotificationContext';
 import {
     Settings, Moon, Sun, Bell, Shield, Lock,
     Eye, EyeOff, Loader2, Check, User,
@@ -31,13 +33,42 @@ const StudentSettings = () => {
     });
     const [changingPassword, setChangingPassword] = useState(false);
 
-    // Notification prefs (local state — can be extended to Firestore)
+    // Notification prefs (persisted in Firestore under users/{uid})
     const [notifPrefs, setNotifPrefs] = useState({
         complaints: true,
         leaveUpdates: true,
         announcements: true,
         systemAlerts: true,
     });
+    const [prefsLoaded, setPrefsLoaded] = useState(false);
+
+    // load / save notification preferences when userData.uid changes
+    useEffect(() => {
+        if (!userData?.uid) return;
+        const loadPrefs = async () => {
+            try {
+                const userRef = doc(db, 'users', userData.uid);
+                const snap = await getDoc(userRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (data.notifPrefs) {
+                        setNotifPrefs(data.notifPrefs);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load notification preferences', err);
+            } finally {
+                setPrefsLoaded(true);
+            }
+        };
+        loadPrefs();
+    }, [userData?.uid]);
+
+    useEffect(() => {
+        if (!prefsLoaded || !userData?.uid) return;
+        const userRef = doc(db, 'users', userData.uid);
+        updateDoc(userRef, { notifPrefs }).catch(err => console.error('Failed to save notification prefs', err));
+    }, [notifPrefs, prefsLoaded, userData?.uid]);
 
     const handlePasswordChange = async () => {
         if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
@@ -74,6 +105,22 @@ const StudentSettings = () => {
         } finally {
             setChangingPassword(false);
         }
+    };
+
+    const updatePref = (key) => {
+        setNotifPrefs(p => {
+            const updated = { ...p, [key]: !p[key] };
+            if (userData?.uid) {
+                const userRef = doc(db, 'users', userData.uid);
+                updateDoc(userRef, { notifPrefs: updated })
+                    .then(() => toast.success('Notification preferences saved'))
+                    .catch(err => {
+                        console.error('Failed to save notification prefs', err);
+                        toast.error('Could not save preferences');
+                    });
+            }
+            return updated;
+        });
     };
 
     const SettingsCard = ({ icon: Icon, title, description, children, iconColor = 'text-blue-500' }) => (
@@ -183,22 +230,22 @@ const StudentSettings = () => {
                         <div className="space-y-1">
                             <Toggle
                                 checked={notifPrefs.complaints}
-                                onChange={() => setNotifPrefs(p => ({ ...p, complaints: !p.complaints }))}
+                                onChange={() => updatePref('complaints')}
                                 label="Complaint Updates"
                             />
                             <Toggle
                                 checked={notifPrefs.leaveUpdates}
-                                onChange={() => setNotifPrefs(p => ({ ...p, leaveUpdates: !p.leaveUpdates }))}
+                                onChange={() => updatePref('leaveUpdates')}
                                 label="Leave Request Updates"
                             />
                             <Toggle
                                 checked={notifPrefs.announcements}
-                                onChange={() => setNotifPrefs(p => ({ ...p, announcements: !p.announcements }))}
+                                onChange={() => updatePref('announcements')}
                                 label="New Announcements"
                             />
                             <Toggle
                                 checked={notifPrefs.systemAlerts}
-                                onChange={() => setNotifPrefs(p => ({ ...p, systemAlerts: !p.systemAlerts }))}
+                                onChange={() => updatePref('systemAlerts')}
                                 label="System Alerts"
                             />
                         </div>

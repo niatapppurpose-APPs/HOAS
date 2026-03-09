@@ -18,7 +18,7 @@ export const useServerStatus = (checkInterval = 5000) => {
         } else {
           setIsServerOnline(false);
         }
-        setLastChecked(new Date());
+        setLastChecked(new Date()); 
       } catch (error) {
         // Network error means server is down
         setIsServerOnline(false);

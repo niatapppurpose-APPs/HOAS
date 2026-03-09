@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { getFirebaseMode } from '../../firebase/debugUtils';
 import { useNavigate } from 'react-router-dom';
 
 const FirebaseModePage = () => {
@@ -9,8 +8,9 @@ const FirebaseModePage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMode(getFirebaseMode());
+    const timer = setTimeout(async () => {
+      const m = await import('../../firebase/debugUtils');
+      setMode(m.getFirebaseMode());
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
@@ -29,8 +29,9 @@ const FirebaseModePage = () => {
     });
   };
 
-  const handleToggleMode = () => {
+  const handleToggleMode = async () => {
     setIsToggling(true);
+    const { getFirebaseMode } = await import('../../firebase/debugUtils');
     const currentMode = getFirebaseMode();
     const isCurrentlyUsingEmulator = currentMode.auth.isUsingEmulator;
     const newValue = isCurrentlyUsingEmulator ? 'false' : 'true';

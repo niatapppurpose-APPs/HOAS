@@ -2,14 +2,41 @@ import { CheckCircle, ChevronDown } from "lucide-react";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 
 
-const RecentActivity = ({ recentUsers, onApprove, approvingUserId }) => {
+import { useState , useEffect} from 'react';
+
+// recentUsers  - full list of pending users
+// onApprove    - callback to approve a user ID
+// approvingUserId - id currently being approved (for loading state)
+// perPage      - optional prop controlling rows per page (default 8)
+const RecentActivity = ({ recentUsers, onApprove, approvingUserId, perPage = 8 }) => {
+  // pagination state for the small activity card
+  const [page, setPage] = useState(0);
+
+  const totalPages = Math.ceil(recentUsers.length / perPage) || 1;
+
+  const sliceStart = page * perPage;
+  const visibleUsers = recentUsers.slice(sliceStart, sliceStart + perPage);
+
+  const handlePageToggle = () => {
+    // cycle through pages forward
+    setPage(prev => (prev + 1) % totalPages);
+  };
+
+  // whenever list length or page-size changes, reset to first page
+  useEffect(() => {
+    setPage(0);
+  }, [recentUsers.length, perPage]);
+
   return (
     <div className="mb-6 sm:mb-8">
-      <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] m-0 mb-1.5">Recent Activity</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1.5">
+        <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] m-0">Recent Activity</h2>
+      
+      </div>
       <p className="text-sm text-[var(--text-muted)] m-0 mb-6">Manage pending warden and student registrations</p>
 
-      <div className="flex flex-col gap-3 sm:gap-4">
-        {recentUsers.map((user) => (
+      <div className="flex flex-col gap-3 sm:gap-4 overflow-scroll">
+        {visibleUsers.map((user) => (
           <div key={user.id} className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 p-4 sm:p-5 bg-[var(--bg-card)] backdrop-blur-xl border border-[var(--border-primary)] rounded-2xl transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-[var(--accent-primary)]">
             <div className="flex items-center gap-3 sm:gap-4 flex-1">
               <Avatar user={user} size="md" />
@@ -46,9 +73,18 @@ const RecentActivity = ({ recentUsers, onApprove, approvingUserId }) => {
                 <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 {approvingUserId === user.id ? 'Approving...' : 'Approve'}
               </button>
-              <button className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-xl text-[var(--text-muted)] cursor-pointer transition-all hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
-                <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </button>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-[var(--text-muted)]">{page+1}/{totalPages}</span>
+                  <button
+                    onClick={handlePageToggle}
+                    className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-xl text-[var(--text-muted)] cursor-pointer transition-all hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+                    title="Next page"
+                  >
+                    <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform ${page !== 0 ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}
