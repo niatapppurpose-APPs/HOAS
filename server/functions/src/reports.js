@@ -6,7 +6,7 @@ import { generateRandomCode, authenticateRequest, fetchReportData } from './repo
 /**
  * Generate and download college report in JSON format
  */
-export const downloadReportJson = onRequest(async (req, res) => {
+export const downloadReportJson = onRequest({ invoker: 'public' }, async (req, res) => {
   return corsHandler(req, res, async () => {
     try {
       console.log('=== downloadReportJson called ===');
@@ -46,7 +46,7 @@ export const downloadReportJson = onRequest(async (req, res) => {
 /**
  * Generate and download college report in PDF format
  */
-export const downloadReportPdf = onRequest(async (req, res) => {
+export const downloadReportPdf = onRequest({ invoker: 'public' }, async (req, res) => {
   return corsHandler(req, res, async () => {
     try {
       console.log('=== downloadReportPdf called ===');

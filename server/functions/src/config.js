@@ -10,7 +10,7 @@ const require = createRequire(import.meta.url);
 // Initialize Firebase Admin
 try {
   // Try to load service account key if available
-  const serviceAccount = require('../serviceAccountKey.json');
+  const serviceAccount = require('../../serviceAccountKey.json');
   initializeApp({
     credential: cert(serviceAccount)
   });
