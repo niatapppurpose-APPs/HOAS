@@ -217,8 +217,8 @@ const WardenStudents = () => {
                                     className="p-4 md:p-5 flex items-center gap-3 md:gap-4 hover:bg-orange-500/5 transition-all cursor-pointer group"
                                     onClick={() => setSelectedStudent(student)}
                                 >
-                                    <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl overflow-hidden border-2 border-orange-500/10 group-hover:border-orange-500/30 transition-all">
-                                        <Avatar name={student.fullName} image={student.photoURL} size="sm" />
+                                    <div className="flex-shrink-0 w-full h-full md:w-12 md:h-12 rounded-xl overflow-hidden border-2 border-orange-500/10 group-hover:border-orange-500/30 transition-all">
+                                        <Avatar name={student.fullName} image={student.photoURL} size="sm" className="w-full h-full" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between">
@@ -277,7 +277,7 @@ const WardenStudents = () => {
                             </button>
                             <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-orange-500/20 shadow-xl">
-                                    <Avatar name={selectedStudent.fullName} image={selectedStudent.photoURL} />
+                                    <Avatar name={selectedStudent.fullName} image={selectedStudent.photoURL} className="w-full h-full" />
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-black" style={{ color: 'var(--text-primary)' }}>
