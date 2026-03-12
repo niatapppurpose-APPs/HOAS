@@ -160,21 +160,7 @@ const Wardens = () => {
                             <h2 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Warden Directory</h2>
                             <p className="mt-2 text-sm md:text-base" style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>Manage and view all wardens assigned to this hostel</p>
                         </div>
-                        {/* <div className="flex items-center gap-2 text-sm">
-                            <span className="text-slate-400">Total Wardens:</span>
-                            <span className="text-white font-semibold">{wardens.length}</span>
-                        </div> */}
-
-
-                        {/* {import.meta.env.DEV && (
-                                <button
-                                    onClick={() => setSimulateError(true)}
-                                    className="ml-2 p-2.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                                    title="Simulate error"
-                                >
-                                    Simulate Error
-                                </button>
-                            )}    */}
+            
                         <div className="relative flex items-center justify-end gap-2">
                             {/* Refresh button visible when search is closed */}
 
@@ -314,7 +300,7 @@ const Wardens = () => {
                             {searchWarden.map((warden) => (
                                 <div
                                     key={warden.id}
-                                    className="rounded-xl p-4 hover:border-slate-600/50 transition-all"
+                                    className="rounded-lg p-4 hover:border-slate-600/50 transition-all"
                                     style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
                                 >
                                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -325,7 +311,7 @@ const Wardens = () => {
                                             <Avatar
                                                 image={warden.photoURL}
                                                 name={warden.fullName || warden.displayName || warden.email}
-                                                size="lg"
+                                                size="xl"
                                             />
 
                                             <div className="flex-1 min-w-0">
@@ -339,6 +325,14 @@ const Wardens = () => {
                                                     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r ${getRoleBadgeColor(getRoleLabel(warden))} text-white text-xs font-medium`}>
                                                         {getRoleLabel(warden)}
                                                     </span>
+                                                      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md border" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-tertiary)' }}>
+                                                        <Building2 className="w-3.5 h-3.5 opacity-70" />
+                                                        {warden.collegeName || contextInfo.collegeName}
+                                                    </span>
+                                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+                                                        <Shield className="w-3.5 h-3.5 opacity-80" />
+                                                        {warden.hostelBlock || 'No block assigned'}
+                                                    </span>
                                                 </div>
 
                                                 {/* Email */}
@@ -350,26 +344,12 @@ const Wardens = () => {
                                                 )}
 
                                                 {/* College and Hostel Badges */}
-                                                <div className="flex flex-wrap items-center gap-2">
+                                                <div className="flex flex-wrap items-center gap-4 mt-1">
                                                     {/* Professional Institution Badge */}
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-600/90 to-indigo-600/90 text-white text-xs font-semibold shadow-lg border border-purple-500/30">
-                                                        <Building2 className="w-3.5 h-3.5" />
-                                                        {warden.collegeName || contextInfo.collegeName}
-                                                        <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold">
-                                                            PRO
-                                                        </span>
-                                                    </span>
+                                                  
 
                                                     {/* Premium Hostel Badge */}
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white text-xs font-semibold shadow-lg border border-emerald-500/30">
-                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                                        </svg>
-                                                        {warden.hostelBlock || '—'}
-                                                        <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold">
-                                                            ★
-                                                        </span>
-                                                    </span>
+                                                   
                                                 </div>
                                             </div>
                                         </div>

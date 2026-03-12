@@ -8,7 +8,7 @@ const AssignStudentModal = ({ isOpen, onClose, hostel, collegeName, assignedWard
     const toast = useToast();
     const [loading, setLoading] = useState(false);
     const [students, setStudents] = useState([]);
-    const [selectedStudent, setSelectedStudent] = useState(null);
+    const [selectedStudents, setSelectedStudents] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [roomNumber, setRoomNumber] = useState("");
     const [selectedWarden, setSelectedWarden] = useState("");
@@ -38,12 +38,13 @@ const AssignStudentModal = ({ isOpen, onClose, hostel, collegeName, assignedWard
             }
         };
 
+        setSelectedStudents([]);
         fetchStudents();
     }, [isOpen, collegeName, hostel.students]);
 
     const handleSubmit = async () => {
-        if (!selectedStudent) {
-            toast.error("Please select a student");
+        if (selectedStudents.length === 0) {
+            toast.error("Please select at least one student");
             return;
         }
 
@@ -52,31 +53,35 @@ const AssignStudentModal = ({ isOpen, onClose, hostel, collegeName, assignedWard
             // 1. Update Hostel doc
             const hostelRef = doc(db, "hostels", hostel.id);
             await updateDoc(hostelRef, {
-                students: arrayUnion(selectedStudent)
+                students: arrayUnion(...selectedStudents)
             });
 
-            // 2. Update Student doc
-            const studentRef = doc(db, "users", selectedStudent);
-            const updateData = {
-                hostelId: hostel.id,
-                hostelBlock: hostel.block || ''
-            };
+            // 2. Update Student docs
+            const updatePromises = selectedStudents.map(studentId => {
+                const studentRef = doc(db, "users", studentId);
+                const updateData = {
+                    hostelId: hostel.id,
+                    hostelBlock: hostel.block || ''
+                };
 
-            if (roomNumber.trim()) {
-                updateData.roomNumber = roomNumber.trim();
-            }
+                if (roomNumber.trim()) {
+                    updateData.roomNumber = roomNumber.trim();
+                }
 
-            if (selectedWarden) {
-                updateData.assignedWarden = selectedWarden;
-            }
+                if (selectedWarden) {
+                    updateData.assignedWarden = selectedWarden;
+                }
 
-            await updateDoc(studentRef, updateData);
+                return updateDoc(studentRef, updateData);
+            });
 
-            toast.success("Student assigned successfully");
+            await Promise.all(updatePromises);
+
+            toast.success("Students assigned successfully");
             onClose();
         } catch (error) {
-            console.error("Error assigning student:", error);
-            toast.error("Failed to assign student");
+            console.error("Error assigning students:", error);
+            toast.error("Failed to assign students");
         } finally {
             setLoading(false);
         }
@@ -87,6 +92,15 @@ const AssignStudentModal = ({ isOpen, onClose, hostel, collegeName, assignedWard
         s.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.studentId?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const isAllSelected = filteredStudents.length > 0 && selectedStudents.length === filteredStudents.length;
+    const handleSelectAll = () => {
+        if (isAllSelected) {
+            setSelectedStudents([]);
+        } else {
+            setSelectedStudents(filteredStudents.map(s => s.id));
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -131,15 +145,31 @@ const AssignStudentModal = ({ isOpen, onClose, hostel, collegeName, assignedWard
                             <div className="p-6 text-center text-gray-500">No unassigned students found.</div>
                         ) : (
                             <div className="divide-y" style={{ borderColor: 'var(--border-primary)' }}>
+                                <label className="flex items-center gap-3 p-4 hover:bg-black/5 cursor-pointer transition-colors bg-black/5">
+                                    <input
+                                        type="checkbox"
+                                        checked={isAllSelected}
+                                        onChange={handleSelectAll}
+                                        className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                    />
+                                    <div className="flex-1">
+                                        <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Select All {filteredStudents.length} Students</p>
+                                    </div>
+                                </label>
                                 {filteredStudents.map(student => (
                                     <label key={student.id} className="flex items-center gap-3 p-4 hover:bg-black/5 cursor-pointer transition-colors">
                                         <input
-                                            type="radio"
-                                            name="selectedStudent"
+                                            type="checkbox"
                                             value={student.id}
-                                            checked={selectedStudent === student.id}
-                                            onChange={() => setSelectedStudent(student.id)}
-                                            className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                                            checked={selectedStudents.includes(student.id)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedStudents(prev => [...prev, student.id]);
+                                                } else {
+                                                    setSelectedStudents(prev => prev.filter(id => id !== student.id));
+                                                }
+                                            }}
+                                            className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                         />
                                         <div className="flex-1">
                                             <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{student.displayName}</p>
@@ -192,7 +222,7 @@ const AssignStudentModal = ({ isOpen, onClose, hostel, collegeName, assignedWard
                         </button>
                         <button
                             onClick={handleSubmit}
-                            disabled={loading || !selectedStudent}
+                            disabled={loading || selectedStudents.length === 0}
                             className="flex items-center gap-2 px-6 py-2 rounded-xl font-medium text-white transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-70"
                             style={{ background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary))' }}
                         >

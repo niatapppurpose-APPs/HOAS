@@ -1,8 +1,10 @@
-const UserListTabs = ({ activeTab, allUsersCount, pendingCount, approvedCount, onTabChange }) => {
+const UserListTabs = ({ activeTab, allUsersCount, pendingCount, approvedCount, suspendedCount, onTabChange }) => {
   const tabs = [
     { id: "all", label: "All", count: allUsersCount },
     { id: "pending", label: "Pending", count: pendingCount },
     { id: "approved", label: "Approved", count: approvedCount },
+    { id: "suspended", label: "Suspended", count: suspendedCount},
+
   ];
 
   return (

@@ -327,7 +327,7 @@ const OwnersDashboard = () => {
     setIsDeleteLoading(user.id);
     try {
       // Confirm deletion
-      const confirmed = await toast.confirm(`Are you sure you want to delete management user "${user.displayName || user.email}"? This will remove their account from both Authentication and Firestore.`);
+      const confirmed = await toast.confirm(`Are you sure you want to delete management user "${user.displayName || user.email}"? This will remove their account Sub user accounts and College account`);
       if (!confirmed) return;
       await cloudFunctions.deleteUserAccount(user.id);
       toast.success('Management user deleted successfully!');
@@ -345,6 +345,7 @@ const OwnersDashboard = () => {
     switch (activeTab) {
       case "pending": users = allUsers.filter(u => u.status === "pending"); break;
       case "approved": users = allUsers.filter(u => u.status === "approved"); break;
+      case "suspended": users = allUsers.filter(u => u.status === "suspended"); break;
       default: users = allUsers;
     }
     return users.sort((a, b) => {
@@ -358,6 +359,7 @@ const OwnersDashboard = () => {
 
   const pendingCount = useMemo(() => allUsers.filter(u => u.status === "pending").length, [allUsers]);
   const approvedCount = useMemo(() => allUsers.filter(u => u.status === "approved").length, [allUsers]);
+  const suspendedCount = useMemo(() => allUsers.filter(u => u.status === "suspended").length, [allUsers]);
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -439,6 +441,7 @@ const OwnersDashboard = () => {
             allUsersCount={allUsers.length}
             pendingCount={pendingCount}
             approvedCount={approvedCount}
+            suspendedCount={suspendedCount}
             onTabChange={setActiveTab}
           />
 

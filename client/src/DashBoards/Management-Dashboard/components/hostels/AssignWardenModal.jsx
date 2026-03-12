@@ -8,7 +8,7 @@ const AssignWardenModal = ({ isOpen, onClose, hostel, collegeName }) => {
     const toast = useToast();
     const [loading, setLoading] = useState(false);
     const [wardens, setWardens] = useState([]);
-    const [selectedWarden, setSelectedWarden] = useState(null);
+    const [selectedWardens, setSelectedWardens] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
@@ -36,12 +36,13 @@ const AssignWardenModal = ({ isOpen, onClose, hostel, collegeName }) => {
             }
         };
 
+        setSelectedWardens([]);
         fetchWardens();
     }, [isOpen, collegeName, hostel.wardens]);
 
     const handleSubmit = async () => {
-        if (!selectedWarden) {
-            toast.error("Please select a warden");
+        if (selectedWardens.length === 0) {
+            toast.error("Please select at least one warden");
             return;
         }
 
@@ -50,21 +51,24 @@ const AssignWardenModal = ({ isOpen, onClose, hostel, collegeName }) => {
             // 1. Update Hostel doc
             const hostelRef = doc(db, "hostels", hostel.id);
             await updateDoc(hostelRef, {
-                wardens: arrayUnion(selectedWarden)
+                wardens: arrayUnion(...selectedWardens)
             });
 
-            // 2. Update Warden doc
-            const wardenRef = doc(db, "users", selectedWarden);
-            await updateDoc(wardenRef, {
-                hostelId: hostel.id,
-                hostelBlock: hostel.block || ''
+            // 2. Update Warden docs
+            const updatePromises = selectedWardens.map(wardenId => {
+                const wardenRef = doc(db, "users", wardenId);
+                return updateDoc(wardenRef, {
+                    hostelId: hostel.id,
+                    hostelBlock: hostel.block || ''
+                });
             });
+            await Promise.all(updatePromises);
 
-            toast.success("Warden assigned successfully");
+            toast.success("Wardens assigned successfully");
             onClose();
         } catch (error) {
-            console.error("Error assigning warden:", error);
-            toast.error("Failed to assign warden");
+            console.error("Error assigning wardens:", error);
+            toast.error("Failed to assign wardens");
         } finally {
             setLoading(false);
         }
@@ -74,6 +78,15 @@ const AssignWardenModal = ({ isOpen, onClose, hostel, collegeName }) => {
         w.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         w.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const isAllSelected = filteredWardens.length > 0 && selectedWardens.length === filteredWardens.length;
+    const handleSelectAll = () => {
+        if (isAllSelected) {
+            setSelectedWardens([]);
+        } else {
+            setSelectedWardens(filteredWardens.map(w => w.id));
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -118,15 +131,31 @@ const AssignWardenModal = ({ isOpen, onClose, hostel, collegeName }) => {
                             <div className="p-6 text-center text-gray-500">No unassigned wardens found.</div>
                         ) : (
                             <div className="divide-y" style={{ borderColor: 'var(--border-primary)' }}>
+                                <label className="flex items-center gap-3 p-4 hover:bg-black/5 cursor-pointer transition-colors bg-black/5">
+                                    <input
+                                        type="checkbox"
+                                        checked={isAllSelected}
+                                        onChange={handleSelectAll}
+                                        className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                    />
+                                    <div className="flex-1">
+                                        <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Select All {filteredWardens.length} Wardens</p>
+                                    </div>
+                                </label>
                                 {filteredWardens.map(warden => (
                                     <label key={warden.id} className="flex items-center gap-3 p-4 hover:bg-black/5 cursor-pointer transition-colors">
                                         <input
-                                            type="radio"
-                                            name="selectedWarden"
+                                            type="checkbox"
                                             value={warden.id}
-                                            checked={selectedWarden === warden.id}
-                                            onChange={() => setSelectedWarden(warden.id)}
-                                            className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                                            checked={selectedWardens.includes(warden.id)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedWardens(prev => [...prev, warden.id]);
+                                                } else {
+                                                    setSelectedWardens(prev => prev.filter(id => id !== warden.id));
+                                                }
+                                            }}
+                                            className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                         />
                                         <div className="flex-1">
                                             <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{warden.displayName}</p>
@@ -148,7 +177,7 @@ const AssignWardenModal = ({ isOpen, onClose, hostel, collegeName }) => {
                         </button>
                         <button
                             onClick={handleSubmit}
-                            disabled={loading || !selectedWarden}
+                            disabled={loading || selectedWardens.length === 0}
                             className="flex items-center gap-2 px-6 py-2 rounded-xl font-medium text-white transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-70"
                             style={{ background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary))' }}
                         >
