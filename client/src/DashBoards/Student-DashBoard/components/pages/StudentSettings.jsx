@@ -39,6 +39,7 @@ const StudentSettings = () => {
         leaveUpdates: true,
         announcements: true,
         systemAlerts: true,
+        soundAlerts: true,
     });
     const [prefsLoaded, setPrefsLoaded] = useState(false);
 
@@ -247,6 +248,11 @@ const StudentSettings = () => {
                                 checked={notifPrefs.systemAlerts}
                                 onChange={() => updatePref('systemAlerts')}
                                 label="System Alerts"
+                            />
+                            <Toggle
+                                checked={notifPrefs.soundAlerts}
+                                onChange={() => updatePref('soundAlerts')}
+                                label="Sound Alerts"
                             />
                         </div>
                     </SettingsCard>

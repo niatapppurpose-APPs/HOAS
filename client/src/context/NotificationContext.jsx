@@ -1,4 +1,4 @@
-﻿// Sanitize notification strings to prevent XSS
+// Sanitize notification strings to prevent XSS
 function sanitize(str) {
   if (typeof str !== 'string') return str;
   return str.replace(/[<>]/g, '');
@@ -362,6 +362,238 @@ export const NotificationProvider = ({ children }) => {
     }, (err) => console.debug('management complaint listener error:', err));
     return unsub;
   }, [user, role, userData?.managementId]);
+
+  // ——— Management: escalated & disputed complaints ——————————————————————————
+  useEffect(() => {
+    if (!user || role !== 'management' || !userData?.managementId) return;
+    const isInitial = { v: true };
+    const q = query(
+      collection(db, 'complaints'),
+      where('managementId', '==', userData.managementId),
+      orderBy('updatedAt', 'desc'),
+      limit(50)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) { isInitial.v = false; return; }
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'modified') {
+          const d = change.doc.data();
+          if (d.status === 'escalated' || d.isEscalated) {
+            const title = '🚨 Complaint Escalated';
+            const body = `"${d.title}" by ${d.studentName || 'Student'} has been escalated`;
+            triggerNotification(title, { body, tag: `mgmt-escalated-${change.doc.id}` });
+            setNotifications(prev => [{
+              id: `mgmt-escalated-${change.doc.id}-${Date.now()}`,
+              title,
+              body,
+              type: 'escalated-complaint',
+              createdAt: new Date(),
+              read: false,
+              data: { complaintId: change.doc.id },
+            }, ...prev]);
+            setUnreadCount(prev => prev + 1);
+          } else if (d.status === 'disputed') {
+            const title = '🚩 Complaint Disputed';
+            const body = `"${d.title}" — student disputes the resolution`;
+            triggerNotification(title, { body, tag: `mgmt-disputed-${change.doc.id}` });
+            setNotifications(prev => [{
+              id: `mgmt-disputed-${change.doc.id}-${Date.now()}`,
+              title,
+              body,
+              type: 'disputed-complaint',
+              createdAt: new Date(),
+              read: false,
+              data: { complaintId: change.doc.id },
+            }, ...prev]);
+            setUnreadCount(prev => prev + 1);
+          }
+        }
+      });
+    }, (err) => console.debug('management escalation listener error:', err));
+    return unsub;
+  }, [user, role, userData?.managementId]);
+
+  // ——— Management: new student/warden registrations ————————————————————————
+  useEffect(() => {
+    if (!user || role !== 'management' || !userData?.uid) return;
+    const isInitial = { v: true };
+    const q = query(
+      collection(db, 'users'),
+      where('managementId', '==', userData.uid),
+      where('status', '==', 'pending'),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) { isInitial.v = false; return; }
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          const roleLabel = d.role === 'warden' ? 'Warden' : 'Student';
+          const title = `👤 New ${roleLabel} Registration`;
+          const body = `${d.fullName || d.displayName || 'Someone'} has registered and needs approval`;
+          triggerNotification(title, { body, tag: `mgmt-reg-${change.doc.id}` });
+          setNotifications(prev => [{
+            id: `mgmt-reg-${change.doc.id}`,
+            title,
+            body,
+            type: 'new-registration',
+            createdAt: new Date(),
+            read: false,
+            data: { userId: change.doc.id, role: d.role },
+          }, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        }
+      });
+    }, (err) => console.debug('management registration listener error:', err));
+    return unsub;
+  }, [user, role, userData?.uid]);
+
+  // ——— Management: new leave requests ——————————————————————————————————————
+  useEffect(() => {
+    if (!user || role !== 'management' || !userData?.managementId) return;
+    const isInitial = { v: true };
+    const q = query(
+      collection(db, 'leaveRequests'),
+      where('managementId', '==', userData.managementId),
+      where('status', '==', 'pending'),
+      orderBy('createdAt', 'desc'),
+      limit(30)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) { isInitial.v = false; return; }
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          const title = '📋 New Leave Request';
+          const body = `${d.studentName || 'A student'} — ${d.leaveType?.replace('_', ' ') || 'Leave'}`;
+          triggerNotification(title, { body, tag: `mgmt-leave-${change.doc.id}` });
+          setNotifications(prev => [{
+            id: `mgmt-leave-${change.doc.id}`,
+            title,
+            body,
+            type: 'new-leave-request',
+            createdAt: new Date(),
+            read: false,
+            data: { leaveId: change.doc.id },
+          }, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        }
+      });
+    }, (err) => console.debug('management leave request listener error:', err));
+    return unsub;
+  }, [user, role, userData?.managementId]);
+
+  // ——— Warden: disputed complaints (student disputes resolution) ——————————
+  useEffect(() => {
+    if (!user || role !== 'warden' || !userData?.managementId) return;
+    const isInitial = { v: true };
+    const prefs = userData?.notifPrefs || {};
+    const q = query(
+      collection(db, 'complaints'),
+      where('managementId', '==', userData.managementId),
+      orderBy('updatedAt', 'desc'),
+      limit(30)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) { isInitial.v = false; return; }
+      if (!prefs.complaintUpdates) return;
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'modified') {
+          const d = change.doc.data();
+          if (d.status === 'disputed') {
+            const title = '🚩 Complaint Disputed by Student';
+            const body = `"${d.title}" — ${d.studentName || 'Student'} disputes your resolution`;
+            triggerNotification(title, { body, tag: `warden-disputed-${change.doc.id}` });
+            setNotifications(prev => [{
+              id: `warden-disputed-${change.doc.id}-${Date.now()}`,
+              title,
+              body,
+              type: 'disputed-complaint',
+              createdAt: new Date(),
+              read: false,
+              data: { complaintId: change.doc.id },
+            }, ...prev]);
+            setUnreadCount(prev => prev + 1);
+          }
+        }
+      });
+    }, (err) => console.debug('warden disputed complaint listener error:', err));
+    return unsub;
+  }, [user, role, userData?.managementId, userData?.notifPrefs]);
+
+  // ——— Warden: new student registrations ——————————————————————————————————
+  useEffect(() => {
+    if (!user || role !== 'warden' || !userData?.managementId) return;
+    const isInitial = { v: true };
+    const prefs = userData?.notifPrefs || {};
+    const q = query(
+      collection(db, 'users'),
+      where('managementId', '==', userData.managementId),
+      where('role', '==', 'student'),
+      where('status', '==', 'pending'),
+      orderBy('createdAt', 'desc'),
+      limit(30)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) { isInitial.v = false; return; }
+      if (!prefs.newStudents) return;
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          const title = '🎓 New Student Registration';
+          const body = `${d.fullName || d.displayName || 'A student'} has registered for ${d.collegeName || 'your hostel'}`;
+          triggerNotification(title, { body, tag: `warden-student-${change.doc.id}` });
+          setNotifications(prev => [{
+            id: `warden-student-${change.doc.id}`,
+            title,
+            body,
+            type: 'new-student',
+            createdAt: new Date(),
+            read: false,
+            data: { studentId: change.doc.id },
+          }, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        }
+      });
+    }, (err) => console.debug('warden student registration listener error:', err));
+    return unsub;
+  }, [user, role, userData?.managementId, userData?.notifPrefs]);
+
+  // ——— Student: support ticket status updates ————————————————————————————
+  useEffect(() => {
+    if (!user || role !== 'student') return;
+    const isInitial = { v: true };
+    const q = query(
+      collection(db, 'supportTickets'),
+      where('userId', '==', user.uid),
+      orderBy('updatedAt', 'desc'),
+      limit(20)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) { isInitial.v = false; return; }
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'modified') {
+          const d = change.doc.data();
+          const statusEmoji = d.status === 'resolved' ? '✅' : d.status === 'in-progress' ? '🔄' : '📩';
+          const title = `${statusEmoji} Support Ticket Updated`;
+          const body = `Your ticket "${d.subject || 'Support Request'}" is now ${d.status}`;
+          triggerNotification(title, { body, tag: `ticket-${change.doc.id}` });
+          setNotifications(prev => [{
+            id: `ticket-${change.doc.id}-${Date.now()}`,
+            title,
+            body,
+            type: 'support-update',
+            createdAt: new Date(),
+            read: false,
+            data: { ticketId: change.doc.id, status: d.status },
+          }, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        }
+      });
+    }, (err) => console.debug('student support ticket listener error:', err.code));
+    return unsub;
+  }, [user, role]);
 
   // â”€â”€â”€ Admin only: pending management approvals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {

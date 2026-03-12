@@ -2,7 +2,7 @@
 
 > A full-stack hostel management platform with hierarchical role-based access control, real-time dashboards, and Firebase Cloud Functions backend.
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/niatapppurpose-APPs/HOAS)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/niatapppurpose-APPs/HOAS)
 [![React](https://img.shields.io/badge/React-19.2.0-61dafb.svg)](https://reactjs.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-12.6.0-orange.svg)](https://firebase.google.com/)
 [![Node](https://img.shields.io/badge/Node.js-22-green.svg)](https://nodejs.org/)
@@ -13,432 +13,235 @@
 
 ## 📋 Overview
 
-**HOAS** is an enterprise-grade hostel management system for educational institutions. It automates operations from student registration to administrative approvals through a four-role hierarchy: **Owner (Super Admin)** → **Management (Principal)** → **Warden** → **Student**.
+**HOAS** is an enterprise-grade hostel management system purpose-built for educational institutions. It automates the entire hostel lifecycle — from student registration and warden approvals to complaint resolution and leave management — through a clean, four-tier role hierarchy:
 
-Built with **React 19**, **Firebase Cloud Functions v2**, **Firestore**, and **Tailwind CSS 4**, the platform provides real-time data synchronization, intelligent approval workflows, and role-specific dashboards.
+**Owner (Super Admin) → Management (Principal) → Warden → Student**
 
-### Key Objectives
+Every role gets a dedicated, feature-rich dashboard tailored to their responsibilities. The platform is built on **React 19** and **Firebase**, delivering real-time data synchronization, intelligent approval workflows, and a premium user interface with dark and light theme support.
 
-- Automate and digitize hostel operations end-to-end
-- Enforce granular permission systems with approval workflows
-- Deliver real-time updates via Firestore listeners
-- Support multiple colleges/hostels under unified super admin control
-- Provide intuitive, role-tailored interfaces with dark/light theme support
+### Why HOAS?
+
+- **End-to-end automation** — eliminates paper-based hostel processes entirely
+- **Granular permission control** — every action is governed by role and approval status
+- **Real-time everything** — Firestore listeners push updates instantly to all connected users
+- **Multi-institution support** — a single Owner can oversee multiple colleges, each with their own management, wardens, and students
+- **Beautiful, role-tailored dashboards** — every user sees only what matters to them, designed with modern UI/UX best practices
 
 ---
 
 ## ✨ Features
 
-### Authentication & Authorization
-- **Google OAuth** for Owner sign-in via Firebase Authentication
-- **Email/Password** login for Management, Warden, and Student roles
-- **Role-Based Access Control (RBAC)** with Firebase custom claims
-- **Hierarchical Permissions** (Owner → Management → Warden → Student)
-- **Approval Workflows** — new user registrations require admin approval
-- **Persistent Auth State** with automatic route protection
+### 🔐 Authentication & Authorization
 
-### Owner Dashboard (Super Admin)
-- Manage all Management (Principal) users across colleges
-- Approve/Deny pending management account requests
-- **Cascade Delete Colleges** — remove entire college hierarchies (Management → Wardens → Students)
-- Real-time statistics and KPI cards
-- Profile management with photo upload & password change
-- Bulk operations and pagination support
-- **Support Ticket System** — centralized tracking, resolution workflow, status animations
-- **Global System Settings** — six-card grid configuration panel:
-  - Role & Access Control
-  - Complaint & Escalation Settings
-  - Notification Preferences
-  - Security & Platform Settings
-  - Appearance Configuration
-  - System Controls (maintenance mode, registration toggles)
-- **Analytics Dashboard** — charts for user trends, college distribution, role approvals
-- **Bulk Student Upload** — import students from Excel spreadsheets with email notifications
-- **Report Generation** — export JSON & PDF reports via PDFKit
+HOAS uses a robust, multi-layered authentication system. The **Owner (Super Admin)** signs in using **Google OAuth**, while **Management**, **Warden**, and **Student** users authenticate with **email and password**. All access is governed by **Role-Based Access Control (RBAC)** through Firebase custom claims, ensuring every user can only see and do what their role permits.
 
-### Management Dashboard (Principal)
-- View and manage Wardens/Students linked to assigned college
-- Approve/Deny pending Warden/Student requests
-- KPI cards with pending approvals counter
-- Quick approval panel for immediate actions
-- Status visualization with circular progress indicators
-- Recent activity timeline
-- Glassmorphism UI with purple-blue gradient theme
-
-### Warden Dashboard
-- **Warden Overview** — welcome banner, quick actions, real-time complaint feed, warden info card
-- **Student Directory** — real-time student list with search, sort (name/room/hostel), status filter, and student detail modal
-- **Complaint Management** — view, manage, and update complaint statuses with notification logic
-- **Announcements (CRUD)** — create, edit, delete announcements with 4 priority levels (Urgent/Important/Normal/Info), pin-to-top, and search
-- **Leave Request Review** — view and manage incoming student leave requests
-- **Settings** — theme toggle (dark/light), password change with Firebase re-authentication, 6 notification toggles (new complaints, sound alerts, leave requests, etc.)
-- **Help & Support** — 16 warden-specific FAQs across 5 categories, support ticket submission, quick contact actions
-- **Profile** — view warden profile information
-- AI-powered translation system (multilingual support via i18next)
-- Real-time notifications and alerts
-
-### Student Dashboard
-- **Student Overview** — welcome banner, quick actions (File Complaint, My Complaints, Apply Leave, Notice Board), recent activity feed, profile summary card
-- **Complaint System** — file, view, and track complaints with image uploads, drag-and-drop, and detailed complaint views
-- **Leave Requests** — submit leave/outing requests (7 types: Home Visit, Medical, Family Emergency, Academic, Personal, Day Outing, Other) with date range, destination, contact info, real-time status tracking, and cancel pending requests
-- **Announcements** — real-time notice board with priority badges, pinned notices, search & filter, expandable detail views
-- **Settings** — theme toggle, password change with Firebase re-authentication, notification preference toggles, account info display
-- **Help & Support** — 12 searchable FAQs in 4 categories, support ticket submission to Firestore, quick contact actions
-- **Profile** — view and edit profile information
-
-### Platform-Wide Features
-- 🎨 **Dark/Light Theme** — auto-detect system preference or manual toggle
-- 🔔 **Toast Notifications** — 4 types (Success, Error, Warning, Info) with animations
-- 🎭 **Interactive Dashboard Tour** — onboarding via Shepherd.js
-- 📱 **Fully Responsive** — mobile-first design with all breakpoints
-- ⚡ **Real-time Updates** — Firestore listeners for instant synchronization
-- 🔍 **Search & Filter** — advanced filtering across all dashboards
-- 📄 **Pagination** — efficient data loading with page state preservation
-- 🚫 **Server Offline Detection** — automatic fallback UI when backend is unavailable
-- 🌐 **Internationalization** — multi-language support with i18next
-- 📊 **Data Visualization** — charts and graphs powered by Recharts
-- 🔔 **Push Notifications** — Firebase Cloud Messaging with Firestore triggers
-- 📢 **Announcement Browser Notifications** — real-time browser push notifications for any new announcement (Student & Warden)
-- 📋 **Leave Request Notifications** — students notified on status changes; wardens notified on new requests
+New user registrations are not automatically granted access — they enter an **approval workflow** where higher-level users must accept or deny the request. This prevents unauthorized access and gives administrators complete control over who joins the platform. Auth state is persisted across sessions with automatic route protection, so users stay logged in and are always redirected to the correct dashboard.
 
 ---
 
-## 🛠️ Tech Stack
+### 👑 Owner Dashboard (Super Admin)
+
+The Owner Dashboard is the command center for the entire HOAS ecosystem. It gives the Super Admin a bird's-eye view of all colleges, management users, wardens, and students across the platform.
+
+**User Management** — The Owner can add, approve, or deny Management (Principal) accounts. When a Management account is approved, it unlocks that college's branch in the hierarchy, allowing wardens and students to register under it. The Owner also has the power to **cascade-delete an entire college** — which removes the Management account and every warden and student linked to it in a single action.
+
+**System Settings** — A dedicated six-card configuration panel lets the Owner control platform-wide behavior, including role and access control rules, complaint escalation settings, notification preferences, security policies, appearance defaults, and system controls like maintenance mode or registration toggles.
+
+**Analytics & Reports** — Interactive charts visualize user trends, college distribution, and role approval rates over time. The Owner can also generate and download **JSON and PDF reports** of user data across the platform using server-side PDFKit generation.
+
+**Support Tickets** — A centralized ticketing system lets the Owner track, respond to, and resolve support requests submitted by any user. Each ticket has a status workflow with visual indicators.
+
+**Bulk Operations** — The Owner can import students in bulk from Excel spreadsheets, with automatic account creation and email notifications sent to each new student.
+
+---
+
+### 🏫 Management Dashboard (Principal)
+
+The Management Dashboard is designed for college principals or administrators who oversee their institution's hostel operations.
+
+**Approvals & User Management** — When wardens or students register under a college, their accounts appear as pending. Management can quickly approve or deny them through a streamlined quick-approval panel. Real-time KPI cards show pending counts, total wardens, total students, and other key metrics at a glance.
+
+**Hostel Administration** — Management can add new hostels, view hostel details, and remove hostels as needed. Each hostel becomes part of the college's organizational structure.
+
+**Complaint Oversight** — Management has visibility into all complaints filed within their college. They can view, filter, and search complaints, see detailed complaint history with timelines, and monitor escalation status. When a complaint is escalated or disputed by a student, Management is notified immediately.
+
+**Leave Request Visibility** — Management receives notifications for new leave requests, giving them oversight of student movements without needing to handle approvals directly (which are managed by wardens).
+
+The dashboard features a modern glassmorphism UI with purple-blue gradients, status visualization through circular progress indicators, and a recent activity timeline.
+
+---
+
+### 🛡️ Warden Dashboard
+
+The Warden Dashboard is a comprehensive workspace for hostel wardens responsible for day-to-day operations.
+
+**Overview & Quick Actions** — The main dashboard greets wardens with a welcome banner, quick-action buttons for common tasks (Complaints, Students, Notice Board, Attendance), a real-time complaint activity feed, and a warden information card.
+
+**Student Directory** — A real-time, searchable list of all students in the warden's hostel. Wardens can sort students by name, room number, or hostel, filter by status, and click on any student to view their complete profile in a detail modal.
+
+**Complaint Management** — Wardens receive, review, and resolve student complaints through a rich interface. Each complaint can be moved through statuses — pending, in-progress, warden-resolved, resolved, or rejected. If a student disagrees with a resolution, they can **dispute** it, which sends the complaint back to the warden with the student's dispute reason prominently displayed. Wardens can then re-resolve and send it back for student confirmation.
+
+**Announcements** — Full CRUD capabilities for hostel announcements. Wardens can create notices with four priority levels (Urgent, Important, Normal, Info), pin important notices to the top, and search through past announcements. Students receive browser notifications instantly when a new announcement is posted.
+
+**Leave Request Review** — All student leave requests within the hostel appear here. Wardens can view details including leave type, dates, destination, and contact information, then approve or deny each request with a single click.
+
+**Settings** — Wardens can toggle between dark and light themes, change their password with Firebase re-authentication, and fine-tune **six notification preferences**: new complaints, complaint status changes, leave requests, new student registrations, sound alerts, and system alerts.
+
+**Help & Support** — A built-in help center with 16 warden-specific FAQs organized across 5 categories, plus the ability to submit support tickets directly to the Owner and quick contact actions.
+
+---
+
+### 🎓 Student Dashboard
+
+The Student Dashboard provides students with everything they need to interact with their hostel administration.
+
+**Overview & Quick Actions** — Students are greeted with a personalized welcome banner and quick-action cards — File a Complaint, View My Complaints, Apply for Leave, and Notice Board. A recent activity feed shows their latest interactions, and a profile summary card displays their key information.
+
+**Complaint System** — Students can file complaints with a detailed form that supports image uploads via drag-and-drop. Every complaint is tracked in real-time — students can see when it's been acknowledged, when it's in progress, and when the warden marks it resolved. If a student feels the issue wasn't truly fixed, they can **dispute** the resolution, which reopens the complaint and notifies the warden with the student's reason.
+
+**Leave Requests** — Students can submit leave or outing requests by choosing from seven leave types (Home Visit, Medical, Family Emergency, Academic, Personal, Day Outing, Other), selecting date ranges, providing their destination and emergency contact details. Each request is tracked in real-time with status updates, and students can cancel pending requests if plans change.
+
+**Announcements** — A real-time notice board that displays all hostel announcements with priority badges, pinned notices at the top, and search and filter capabilities. Students receive browser notifications whenever a new announcement is posted.
+
+**Settings** — Students can toggle their theme preference, change their password securely through Firebase re-authentication, and control five notification preferences: complaint updates, leave request updates, new announcements, system alerts, and sound alerts.
+
+**Help & Support** — 12 searchable FAQs organized in 4 categories cover the most common student questions. Students can also submit support tickets that go directly to the Owner for resolution.
+
+---
+
+### 🌐 Platform-Wide Capabilities
+
+Beyond the role-specific dashboards, HOAS includes several capabilities that enhance the experience for every user:
+
+**Dark & Light Theme** — Users can choose their preferred theme or let the platform auto-detect their system preference. The theme is consistent across every page and component.
+
+**Real-Time Notifications** — HOAS uses a comprehensive browser notification system powered by Firebase Cloud Messaging and Firestore real-time listeners. There are 16 active notification channels covering every significant event across all four roles — from new complaints and leave requests to escalated issues and user registrations. Each listener respects user preferences, skips initial page load to prevent duplicate alerts, and updates both the native browser notification and the in-app notification bell. See the **Notification System** section below for the complete coverage matrix.
+
+**Toast Notifications** — In-app toast messages with four styles (Success, Error, Warning, Info) provide immediate feedback for every user action, with smooth entrance and exit animations.
+
+**Interactive Onboarding** — First-time users are guided through their dashboard with an interactive tour built on Shepherd.js, highlighting key areas and explaining functionality step by step.
+
+**Fully Responsive Design** — Every page is designed mobile-first and works beautifully on phones, tablets, and desktops. The layout adapts from single-column on mobile to multi-column grids on larger screens.
+
+**Server Health Monitoring** — The platform automatically detects when the backend is unavailable and shows a clean fallback UI, preventing confusing error states for users.
+
+**Internationalization** — Multi-language support is built in through i18next, with AI-powered translation available for wardens.
+
+**Data Visualization** — Charts and graphs powered by Recharts give administrators clear visual insights into trends, distributions, and approval rates.
+
+---
+
+## 🔔 Notification System
+
+HOAS implements one of its most critical features through a **comprehensive real-time notification system**. Three layers work together to ensure no important event goes unnoticed:
+
+**NotificationContext** — The central React context provider that manages all notification state, FCM token registration, permission requests, and 16 real-time Firestore snapshot listeners.
+
+**Notification Service** — A service layer that handles requesting browser notification permission, obtaining Firebase Cloud Messaging device tokens, and displaying native browser notifications with sound.
+
+**Service Worker** — A background worker that catches push notifications even when the app is not actively open, displays them as native OS notifications, and handles click-to-open navigation.
+
+### Complete Coverage
+
+**Student Notifications** — Students are notified when their complaint status changes, when their leave request is approved or denied, when new announcements are posted to their hostel, and when their support ticket is updated. Sound alerts can be toggled on or off.
+
+**Warden Notifications** — Wardens receive alerts for new complaints filed by students, when a student disputes a resolution, new pending leave requests, new student registrations in their hostel, and new announcements. Each category can be individually enabled or disabled through six toggle switches in Settings.
+
+**Management Notifications** — Management is notified when new complaints are filed in their college, when a complaint is escalated (automatically or manually), when a student disputes a warden's resolution, when new students or wardens register and need approval, and when new leave requests come in.
+
+**Owner (Admin) Notifications** — The Owner receives notifications for pending management account approvals and new support tickets filed by any user across the platform.
+
+Every notification listener follows a consistent pattern: it guards against the wrong role, skips the initial data load to prevent false alerts, respects user preference settings, triggers a native browser notification with sound, and updates the in-app notification bell count.
+
+---
+
+## 🛠️ Technology Stack
 
 ### Frontend
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| React | 19.2.0 | UI framework with hooks |
-| Vite | 7.2.4 | Build tool & dev server |
-| Tailwind CSS | 4.1.18 | Utility-first CSS with CSS variables |
-| React Router | 7.10.1 | Client-side routing |
-| Firebase SDK | 12.6.0 | Auth, Firestore, Storage, Messaging |
-| Lucide React | 0.561.0 | Icon library |
-| Framer Motion | 12.27.5 | Animations & transitions |
-| Recharts | 3.6.0 | Data visualization |
-| i18next | 25.8.0 | Internationalization |
-| Shepherd.js | 14.5.1 | User onboarding tours |
-| react-colorful | 5.6.1 | Color picker (theme customization) |
-| XLSX | 0.18.5 | Excel file parsing (bulk upload) |
+
+**React 19.2.0** serves as the UI framework, built and served through **Vite 7.2.4** for fast development and optimized production builds. Styling uses **Tailwind CSS 4.1.18** with CSS variables for theme switching. Navigation is handled by **React Router 7.10.1**, and the entire Firebase ecosystem (**SDK 12.6.0**) powers authentication, database, storage, and messaging on the client side.
+
+The interface uses **Lucide React** for icons, **Framer Motion 12.27.5** for smooth animations and page transitions, **Recharts 3.6.0** for data visualization, **Shepherd.js 14.5.1** for onboarding tours, **react-colorful** for theme customization, **i18next 25.8.0** for internationalization, and **XLSX** for parsing Excel files during bulk student uploads.
 
 ### Backend
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Node.js | 22 | JavaScript runtime |
-| Firebase Functions v2 | 7.0.6 | Serverless cloud functions |
-| Firebase Admin SDK | 13.6.0 | Server-side Firebase operations |
-| Express | 5.2.1 | HTTP middleware (CORS) |
-| PDFKit | 0.15.0 | PDF report generation |
-| Nodemailer | 8.0.1 | Email notifications |
-| XLSX | 0.18.5 | Excel parsing for bulk uploads |
+
+The server runs on **Node.js 22** with **Firebase Cloud Functions v2** (7.0.6) providing a serverless architecture. The **Firebase Admin SDK 13.6.0** handles server-side authentication verification and database operations. **Express 5.2.1** is used as HTTP middleware for CORS handling. Reports are generated as PDFs using **PDFKit 0.15.0**, email notifications are dispatched through **Nodemailer 8.0.1**, and **XLSX** handles Excel file parsing for the bulk student import feature.
 
 ### Infrastructure
-| Service | Purpose |
-|---------|---------|
-| Firebase Authentication | Google OAuth & email/password auth |
-| Cloud Firestore | NoSQL real-time database |
-| Firebase Cloud Functions | Serverless backend (us-central1) |
-| Firebase Storage | Profile photos & file uploads |
-| Firebase Cloud Messaging | Push notifications |
-| Firebase Hosting | Frontend deployment |
+
+The platform relies entirely on Firebase services: **Firebase Authentication** for Google OAuth and email/password login, **Cloud Firestore** as the real-time NoSQL database, **Firebase Cloud Functions** deployed to us-central1 as the serverless backend, **Firebase Storage** for profile photos and file uploads, **Firebase Cloud Messaging** for push notifications, and **Firebase Hosting** for frontend deployment.
 
 ### Development Tools
-- **ESLint** — code linting and quality
-- **Concurrently** — run client + server in parallel
-- **Firebase Emulator Suite** — local development environment
 
----
-
-## 📁 Project Structure
-
-```
-HOAS/
-├── client/                              # Frontend (React + Vite)
-│   ├── public/
-│   │   └── firebase-messaging-sw.js     # FCM service worker
-│   ├── src/
-│   │   ├── assets/                      # Images & developer photos
-│   │   ├── components/
-│   │   │   ├── AnimatedLogoutButton/    # Animated logout component
-│   │   │   ├── ErrorBoundary.jsx        # React error boundary
-│   │   │   ├── ErrorModal.jsx           # Error reporting (Firestore + email)
-│   │   │   ├── FirebaseModeIndicator.jsx# Emulator vs production badge
-│   │   │   ├── LocationAutocomplete.jsx # Location search input
-│   │   │   ├── ProfileBanner.jsx        # Profile header banner
-│   │   │   ├── OwnerServices/           # Owner layout components
-│   │   │   │   ├── Avatar.jsx
-│   │   │   │   ├── DeleteConfirmModal.jsx
-│   │   │   │   ├── EmptyState.jsx
-│   │   │   │   ├── GlobalDeleteModal.jsx
-│   │   │   │   ├── header.jsx
-│   │   │   │   ├── NotificationBell.jsx
-│   │   │   │   ├── OwnerProfile.jsx     # Photo upload + password change
-│   │   │   │   ├── Sidebar.jsx
-│   │   │   │   ├── StatsCard.jsx
-│   │   │   │   └── StatusBadge.jsx
-│   │   │   ├── Routes/                  # App routing configuration
-│   │   │   ├── ThemeToggle/             # Dark/Light mode toggle
-│   │   │   ├── Toast/                   # Toast notification system
-│   │   │   └── UserServices/            # Role-based UI utilities
-│   │   ├── context/
-│   │   │   ├── AuthContext.jsx          # Firebase auth state & role management
-│   │   │   ├── ErrorContext.jsx         # Global error handling
-│   │   │   ├── ModalContext.jsx         # Modal state management
-│   │   │   ├── NotificationContext.jsx  # Push notification state
-│   │   │   └── ThemeContext.jsx         # Dark/light theme management
-│   │   ├── DashBoards/
-│   │   │   ├── Management-Dashboard/    # Principal/Co-Admin dashboard
-│   │   │   ├── Principal-Dashbord/      # Principal view
-│   │   │   ├── Student-DashBoard/       # Student view
-│   │   │   │   ├── StudentDashboard.jsx          # Main dashboard
-│   │   │   │   └── components/
-│   │   │   │       ├── layout/
-│   │   │   │       │   ├── StudentLayout.jsx     # Layout wrapper
-│   │   │   │       │   ├── StudentSidebar.jsx    # Navigation sidebar
-│   │   │   │       │   └── StudentHeader.jsx     # Top header bar
-│   │   │   │       └── pages/
-│   │   │   │           ├── StudentComplaints.jsx  # Complaint filing & tracking
-│   │   │   │           ├── StudentLeaveRequests.jsx # Leave/outing applications ✨NEW
-│   │   │   │           ├── StudentAnnouncements.jsx # Notice board viewer ✨NEW
-│   │   │   │           ├── StudentSettings.jsx    # Preferences & security ✨NEW
-│   │   │   │           ├── StudentHelpSupport.jsx # FAQs & support tickets ✨NEW
-│   │   │   │           └── StudentProfile.jsx     # Profile management
-│   │   │   └── Warden-Dashboard/        # Warden view
-│   │   │       ├── WardenDashboard.jsx           # Main dashboard
-│   │   │       └── components/
-│   │   │           ├── layout/
-│   │   │           │   ├── WardenLayout.jsx      # Layout wrapper
-│   │   │           │   ├── WardenSidebar.jsx     # Navigation sidebar
-│   │   │           │   └── WardenHeader.jsx      # Top header bar
-│   │   │           └── pages/
-│   │   │               ├── WardenStudents.jsx     # Student directory ✨NEW
-│   │   │               ├── WardenComplaints.jsx   # Complaint management
-│   │   │               ├── WardenAnnouncements.jsx # Announcement CRUD ✨NEW
-│   │   │               ├── WardenSettings.jsx     # Preferences & security ✨NEW
-│   │   │               ├── WardenHelpSupport.jsx  # FAQs & support tickets ✨NEW
-│   │   │               └── WardenProfile.jsx      # Profile view
-│   │   ├── firebase/
-│   │   │   ├── cloudFunctions.js        # Backend API client (11 functions)
-│   │   │   ├── debugUtils.js            # Debug/logging utilities
-│   │   │   ├── firebaseConfig.js        # Firebase app initialization
-│   │   │   └── notificationService.js   # FCM notification handlers
-│   │   ├── hooks/
-│   │   │   ├── useServerStatus.js       # Backend health monitoring
-│   │   │   └── useSystemSettings.jsx    # System settings enforcement
-│   │   ├── Pages/
-│   │   │   ├── Dashboard/               # Dashboard router
-│   │   │   ├── HOME/                    # Landing page
-│   │   │   ├── LoginPage/               # Login, logout, redirect
-│   │   │   ├── NotFound/                # 404 page
-│   │   │   ├── OwnersDashboard/         # Owner admin panel
-│   │   │   │   ├── ownersdashbord.jsx   # Main dashboard
-│   │   │   │   ├── OwnersLayout.jsx     # Layout wrapper
-│   │   │   │   ├── tourConfig.js        # Shepherd.js tour setup
-│   │   │   │   ├── Pages/
-│   │   │   │   │   ├── Analytics.jsx    # Analytics dashboard
-│   │   │   │   │   ├── AnalyticsComponents/  # Chart components
-│   │   │   │   │   ├── GlobalSystemSettings.jsx  # 6-card settings panel
-│   │   │   │   │   ├── Help.jsx
-│   │   │   │   │   ├── Notifications.jsx
-│   │   │   │   │   ├── Reports.jsx
-│   │   │   │   │   ├── Students.jsx     # Student management + bulk upload
-│   │   │   │   │   ├── SupportTickets.jsx
-│   │   │   │   │   └── Wardens.jsx      # Warden management
-│   │   │   │   └── components/          # Shared UI components
-│   │   │   ├── ProfilePage/             # User profile
-│   │   │   └── WaitingApproval/         # Pending approval screen
-│   │   ├── data/
-│   │   │   └── college_data.json        # College reference data
-│   │   ├── App.jsx                      # Root component
-│   │   ├── App.css
-│   │   ├── main.jsx                     # Entry point
-│   │   └── index.css                    # Global styles
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── eslint.config.js
-│
-├── server/                              # Backend (Firebase Cloud Functions)
-│   ├── functions/
-│   │   ├── src/
-│   │   │   ├── config.js               # Firebase Admin init, CORS, region config
-│   │   │   ├── helpers.js              # Auth verification middleware
-│   │   │   ├── userManagement.js       # User CRUD (approve, deny, create)
-│   │   │   ├── collegeManagement.js    # College operations (delete, stats)
-│   │   │   ├── systemSettings.js       # Settings API (get, update, capacity)
-│   │   │   ├── reports.js              # PDF & JSON report generation
-│   │   │   ├── notifications.js        # Firestore triggers for notifications
-│   │   │   └── bulkUpload.js           # Bulk student creation from Excel
-│   │   ├── index.js                    # Functions entry point
-│   │   └── package.json
-│   ├── firebase.json
-│   ├── storage.rules
-│   ├── serviceAccountKey.json          # Firebase credentials (gitignored)
-│   └── setAdmin.js                     # Admin setup utility
-│
-├── docs/                               # Documentation (28 guides)
-│   ├── QUICK_START.md
-│   ├── DEVELOPER_SETUP.md
-│   ├── HOAS_COMPLETE_DOCUMENTATION.md
-│   ├── ARCHITECTURE_DIAGRAMS.md
-│   ├── CLOUD_FUNCTIONS_API.md
-│   ├── CONTEXT_ARCHITECTURE.md
-│   ├── ROUTING_AND_CONTEXT.md
-│   ├── FIREBASE_EMULATOR_SETUP.md
-│   ├── DEPLOYMENT_CHECKLIST.md
-│   ├── CHANGELOG.md
-│   └── ... (18 more)
-│
-├── package.json                        # Root workspace configuration
-└── README.md
-```
+Code quality is maintained with **ESLint**, development runs client and server simultaneously using **Concurrently**, and local testing is done through the **Firebase Emulator Suite**.
 
 ---
 
 ## 🔗 Cloud Functions API
 
-The backend exposes **11 callable functions** and **2 HTTP endpoints**, all deployed to `us-central1`:
+The backend exposes **10 callable functions** and **2 HTTP endpoints**, all deployed to the **us-central1** region. Additionally, **5 Firestore triggers** fire automatically on database events.
 
-### Callable Functions (via `cloudFunctions.js`)
+### Callable Functions
 
-| Function | Module | Description |
-|----------|--------|-------------|
-| `approveUser` | userManagement | Approve a pending user registration |
-| `denyUser` | userManagement | Deny a pending user registration |
-| `getAllManagementUsers` | userManagement | List all management-role users |
-| `createManagement` | userManagement | Create a new management user |
-| `createWarden` | userManagement | Create a new warden user |
-| `deleteCollege` | collegeManagement | Cascade-delete a college and all its users |
-| `getSystemSettings` | systemSettings | Fetch global system settings |
-| `updateSystemSettings` | systemSettings | Update global system settings |
-| `checkCollegeCapacity` | systemSettings | Check if a college has reached user limits |
-| `bulkCreateStudents` | bulkUpload | Bulk-create students from Excel data |
+| Function | Description |
+|----------|-------------|
+| **approveUser** | Approves a pending user registration and sets their role via custom claims |
+| **denyUser** | Denies a pending user registration and removes their account |
+| **getAllManagementUsers** | Returns a list of all management-role users across the platform |
+| **createManagement** | Creates a new management user with email/password credentials |
+| **createWarden** | Creates a new warden user linked to a specific management account |
+| **deleteCollege** | Cascade-deletes a college along with all its wardens and students |
+| **getSystemSettings** | Fetches the global system configuration settings |
+| **updateSystemSettings** | Updates one or more global system settings |
+| **checkCollegeCapacity** | Checks whether a college has reached its configured user limits |
+| **bulkCreateStudents** | Creates multiple student accounts from Excel spreadsheet data |
 
 ### HTTP Endpoints
 
-| Endpoint | Module | Description |
-|----------|--------|-------------|
-| `downloadReportJson` | reports | Export user data as JSON |
-| `downloadReportPdf` | reports | Export user data as PDF (via PDFKit) |
+| Endpoint | Description |
+|----------|-------------|
+| **downloadReportJson** | Exports user data as a downloadable JSON file |
+| **downloadReportPdf** | Exports user data as a formatted PDF document via PDFKit |
 
-### Firestore Triggers (server-only)
+### Firestore Triggers
 
-| Trigger | Module | Fires On |
-|---------|--------|----------|
-| `onNewCollegeApproval` | notifications | New college approval request |
-| `onNewSupportTicket` | notifications | Support ticket created |
-| `onSupportTicketUpdate` | notifications | Support ticket status change |
-| `onNewWardenRegistration` | notifications | New warden registration |
-| `sendCustomNotification` | notifications | Manual notification dispatch |
-
----
-
-## 🚀 Setup & Installation
-
-### Prerequisites
-
-- **Node.js 22+** ([Download](https://nodejs.org/))
-- **Firebase CLI** (`npm install -g firebase-tools`)
-- **Git** ([Download](https://git-scm.com/))
-- A **Firebase project** with Firestore, Authentication, and Storage enabled
-
-### Quick Start
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/niatapppurpose-APPs/HOAS.git
-cd HOAS
-
-# 2. Install all dependencies (root + client + server)
-npm install
-cd client && npm install && cd ..
-cd server/functions && npm install && cd ../..
-
-# 3. Configure Firebase
-#    - Add your Firebase web app config to client/src/firebase/firebaseConfig.js
-#    - Place your service account key at server/serviceAccountKey.json
-
-# 4. Start development (client + emulators)
-npm run dev
-
-# 5. Or start client only
-npm run dev:client
-
-# 6. Build for production
-npm run build
-```
-
-### Available Scripts (Root)
-
-| Script | Command | Description |
-|--------|---------|-------------|
-| `dev` | `concurrently` | Run client + server concurrently |
-| `dev:client` | `npm run dev --prefix client` | Start Vite dev server |
-| `build` | `npm run build --prefix client` | Production build |
-| `deploy:functions` | Firebase deploy | Deploy cloud functions |
-
-> See [docs/DEVELOPER_SETUP.md](docs/DEVELOPER_SETUP.md) for detailed Firebase configuration, service account setup, and environment variables.
+| Trigger | Fires When |
+|---------|------------|
+| **onNewCollegeApproval** | A new college management account needs approval |
+| **onNewSupportTicket** | A user submits a new support ticket |
+| **onSupportTicketUpdate** | A support ticket's status changes |
+| **onNewWardenRegistration** | A new warden registers under a college |
+| **sendCustomNotification** | A manual notification is dispatched by an admin |
 
 ---
 
 ## 🏗️ Architecture
 
-### System Overview
+### System Flow
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                   FRONTEND (React 19)                     │
-│  Vite 7 · Tailwind CSS 4 · Firebase SDK 12               │
-│  Real-time Firestore listeners · FCM push notifications   │
-└───────────────────┬──────────────────────────────────────┘
-                    │  HTTPS callable / HTTP
-                    ▼
-┌──────────────────────────────────────────────────────────┐
-│          FIREBASE CLOUD FUNCTIONS v2 (Node 22)            │
-│  userManagement · collegeManagement · systemSettings      │
-│  reports · notifications · bulkUpload                     │
-│  Auth verification · CORS · Input validation              │
-└───────────────────┬──────────────────────────────────────┘
-                    │
-                    ▼
-┌──────────────────────────────────────────────────────────┐
-│                  FIREBASE SERVICES                        │
-│  ┌────────────┬─────────────┬──────────┬──────────────┐  │
-│  │ Firestore  │ Auth (OAuth │ Storage  │ Cloud        │  │
-│  │ Database   │ + Password) │ (Files)  │ Messaging    │  │
-│  └────────────┴─────────────┴──────────┴──────────────┘  │
-└──────────────────────────────────────────────────────────┘
-```
+The frontend is a **React 19** single-page application built with Vite and Tailwind CSS. It communicates with the backend through HTTPS callable functions and HTTP endpoints. All real-time data flows through **Firestore listeners** that push updates instantly to the UI, while **Firebase Cloud Messaging** handles push notifications through a registered service worker.
 
-### User Role Hierarchy
+The backend is a set of **Firebase Cloud Functions v2** running on Node.js 22. Every function verifies the caller's authentication token before processing requests. Functions are organized into focused modules — user management, college management, system settings, reports, notifications, and bulk upload — keeping the codebase maintainable and testable.
 
-```
-Owner (Super Admin)
-├── Google OAuth login
-├── Full system access & global settings
-│
-├── Management (College A) ← Email/Password login
-│   ├── Warden 1 ← Email/Password login
-│   │   └── Students 1, 2, 3…
-│   └── Warden 2
-│       └── Students 4, 5, 6…
-│
-└── Management (College B)
-    └── Warden 3
-        └── Students 7, 8, 9…
-```
+All data is stored in **Cloud Firestore** collections with security rules enforcing role-based access at the database level. **Firebase Storage** handles file uploads like profile photos, and **Firebase Authentication** manages both Google OAuth and email/password identity providers.
+
+### Role Hierarchy
+
+The permission model follows a strict tree structure. The **Owner (Super Admin)** sits at the top with full platform access and Google OAuth login. Below them, each **Management (Principal)** account controls a single college with email/password login. Within each college, one or more **Wardens** manage day-to-day operations, and under each warden, **Students** interact with the hostel system.
+
+Each level can only see and manage data within its own branch of the tree. A warden in College A cannot see students from College B, and a student can only see their own data plus hostel-wide announcements.
 
 ### Context Architecture
 
-The app uses **5 React Context providers** for global state:
+The application manages global state through **five React Context providers**:
 
-| Context | Purpose |
-|---------|---------|
-| `AuthContext` | Firebase auth state, user role, login/logout |
-| `ThemeContext` | Dark/light mode, system preference detection |
-| `ModalContext` | Global modal state management |
-| `ErrorContext` | Centralized error handling & reporting |
-| `NotificationContext` | Push notification state & FCM tokens |
+| Context | Responsibility |
+|---------|---------------|
+| **AuthContext** | Firebase authentication state, current user data, role detection, login and logout |
+| **ThemeContext** | Dark and light mode management with automatic system preference detection |
+| **ModalContext** | Centralized modal lifecycle management across all dashboards |
+| **ErrorContext** | Global error handling, Firestore error logging, and email-based error reporting |
+| **NotificationContext** | Push notification state, FCM token management, and all 16 real-time Firestore listeners |
 
 ---
 
@@ -446,107 +249,100 @@ The app uses **5 React Context providers** for global state:
 
 ### Theme
 
-The app supports **dark and light modes** with automatic system preference detection. Themes are managed via CSS variables and Tailwind CSS 4.
+HOAS supports **dark and light modes** with automatic detection of the user's system preference. Themes are implemented through CSS custom properties and Tailwind CSS 4, ensuring every component — from buttons to modals to charts — adapts seamlessly when the theme is toggled.
 
-### Color Palette
+### Visual Language
 
-| Color | Hex | Usage |
-|-------|-----|-------|
-| Purple | `#8B5CF6` | Wardens, primary actions |
-| Blue | `#3B82F6` | Students, secondary actions |
-| Orange | `#FB923C` | Pending/attention items |
-| Green | `#10B981` | Approved/success states |
-| Red | `#EF4444` | Deny/danger actions |
+| Color | Usage |
+|-------|-------|
+| **Purple (#8B5CF6)** | Warden elements, primary action buttons |
+| **Blue (#3B82F6)** | Student elements, secondary actions |
+| **Orange (#FB923C)** | Pending items, attention-required indicators |
+| **Green (#10B981)** | Approved states, success confirmations |
+| **Red (#EF4444)** | Denial actions, danger confirmations |
 
 ### UI Patterns
-- **Glassmorphism** — backdrop-blur effects on cards and modals
-- **Framer Motion** — page transitions, list animations, hover effects
-- **Responsive Grid** — 1-col (mobile) → 2-col (tablet) → 3-col (desktop)
-- **Sticky Action Bars** — bottom-fixed save buttons with unsaved-changes indicator
+
+The interface uses **glassmorphism** effects (backdrop-blur on cards and modals) for a modern, layered appearance. Page transitions and list animations are powered by **Framer Motion**, creating a fluid, app-like experience. Layouts follow a **responsive grid** system — single column on mobile, two columns on tablet, and three columns on desktop. **Sticky action bars** with unsaved-changes indicators ensure users never accidentally lose their work.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+You will need **Node.js 22 or later**, the **Firebase CLI** (install with `npm install -g firebase-tools`), **Git** for version control, and a **Firebase project** with Firestore, Authentication, and Storage enabled in the Firebase Console.
+
+### Installation
+
+1. **Clone the repository** and navigate into it
+2. **Install dependencies** at the root level, then install separately in the `client` folder and the `server/functions` folder
+3. **Configure Firebase** by adding your Firebase web app configuration to `client/src/firebase/firebaseConfig.js` and placing your service account key at `server/serviceAccountKey.json`
+4. **Start developing** by running the dev script at the root level, which launches both the client (Vite dev server) and the Firebase emulators concurrently
+
+### Available Scripts
+
+| Script | What It Does |
+|--------|-------------|
+| **dev** | Starts both the client dev server and Firebase emulators simultaneously |
+| **dev:client** | Starts only the Vite development server for frontend work |
+| **build** | Creates an optimized production build of the client application |
+| **deploy:functions** | Deploys the cloud functions to Firebase |
+
+> For detailed Firebase configuration, service account setup, environment variables, and emulator instructions, see the [Developer Setup Guide](docs/DEVELOPER_SETUP.md).
 
 ---
 
 ## 🔄 Development History
 
-### Phase 1: Foundation (Dec 2024)
-- Google OAuth authentication via Firebase
-- Persistent auth state with `AuthContext`
-- Role-based routing protection
+### Phase 1 — Foundation (December 2024)
+Established the authentication foundation with Google OAuth via Firebase, persistent auth state management through AuthContext, and role-based routing protection that automatically redirects users to their designated dashboards.
 
-### Phase 2: Core Dashboards (Dec 2024 – Jan 2025)
-- Owner Dashboard with user management, approval/denial, stats cards
-- Cascade delete for colleges (Management → Wardens → Students)
-- Owner Profile page with edit capabilities
-- Management Dashboard for Principals (Warden/Student management)
+### Phase 2 — Core Dashboards (December 2024 – January 2025)
+Built the Owner Dashboard with user management, approval and denial workflows, and statistics cards. Implemented cascade-delete functionality for colleges that cleanly removes the entire hierarchy. Created the Owner Profile page and the Management Dashboard for principals with warden and student management capabilities.
 
-### Phase 3: Backend Architecture (Jan 2025)
-- Restructured into `client/server/docs` monorepo
-- Modularized Cloud Functions (user, college, reports modules)
-- Server-side authorization on every endpoint
-- JSON & PDF report generation
+### Phase 3 — Backend Architecture (January 2025)
+Restructured the project into a clean client/server/docs monorepo layout. Modularized Cloud Functions into focused modules for user management, college operations, and report generation. Added server-side authorization verification on every endpoint and implemented JSON and PDF report generation.
 
-### Phase 4: UX Polish (Jan 2025)
-- Custom Toast notification system (replaced all `alert()` calls)
-- Pagination & bulk approve/deny operations
-- Dark/light theme with system auto-detection
-- Interactive dashboard tour (Shepherd.js)
-- Server offline detection with fallback UI
-- Internationalization (i18next)
+### Phase 4 — UX Polish (January 2025)
+Replaced all browser alert dialogs with a custom Toast notification system. Added pagination and bulk approve/deny operations. Built the dark and light theme system with automatic system preference detection. Integrated an interactive dashboard tour using Shepherd.js, added server offline detection with fallback UI, and implemented internationalization through i18next.
 
-### Phase 5: Management Dashboard Redesign (Jan 2025)
-- Glassmorphism UI overhaul with gradient themes
-- KPI cards, quick approval panel, activity timeline
+### Phase 5 — Management Dashboard Redesign (January 2025)
+Overhauled the Management Dashboard with a glassmorphism design language, gradient themes, KPI cards, a quick approval panel, and a real-time activity timeline.
 
-### Phase 6: UI/UX Refinements (Jan 2025)
-- Login page redesign
-- Various bug fixes and optimization
+### Phase 6 — UI/UX Refinements (January 2025)
+Redesigned the login page and addressed various bugs and performance optimizations across the platform.
 
-### Phase 7: Platform Features (Jan 2026)
-- Firebase hosting deployment fixes
-- Documentation consolidation
-- Empty state components
-- Global System Settings module with enforcement hooks
-- Enhanced theme consistency
+### Phase 7 — Platform Features (January 2026)
+Fixed Firebase Hosting deployment issues, consolidated documentation, added empty-state components, built the Global System Settings module with enforcement hooks, and improved theme consistency across all pages.
 
-### Phase 8: Advanced Features (Jan – Feb 2026)
-- College profile & logo upload system
-- Google OAuth flow optimization
-- Dynamic homepage with auth-aware CTAs
-- Developer team integration
-- Support ticketing system with resolution workflow
-- Premium error reporting (Firestore + email fallback)
+### Phase 8 — Advanced Features (January – February 2026)
+Introduced the college profile and logo upload system, optimized the Google OAuth flow, made the homepage dynamic with auth-aware calls to action, integrated the developer team section, built the support ticketing system with a resolution workflow, and added premium error reporting with Firestore logging and email fallback.
 
-### Phase 9: Cleanup & Optimization
-- Removed unused cloud functions (17 functions cleaned from server & client)
-- Deleted deprecated modules (`admin.js`, `triggers.js`, `utility.js`)
-- Streamlined `systemSettings.js` (952 → 217 lines)
-- Streamlined `cloudFunctions.js` (468 → 195 lines)
-- Settings page redesigned to 6-card grid layout
-- Enhanced Owner Profile with photo upload & password change modal
+### Phase 9 — Cleanup & Optimization (February 2026)
+Removed 17 unused cloud functions from both server and client. Deleted deprecated modules. Streamlined the system settings module from 952 lines to 217 and the cloud functions client from 468 lines to 195. Redesigned the settings page into a six-card grid layout and enhanced the Owner Profile with photo upload and password change capabilities.
 
-### Phase 10: Dashboard Feature Completion & Notifications (Current — March 2026)
-- **Student Dashboard** — fully implemented 4 new pages:
-  - **Leave Requests** — submit leave/outing requests (7 types), date range picker, destination, contacts, real-time status tracking, cancel pending
-  - **Announcements** — real-time notice board with priority badges, pinned notices, expandable details, search & filter
-  - **Settings** — theme toggle, password change (Firebase re-auth), notification preference toggles, account info
-  - **Help & Support** — 12 searchable FAQs in 4 categories, support ticket submission, quick contact actions
-- **Warden Dashboard** — fully implemented 4 new pages:
-  - **Student Directory** — real-time Firestore student list, search/sort/filter, student detail modal with full info
-  - **Announcements (CRUD)** — create, edit, delete hostel notices with 4 priority levels, pin-to-top, search
-  - **Settings** — theme toggle, password change, 6 warden-specific notification toggles (new complaints, leave requests, sound alerts, etc.)
-  - **Help & Support** — 16 warden-specific FAQs in 5 categories, support ticket submission, quick actions
-- **Browser Push Notifications** — real-time browser notifications for:
-  - 📢 New announcements (Student & Warden) — triggers on any announcement posted to their college
-  - 📋 Leave request status updates (Student) — notified when approved, denied, or cancelled
-  - 📋 New leave requests (Warden) — notified when students submit pending leave requests
-- All new pages use real-time Firestore `onSnapshot` listeners, consistent UI design with CSS variables, responsive layouts
+### Phase 10 — Dashboard Feature Completion (March 2026)
+Fully implemented four new pages each for the Student Dashboard (Leave Requests, Announcements, Settings, Help & Support) and the Warden Dashboard (Student Directory, Announcements CRUD, Leave Requests, Settings, Help & Support). All new pages use real-time Firestore listeners, consistent CSS variable-based theming, and responsive layouts.
 
-### Summary
-- **Active Development**: December 2024 – Present
-- **Total PRs**: 27+
-- **Documentation Files**: 28
-- **Backend Functions**: 15 (10 callable + 2 HTTP + 3 triggers + helpers)
-- **Notification Listeners**: 10 real-time Firestore listeners for push notifications across all roles
+### Phase 11 — Comprehensive Notification System (March 2026 — Current)
+Expanded the notification system from basic announcement alerts to a full 16-listener architecture covering every significant event across all four roles. Added Management notifications for escalated complaints, disputed resolutions, new registrations, and leave requests. Added Warden notifications for disputed complaints and new student registrations. Added Student notifications for support ticket updates and a sound alerts toggle. Every listener follows a consistent, robust pattern.
+
+---
+
+## 📊 Project at a Glance
+
+| Metric | Value |
+|--------|-------|
+| **Active Development** | December 2024 – Present |
+| **Current Version** | 2.1.0 |
+| **Total Pull Requests** | 27+ |
+| **Documentation Files** | 28 comprehensive guides |
+| **Backend Functions** | 15 (10 callable + 2 HTTP + 3 Firestore triggers) |
+| **Real-Time Notification Listeners** | 16 across all roles |
+| **User Roles** | 4 (Owner, Management, Warden, Student) |
+| **Dashboard Pages** | 20+ |
+| **React Context Providers** | 5 |
 
 ---
 
@@ -558,16 +354,29 @@ Comprehensive guides are available in the [`docs/`](docs/) folder:
 |-------|-------------|
 | [Quick Start](docs/QUICK_START.md) | Get running in 5 minutes |
 | [Developer Setup](docs/DEVELOPER_SETUP.md) | Firebase config, env vars, emulators |
-| [Complete Docs](docs/HOAS_COMPLETE_DOCUMENTATION.md) | Full system documentation |
+| [Complete Documentation](docs/HOAS_COMPLETE_DOCUMENTATION.md) | Full system documentation |
 | [Cloud Functions API](docs/CLOUD_FUNCTIONS_API.md) | Backend API reference |
-| [Architecture Diagrams](docs/ARCHITECTURE_DIAGRAMS.md) | System & data flow diagrams |
+| [Architecture Diagrams](docs/ARCHITECTURE_DIAGRAMS.md) | System and data flow diagrams |
 | [Context Architecture](docs/CONTEXT_ARCHITECTURE.md) | React context providers guide |
-| [Routing & Context](docs/ROUTING_AND_CONTEXT.md) | Route protection & navigation |
+| [Routing & Context](docs/ROUTING_AND_CONTEXT.md) | Route protection and navigation |
 | [Firebase Emulators](docs/FIREBASE_EMULATOR_SETUP.md) | Local development with emulators |
 | [Deployment Checklist](docs/DEPLOYMENT_CHECKLIST.md) | Production deployment steps |
 | [Notifications](docs/Notification.md) | Push notification setup |
 | [Reports](docs/REPORTS.md) | Report generation guide |
 | [Changelog](docs/CHANGELOG.md) | Version history |
+
+---
+
+## 🔮 Future Roadmap
+
+- SMS integration for critical alerts
+- Native mobile app using React Native
+- Hostel inventory and asset management
+- Fee payment integration
+- Automated room allocation
+- Parent portal for visibility into student activities
+- Comprehensive audit logging and activity history
+- Scheduled data export and backup
 
 ---
 
@@ -584,25 +393,6 @@ Developed and maintained by **niatapppurpose-APPs**.
 5. Push and open a Pull Request
 
 **Commit convention**: `feat:`, `fix:`, `refactor:`, `docs:`, `style:`, `chore:`
-
----
-
-## 🔮 Future Enhancements
-
-- [ ] SMS integration for critical alerts
-- [ ] Mobile app (React Native)
-- [ ] Hostel inventory management
-- [ ] Fee payment integration
-- [ ] Room allocation automation
-- [x] ~~Attendance tracking~~ (dashboard quick action available)
-- [ ] Parent portal
-- [ ] Audit logging and activity history
-- [ ] Data export scheduling
-- [x] ~~Student leave request system~~ ✅ Implemented
-- [x] ~~Announcement system with browser notifications~~ ✅ Implemented
-- [x] ~~Warden student directory~~ ✅ Implemented
-- [x] ~~Settings pages for Student & Warden~~ ✅ Implemented
-- [x] ~~Help & Support with FAQs~~ ✅ Implemented
 
 ---
 
