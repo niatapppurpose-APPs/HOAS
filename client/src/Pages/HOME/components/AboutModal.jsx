@@ -55,14 +55,14 @@ const AboutModal = React.memo(({ isAboutOpen, setIsAboutOpen, isDark }) => {
 
                         <div className={`relative p-6 md:p-8 flex-shrink-0 overflow-y-auto custom-scrollbar max-h-[85vh] ${activeTeamMember ? 'hidden md:block md:w-1/2 md:border-r md:border-white/10' : 'w-full'}`}>
                             <div className="flex flex-col items-center text-center">
-                                <motion.div layoutId="app-logo" className="w-20 h-20 bg-indigo-600 rounded-2xl p-2 flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-5">
+                                <motion.div layoutId="app-logo" className="w-20 h-20 bg-blue-600 rounded-2xl p-2 flex items-center justify-center shadow-lg shadow-blue-500/20 mb-5">
                                     <div className="w-full h-full bg-white rounded-xl overflow-hidden flex items-center justify-center">
                                         <img src={AppLogo} alt="HOAS Logo" className="w-full h-full object-contain" />
                                     </div>
                                 </motion.div>
 
                                 <h3 className="text-3xl font-bold mb-2 tracking-tight" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</h3>
-                                <p className="text-xs font-bold tracking-[0.2em] uppercase mb-8" style={{ color: isDark ? '#818cf8' : '#4f46e5' }}>
+                                <p className="text-xs font-bold tracking-[0.2em] uppercase mb-8" style={{ color: isDark ? '#60a5fa' : '#2563eb' }}>
                                     Hostel Operations Accountability System
                                 </p>
 
@@ -73,7 +73,7 @@ const AboutModal = React.memo(({ isAboutOpen, setIsAboutOpen, isDark }) => {
                                             backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
                                             borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)',
                                         }}>
-                                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2 group-hover:text-indigo-400 transition-colors" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>System Overview</h4>
+                                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2 group-hover:text-blue-400 transition-colors" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>System Overview</h4>
                                         <p className="text-sm leading-relaxed" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>
                                             A comprehensive enterprise platform designed to streamline hostel management, ensuring transparency, automating approvals, and driving efficiency in accommodation processes.
                                         </p>
@@ -89,9 +89,9 @@ const AboutModal = React.memo(({ isAboutOpen, setIsAboutOpen, isDark }) => {
                                             <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Version</h4>
                                             <div className="px-2 py-0.5 rounded-full text-[10px] font-bold"
                                                 style={{
-                                                    backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.15)',
-                                                    color: isDark ? '#a5b4fc' : '#4338ca',
-                                                    border: isDark ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid rgba(99, 102, 241, 0.3)',
+                                                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
+                                                    color: isDark ? '#93c5fd' : '#1d4ed8',
+                                                    border: isDark ? '1px solid rgba(59, 130, 246, 0.2)' : '1px solid rgba(59, 130, 246, 0.3)',
                                                 }}>STABLE</div>
                                         </div>
                                         <div className="flex flex-col">
@@ -136,8 +136,8 @@ const AboutModal = React.memo(({ isAboutOpen, setIsAboutOpen, isDark }) => {
                                                         onClick={() => setActiveTeamMember(activeTeamMember === key ? null : key)}
                                                         className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg border-2 transition-all overflow-hidden ${activeTeamMember === key
                                                             ? isDark
-                                                                ? 'border-white ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900 scale-110'
-                                                                : 'border-indigo-500 ring-2 ring-indigo-500 ring-offset-2 ring-offset-white scale-110'
+                                                                ? 'border-white ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-900 scale-110'
+                                                                : 'border-blue-500 ring-2 ring-blue-500 ring-offset-2 ring-offset-white scale-110'
                                                             : isDark
                                                                 ? 'border-slate-800 opacity-80 hover:opacity-100'
                                                                 : 'border-slate-300 opacity-80 hover:opacity-100'
@@ -159,9 +159,9 @@ const AboutModal = React.memo(({ isAboutOpen, setIsAboutOpen, isDark }) => {
                                     <div className="flex items-center gap-2 text-xs font-medium" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
                                         <span>© 2026 HOAS</span>
                                         <span className="w-1 h-1 rounded-full" style={{ backgroundColor: isDark ? '#475569' : '#cbd5e1' }}></span>
-                                        <span className="hover:text-indigo-400 cursor-pointer transition-colors">Privacy</span>
+                                        <span className="hover:text-blue-400 cursor-pointer transition-colors">Privacy</span>
                                         <span className="w-1 h-1 rounded-full" style={{ backgroundColor: isDark ? '#475569' : '#cbd5e1' }}></span>
-                                        <span className="hover:text-indigo-400 cursor-pointer transition-colors">Terms</span>
+                                        <span className="hover:text-blue-400 cursor-pointer transition-colors">Terms</span>
                                     </div>
                                 </div>
                             </div>
@@ -191,7 +191,7 @@ const AboutModal = React.memo(({ isAboutOpen, setIsAboutOpen, isDark }) => {
                                         <h2 className="text-xl md:text-2xl font-bold" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
                                             {teamData[activeTeamMember].name}
                                         </h2>
-                                        <p className="text-[11px] md:text-xs uppercase tracking-wider font-semibold mt-1" style={{ color: isDark ? '#a5b4fc' : '#4338ca' }}>
+                                        <p className="text-[11px] md:text-xs uppercase tracking-wider font-semibold mt-1" style={{ color: isDark ? '#93c5fd' : '#1d4ed8' }}>
                                             {teamData[activeTeamMember].role}
                                         </p>
                                         <p className="text-xs mt-1" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
@@ -208,7 +208,7 @@ const AboutModal = React.memo(({ isAboutOpen, setIsAboutOpen, isDark }) => {
                                     <button
                                         className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-sm"
                                         style={{
-                                            backgroundColor: isDark ? '#ffffff' : '#4f46e5',
+                                            backgroundColor: isDark ? '#ffffff' : '#2563eb',
                                             color: isDark ? '#0f172a' : '#ffffff',
                                         }}
                                         onClick={() => {
@@ -227,9 +227,9 @@ const AboutModal = React.memo(({ isAboutOpen, setIsAboutOpen, isDark }) => {
                                         rel="noopener noreferrer"
                                         className="w-full sm:w-auto px-6 py-2.5 border rounded-xl font-medium text-sm text-center"
                                         style={{
-                                            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(79,70,229,0.08)',
-                                            color: isDark ? '#ffffff' : '#4f46e5',
-                                            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(79,70,229,0.25)',
+                                            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(37,99,235,0.08)',
+                                            color: isDark ? '#ffffff' : '#2563eb',
+                                            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(37,99,235,0.25)',
                                         }}
                                     >
                                         Contact

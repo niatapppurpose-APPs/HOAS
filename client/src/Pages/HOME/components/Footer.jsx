@@ -1,9 +1,29 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { socialLinks } from '../constants';
-import AppLogo from '../../../assets/AppLogo4k.png';
+import PreviewModal from './PreviewModal';
 
 const Footer = React.memo(({ isDark }) => {
+    const navigate = useNavigate();
+    const [previewRole, setPreviewRole] = useState(null);
+
+    const handleLinkClick = (path, role = null) => {
+        if (role) {
+            setPreviewRole(role);
+            return;
+        }
+
+        if (path.startsWith('http')) {
+            window.open(path, '_blank');
+        } else if (path.startsWith('alert:')) {
+            alert(path.replace('alert:', ''));
+        } else {
+            navigate(path);
+            window.scrollTo(0, 0);
+        }
+    };
+
     // Use CSS :hover instead of direct DOM manipulation
     return (
         <footer className="pt-12 md:pt-16 pb-8 border-t"
@@ -12,60 +32,52 @@ const Footer = React.memo(({ isDark }) => {
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)',
             }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-12">
+                <div className="flex flex-col lg:flex-row items-start gap-12 lg:gap-20 mb-12">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.1 }}
-                        className="col-span-1 sm:col-span-2 md:col-span-1"
+                        className="flex-shrink-0"
                     >
-                        <div className="flex items-center gap-4 mb-6">
-                            <motion.div
-                                animate={{ y: [0, -4, 0] }}
-                                transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-                                className="w-12 h-12 bg-indigo-600 rounded-xl p-1.5 flex items-center justify-center"
-                                style={{ border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(99,102,241,0.3)' }}
-                            >
-                                <div className="w-full h-full bg-white rounded-lg overflow-hidden flex items-center justify-center">
-                                    <img src={AppLogo} alt="AppLogo" className="w-full h-full object-contain" />
-                                </div>
-                            </motion.div>
-                            <span className="text-2xl font-bold tracking-tight uppercase" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</span>
+                        <div className="flex items-center gap-4 mb-4">
+                            <span className="text-[100px] leading-none font-bold tracking-tighter uppercase" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</span>
                         </div>
                         <p className="text-sm leading-relaxed max-w-xs" style={{ color: '#64748b' }}>
                             The standard for modern hostel administration. Built for security, designed for usability.
                         </p>
                     </motion.div>
 
-                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
-                        <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Platform</h4>
-                        <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
-                            <li className="hover:text-indigo-500 cursor-pointer transition-colors">Owner Dashboard</li>
-                            <li className="hover:text-indigo-500 cursor-pointer transition-colors">Management Portal</li>
-                            <li className="hover:text-indigo-500 cursor-pointer transition-colors">Student App</li>
-                        </ul>
-                    </motion.div>
+                    <div className='grid grid-cols-2 sm:grid-cols-3 gap-8 sm:gap-100 md:gap-16 pt-4'>
+                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
+                            <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Platform</h4>
+                            <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
+                                <li onClick={() => handleLinkClick('/OwnersDashboard', 'Owner Dashboard')} className="hover:text-blue-500 cursor-pointer transition-colors">Owner Dashboard</li>
+                                <li onClick={() => handleLinkClick('/dashboard', 'Management Portal')} className="hover:text-blue-500 cursor-pointer transition-colors">Management Portal</li>
+                                <li onClick={() => handleLinkClick('/login', 'Warden Dashboard')} className="hover:text-blue-500 cursor-pointer transition-colors">Warden Dashboard</li>
+                                <li onClick={() => handleLinkClick('/login', 'Student App')} className="hover:text-blue-500 cursor-pointer transition-colors">Student App</li>
+                            </ul>
+                        </motion.div>
 
-                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }}>
-                        <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Resources</h4>
-                        <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
-                            <li className="hover:text-indigo-500 cursor-pointer transition-colors">Documentation</li>
-                            <li className="hover:text-indigo-500 cursor-pointer transition-colors">API Reference</li>
-                            <li className="hover:text-indigo-500 cursor-pointer transition-colors">Support</li>
-                        </ul>
-                    </motion.div>
+                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }}>
+                            <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Resources</h4>
+                            <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
+                                <li onClick={() => handleLinkClick('https://github.com/niatapppurpose-APPs/HOAS#readme')} className="hover:text-blue-500 cursor-pointer transition-colors">Documentation</li>
+                                <li onClick={() => handleLinkClick(null, 'API Reference')} className="hover:text-blue-500 cursor-pointer transition-colors">API Reference</li>
+                                <li onClick={() => handleLinkClick(null, 'Support')} className="hover:text-blue-500 cursor-pointer transition-colors">Support</li>
+                            </ul>
+                        </motion.div>
 
-                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.4 }}>
-                        <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Legal</h4>
-                        <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
-                            <li className="hover:text-indigo-500 cursor-pointer transition-colors">Privacy Policy</li>
-                            <li className="hover:text-indigo-500 cursor-pointer transition-colors">Terms of Service</li>
-                            <li className="hover:text-indigo-500 cursor-pointer transition-colors">Compliance</li>
-                        </ul>
-                    </motion.div>
+                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.4 }}>
+                            <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Legal</h4>
+                            <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
+                                <li onClick={() => handleLinkClick(null, 'Privacy Policy')} className="hover:text-blue-500 cursor-pointer transition-colors">Privacy Policy</li>
+                                <li onClick={() => handleLinkClick(null, 'Terms of Service')} className="hover:text-blue-500 cursor-pointer transition-colors">Terms of Service</li>
+                                <li onClick={() => handleLinkClick(null, 'Compliance')} className="hover:text-blue-500 cursor-pointer transition-colors">Compliance</li>
+                            </ul>
+                        </motion.div>
+                    </div>
                 </div>
-
                 <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left"
                     style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)' }}>
                     <p className="text-sm" style={{ color: isDark ? '#475569' : '#94a3b8' }}>© 2026 HOAS. All rights reserved.</p>
@@ -92,6 +104,12 @@ const Footer = React.memo(({ isDark }) => {
                     </div>
                 </div>
             </div>
+            <PreviewModal
+                isOpen={!!previewRole}
+                onClose={() => setPreviewRole(null)}
+                role={previewRole}
+                isDark={isDark}
+            />
         </footer>
     );
 });

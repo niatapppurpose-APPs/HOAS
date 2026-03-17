@@ -11,28 +11,29 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { SystemSettingsProvider } from "./hooks/useSystemSettings.jsx";
 import ErrorModal from "./components/ErrorModal";
 import ErrorBoundary from "./components/ErrorBoundary";
+import * as Tooltip from '@radix-ui/react-tooltip';
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <ThemeProvider>
-      <ToastProvider position="top-right">
-        <AuthProvider>
-          <SystemSettingsProvider>
-            <NotificationProvider>
-              <ErrorProvider>
-                {/* Keep ErrorModal outside of ErrorBoundary so it can show even when children crash */}
-                <ErrorModal />
-                <ErrorBoundary>
-                  <ModalProvider>
-                    <App />
-                  </ModalProvider>
-                </ErrorBoundary>
-              </ErrorProvider>
-            </NotificationProvider>
-          </SystemSettingsProvider>
-        </AuthProvider>
-      </ToastProvider>
+      <Tooltip.Provider delayDuration={0}>
+        <ToastProvider position="top-right">
+          <AuthProvider>
+            <SystemSettingsProvider>
+              <NotificationProvider>
+                <ErrorProvider>
+                  <ErrorBoundary>
+                    <ModalProvider>
+                      <App />
+                    </ModalProvider>
+                  </ErrorBoundary>
+                </ErrorProvider>
+              </NotificationProvider>
+            </SystemSettingsProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </Tooltip.Provider>
     </ThemeProvider>
   </BrowserRouter>
 );

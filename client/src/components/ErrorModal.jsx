@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle, FileCode, Hash, Send, CheckCircle } from 'lucide-react';
+import { X, AlertCircle, Send, CheckCircle } from 'lucide-react';
 import { useError } from '../context/ErrorContext';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase/firebaseConfig';
@@ -112,99 +112,81 @@ ${error.stack || 'No stack trace available'}
   // Success state UI
   if (submitted) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-        <div className="relative max-w-md w-full bg-white rounded-2xl p-8 shadow-2xl text-center animate-in zoom-in duration-300">
+        <div className="relative max-w-md w-full bg-white rounded-3xl p-8 sm:p-12 shadow-2xl text-center animate-in zoom-in duration-300">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center animate-bounce">
             <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-3">Report Received!</h3>
-          <p className="text-gray-600">Thank you for helping us improve HOAS. Our engineers are on it.</p>
+          <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-3">Report Received!</h3>
+          <p className="text-base sm:text-lg text-gray-500">Thank you for helping us improve HOAS. Our engineers are on it.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-12">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={clearError} />
-      <div className="relative max-w-4xl w-full bg-white rounded-[2.5rem] p-10 shadow-2xl animate-in fade-in zoom-in duration-500">
-        <div className="flex items-start gap-10">
-          <div className="p-3 rounded-xl bg-red-100 text-red-600 shadow-sm">
-            <AlertCircle className="w-6 h-6" />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 md:p-12 overflow-y-auto ">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-md " onClick={clearError} />
+      <div className="relative max-w-4xl w-full bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 shadow-2xl animate-in fade-in zoom-in duration-500 my-auto">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-10">
+          <div className="p-3 rounded-xl bg-red-100 text-red-600 shadow-sm shrink-0">
+            <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8" />
           </div>
-          <div className="flex-1">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h3 className="text-3xl font-black text-gray-900 tracking-tight">Application Error</h3>
-                <p className="text-lg text-gray-500 mt-1">We've captured a technical issue for our engineering team.</p>
+          <div className="flex-1 w-full text-center sm:text-left">
+            <div className="flex justify-between items-start mb-4 sm:mb-6">
+              <div className="flex-1">
+                <h3 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Application Error</h3>
+                <p className="text-base sm:text-lg text-gray-500 mt-1">We've captured a technical issue for our engineering team.</p>
               </div>
               <button
-                className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-300 transform hover:rotate-90"
+                className="hidden sm:block p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-300 transform hover:rotate-90"
                 onClick={clearError}
               >
                 <X className="w-8 h-8" />
               </button>
             </div>
 
-            {/* Technical Detail Badges */}
-            {(fileName || lineNumber) && (
-              <div className="flex flex-wrap gap-3 my-6">
-                {fileName && (
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 text-indigo-700 text-sm font-bold border border-indigo-100 shadow-sm">
-                    <FileCode className="w-4 h-4" /> {fileName}
-                  </span>
-                )}
-                {lineNumber && (
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-50 text-orange-700 text-sm font-bold border border-orange-100 shadow-sm">
-                    <Hash className="w-4 h-4" /> Line {lineNumber}
-                  </span>
-                )}
-              </div>
-            )}
 
-            {/* Error Message Box */}
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-6 text-base font-medium text-gray-800 shadow-inner">
-              <span className="text-red-600 font-black block mb-2 underline decoration-2 underline-offset-4">Message:</span>
-              <p className="font-mono text-sm leading-relaxed">{error.message}</p>
-            </div>
+
+
 
             {/* User Commentary */}
-            <div className="mb-8">
-              <label className="block text-base font-black text-gray-700 mb-3">
-                What happened? <span className="text-gray-400 font-normal ml-1">(Optional)</span>
+            <div className="mb-6 sm:mb-8 text-left">
+              <label className="block text-base font-black text-gray-700 mb-2 sm:mb-3">
+                What happened?
               </label>
               <textarea
                 value={additionalInfo}
                 onChange={(e) => setAdditionalInfo(e.target.value)}
                 placeholder="E.g. Error appeared when clicking 'Save Student'..."
-                className="text-black w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-[1.5rem] text-base focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all outline-none resize-none shadow-inner"
-                rows={4}
+                className="text-black w-full px-4 sm:px-5 py-3 sm:py-4 bg-gray-50 border border-gray-200 rounded-2xl sm:rounded-[1.5rem] text-sm sm:text-base focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all outline-none resize-none shadow-inner"
+                rows={3}
               />
             </div>
 
             {/* Footer Actions */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 border-t pt-8">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 border-t pt-6 sm:pt-8">
               <a
                 href={getEmailLink()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-base font-black text-red-600 hover:text-red-700 underline underline-offset-8 decoration-2 transition-all"
+                className="text-sm sm:text-base font-black text-red-600 hover:text-red-700 underline underline-offset-8 decoration-2 transition-all"
               >
                 Report via Email instead
               </a>
 
-              <div className="flex items-center gap-4 w-full sm:w-auto">
+              <div className="flex flex-col-reverse sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
                 <button
                   onClick={clearError}
-                  className="flex-1 sm:flex-none px-8 py-3.5 rounded-[1.25rem] bg-gray-100 hover:bg-gray-200 text-gray-700 font-extrabold transition-all"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-extrabold transition-all"
                 >
                   Ignore
                 </button>
                 <button
                   onClick={handleSubmitReport}
                   disabled={isSubmitting}
-                  className="flex-1 sm:flex-none px-10 py-3.5 rounded-[1.25rem] bg-red-600 text-white font-extrabold hover:bg-red-700 shadow-xl shadow-red-200 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95"
+                  className="w-full sm:w-auto px-10 py-3.5 rounded-2xl bg-red-600 text-white font-extrabold hover:bg-red-700 shadow-xl shadow-red-200 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95"
                 >
                   {isSubmitting ? (
                     <>
@@ -222,6 +204,14 @@ ${error.stack || 'No stack trace available'}
             </div>
           </div>
         </div>
+
+        {/* Mobile Close Button */}
+        <button
+          className="sm:hidden absolute top-4 right-4 p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-300"
+          onClick={clearError}
+        >
+          <X className="w-6 h-6" />
+        </button>
       </div>
     </div>
   );

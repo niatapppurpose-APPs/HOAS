@@ -326,7 +326,6 @@ const Wardens = () => {
                                                         {getRoleLabel(warden)}
                                                     </span>
                                                       <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md border" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-tertiary)' }}>
-                                                        <Building2 className="w-3.5 h-3.5 opacity-70" />
                                                         {warden.collegeName || contextInfo.collegeName}
                                                     </span>
                                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">

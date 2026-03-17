@@ -10,7 +10,7 @@ import {
 } from './analyticsTransforms';
 
 // Fetch + compute all Analytics datasets (keeps Analytics.jsx small and UI-only).
-export function useAnalyticsData({ autoRefreshMs = 30000, realtimeDebounceMs = 500 } = {}) {
+export function useAnalyticsData() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -24,12 +24,11 @@ export function useAnalyticsData({ autoRefreshMs = 30000, realtimeDebounceMs = 5
     approvalRate: 0,
     avgApprovalTime: 0,
     activeColleges: 0,
+    totalColleges: 0,
     pendingReview: 0,
   });
 
   const isMountedRef = useRef(true);
-  const updateTimeoutRef = useRef(null);
-  const intervalRef = useRef(null);
 
   const computeAndSet = useCallback((users) => {
     const students = users.filter((u) => u.role === 'student');
@@ -57,90 +56,64 @@ export function useAnalyticsData({ autoRefreshMs = 30000, realtimeDebounceMs = 5
     setRolePerformanceData(generateRolePerformance(students, wardens, colleges));
   }, []);
 
-  const fetchAnalyticsData = useCallback(
-    async (isRefresh = false) => {
-      try {
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    const unsubscribe = onSnapshot(
+      collection(db, 'users'),
+      (snapshot) => {
         if (!isMountedRef.current) return;
 
-        if (isRefresh) setRefreshing(true);
-        else setLoading(true);
+        const users = snapshot.docs
+          .map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              createdAt: normalizeCreatedAt(data.createdAt),
+            };
+          })
+          .filter(u => u.role !== 'admin' && u.role !== 'owner');
 
-        const usersSnapshot = await getDocs(collection(db, 'users'));
-        const users = usersSnapshot.docs.map((doc) => {
+        computeAndSet(users);
+        setLastUpdated(new Date());
+        setLoading(false);
+        setRefreshing(false);
+      },
+      (error) => {
+        console.error('Error listening to users:', error);
+        setLoading(false);
+      },
+    );
+
+    return () => {
+      isMountedRef.current = false;
+      unsubscribe();
+    };
+  }, [computeAndSet]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const snapshot = await getDocs(collection(db, 'users'));
+      const users = snapshot.docs
+        .map((doc) => {
           const data = doc.data();
           return {
             id: doc.id,
             ...data,
             createdAt: normalizeCreatedAt(data.createdAt),
           };
-        });
-
-        if (!isMountedRef.current) return;
-
-        computeAndSet(users);
-        setLastUpdated(new Date());
-      } catch (error) {
-        // Keep UI stable; log for debugging.
-        console.error('Error fetching analytics data:', error);
-      } finally {
-        if (!isMountedRef.current) return;
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [computeAndSet],
-  );
-
-  const handleRefresh = useCallback(() => {
-    fetchAnalyticsData(true);
-  }, [fetchAnalyticsData]);
-
-  useEffect(() => {
-    isMountedRef.current = true;
-
-    // Initial load
-    fetchAnalyticsData(false);
-
-    // Realtime updates (debounced)
-    const unsubscribe = onSnapshot(
-      collection(db, 'users'),
-      (snapshot) => {
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
-
-        updateTimeoutRef.current = setTimeout(() => {
-          if (!isMountedRef.current) return;
-          // Snapshot.size is useful to verify listener is active.
-          // eslint-disable-next-line no-console
-          console.log('Analytics realtime update:', snapshot.size);
-          fetchAnalyticsData(true);
-        }, realtimeDebounceMs);
-      },
-      (error) => {
-        console.error('Error listening to users:', error);
-      },
-    );
-
-    // Auto refresh (kept because you asked)
-    intervalRef.current = setInterval(() => {
-      if (!isMountedRef.current) return;
-      fetchAnalyticsData(true);
-    }, autoRefreshMs);
-
-    return () => {
-      isMountedRef.current = false;
-
-      unsubscribe();
-
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
-      }
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [autoRefreshMs, fetchAnalyticsData, realtimeDebounceMs]);
+        })
+        .filter(u => u.role !== 'admin' && u.role !== 'owner');
+      computeAndSet(users);
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Manual refresh error:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [computeAndSet]);
 
   return {
     loading,

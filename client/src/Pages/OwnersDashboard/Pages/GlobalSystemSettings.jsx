@@ -6,7 +6,8 @@ import { useToast } from '../../../components/Toast';
 import Header from '../../../components/OwnerServices/header';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../../../firebase/firebaseConfig';
+import { db, auth } from '../../../firebase/firebaseConfig';
+import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { StatusBadge, ToggleSwitch, SectionCard, SettingRow } from './components/SettingsComponents';
 import AccessLogsModal from './components/AccessLogsModal';
 import { DEFAULT_SETTINGS, roleColor } from './settingsConstants';
@@ -47,7 +48,10 @@ import {
   Key,
   LogOut,
   Eye,
+  EyeOff,
   ScrollText,
+  Trash2,
+  X,
 } from 'lucide-react';
 
 /* ── Theme mode options (stable – hoisted for performance) ── */
@@ -82,6 +86,13 @@ const GlobalSystemSettings = () => {
 
   /* ── Access Logs ── */
   const [showLogs, setShowLogs] = useState(false);
+
+  /* ── Delete Account ── */
+  const [showDeleteForm, setShowDeleteForm] = useState(false);
+  const [deletePw, setDeletePw] = useState("");
+  const [deleteEmailChallenge, setDeleteEmailChallenge] = useState("");
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [showDeletePw, setShowDeletePw] = useState(false);
 
   const loadData = useCallback(async (showLoading = true) => {
     try {
@@ -153,6 +164,54 @@ const GlobalSystemSettings = () => {
   const handleLogout = async () => {
     try { await logout(); toast.success('Logged out'); navigate('/', { replace: true }); }
     catch { toast.error('Logout failed'); }
+  };
+
+  const confirmDeleteAccount = async () => {
+    if (!deletePw) {
+      toast.error("Password required for deletion");
+      return;
+    }
+    if (deleteEmailChallenge !== user.email) {
+      toast.error("Email verification does not match");
+      return;
+    }
+
+    // Final confirmation via Toast instead of popup
+    const confirmed = await toast.confirm(
+      "CRITICAL: Delete your account permanently? Your hostels and warden data will be lost forever.",
+      null,
+      { confirmText: 'DELETE NOW', cancelText: 'ABORT' }
+    );
+
+    if (!confirmed) return;
+
+    setIsDeletingAccount(true);
+    try {
+      if (!user) return;
+      // 1. Re-authenticate for security
+      const cred = EmailAuthProvider.credential(user.email, deletePw);
+      await reauthenticateWithCredential(auth.currentUser, cred);
+
+      // 2. Call cloud function to clean up Firestore data
+      await cloudFunctions.deleteUserAccount(user.uid);
+
+      // 3. Delete from Auth
+      await auth.currentUser.delete();
+
+      toast.success("Account deleted permanently");
+      setShowDeleteForm(false);
+      setDeletePw("");
+      setDeleteEmailChallenge("");
+      navigate("/login", { replace: true });
+    } catch (err) {
+      console.error("Delete error:", err);
+      let msg = "Failed to delete account";
+      if (err.code === "auth/wrong-password") msg = "Incorrect password";
+      if (err.code === "auth/requires-recent-login") msg = "Security timeout: Please logout and login again to delete";
+      toast.error(msg);
+    } finally {
+      setIsDeletingAccount(false);
+    }
   };
 
   const secStatus = useMemo(() =>
@@ -430,6 +489,88 @@ const GlobalSystemSettings = () => {
                 </div>
               </div>
             </SectionCard>
+
+            {/* ── 7. Danger Zone (Inline) ── */}
+            <SectionCard title="Danger Zone" icon={AlertTriangle} accent="#ef4444" status="warning">
+              <div className="space-y-4">
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Irreversible actions related to your account security and data permanence.
+                </p>
+                
+                {!showDeleteForm ? (
+                  <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold text-red-500">Delete Account</p>
+                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Purge your account and all associated data</p>
+                      </div>
+                      <button 
+                        onClick={() => setShowDeleteForm(true)}
+                        className="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-xs font-bold transition-all border border-red-500/30 cursor-pointer"
+                      >
+                        Initiate
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6 rounded-2xl border-2 border-red-500/20 bg-red-500/[0.02] space-y-5 animate-fadeIn">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-red-500 font-bold text-sm">
+                        <Siren size={18} />
+                        Confirm Deletion Identity
+                      </div>
+                      <button onClick={() => setShowDeleteForm(false)} className="text-[10px] uppercase font-bold text-slate-500 hover:text-red-500 transition-colors cursor-pointer">
+                        Cancel
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5 ml-1">Account Email</label>
+                        <input
+                          type="text"
+                          value={deleteEmailChallenge}
+                          onChange={e => setDeleteEmailChallenge(e.target.value)}
+                          placeholder={user.email}
+                          className="w-full py-2.5 px-4 rounded-xl border text-sm font-medium focus:ring-4 focus:ring-red-500/5 focus:border-red-500/30 transition-all"
+                          style={{ backgroundColor: "var(--bg-primary)", borderColor: "var(--border-primary)", color: "var(--text-primary)" }}
+                        />
+                      </div>
+
+                      <div className="relative">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5 ml-1">Password</label>
+                        <input
+                          type={showDeletePw ? "text" : "password"}
+                          value={deletePw}
+                          onChange={e => setDeletePw(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full py-2.5 px-4 rounded-xl border text-sm font-medium focus:ring-4 focus:ring-red-500/5 focus:border-red-500/30 transition-all pr-12"
+                          style={{ backgroundColor: "var(--bg-primary)", borderColor: "var(--border-primary)", color: "var(--text-primary)" }}
+                        />
+                        <button
+                          onClick={() => setShowDeletePw(!showDeletePw)}
+                          className="absolute right-3 bottom-2.5 p-1 text-muted-foreground hover:text-red-500 transition-colors cursor-pointer"
+                        >
+                          {showDeletePw ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={confirmDeleteAccount}
+                      disabled={isDeletingAccount || !deletePw || deleteEmailChallenge !== user.email}
+                      className="w-full py-3 rounded-xl bg-red-600 hover:bg-black text-white text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-red-500/20 disabled:opacity-20 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {isDeletingAccount ? <Loader2 size={16} className="animate-spin" /> : <><Trash2 size={14} /> Request Permanent Purge</>}
+                    </button>
+                    
+                    <p className="text-[10px] text-center text-muted-foreground italic">
+                      Clicking above will trigger a final toast confirmation.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </SectionCard>
           </div>
 
           {/* ── Footer ── */}
@@ -474,7 +615,6 @@ const GlobalSystemSettings = () => {
 
         </div>
       </div>
-
 
       {/* ── Access Logs Modal ── */}
       {showLogs && <AccessLogsModal onClose={() => setShowLogs(false)} />}

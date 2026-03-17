@@ -1,33 +1,42 @@
-// KPI strip: renders top-level analytics numbers.
 import { memo } from 'react';
+import { 
+  Users, 
+  TrendingUp, 
+  CheckCircle2, 
+  Clock 
+} from 'lucide-react';
 import StatsCard from './StatsCard';
 
 const StatsGrid = ({ stats }) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
       <StatsCard
-        title="Today's Registrations"
+        title="Registrations"
         value={stats.todayRegistrations}
         subtitle="New users today"
-        gradient="from-blue-600 to-blue-700 border-blue-400/30"
+        icon={Users}
+        gradient="from-blue-500 to-indigo-600"
       />
       <StatsCard
-        title="Week Growth"
-        value={`${stats.weekGrowth > 0 ? '+' : ''}${stats.weekGrowth}%`}
-        subtitle="vs last week"
-        gradient="from-green-600 to-green-700 border-green-400/30"
+        title="Growth"
+        value={`${stats.weekGrowth}%`}
+        subtitle="Compared to last week"
+        icon={TrendingUp}
+        gradient="from-emerald-500 to-teal-600"
       />
       <StatsCard
         title="Approval Rate"
         value={`${stats.approvalRate}%`}
-        subtitle="Success rate"
-        gradient="from-purple-600 to-purple-700 border-purple-400/30"
+        subtitle="Processed accounts"
+        icon={CheckCircle2}
+        gradient="from-purple-500 to-fuchsia-600"
       />
       <StatsCard
-        title="Avg Approval Time"
+        title="Processing"
         value={`${stats.avgApprovalTime}h`}
-        subtitle="Processing time"
-        gradient="from-orange-600 to-orange-700 border-orange-400/30"
+        subtitle="Average cleanup"
+        icon={Clock}
+        gradient="from-orange-500 to-amber-600"
       />
     </div>
   );

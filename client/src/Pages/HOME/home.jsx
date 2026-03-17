@@ -22,7 +22,7 @@ const Home = () => {
     const targetRef = useRef(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isAboutOpen, setIsAboutOpen] = useState(false);
-    const { user, isAdmin, loading, adminChecked } = useAuth();
+    const { user, isAdmin } = useAuth();
     const { isDark } = useTheme();
 
     // Lock body scroll when mobile menu is open
@@ -53,17 +53,17 @@ const Home = () => {
     }, [isAdmin, user, navigate]);
 
     return (
-        <div className="min-h-screen font-sans selection:bg-indigo-500/30 selection:text-indigo-200 overflow-x-hidden transition-colors duration-300"
+        <div className="min-h-screen font-sans selection:bg-blue-500/30 selection:text-blue-200 overflow-x-hidden transition-colors duration-300"
             style={{
                 backgroundColor: isDark ? '#020617' : '#f8fafc',
                 color: isDark ? '#f1f5f9' : '#0f172a'
             }}>
 
             {/* Navigation */}
-            <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b border-indigo-500/10 supports-[backdrop-filter]:transition-colors duration-300"
+            <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b supports-[backdrop-filter]:transition-colors duration-300"
                 style={{
                     backgroundColor: isDark ? 'rgba(2, 6, 23, 0.8)' : 'rgba(248, 250, 252, 0.8)',
-                    borderColor: isDark ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.2)'
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(59, 130, 246, 0.2)'
                 }}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16 md:h-20">
@@ -74,19 +74,19 @@ const Home = () => {
                             className="flex items-center gap-4 cursor-pointer z-50 group"
                             onClick={() => {
                                 setIsMobileMenuOpen(false);
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                window.scrollTo({ top: 0, behavior: "smooth" });
                             }}
                         >
                             <motion.div
                                 animate={{ y: [0, -4, 0] }}
-                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                                className="w-12 h-12 md:w-14 md:h-14 bg-indigo-600 rounded-xl p-1.5 flex items-center justify-center shadow-[0_0_20px_rgba(79,70,229,0.4)] group-hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] transition-all duration-300 border border-white/10"
+                                // transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                className="w-16 h-16 md:w-18 md:h-18  rounded-xl p-1.5 flex items-center justify-center"
                             >
-                                <div className="w-full h-full bg-white rounded-lg overflow-hidden flex items-center justify-center">
-                                    <img src={AppLogo} alt="AppLogo" className="w-full h-full object-contain animate-logo-glow" />
+                                <div className="w-full h-full rounded-lg overflow-hidden flex items-center justify-center">
+                                    <img src={AppLogo} alt="AppLogo" className="w-full h-full rounded-full object-contain" />
                                 </div>
                             </motion.div>
-                            <span className="text-xl md:text-2xl font-bold tracking-tight group-hover:text-indigo-300 transition-colors uppercase"
+                            <span className="text-xl md:text-2xl font-bold tracking-tight group-hover:text-blue-300 transition-colors uppercase"
                                 style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</span>
                         </motion.div>
 
@@ -94,45 +94,33 @@ const Home = () => {
                         <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="hidden md:flex items-center gap-6 lg:gap-8"
+                            className="hidden md:flex items-center flex-1 justify-end gap-2"
                         >
-                            <button onClick={() => scrollToSection('roles')}
-                                className="text-sm font-medium hover:scale-105 transition-all hover:text-indigo-600"
-                                style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Roles</button>
-                            <button onClick={() => scrollToSection('features')}
-                                className="text-sm font-medium hover:scale-105 transition-all hover:text-indigo-600"
-                                style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Features</button>
-                            <button onClick={() => scrollToSection('workflow')}
-                                className="text-sm font-medium hover:scale-105 transition-all hover:text-indigo-600"
-                                style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Workflow</button>
+                            <div className=' flex gap-6'>
+                                <button onClick={() => scrollToSection('roles')}
+                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-blue-600"
+                                    style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Roles</button>
+                                <button onClick={() => scrollToSection('features')}
+                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-blue-600"
+                                    style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Features</button>
+                                <button onClick={() => scrollToSection('workflow')}
+                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-blue-600"
+                                    style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Workflow</button>
 
+                            </div>
 
-
-                            <div className="flex items-center gap-4">
-                                {/* Theme Toggle */}
+                            <div className='flex items-center gap-2 ml-4'>
+                                <button
+                                    onClick={() => setIsAboutOpen(true)}
+                                    className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-all"
+                                    style={{ color: isDark ? '#cbd5e1' : '#475569' }}
+                                    title="About App"
+                                >
+                                    <Info className="w-8 h-8" />
+                                </button>
                                 <ThemeToggle size="sm" className="bg-white/5 hover:bg-white/10 border border-white/10" />
 
-
-
-
-                                {/* Get Started / Dashboard button */}
-                                {!loading && adminChecked && (
-                                    <button
-                                        onClick={handleNavigate}
-                                        className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-full shadow-[0_0_20px_-5px_rgba(79,70,229,0.5)] hover:shadow-[0_0_25px_-5px_rgba(79,70,229,0.7)] transition-all duration-300 flex items-center gap-2 group hover:scale-105 active:scale-95"
-                                    >
-                                        {isAdmin ? 'Dashboard' : user ? 'Dashboard' : 'Get Started'} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                    </button>
-                                )}
                             </div>
-                            <button
-                                onClick={() => setIsAboutOpen(true)}
-                                className="p-2 hover:bg-white/10 rounded-full transition-all"
-                                style={{ color: isDark ? '#cbd5e1' : '#475569' }}
-                                title="About App"
-                            >
-                                <Info className="w-8 h-8" />
-                            </button>
                         </motion.div>
 
                         {/* Mobile Menu Toggle */}
@@ -174,13 +162,13 @@ const Home = () => {
                                     <motion.div
                                         animate={{ y: [0, -10, 0], rotate: [0, 1, 0, -1, 0] }}
                                         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                                        className="w-20 h-20 bg-indigo-600 rounded-2xl p-2.5 flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.3)] border border-white/10"
+                                        className="w-20 h-20 bg-blue-600 rounded-2xl p-2.5 flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.3)] border border-white/10"
                                     >
                                         <div className="w-full h-full bg-white rounded-xl overflow-hidden flex items-center justify-center">
                                             <img src={AppLogo} alt="AppLogo" className="w-full h-full object-contain animate-logo-glow" />
                                         </div>
                                     </motion.div>
-                                    <span className="text-2xl font-black uppercase tracking-[0.2em] bg-clip-text text-transparent bg-gradient-to-b"
+                                    <span className="text-2xl font-black uppercase tracking-[0.2em] bg-clip-text text-transparent"
                                         style={{
                                             backgroundImage: isDark
                                                 ? 'linear-gradient(to bottom, #ffffff, #94a3b8)'
@@ -233,9 +221,9 @@ const Home = () => {
                                     }}
                                     className="w-full py-3.5 text-base font-semibold rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
                                     style={{
-                                        backgroundColor: '#6366f1',
+                                        backgroundColor: '#3b82f6',
                                         color: '#ffffff',
-                                        boxShadow: '0 10px 25px -3px rgba(99, 102, 241, 0.3)'
+                                        boxShadow: '0 10px 25px -3px rgba(59, 130, 246, 0.3)'
                                     }}
                                 >
                                     {isAdmin ? 'Dashboard' : user ? 'Dashboard' : 'Get Started'} <ChevronRight className="w-4 h-4" />
@@ -255,8 +243,8 @@ const Home = () => {
                     transition={{ duration: 1.5 }}
                     className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 pointer-events-none overflow-hidden"
                 >
-                    <div className="absolute top-0 left-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-indigo-500/20 rounded-full blur-[60px] md:blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
-                    <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-purple-500/20 rounded-full blur-[60px] md:blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
+                    <div className="absolute top-0 left-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-blue-500/20 rounded-full blur-[60px] md:blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
+                    <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-sky-500/20 rounded-full blur-[60px] md:blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
                 </motion.div>
 
                 <div className="max-w-7xl mx-auto text-center relative z-10">
@@ -266,14 +254,14 @@ const Home = () => {
                         transition={{ duration: 0.8, type: "spring", bounce: 0.5 }}
                         className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full border text-xs md:text-sm font-medium mb-6 md:mb-8 backdrop-blur-sm transition-colors cursor-default"
                         style={{
-                            backgroundColor: isDark ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.12)',
-                            borderColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.3)',
-                            color: isDark ? '#a5b4fc' : '#4338ca'
+                            backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.12)',
+                            borderColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.3)',
+                            color: isDark ? '#93c5fd' : '#1d4ed8'
                         }}
                     >
                         <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                         </span>
                         Next Generation Institutional Management
                     </motion.div>
@@ -289,8 +277,8 @@ const Home = () => {
                         <span className="text-transparent bg-clip-text bg-gradient-to-r animate-text bg-[length:200%_auto]"
                             style={{
                                 backgroundImage: isDark
-                                    ? 'linear-gradient(to right, #818cf8, #c084fc, #818cf8)'
-                                    : 'linear-gradient(to right, #4f46e5, #7c3aed, #4f46e5)'
+                                    ? 'linear-gradient(to right, #60a5fa, #38bdf8, #60a5fa)'
+                                    : 'linear-gradient(to right, #2563eb, #0ea5e9, #2563eb)'
                             }}>
                             Hostel Operations
                         </span>
@@ -331,8 +319,8 @@ const Home = () => {
                             onClick={() => scrollToSection('roles')}
                             className="w-full sm:w-auto px-8 py-4 bg-transparent border rounded-full font-bold text-lg transition-all backdrop-blur-sm"
                             style={{
-                                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(79, 70, 229, 0.3)',
-                                color: isDark ? '#ffffff' : '#4f46e5'
+                                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(37, 99, 235, 0.3)',
+                                color: isDark ? '#ffffff' : '#2563eb'
                             }}
                         >
                             Explore Features
@@ -370,7 +358,7 @@ const Home = () => {
                             icon={Building2}
                             role="Owner / Admin"
                             desc="Super Admin control over all colleges, global settings, & detailed analytics."
-                            color="from-indigo-500 to-blue-600"
+                            color="from-blue-500 to-blue-600"
                             isDark={isDark}
                         />
                         <RoleCard
@@ -391,7 +379,7 @@ const Home = () => {
                             icon={GraduationCap}
                             role="Student"
                             desc="Apply for rooms, view allocation status, & raise maintenance requests."
-                            color="from-pink-500 to-rose-600"
+                            color="from-teal-500 to-emerald-600"
                             isDark={isDark}
                         />
                     </motion.div>
@@ -407,8 +395,8 @@ const Home = () => {
                 <div className="absolute inset-0"
                     style={{
                         background: isDark
-                            ? 'radial-gradient(ellipse at top right, rgba(79, 70, 229, 0.2), transparent)'
-                            : 'radial-gradient(ellipse at top right, rgba(99, 102, 241, 0.08), transparent)'
+                            ? 'radial-gradient(ellipse at top right, rgba(37, 99, 235, 0.2), transparent)'
+                            : 'radial-gradient(ellipse at top right, rgba(59, 130, 246, 0.08), transparent)'
                     }}></div>
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -422,7 +410,7 @@ const Home = () => {
                         >
                             <h2 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6">
                                 <span style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Enterprise-Grade</span> <br className="hidden md:inline" />
-                                <span className="text-indigo-400">Hostel Management</span>
+                                <span className="text-blue-400">Hostel Management</span>
                             </h2>
                             <p className="text-base md:text-lg mb-8 leading-relaxed"
                                 style={{ color: isDark ? '#94a3b8' : '#475569' }}>
@@ -465,9 +453,9 @@ const Home = () => {
                 style={{
                     background: isDark
                         ? 'linear-gradient(to bottom, #0f172a, rgba(30, 27, 75, 0.2))'
-                        : 'linear-gradient(to bottom, #eef2ff, #e0e7ff)'
+                        : 'linear-gradient(to bottom, #eff6ff, #dbeafe)'
                 }}>
-                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent"></div>
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent"></div>
 
                 <div className="max-w-5xl mx-auto px-4 text-center">
                     <motion.h2
@@ -500,11 +488,11 @@ const Home = () => {
                         onClick={() => navigate('/login')}
                         className="w-full sm:w-auto px-10 py-4 rounded-lg font-bold text-xl transition-all hover:scale-105 active:scale-95"
                         style={{
-                            backgroundColor: isDark ? '#ffffff' : '#4f46e5',
-                            color: isDark ? '#312e81' : '#ffffff',
+                            backgroundColor: isDark ? '#ffffff' : '#2563eb',
+                            color: isDark ? '#1e3a8a' : '#ffffff',
                             boxShadow: isDark
                                 ? '0 0 40px -10px rgba(255, 255, 255, 0.3)'
-                                : '0 0 40px -10px rgba(79, 70, 229, 0.4)'
+                                : '0 0 40px -10px rgba(37, 99, 235, 0.4)'
                         }}
                     >
                         {!user ? 'Get Started Here 👋' : 'Go To Dashbaord 👉'}

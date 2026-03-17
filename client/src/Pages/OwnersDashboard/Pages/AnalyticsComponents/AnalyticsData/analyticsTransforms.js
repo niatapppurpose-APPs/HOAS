@@ -111,16 +111,15 @@ export function generateRolePerformance(students, wardens, colleges) {
 }
 
 export function calculateStats({ users, students, wardens, colleges, approved, denied, pending }) {
-  // Today registrations
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  
   const todayRegistrations = users.filter((u) => {
     const userDate = new Date(u.createdAt);
     userDate.setHours(0, 0, 0, 0);
     return userDate.getTime() === today.getTime();
   }).length;
 
-  // Week growth
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
   const lastWeekUsers = users.filter((u) => u.createdAt >= weekAgo).length;
@@ -132,29 +131,35 @@ export function calculateStats({ users, students, wardens, colleges, approved, d
   const weekGrowth =
     previousWeekUsers > 0
       ? Math.round(((lastWeekUsers - previousWeekUsers) / previousWeekUsers) * 100)
-      : lastWeekUsers > 0
-        ? 100
-        : 0;
+      : lastWeekUsers > 0 ? 100 : 0;
 
-  // Approval rate
   const totalProcessed = approved.length + denied.length;
   const approvalRate = totalProcessed > 0 ? Math.round((approved.length / totalProcessed) * 100) : 0;
 
-  // Active colleges
+  // Real Approval Time Calculation
+  const approvedUsersWithTime = approved.filter(u => u.updatedAt && u.createdAt);
+  let avgApprovalTime = 0;
+  if (approvedUsersWithTime.length > 0) {
+    const totalHours = approvedUsersWithTime.reduce((acc, u) => {
+      const start = new Date(u.createdAt);
+      const end = new Date(u.updatedAt);
+      return acc + (end - start) / (1000 * 60 * 60);
+    }, 0);
+    avgApprovalTime = Math.round(totalHours / approvedUsersWithTime.length);
+  }
+
   const activeColleges = colleges.filter((c) => {
-    const hasUsers =
-      students.some((s) => s.collegeId === c.uid || s.managementUid === c.uid) ||
-      wardens.some((w) => w.collegeId === c.uid || w.managementUid === c.uid);
-    return hasUsers;
+    return students.some((s) => s.collegeId === c.uid || s.managementUid === c.uid) ||
+           wardens.some((w) => w.collegeId === c.uid || w.managementUid === c.uid);
   }).length;
 
   return {
     todayRegistrations,
     weekGrowth,
     approvalRate,
-    // Kept as-is from prior code: placeholder until there is real approval-time tracking.
-    avgApprovalTime: Math.floor(Math.random() * 24) + 2,
+    avgApprovalTime: avgApprovalTime || 0,
     activeColleges,
+    totalColleges: colleges.length,
     pendingReview: pending.length,
   };
 }

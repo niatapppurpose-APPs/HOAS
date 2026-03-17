@@ -9,7 +9,7 @@ import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmM
 import { HashLoader } from "react-spinners";
 
 import search from './Search.mp4'
-import { Mail, GraduationCap, UserMinus, Building2, Search, X, RefreshCw } from 'lucide-react';
+import { Mail, GraduationCap, UserMinus, Building2, Search, X, RefreshCw, Shield } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import EmptyState from '../../../components/OwnerServices/EmptyState';
 import NoDataLight from '../../../assets/No-Data.avif';
@@ -102,7 +102,9 @@ const Students = () => {
     };
 
     const searchStudent = students.filter((studentlist) =>
-        !searchListStudent.trim() || studentlist.fullName?.toLowerCase().includes(searchListStudent.toLowerCase())
+        !searchListStudent.trim() || 
+        studentlist.fullName?.toLowerCase().includes(searchListStudent.toLowerCase()) ||
+        studentlist.email?.toLowerCase().includes(searchListStudent.toLowerCase())
     )
 
     // Save page state before navigating away
@@ -190,19 +192,6 @@ const Students = () => {
                                     <RefreshCw className="w-5 h-5 transition-transform duration-300 group-hover:rotate-180" style={{ color: 'var(--text-muted)' }} />
                                 </button>
                             )}
-
-
-
-                            {/* {import.meta.env.DEV && (
-                                <button
-                                    onClick={() => setSimulateError(true)}
-                                    className="ml-2 p-2.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                                    title="Simulate error"
-                                >
-                                    Simulate Error
-                                </button>
-                            )} */}
-
                             {/* Expandable Search Input */}
                             <div
                                 className={`flex justify-around gap-5 py-5 absolute  right-10 overflow-hidden transition-all duration-500 ease-in-out ${searchOpen ? 'w-full sm:w-80 opacity-100' : 'w-0 opacity-0'
@@ -309,7 +298,7 @@ const Students = () => {
                                             <Avatar
                                                 image={student.photoURL}
                                                 name={student.fullName || student.displayName || student.email}
-                                                size="lg"
+                                                size="xl"
                                             />
 
                                             <div className="flex-1 min-w-0">
@@ -324,6 +313,14 @@ const Students = () => {
                                                         <GraduationCap className="w-3 h-3" />
                                                         Student
                                                     </span>
+                                                    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md border" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-tertiary)' }}>
+
+                                                        {student.collegeName || contextInfo.collegeName}
+                                                    </span>
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+                                                        <Shield className="w-3.5 h-3.5 opacity-80" />
+                                                        {student.hostelBlock || 'No block assigned'}
+                                                    </span>
                                                 </div>
 
                                                 {/* Email */}
@@ -333,29 +330,6 @@ const Students = () => {
                                                         <span className="truncate">{student.email}</span>
                                                     </div>
                                                 )}
-
-                                                {/* College and Hostel Badges */}
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    {/* Professional Institution Badge */}
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-600/90 to-indigo-600/90 text-white text-xs font-semibold shadow-lg border border-purple-500/30">
-                                                        <Building2 className="w-3.5 h-3.5" />
-                                                        {student.collegeName || contextInfo.collegeName}
-                                                        <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold">
-                                                            PRO
-                                                        </span>
-                                                    </span>
-
-                                                    {/* Premium Hostel Badge */}
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-600/90 to-teal-600/90 text-white text-xs font-semibold shadow-lg border border-emerald-500/30">
-                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                                        </svg>
-                                                        {student.hostelBlock || '—'}
-                                                        <span className="ml-1 px-1.5 py-0.5 rounded bg-white/20 text-[10px] font-bold">
-                                                            ★
-                                                        </span>
-                                                    </span>
-                                                </div>
                                             </div>
                                         </div>
 

@@ -5,7 +5,6 @@ import Header from '../../../components/OwnerServices/header';
 import LoadingState from './AnalyticsComponents/LoadingState'; // Loading spinner
 import RefreshButton from './AnalyticsComponents/RefreshButton'; // Manual refresh + “last updated” badge
 import StatsGrid from './AnalyticsComponents/StatsGrid'; // KPI summary cards
-import UserTrendChart from './AnalyticsComponents/UserTrendChart'; // 30-day registration trend
 import CollegeDistributionChart from './AnalyticsComponents/CollegeDistributionChart'; // Per-college distribution pie
 import RoleApprovalChart from './AnalyticsComponents/RoleApprovalChart'; // Approval % per role
 import { useAnalyticsData } from './AnalyticsComponents/AnalyticsData/useAnalyticsData';
@@ -62,16 +61,22 @@ const Analytics = () => {
         {/* Loading State */}
         {loading && <LoadingState />}
 
-        {/* Refresh Button and Status */}
-        {!loading && <RefreshButton onRefresh={handleRefresh} refreshing={refreshing} lastUpdated={lastUpdated} />}
+        {/* Reload Section */}
+        {!loading && (
+          <div className="mb-6">
+            <RefreshButton 
+              onRefresh={handleRefresh} 
+              refreshing={refreshing} 
+              lastUpdated={lastUpdated} 
+            />
+          </div>
+        )}
 
         {/* Real-time Analytics Stats */}
         {!loading && (
           <>
             <StatsGrid stats={stats} />
 
-            {/* User Registration Trend */}
-            {/* <UserTrendChart data={userTrendData} dateRange={dateRange} /> */}
 
             {/* Two Chart Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

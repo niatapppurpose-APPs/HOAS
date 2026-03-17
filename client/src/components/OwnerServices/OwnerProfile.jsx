@@ -10,7 +10,6 @@ import AnimatedLogoutButton from "../AnimatedLogoutButton";
 import {
   Mail,
   Phone,
-  Building2,
   ArrowLeft,
   Save,
   ShieldCheck,
@@ -21,7 +20,7 @@ import {
   Loader2,
   X,
   User,
-  BadgeCheck,
+  BadgeCheck
 } from "lucide-react";
 import { HashLoader } from "react-spinners";
 
@@ -156,6 +155,8 @@ const OwnerProfile = () => {
     );
   }
 
+  // Prevent crashes if user is null during transition/deletion
+  if (!user) return null;
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--bg-primary)", color: "var(--text-primary)" }}>
       {/* ── Header ── */}
@@ -244,11 +245,11 @@ const OwnerProfile = () => {
               <div className="space-y-2">
                 <p className="text-sm flex justify-between" style={{ color: "var(--text-secondary)" }}>
                   <span className="flex items-center gap-2"><Calendar size={14} /> Created</span>
-                  <span>{new Date(user.metadata.creationTime).toLocaleDateString()}</span>
+                  <span>{user.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : "N/A"}</span>
                 </p>
                 <p className="text-sm flex justify-between" style={{ color: "var(--text-secondary)" }}>
                   <span className="flex items-center gap-2"><Calendar size={14} /> Last Login</span>
-                  <span>{new Date(user.metadata.lastSignInTime).toLocaleDateString()}</span>
+                  <span>{user.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleDateString() : "N/A"}</span>
                 </p>
               </div>
             </InfoCard>
@@ -270,13 +271,15 @@ const OwnerProfile = () => {
           </div>
 
           {/* ── Actions ── */}
-          <div className="flex flex-col md:flex-row justify-end gap-4 mt-8">
-            <button onClick={handleSave} disabled={isSaving}
-              className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-2 disabled:opacity-50 transition cursor-pointer font-medium">
-              {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-              Save Changes
-            </button>
-            <AnimatedLogoutButton onLogout={handleLogout} variant="dark" text="Log Out" />
+          <div className="flex md:flex-row justify-end items-center gap-4 mt-8">
+            <div className="flex justify-end gap-10 items-center">
+              <button onClick={handleSave} disabled={isSaving}
+                className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-2 disabled:opacity-50 transition cursor-pointer font-medium">
+                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                Save Changes
+              </button>
+              <AnimatedLogoutButton onLogout={handleLogout} variant="light" text="Log Out" />
+            </div>
           </div>
 
           {saveMessage && (
