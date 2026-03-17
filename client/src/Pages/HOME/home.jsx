@@ -53,7 +53,7 @@ const Home = () => {
     }, [isAdmin, user, navigate]);
 
     return (
-        <div className="min-h-screen font-sans selection:bg-blue-500/30 selection:text-blue-200 overflow-x-hidden transition-colors duration-300"
+        <div className="min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden transition-colors duration-300"
             style={{
                 backgroundColor: isDark ? '#020617' : '#f8fafc',
                 color: isDark ? '#f1f5f9' : '#0f172a'
@@ -63,7 +63,7 @@ const Home = () => {
             <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b supports-[backdrop-filter]:transition-colors duration-300"
                 style={{
                     backgroundColor: isDark ? 'rgba(2, 6, 23, 0.8)' : 'rgba(248, 250, 252, 0.8)',
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(59, 130, 246, 0.2)'
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(124, 58, 237, 0.2)'
                 }}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16 md:h-20">
@@ -86,7 +86,7 @@ const Home = () => {
                                     <img src={AppLogo} alt="AppLogo" className="w-full h-full rounded-full object-contain" />
                                 </div>
                             </motion.div>
-                            <span className="text-xl md:text-2xl font-bold tracking-tight group-hover:text-blue-300 transition-colors uppercase"
+                            <span className="text-xl md:text-2xl font-bold tracking-tight group-hover:text-violet-300 transition-colors uppercase"
                                 style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</span>
                         </motion.div>
 
@@ -98,13 +98,13 @@ const Home = () => {
                         >
                             <div className=' flex gap-6'>
                                 <button onClick={() => scrollToSection('roles')}
-                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-blue-600"
+                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-violet-600"
                                     style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Roles</button>
                                 <button onClick={() => scrollToSection('features')}
-                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-blue-600"
+                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-violet-600"
                                     style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Features</button>
                                 <button onClick={() => scrollToSection('workflow')}
-                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-blue-600"
+                                    className="text-sm font-medium hover:scale-105 transition-all hover:text-violet-600"
                                     style={{ color: isDark ? '#cbd5e1' : '#475569' }}>Workflow</button>
 
                             </div>
@@ -162,7 +162,7 @@ const Home = () => {
                                     <motion.div
                                         animate={{ y: [0, -10, 0], rotate: [0, 1, 0, -1, 0] }}
                                         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                                        className="w-20 h-20 bg-blue-600 rounded-2xl p-2.5 flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.3)] border border-white/10"
+                                        className="w-20 h-20 bg-violet-600 rounded-2xl p-2.5 flex items-center justify-center shadow-[0_0_30px_rgba(124,58,237,0.3)] border border-white/10"
                                     >
                                         <div className="w-full h-full bg-white rounded-xl overflow-hidden flex items-center justify-center">
                                             <img src={AppLogo} alt="AppLogo" className="w-full h-full object-contain animate-logo-glow" />
@@ -221,9 +221,9 @@ const Home = () => {
                                     }}
                                     className="w-full py-3.5 text-base font-semibold rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
                                     style={{
-                                        backgroundColor: '#3b82f6',
+                                        backgroundColor: '#7c3aed',
                                         color: '#ffffff',
-                                        boxShadow: '0 10px 25px -3px rgba(59, 130, 246, 0.3)'
+                                        boxShadow: '0 10px 25px -3px rgba(124, 58, 237, 0.3)'
                                     }}
                                 >
                                     {isAdmin ? 'Dashboard' : user ? 'Dashboard' : 'Get Started'} <ChevronRight className="w-4 h-4" />
@@ -243,8 +243,8 @@ const Home = () => {
                     transition={{ duration: 1.5 }}
                     className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 pointer-events-none overflow-hidden"
                 >
-                    <div className="absolute top-0 left-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-blue-500/20 rounded-full blur-[60px] md:blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
-                    <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-sky-500/20 rounded-full blur-[60px] md:blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
+                    <div className="absolute top-0 left-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-violet-500/20 rounded-full blur-[60px] md:blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
+                    <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-purple-500/20 rounded-full blur-[60px] md:blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
                 </motion.div>
 
                 <div className="max-w-7xl mx-auto text-center relative z-10">
@@ -254,14 +254,14 @@ const Home = () => {
                         transition={{ duration: 0.8, type: "spring", bounce: 0.5 }}
                         className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full border text-xs md:text-sm font-medium mb-6 md:mb-8 backdrop-blur-sm transition-colors cursor-default"
                         style={{
-                            backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.12)',
-                            borderColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.3)',
-                            color: isDark ? '#93c5fd' : '#1d4ed8'
+                            backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.12)',
+                            borderColor: isDark ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.3)',
+                            color: isDark ? '#c4b5fd' : '#6d28d9'
                         }}
                     >
                         <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
                         </span>
                         Next Generation Institutional Management
                     </motion.div>
@@ -277,8 +277,8 @@ const Home = () => {
                         <span className="text-transparent bg-clip-text bg-gradient-to-r animate-text bg-[length:200%_auto]"
                             style={{
                                 backgroundImage: isDark
-                                    ? 'linear-gradient(to right, #60a5fa, #38bdf8, #60a5fa)'
-                                    : 'linear-gradient(to right, #2563eb, #0ea5e9, #2563eb)'
+                                    ? 'linear-gradient(to right, #a78bfa, #c084fc, #a78bfa)'
+                                    : 'linear-gradient(to right, #7c3aed, #9333ea, #7c3aed)'
                             }}>
                             Hostel Operations
                         </span>
@@ -319,8 +319,8 @@ const Home = () => {
                             onClick={() => scrollToSection('roles')}
                             className="w-full sm:w-auto px-8 py-4 bg-transparent border rounded-full font-bold text-lg transition-all backdrop-blur-sm"
                             style={{
-                                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(37, 99, 235, 0.3)',
-                                color: isDark ? '#ffffff' : '#2563eb'
+                                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(124, 58, 237, 0.3)',
+                                color: isDark ? '#ffffff' : '#7c3aed'
                             }}
                         >
                             Explore Features
@@ -358,7 +358,7 @@ const Home = () => {
                             icon={Building2}
                             role="Owner / Admin"
                             desc="Super Admin control over all colleges, global settings, & detailed analytics."
-                            color="from-blue-500 to-blue-600"
+                            color="from-violet-500 to-violet-600"
                             isDark={isDark}
                         />
                         <RoleCard
@@ -395,8 +395,8 @@ const Home = () => {
                 <div className="absolute inset-0"
                     style={{
                         background: isDark
-                            ? 'radial-gradient(ellipse at top right, rgba(37, 99, 235, 0.2), transparent)'
-                            : 'radial-gradient(ellipse at top right, rgba(59, 130, 246, 0.08), transparent)'
+                            ? 'radial-gradient(ellipse at top right, rgba(124, 58, 237, 0.2), transparent)'
+                            : 'radial-gradient(ellipse at top right, rgba(139, 92, 246, 0.08), transparent)'
                     }}></div>
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -410,7 +410,7 @@ const Home = () => {
                         >
                             <h2 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6">
                                 <span style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Enterprise-Grade</span> <br className="hidden md:inline" />
-                                <span className="text-blue-400">Hostel Management</span>
+                                <span className="text-violet-400">Hostel Management</span>
                             </h2>
                             <p className="text-base md:text-lg mb-8 leading-relaxed"
                                 style={{ color: isDark ? '#94a3b8' : '#475569' }}>
@@ -455,7 +455,7 @@ const Home = () => {
                         ? 'linear-gradient(to bottom, #0f172a, rgba(30, 27, 75, 0.2))'
                         : 'linear-gradient(to bottom, #eff6ff, #dbeafe)'
                 }}>
-                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent"></div>
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent"></div>
 
                 <div className="max-w-5xl mx-auto px-4 text-center">
                     <motion.h2
@@ -488,11 +488,11 @@ const Home = () => {
                         onClick={() => navigate('/login')}
                         className="w-full sm:w-auto px-10 py-4 rounded-lg font-bold text-xl transition-all hover:scale-105 active:scale-95"
                         style={{
-                            backgroundColor: isDark ? '#ffffff' : '#2563eb',
-                            color: isDark ? '#1e3a8a' : '#ffffff',
+                            backgroundColor: isDark ? '#ffffff' : '#7c3aed',
+                            color: isDark ? '#4c1d95' : '#ffffff',
                             boxShadow: isDark
                                 ? '0 0 40px -10px rgba(255, 255, 255, 0.3)'
-                                : '0 0 40px -10px rgba(37, 99, 235, 0.4)'
+                                : '0 0 40px -10px rgba(124, 58, 237, 0.4)'
                         }}
                     >
                         {!user ? 'Get Started Here 👋' : 'Go To Dashbaord 👉'}

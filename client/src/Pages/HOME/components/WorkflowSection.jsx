@@ -25,9 +25,9 @@ const ScrollWorkflowCard = React.memo(({ number, title, desc, role, icon: Icon, 
         className="relative p-6 rounded-2xl border text-center backdrop-blur-sm"
         style={{
             backgroundColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.98)',
-            borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)',
+            borderColor: isDark ? 'rgba(124, 58, 237, 0.3)' : 'rgba(124, 58, 237, 0.2)',
             boxShadow: isDark
-                ? '0 20px 40px -15px rgba(59, 130, 246, 0.2), 0 0 0 1px rgba(59, 130, 246, 0.1)'
+                ? '0 20px 40px -15px rgba(124, 58, 237, 0.2), 0 0 0 1px rgba(124, 58, 237, 0.1)'
                 : '0 20px 40px -15px rgba(0, 0, 0, 0.1)',
         }}
     >
@@ -35,8 +35,8 @@ const ScrollWorkflowCard = React.memo(({ number, title, desc, role, icon: Icon, 
             className="absolute inset-0 rounded-2xl pointer-events-none"
             style={{
                 background: isDark
-                    ? 'radial-gradient(ellipse at center, rgba(59, 130, 246, 0.08) 0%, transparent 70%)'
-                    : 'radial-gradient(ellipse at center, rgba(59, 130, 246, 0.05) 0%, transparent 70%)',
+                    ? 'radial-gradient(ellipse at center, rgba(124, 58, 237, 0.08) 0%, transparent 70%)'
+                    : 'radial-gradient(ellipse at center, rgba(124, 58, 237, 0.05) 0%, transparent 70%)',
             }}
         />
         <motion.div
@@ -46,18 +46,18 @@ const ScrollWorkflowCard = React.memo(({ number, title, desc, role, icon: Icon, 
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.15 + 0.2, type: 'spring', stiffness: 200 }}
             style={{
-                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
-                border: '2px solid rgba(59, 130, 246, 0.4)',
+                backgroundColor: isDark ? 'rgba(124, 58, 237, 0.2)' : 'rgba(124, 58, 237, 0.15)',
+                border: '2px solid rgba(124, 58, 237, 0.4)',
             }}
         >
-            <Icon size={28} style={{ color: '#3b82f6' }} />
+            <Icon size={28} style={{ color: '#7c3aed' }} />
             <motion.div
                 className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
                 initial={{ scale: 0 }}
                 whileInView={{ scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.15 + 0.4, type: 'spring' }}
-                style={{ backgroundColor: '#3b82f6', color: '#ffffff' }}
+                style={{ backgroundColor: '#7c3aed', color: '#ffffff' }}
             >
                 {number}
             </motion.div>
@@ -68,9 +68,9 @@ const ScrollWorkflowCard = React.memo(({ number, title, desc, role, icon: Icon, 
         <div
             className="inline-block px-3 py-1 rounded-full text-xs font-semibold mb-3"
             style={{
-                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
-                color: isDark ? '#60a5fa' : '#1d4ed8',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
+                backgroundColor: isDark ? 'rgba(124, 58, 237, 0.2)' : 'rgba(124, 58, 237, 0.15)',
+                color: isDark ? '#a78bfa' : '#6d28d9',
+                border: '1px solid rgba(124, 58, 237, 0.3)',
             }}
         >
             {role}
@@ -79,7 +79,7 @@ const ScrollWorkflowCard = React.memo(({ number, title, desc, role, icon: Icon, 
             {desc}
         </p>
         <motion.div
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 rounded-full bg-gradient-to-r from-blue-500 to-sky-500"
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500"
             initial={{ width: 0 }}
             whileInView={{ width: '60%' }}
             viewport={{ once: true }}
@@ -129,7 +129,7 @@ const WorkflowSection = React.memo(({ isDark }) => {
                         transition={{ duration: 1.5, delay: 0.3, ease: 'easeOut' }}
                         style={{ transformOrigin: 'left' }}
                     >
-                        <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-blue-600" />
+                        <div className="w-full h-full rounded-full bg-gradient-to-r from-violet-600 via-violet-400 to-violet-600" />
                     </motion.div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-4 relative z-10">
                         {workflowSteps.map((step, index) => (

@@ -20,7 +20,7 @@ export const teamData = {
         desc: 'Responsible for designing and implementing the core system architecture of HOAS. Specialized in building scalable, secure, and efficient backend services, managing data flow, authentication, and ensuring smooth coordination between system logic and user facing features.',
         initials: 'HA',
         image: BackendDeveloper,
-        gradient: 'from-blue-500 to-sky-600',
+        gradient: 'from-violet-500 to-indigo-600',
     },
 };
 
@@ -78,5 +78,5 @@ export const socialLinks = [
     { icon: Twitter, href: 'https://twitter.com', label: 'Twitter', hoverColor: '#1DA1F2' },
     { icon: Github, href: 'https://github.com', label: 'GitHub', hoverColor: '#333333' },
     { icon: Instagram, href: 'https://instagram.com', label: 'Instagram', hoverColor: '#E4405F' },
-    { icon: Mail, href: 'https://mail.google.com/mail/?view=cm&fs=1&to=niatapppurpose@gmail.com', label: 'Email', hoverColor: '#3b82f6' },
+    { icon: Mail, href: 'https://mail.google.com/mail/?view=cm&fs=1&to=niatapppurpose@gmail.com', label: 'Email', hoverColor: '#7c3aed' },
 ];

@@ -52,28 +52,28 @@ const Footer = React.memo(({ isDark }) => {
                         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
                             <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Platform</h4>
                             <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
-                                <li onClick={() => handleLinkClick('/OwnersDashboard', 'Owner Dashboard')} className="hover:text-blue-500 cursor-pointer transition-colors">Owner Dashboard</li>
-                                <li onClick={() => handleLinkClick('/dashboard', 'Management Portal')} className="hover:text-blue-500 cursor-pointer transition-colors">Management Portal</li>
-                                <li onClick={() => handleLinkClick('/login', 'Warden Dashboard')} className="hover:text-blue-500 cursor-pointer transition-colors">Warden Dashboard</li>
-                                <li onClick={() => handleLinkClick('/login', 'Student App')} className="hover:text-blue-500 cursor-pointer transition-colors">Student App</li>
+                                <li onClick={() => handleLinkClick('/OwnersDashboard', 'Owner Dashboard')} className="hover:text-violet-500 cursor-pointer transition-colors">Owner Dashboard</li>
+                                <li onClick={() => handleLinkClick('/dashboard', 'Management Portal')} className="hover:text-violet-500 cursor-pointer transition-colors">Management Portal</li>
+                                <li onClick={() => handleLinkClick('/login', 'Warden Dashboard')} className="hover:text-violet-500 cursor-pointer transition-colors">Warden Dashboard</li>
+                                <li onClick={() => handleLinkClick('/login', 'Student App')} className="hover:text-violet-500 cursor-pointer transition-colors">Student App</li>
                             </ul>
                         </motion.div>
 
                         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }}>
                             <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Resources</h4>
                             <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
-                                <li onClick={() => handleLinkClick('https://github.com/niatapppurpose-APPs/HOAS#readme')} className="hover:text-blue-500 cursor-pointer transition-colors">Documentation</li>
-                                <li onClick={() => handleLinkClick(null, 'API Reference')} className="hover:text-blue-500 cursor-pointer transition-colors">API Reference</li>
-                                <li onClick={() => handleLinkClick(null, 'Support')} className="hover:text-blue-500 cursor-pointer transition-colors">Support</li>
+                                <li onClick={() => handleLinkClick('https://github.com/niatapppurpose-APPs/HOAS#readme')} className="hover:text-violet-500 cursor-pointer transition-colors">Documentation</li>
+                                <li onClick={() => handleLinkClick(null, 'API Reference')} className="hover:text-violet-500 cursor-pointer transition-colors">API Reference</li>
+                                <li onClick={() => handleLinkClick(null, 'Support')} className="hover:text-violet-500 cursor-pointer transition-colors">Support</li>
                             </ul>
                         </motion.div>
 
                         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.4 }}>
                             <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Legal</h4>
                             <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
-                                <li onClick={() => handleLinkClick(null, 'Privacy Policy')} className="hover:text-blue-500 cursor-pointer transition-colors">Privacy Policy</li>
-                                <li onClick={() => handleLinkClick(null, 'Terms of Service')} className="hover:text-blue-500 cursor-pointer transition-colors">Terms of Service</li>
-                                <li onClick={() => handleLinkClick(null, 'Compliance')} className="hover:text-blue-500 cursor-pointer transition-colors">Compliance</li>
+                                <li onClick={() => handleLinkClick(null, 'Privacy Policy')} className="hover:text-violet-500 cursor-pointer transition-colors">Privacy Policy</li>
+                                <li onClick={() => handleLinkClick(null, 'Terms of Service')} className="hover:text-violet-500 cursor-pointer transition-colors">Terms of Service</li>
+                                <li onClick={() => handleLinkClick(null, 'Compliance')} className="hover:text-violet-500 cursor-pointer transition-colors">Compliance</li>
                             </ul>
                         </motion.div>
                     </div>

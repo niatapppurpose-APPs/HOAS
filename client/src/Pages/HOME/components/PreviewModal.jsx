@@ -9,10 +9,10 @@ import StudentImg from '../../../assets/student_preview.png';
 const PreviewModal = ({ isOpen, onClose, role, isDark }) => {
     // Utility for dynamic colors since Tailwind JIT can't predict them
     const colorMap = {
-        'blue': '#3b82f6',
+        'blue': '#7c3aed',
         'teal': '#14b8a6',
         'amber': '#f59e0b',
-        'sky': '#0ea5e9'
+        'sky': '#8b5cf6'
     };
 
     useEffect(() => {
@@ -160,7 +160,7 @@ const PreviewModal = ({ isOpen, onClose, role, isDark }) => {
                                 <h3 className="text-2xl md:text-3xl font-bold mb-2">
                                     {current.title}
                                 </h3>
-                                <div className="h-1 w-20 rounded-full" style={{ backgroundColor: colorMap[current.color] || '#3b82f6' }} />
+                                <div className="h-1 w-20 rounded-full" style={{ backgroundColor: colorMap[current.color] || '#7c3aed' }} />
                             </div>
                             <button onClick={onClose} className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors hidden md:block">
                                 <X className="w-6 h-6" style={{ color: isDark ? '#94a3b8' : '#64748b' }} />
@@ -175,7 +175,7 @@ const PreviewModal = ({ isOpen, onClose, role, isDark }) => {
                             <ul className="space-y-3">
                                 {current.features?.map((f, i) => (
                                     <li key={i} className="flex items-center gap-3 text-sm" style={{ color: isDark ? '#cbd5e1' : '#1e293b' }}>
-                                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colorMap[current.color] || '#3b82f6' }} />
+                                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colorMap[current.color] || '#7c3aed' }} />
                                         {f}
                                     </li>
                                 ))}
@@ -186,7 +186,7 @@ const PreviewModal = ({ isOpen, onClose, role, isDark }) => {
                             onClick={onClose}
                             className="w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 text-white"
                             style={{ 
-                                backgroundColor: colorMap[current.color] || '#3b82f6',
+                                backgroundColor: colorMap[current.color] || '#7c3aed',
                                 boxShadow: `0 10px 15px -3px ${colorMap[current.color]}40`
                             }}
                         >
@@ -220,7 +220,7 @@ const PreviewModal = ({ isOpen, onClose, role, isDark }) => {
 
                         {/* Background glow using inline styles for dynamic colors */}
                         <div className="absolute inset-0 blur-[100px] opacity-15 rounded-full" 
-                            style={{ backgroundColor: colorMap[current.color] || '#3b82f6' }} />
+                            style={{ backgroundColor: colorMap[current.color] || '#7c3aed' }} />
                     </div>
 
                     <button

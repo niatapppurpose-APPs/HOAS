@@ -13,14 +13,14 @@ export const RoleCard = React.memo(({ icon: Icon, role, desc, color, isDark = tr
         className="group relative p-6 md:p-8 rounded-2xl border transition-colors duration-300"
         style={{
             backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#ffffff',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(59, 130, 246, 0.15)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(124, 58, 237, 0.15)',
             boxShadow: isDark ? 'none' : '0 4px 20px -5px rgba(0, 0, 0, 0.08)',
         }}
     >
         <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-2xl`} />
         <motion.div
             whileHover={{ scale: 1.1, rotate: 5 }}
-            className={`w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center mb-4 md:mb-6 shadow-lg group-hover:shadow-blue-500/20`}
+            className={`w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center mb-4 md:mb-6 shadow-lg group-hover:shadow-violet-500/20`}
             style={{ boxShadow: isDark ? '0 10px 15px -3px rgba(0, 0, 0, 0.2)' : '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
         >
             <Icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
@@ -51,8 +51,8 @@ export const GlassCard = React.memo(({ icon: Icon, title, delay, isDark = true }
     >
         <div className="p-2 md:p-3 rounded-lg shrink-0"
             style={{
-                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
-                color: isDark ? '#60a5fa' : '#2563eb',
+                backgroundColor: isDark ? 'rgba(124, 58, 237, 0.2)' : 'rgba(124, 58, 237, 0.15)',
+                color: isDark ? '#a78bfa' : '#7c3aed',
             }}>
             <Icon className="w-5 h-5 md:w-6 md:h-6" />
         </div>
@@ -75,10 +75,10 @@ export const FeatureItem = React.memo(({ title, desc, delay, isDark = true }) =>
         <div className="mt-1 shrink-0">
             <div className="w-8 h-8 rounded-full flex items-center justify-center"
                 style={{
-                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
-                    border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(59, 130, 246, 0.3)',
+                    backgroundColor: isDark ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.15)',
+                    border: isDark ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid rgba(139, 92, 246, 0.3)',
                 }}>
-                <CheckCircle2 className="w-5 h-5" style={{ color: isDark ? '#60a5fa' : '#2563eb' }} />
+                <CheckCircle2 className="w-5 h-5" style={{ color: isDark ? '#a78bfa' : '#7c3aed' }} />
             </div>
         </div>
         <div>
