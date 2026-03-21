@@ -80,7 +80,8 @@ const HostelDetailsModal = ({ isOpen, onClose, hostelId }) => {
             const wardenRef = doc(db, "users", wardenId);
             await updateDoc(wardenRef, {
                 hostelId: null,
-                hostelBlock: null
+                hostelBlock: null,
+                hostelName: null
             });
 
             toast.success("Warden removed successfully");

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom";
+import { useOutletContext } from "react-router-dom";
 import ManagementHeader from "../../components/layout/ManagementHeader";
 import { Home, Search, Filter, Plus, Home as HomeIcon } from "lucide-react";
 import { db } from "../../../../firebase/firebaseConfig";
@@ -19,11 +19,27 @@ const Hostels = () => {
   const [loading, setLoading] = useState(true);
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingHostel, setEditingHostel] = useState(null);
   const [selectedHostelId, setSelectedHostelId] = useState(null);
 
   const { isCollapsed, setIsCollapsed } = useOutletContext();
   const { userData } = useAuth();
-  const navigate = useNavigate();
+
+  const getHostelKey = (hostel) =>
+    String(hostel?.block || hostel?.name || hostel?.id || "")
+      .trim()
+      .toLowerCase();
+
+  const getHostelScore = (hostel) => {
+    let score = 0;
+    if (hostel?.block) score += 3;
+    if (hostel?.name) score += 2;
+    if (hostel?.location?.address) score += 1;
+    if (hostel?.capacity) score += 1;
+    if (Array.isArray(hostel?.wardens) && hostel.wardens.length > 0) score += 1;
+    if (Array.isArray(hostel?.students) && hostel.students.length > 0) score += 1;
+    return score;
+  };
 
   useEffect(() => {
     if (!userData?.collegeName) {
@@ -37,8 +53,20 @@ const Hostels = () => {
     );
 
     const unsub = onSnapshot(q, snap => {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      setHostels(list);
+      const list = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(h => !h.managementId || h.managementId === userData?.uid)
+        .reduce((map, hostel) => {
+          const key = getHostelKey(hostel);
+          const existing = map.get(key);
+
+          if (!existing || getHostelScore(hostel) > getHostelScore(existing)) {
+            map.set(key, hostel);
+          }
+
+          return map;
+        }, new Map());
+      setHostels(Array.from(list.values()));
       setLoading(false);
     }, (err) => {
       console.error("Error fetching hostels", err);
@@ -57,6 +85,16 @@ const Hostels = () => {
       console.error('Delete hostel failed', err);
       toast.error("Failed to delete hostel");
     }
+  };
+
+  const handleEditHostel = (hostel) => {
+    setEditingHostel(hostel);
+    setShowAddModal(true);
+  };
+
+  const handleCloseHostelModal = () => {
+    setShowAddModal(false);
+    setEditingHostel(null);
   };
 
   const filteredHostels = hostels.filter(h =>
@@ -87,7 +125,10 @@ const Hostels = () => {
             </div>
           </div>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              setEditingHostel(null);
+              setShowAddModal(true);
+            }}
             className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium text-white transition-all transform hover:scale-[1.02] active:scale-95 whitespace-nowrap"
             style={{ background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary))', boxShadow: '0 4px 14px 0 rgba(99, 102, 241, 0.39)' }}
           >
@@ -134,7 +175,10 @@ const Hostels = () => {
             </p>
             {!searchTerm && (
               <button
-                onClick={() => setShowAddModal(true)}
+                onClick={() => {
+                  setEditingHostel(null);
+                  setShowAddModal(true);
+                }}
                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium text-white transition-all transform hover:scale-[1.02] active:scale-95"
                 style={{ background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary))' }}
               >
@@ -150,6 +194,7 @@ const Hostels = () => {
                 hostel={hostel}
                 onClick={() => setSelectedHostelId(hostel.id)}
                 onDelete={handleDeleteHostel}
+                onEdit={handleEditHostel}
               />
             ))}
           </div>
@@ -159,8 +204,10 @@ const Hostels = () => {
       {/* Modals */}
       <AddHostelModal
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={handleCloseHostelModal}
         collegeName={userData?.collegeName}
+        managementId={userData?.uid}
+        initialHostel={editingHostel}
       />
 
       {selectedHostelId && (

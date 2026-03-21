@@ -50,7 +50,7 @@ const AddManagementModal = React.memo(({ isOpen, onClose, isDark }) => {
             return;
         }
 
-        const emailPattern = /\.(edu|ac\.in|co\.in|edu\.in|org)$/i;
+        const emailPattern = /\.(edu|ac\.in|co\.in|edu\.in|org|com)$/i;
         if (!emailPattern.test(newManagement.email)) {
             setFormError('Please enter the college official E-mail Address (e.g., .edu, .ac.in)');
             return;

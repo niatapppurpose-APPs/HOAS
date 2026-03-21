@@ -141,6 +141,7 @@ export const createStudent = onCall(corsOptions, async (request) => {
                             name: hostelBlock,
                             block: hostelBlock,
                             collegeName,
+                            managementId: effectiveManagementId,
                             createdAt: new Date().toISOString(),
                         });
                     }

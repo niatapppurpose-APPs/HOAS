@@ -59,7 +59,8 @@ const AssignWardenModal = ({ isOpen, onClose, hostel, collegeName }) => {
                 const wardenRef = doc(db, "users", wardenId);
                 return updateDoc(wardenRef, {
                     hostelId: hostel.id,
-                    hostelBlock: hostel.block || ''
+                    hostelBlock: hostel.block || '',
+                    hostelName: hostel.name || ''
                 });
             });
             await Promise.all(updatePromises);

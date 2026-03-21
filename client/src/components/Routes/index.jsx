@@ -163,6 +163,11 @@ const Routes_path = () => {
                             <Analytics />
                         </FeatureGate>
                     } />
+                    <Route path="analytics" element={
+                        <FeatureGate feature="analytics" fallback={<FeatureDisabled feature="analytics" />}>
+                            <Analytics />
+                        </FeatureGate>
+                    } />
                     <Route path="reports" element={
                         <FeatureGate feature="reports" fallback={<FeatureDisabled feature="reports" />}>
                             <Reports />

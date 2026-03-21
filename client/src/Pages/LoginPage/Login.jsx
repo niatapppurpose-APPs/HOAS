@@ -88,13 +88,14 @@ const Login = () => {
   if (showRedirecting && user && (userDataLoading || !minDelayPassed)) {
     // choose display name from various sources in priority order
     const nameFromAuth = user?.displayName;
-    const nameFromFirestore = userData?.displayName;
+    const nameFromFirestore = userData?.displayName || userData?.fullName || userData?.name;
     const fallbackName = user?.email ? user.email.split('@')[0] : 'User';
-    const firstName = (nameFromAuth || nameFromFirestore || fallbackName || 'User').split(' ')[0];
+    const firstName = (nameFromAuth || nameFromFirestore ||fallbackName || 'User').split(' ')[0];
 
     return (
       <RedirectingPage
         userName={firstName}
+        showToast={false}
       />
     );
   }
@@ -153,7 +154,7 @@ const Login = () => {
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
           Go Home
         </button>
-
+        <h1>{user?.displayName}</h1>
         {/* Main content */}
         <div className="relative z-10 min-h-screen flex flex-col lg:flex-row items-center justify-center px-4 sm:px-6 lg:px-8 py-12 lg:py-0 gap-8 lg:gap-16 xl:gap-24">
 

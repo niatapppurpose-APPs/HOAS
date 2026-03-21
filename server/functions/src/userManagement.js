@@ -300,6 +300,9 @@ export const createWarden = onCall(corsOptions, async (request) => {
     }
 
     const { fullName, email, phone, hostelBlock, hostelName, collegeName, managementId, password: providedPassword } = request.data;
+    const normalizedHostelBlock = (hostelBlock || '').trim();
+    const normalizedHostelName = (hostelName || '').trim();
+    const effectiveManagementId = managementId || request.auth.uid;
 
     // Validate required fields
     if (!fullName || !email) {
@@ -344,10 +347,10 @@ export const createWarden = onCall(corsOptions, async (request) => {
       phone: phone || '',
       role: 'warden',
       status: 'approved',
-      hostelBlock: hostelBlock || '',
-      hostelName: hostelName || '',
+      hostelBlock: normalizedHostelBlock,
+      hostelName: normalizedHostelName,
       collegeName: collegeName || '',
-      managementId: managementId || request.auth.uid,
+      managementId: effectiveManagementId,
       isOnline: false,
       createdBy: request.auth.uid,
       createdAt: new Date().toISOString(),
@@ -355,17 +358,36 @@ export const createWarden = onCall(corsOptions, async (request) => {
     });
 
     // if a new hostelBlock was provided, add it to hostels collection if missing
-    if (hostelBlock && collegeName) {
+    if (normalizedHostelBlock && collegeName) {
       try {
-        const existing = await db.collection('hostels')
-          .where('name', '==', hostelBlock)
+        const existingHostels = await db.collection('hostels')
           .where('collegeName', '==', collegeName)
-          .limit(1)
           .get();
-        if (existing.empty) {
+
+        const normalizedKeysToMatch = [normalizedHostelBlock, normalizedHostelName]
+          .filter(Boolean)
+          .map((value) => value.toLowerCase());
+
+        const alreadyExists = existingHostels.docs.some((hostelDoc) => {
+          const hostelData = hostelDoc.data() || {};
+
+          if (hostelData.managementId && hostelData.managementId !== effectiveManagementId) {
+            return false;
+          }
+
+          const hostelKeys = [hostelData.block, hostelData.name]
+            .filter(Boolean)
+            .map((value) => String(value).trim().toLowerCase());
+
+          return normalizedKeysToMatch.some((key) => hostelKeys.includes(key));
+        });
+
+        if (!alreadyExists) {
           await db.collection('hostels').add({
-            name: hostelBlock,
+            name: normalizedHostelName || normalizedHostelBlock,
+            block: normalizedHostelBlock,
             collegeName,
+            managementId: effectiveManagementId,
             createdAt: new Date().toISOString(),
           });
         }
@@ -468,6 +490,30 @@ export const deleteUserAccount = onCall(corsOptions, async (request) => {
         }
         await db.collection('users').doc(u.id).delete();
         logger.info('✅ Firestore user document deleted (cascade):', u.id);
+      }
+
+      // Cascade delete hostels tied to this management (and fallback on collegeName for legacy records)
+      const hostelIdsToDelete = new Set();
+      if (userId) {
+        const hostelsByManagement = await db.collection('hostels')
+          .where('managementId', '==', userId)
+          .get();
+        hostelsByManagement.forEach(doc => hostelIdsToDelete.add(doc.id));
+      }
+      if (targetUser.collegeName) {
+        const hostelsByCollege = await db.collection('hostels')
+          .where('collegeName', '==', targetUser.collegeName)
+          .get();
+        hostelsByCollege.forEach(doc => hostelIdsToDelete.add(doc.id));
+      }
+
+      for (const hostelId of hostelIdsToDelete) {
+        try {
+          await db.collection('hostels').doc(hostelId).delete();
+          logger.info('✅ Hostels document deleted (cascade):', hostelId);
+        } catch (hErr) {
+          logger.error('❌ Failed to delete hostel document (cascade):', hostelId, hErr.message);
+        }
       }
     }
 

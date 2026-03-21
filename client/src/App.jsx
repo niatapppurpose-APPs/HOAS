@@ -34,6 +34,22 @@ const App = () => {
     };
   }, []);
 
+  // Track app launches across tabs using localStorage (counts once per browser tab session)
+  useEffect(() => {
+    const COUNT_KEY = 'HOAS_HOME_VISIT_COUNT';
+    const SESSION_KEY = 'HOAS_HOME_VISITED';
+
+    try {
+      if (!window.sessionStorage.getItem(SESSION_KEY)) {
+        const current = parseInt(window.localStorage.getItem(COUNT_KEY) || '0', 10);
+        window.localStorage.setItem(COUNT_KEY, String(current + 1));
+        window.sessionStorage.setItem(SESSION_KEY, '1');
+      }
+    } catch {
+      // Ignore (e.g., private mode restrictions)
+    }
+  }, []);
+
   // Show 404 (Yeti) if browser is offline (network disconnected)
   if (!isOnline) {
     return <NotFound />;

@@ -31,12 +31,10 @@ export const AuthProvider = ({ children }) => {
     getRedirectResult(auth)
       .then((result) => {
         if (result?.user) {
-          console.log("Redirect result user:", result.user.email);
           toastRef.current.success('Welcome back! Signing you in...', 3000);
         }
       })
       .catch((error) => {
-        console.error("Redirect error:", error);
         toastRef.current.error('Sign-in failed. Please try again.', 4000);
       });
 

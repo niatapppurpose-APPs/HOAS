@@ -4,7 +4,7 @@ import { useAuth } from '../../../../context/AuthContext';
 import { useTheme } from '../../../../context/ThemeContext';
 import { useToast } from '../../../../components/Toast';
 import { db } from '../../../../firebase/firebaseConfig';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import {
     X, User, Mail, Lock, Phone, Building2, Eye, EyeOff,
     ShieldCheck, Loader2, CheckCircle2, AlertTriangle
@@ -107,20 +107,6 @@ const AddWardenModal = ({ isOpen, onClose, collegeName }) => {
                 collegeName: college,
                 managementId: userData?.uid || user?.uid,
             });
-
-            // if hostelBlock is new, add to hostels collection
-            const block = formData.hostelBlock.trim();
-            if (block && college && !hostels.includes(block)) {
-                try {
-                    await addDoc(collection(db, 'hostels'), {
-                        name: block,
-                        collegeName: college,
-                        createdAt: serverTimestamp(),
-                    });
-                } catch (e) {
-                    console.warn('failed to add new hostel block', e);
-                }
-            }
 
             setSuccess(true);
             toast.success(`Warden "${formData.fullName}" created successfully! 🎉`);

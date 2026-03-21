@@ -11,11 +11,9 @@ import { useToast } from "../../../components/Toast";
 // Import components
 import ManagementHeader from "../components/layout/ManagementHeader";
 import KPICards from "../components/dashboard/KPICards";
-import QuickApproval from "../components/dashboard/QuickApproval";
+// import QuickApproval from "../components/dashboard/QuickApproval";
 import RecentActivity from "../components/dashboard/RecentActivity";
 import StatusTable from "../components/dashboard/StatusTable";
-import StatusVisualization from "../components/dashboard/StatusVisualization";
-import AddWarden from './pages/AddWardenModal'
 // Import styles
 import "./ManagementDashboard.css";
 
@@ -129,8 +127,6 @@ const ManagementDashboard = () => {
 
   // keep full list for RecentActivity so it can paginate internally
   const recentUsers = allPendingUsers;
-  const firstPendingUser = allPendingUsers[0] || null;
-
   // Get users for table
   const allUsers = [...wardens, ...students].sort((a, b) => {
     const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt ? new Date(a.createdAt) : new Date(0));
@@ -186,23 +182,6 @@ const ManagementDashboard = () => {
     }
   };
 
-  const handleViewDetails = () => {
-    toast.info("View details clicked");
-  };
-
-  // Visualization data
-  const wardensViz = {
-    total: wardens.length,
-    active: wardens.filter(w => w.status === 'approved').length,
-    pending: wardens.filter(w => w.status === 'pending').length
-  };
-
-  const studentsViz = {
-    total: students.length,
-    active: students.filter(s => s.status === 'approved').length,
-    pending: students.filter(s => s.status === 'pending').length
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -224,22 +203,9 @@ const ManagementDashboard = () => {
 
       {/* Main Content */}
       <div className="pt-20 sm:pt-24 px-3 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-x-hidden">
-        {/* Top Row: KPI Cards + Quick Approval */}
-        <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 mb-8">
-          <div className="flex-1 w-full min-w-0">
-            <KPICards stats={stats} />
-          </div>
-          <div className="w-full xl:w-[400px] flex-shrink-0 flex flex-col gap-4">
-            <QuickApproval
-              pendingUser={firstPendingUser}
-              onApprove={() => handleApprove(firstPendingUser?.id)}
-              onViewDetails={handleViewDetails}
-              isApproving={approvingUserId === firstPendingUser?.id}
-            />
-            <div>
-              <AddWarden />
-            </div>
-          </div>
+        {/* Top Row: KPI Cards */}
+        <div className="mb-8">
+          <KPICards stats={stats} />
         </div>
 
         {/* Recent Activity */}
@@ -261,12 +227,12 @@ const ManagementDashboard = () => {
               onSearchChange={setStatusSearch}
             />
           </div>
-          <div className="w-full xl:w-[400px] 2xl:w-[500px] flex-shrink-0">
+          {/* <div className="w-full xl:w-[400px] 2xl:w-[500px] flex-shrink-0">
             <StatusVisualization
               wardens={wardensViz}
               students={studentsViz}
             />
-          </div>
+          </div> */}
         </div>
       </div>
     </>

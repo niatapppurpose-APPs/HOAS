@@ -1,18 +1,28 @@
 import { useState, useEffect } from "react";
-import { X, MapPin, Building, Info, UserPlus } from "lucide-react";
+import { X, MapPin, Building, Info, UserPlus, Save } from "lucide-react";
 import { db } from "../../../../firebase/firebaseConfig";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, serverTimestamp, getDocs, query, where } from "firebase/firestore";
 import { useToast } from "../../../../components/Toast";
 
-const AddHostelModal = ({ isOpen, onClose, collegeName }) => {
+const getInitialFormState = (hostel) => ({
+    name: hostel?.name || "",
+    block: hostel?.block || "",
+    address: hostel?.location?.address || hostel?.address || "",
+    capacity: hostel?.capacity || "",
+});
+
+const AddHostelModal = ({ isOpen, onClose, collegeName, managementId, initialHostel = null }) => {
     const toast = useToast();
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({
-        name: "",
-        block: "",
-        address: "",
-        capacity: "",
-    });
+    const [formData, setFormData] = useState(getInitialFormState(initialHostel));
+
+    const isEditMode = Boolean(initialHostel?.id);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        setFormData(getInitialFormState(initialHostel));
+        setLoading(false);
+    }, [isOpen, initialHostel]);
 
     if (!isOpen) return null;
 
@@ -30,21 +40,67 @@ const AddHostelModal = ({ isOpen, onClose, collegeName }) => {
 
         setLoading(true);
         try {
-            await addDoc(collection(db, "hostels"), {
-                ...formData,
+            const payload = {
+                name: formData.name.trim(),
+                block: formData.block.trim(),
+                capacity: formData.capacity,
                 location: {
-                    address: formData.address,
+                    address: formData.address.trim(),
                 },
                 collegeName,
-                wardens: [],
-                students: [],
-                createdAt: serverTimestamp(),
-            });
-            toast.success("Hostel added successfully!");
+                managementId: managementId || null,
+            };
+
+            if (isEditMode) {
+                const previousBlock = initialHostel?.block || "";
+
+                await updateDoc(doc(db, "hostels", initialHostel.id), {
+                    ...payload,
+                    updatedAt: serverTimestamp(),
+                });
+
+                const linkedUsersSnap = await getDocs(
+                    query(collection(db, "users"), where("collegeName", "==", collegeName))
+                );
+
+                const linkedUsers = linkedUsersSnap.docs.filter((userDoc) => {
+                    const userData = userDoc.data() || {};
+                    return userData.hostelId === initialHostel.id || userData.hostelBlock === previousBlock;
+                });
+
+                const userUpdatePromises = linkedUsers.map((userDoc) => {
+                    const userData = userDoc.data() || {};
+                    const nextUserData = {
+                        hostelId: initialHostel.id,
+                        hostelBlock: payload.block,
+                        updatedAt: serverTimestamp(),
+                    };
+
+                    if (userData.role === "warden") {
+                        nextUserData.hostelName = payload.name;
+                    }
+
+                    return updateDoc(doc(db, "users", userDoc.id), nextUserData);
+                });
+
+                if (userUpdatePromises.length > 0) {
+                    await Promise.all(userUpdatePromises);
+                }
+
+                toast.success("Hostel updated successfully!");
+            } else {
+                await addDoc(collection(db, "hostels"), {
+                    ...payload,
+                    wardens: [],
+                    students: [],
+                    createdAt: serverTimestamp(),
+                });
+                toast.success("Hostel added successfully!");
+            }
             onClose();
         } catch (error) {
-            console.error("Error adding hostel:", error);
-            toast.error("Failed to add hostel");
+            console.error(`Error ${isEditMode ? "updating" : "adding"} hostel:`, error);
+            toast.error(isEditMode ? "Failed to update hostel" : "Failed to add hostel");
         } finally {
             setLoading(false);
         }
@@ -57,7 +113,9 @@ const AddHostelModal = ({ isOpen, onClose, collegeName }) => {
                 style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
             >
                 <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-primary)' }}>
-                    <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Add New Hostel</h2>
+                    <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        {isEditMode ? "Edit Hostel" : "Add New Hostel"}
+                    </h2>
                     <button
                         onClick={onClose}
                         className="p-2 rounded-lg hover:bg-black/5 transition-colors"
@@ -162,9 +220,9 @@ const AddHostelModal = ({ isOpen, onClose, collegeName }) => {
                             {loading ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                             ) : (
-                                <UserPlus size={18} />
+                                isEditMode ? <Save size={18} /> : <UserPlus size={18} />
                             )}
-                            {loading ? 'Adding...' : 'Add Hostel'}
+                            {loading ? (isEditMode ? 'Saving...' : 'Adding...') : (isEditMode ? 'Save Changes' : 'Add Hostel')}
                         </button>
                     </div>
                 </form>

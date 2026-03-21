@@ -132,6 +132,7 @@ export const bulkCreateStudents = onCall({ ...corsOptions, timeoutSeconds: 300 }
                 name: hostelBlock,
                 block: hostelBlock,
                 collegeName,
+                managementId: managementId || request.auth.uid,
                 createdAt: new Date().toISOString(),
               });
             }

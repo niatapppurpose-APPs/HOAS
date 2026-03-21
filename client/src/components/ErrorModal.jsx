@@ -16,7 +16,7 @@ const ErrorModal = () => {
 
   // Extract file name and line number from stack trace
   const extractFileInfo = (stack) => {
-    if (!stack) return { fileName: null, lineNumber: null };
+    if (!stack || typeof stack !== 'string') return { fileName: null, lineNumber: null };
 
     // Match patterns like "at Component (file.jsx:123:45)" or "file.jsx?t=123:45:67"
     const match = stack.match(/([^/\\]+\.(jsx|js|tsx|ts))[\?:].*?:(\d+)/);

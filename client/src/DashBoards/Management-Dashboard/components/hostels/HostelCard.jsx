@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Building2, MapPin, Users, Settings, UserCircle, Trash2 } from "lucide-react";
+import { Building2, MapPin, Users, UserCircle, Trash2, Pencil } from "lucide-react";
 
-const HostelCard = ({ hostel, onClick, onDelete }) => {
+const HostelCard = ({ hostel, onClick, onDelete, onEdit }) => {
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = (e) => {
@@ -14,6 +14,11 @@ const HostelCard = ({ hostel, onClick, onDelete }) => {
         setIsDeleting(false);
     };
 
+    const handleEdit = (e) => {
+        e.stopPropagation();
+        onEdit?.(hostel);
+    };
+
     return (
         <div
             onClick={onClick}
@@ -24,15 +29,24 @@ const HostelCard = ({ hostel, onClick, onDelete }) => {
                 boxShadow: 'var(--shadow-md)'
             }}
         >
-            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                    title="Delete Hostel"
-                >
-                    <Trash2 size={16} />
-                </button>
+            <div className="absolute top-0 right-0 p-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleEdit}
+                        className="p-2 rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-100 transition-colors"
+                        title="Edit Hostel"
+                    >
+                        <Pencil size={16} />
+                    </button>
+                    <button
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                        title="Delete Hostel"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
             </div>
 
             <div className="flex items-start gap-4 mb-4">

@@ -9,12 +9,15 @@ import { useToast } from '../../components/Toast';
  * @param {string} props.userName - User's name to display in greeting
  * @param {string} props.message - Custom message (optional)
  */
-const RedirectingPage = ({ userName = 'User', message }) => {
+const RedirectingPage = ({ userName = 'User', message, showToast = true }) => {
   const toast = useToast();
+
   // show toast when page appears (backup in case LoginButton toast was missed)
   useEffect(() => {
-    toast.success(`Welcome back ${userName} 👋`, 3000);
-  }, [toast, userName]);
+    if (showToast) {
+      toast.success(`Welcome back ${userName} 👋`, 3000);
+    }
+  }, [toast, userName, showToast]);
 
   // Prevent back navigation and page reload
   useEffect(() => {

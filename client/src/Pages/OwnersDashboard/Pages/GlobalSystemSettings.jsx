@@ -5,8 +5,8 @@ import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../components/Toast';
 import Header from '../../../components/OwnerServices/header';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../../../firebase/firebaseConfig';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { StatusBadge, ToggleSwitch, SectionCard, SettingRow } from './components/SettingsComponents';
 import AccessLogsModal from './components/AccessLogsModal';
@@ -301,6 +301,7 @@ const GlobalSystemSettings = () => {
                 )}
               </div>
             </SectionCard>
+
 
             {/* ── 2. Complaint & Escalation ── */}
             <SectionCard title="Complaint & Escalation" icon={Siren} accent="#ef4444" status={settings.autoEscalation ? 'enabled' : 'disabled'}>
