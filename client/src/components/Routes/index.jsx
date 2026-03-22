@@ -61,16 +61,16 @@ const WardenHelpSupport = lazy(() => import("../../DashBoards/Warden-Dashboard/c
 const WardenProfile = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenProfile"));
 
 // Management Dashboard - lazy loaded
-const ManagementDashboard = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/ManagementDashboard"));
-const ManagementLayout = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/ManagementLayout"));
-const ManagementWardens = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Wardens"));
-const ManagementStudents = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Students"));
-const ManagementHostels = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Hostels"));
-const ManagementReports = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/Reports"));
-const ManagementComplaints = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/ManagementComplaints"));
-const ManagementHelp = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/HelpSupport"));
-const ManagementSettings_Page = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/ManagementSettings"));
-const ManagementProfile = lazy(() => import("../../DashBoards/Management-Dashboard/maincomponent/pages/ManagementProfile"));
+const ManagementDashboard = lazy(() => import("../../DashBoards/Management-Dashboard/ManagementDashboard"));
+const ManagementLayout = lazy(() => import("../../DashBoards/Management-Dashboard/ManagementLayout"));
+const ManagementWardens = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Wardens"));
+const ManagementStudents = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Students"));
+const ManagementHostels = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Hostels"));
+const ManagementReports = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Reports"));
+const ManagementComplaints = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementComplaints"));
+const ManagementHelp = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/HelpSupport"));
+const ManagementSettings_Page = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementSettings"));
+const ManagementProfile = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementProfile"));
 
 // Firebase Mode Page - public, lazy loaded
 const FirebaseModePage = lazy(() => import("../../Pages/FirebaseModePage/FirebaseModePage"));
@@ -180,8 +180,8 @@ const Routes_path = () => {
                     } />
                     <Route path="settings" element={<Settings />} />
                     <Route path="support-tickets" element={<SupportTickets />} />
+                    <Route path="profile" element={<OwnerProfile />} />
                 </Route>
-                <Route path="/owner-profile" element={<OwnerProfile />} />
 
                 {/* 404 Not Found - Catch all unmatched routes */}
                 <Route path="*" element={<NotFound />} />

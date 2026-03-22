@@ -37,10 +37,11 @@ const UserCard = ({
   return (
     <div
       id={isFirst ? 'tour-user-card' : undefined}
-      className={`rounded-xl p-4 transition-all ${isSelected ? 'border-indigo-500/50' : ''} `}
+      className={`rounded-2xl p-5 sm:p-6 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl will-change-transform ${isSelected ? 'border-indigo-500 shadow-md ring-2 ring-indigo-500/20' : 'shadow-md'} `}
       style={{
-        backgroundColor: isSelected ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-card)',
-        border: `1px solid ${isSelected ? 'rgba(99, 102, 241, 0.5)' : 'var(--border-primary)'}`
+        backgroundColor: isSelected ? 'rgba(99, 102, 241, 0.04)' : 'var(--bg-card)',
+        border: `1px solid ${isSelected ? 'var(--accent-primary)' : 'var(--border-primary)'}`,
+        backdropFilter: 'blur(20px)'
       }}
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

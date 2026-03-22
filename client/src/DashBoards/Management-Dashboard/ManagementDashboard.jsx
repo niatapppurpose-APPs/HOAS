@@ -3,17 +3,17 @@ import { useNavigate, useOutletContext } from "react-router-dom";
 
 import { collection, query, where, onSnapshot, doc } from "firebase/firestore";
 
-import { db } from "../../../firebase/firebaseConfig";
-import { useAuth } from "../../../context/AuthContext";
-import * as cloudFunctions from "../../../firebase/cloudFunctions";
-import { useToast } from "../../../components/Toast";
+import { db } from "../../firebase/firebaseConfig";
+import { useAuth } from "../../context/AuthContext";
+import * as cloudFunctions from "../../firebase/cloudFunctions";
+import { useToast } from "../../components/Toast";
 
 // Import components
-import ManagementHeader from "../components/layout/ManagementHeader";
-import KPICards from "../components/dashboard/KPICards";
-// import QuickApproval from "../components/dashboard/QuickApproval";
-import RecentActivity from "../components/dashboard/RecentActivity";
-import StatusTable from "../components/dashboard/StatusTable";
+import ManagementHeader from "./components/layout/ManagementHeader";
+import KPICards from "./components/dashboard/KPICards";
+// import QuickApproval from "./components/dashboard/QuickApproval";
+import RecentActivity from "./components/dashboard/RecentActivity";
+import StatusTable from "./components/dashboard/StatusTable";
 // Import styles
 import "./ManagementDashboard.css";
 

@@ -416,22 +416,22 @@ const OwnersDashboard = () => {
 
         {/* User Management */}
         <section id="tour-approval-board">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pt-4">
             <div>
-              <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Approval Board</h2>
-              <p className="mt-1" style={{ color: 'var(--text-muted)' }}>Approve or deny 'CO-ADMIN' registrations</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>Approval Board</h2>
+              <p className="mt-1.5 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Approve or manage 'CO-ADMIN' registrations securely</p>
             </div>
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
-              className="border border-1 p-2 px-4 rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity"
+              className="px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/25 group"
               style={{
-                backgroundColor: isDark ? '#fff' : '#000',
-                color: isDark ? '#000' : '#fff',
-                borderColor: isDark ? '#374151' : '#9ca3af'
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                color: '#ffffff',
+                border: 'none',
               }}
             >
-              <Plus size={18} />
+              <Plus size={18} className="transition-transform group-hover:rotate-90" />
               Add Management
             </button>
           </div>

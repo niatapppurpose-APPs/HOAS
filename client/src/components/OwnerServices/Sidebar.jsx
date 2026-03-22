@@ -389,7 +389,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               }
 
               // Navigate to profile with state
-              navigate("/owner-profile", { state });
+              navigate("/OwnersDashboard/profile", { state });
 
               // Close sidebar on mobile
               if (window.innerWidth < 1024) setIsCollapsed(true);

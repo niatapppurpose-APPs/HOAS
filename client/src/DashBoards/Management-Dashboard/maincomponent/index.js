@@ -1,9 +1,0 @@
-export { default as ManagementDashboard } from './ManagementDashboard';
-export { default as ManagementLayout } from './ManagementLayout';
-export { default as ManagementSidebar } from '../components/layout/ManagementSidebar';
-export { default as ManagementHeader } from '../components/layout/ManagementHeader';
-export { default as KPICards } from '../components/dashboard/KPICards';
-export { default as QuickApproval } from '../components/dashboard/QuickApproval';
-export { default as RecentActivity } from '../components/dashboard/RecentActivity';
-export { default as StatusTable } from '../components/dashboard/StatusTable';
-export { default as StatusVisualization } from '../components/dashboard/StatusVisualization';

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import ManagementSidebar from '../components/layout/ManagementSidebar';
-import { useAuth } from '../../../context/AuthContext';
-import { useTheme } from '../../../context/ThemeContext';
+import ManagementSidebar from './components/layout/ManagementSidebar';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const ManagementLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
