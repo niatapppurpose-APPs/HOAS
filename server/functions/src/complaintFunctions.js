@@ -1,4 +1,4 @@
-/**
+  /**
  * Complaint System Cloud Functions
  * Handles:
  * - Notifications when warden resolves a complaint (student review)
