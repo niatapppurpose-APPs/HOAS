@@ -1,12 +1,24 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronRight, Eye, Info } from 'lucide-react';
-import OwnerImg from '../../../assets/owner_preview.png';
-import ManagementImg from '../../../assets/management_preview.png';
-import WardenImg from '../../../assets/warden_preview.png';
-import StudentImg from '../../../assets/student_preview.png';
+import { X, ChevronRight, Eye, Info, Maximize2 } from 'lucide-react';
 
+import WardenImg from '../../../assets/Warden-Dashbord.png';
+import StudentImg from '../../../assets/Student-Dashbord.png';
+import OwnerImg from '../../../assets/Owner-dashbord.png';
+import ManagementImg from '../../../assets/Management-Dashbord.png'
 const PreviewModal = ({ isOpen, onClose, role, isDark }) => {
+    const [isZoomed, setIsZoomed] = useState(false);
+
+    // Close on Escape key
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') setIsZoomed(false);
+        };
+        if (isZoomed) {
+            window.addEventListener('keydown', handleKeyDown);
+        }
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isZoomed]);
     // Utility for dynamic colors since Tailwind JIT can't predict them
     const colorMap = {
         'blue': '#7c3aed',
@@ -185,7 +197,7 @@ const PreviewModal = ({ isOpen, onClose, role, isDark }) => {
                         <button
                             onClick={onClose}
                             className="w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 text-white"
-                            style={{ 
+                            style={{
                                 backgroundColor: colorMap[current.color] || '#7c3aed',
                                 boxShadow: `0 10px 15px -3px ${colorMap[current.color]}40`
                             }}
@@ -195,21 +207,27 @@ const PreviewModal = ({ isOpen, onClose, role, isDark }) => {
                     </div>
 
                     {/* Right: Image Preview */}
-                    <div className="md:w-3/5 flex items-center justify-center p-4 relative overflow-hidden" 
+                    <div className="md:w-3/5 flex items-center justify-center p-2 relative overflow-hidden"
                         style={{ backgroundColor: isDark ? 'rgba(15, 23, 42, 0.5)' : 'rgba(248, 250, 252, 0.8)' }}>
                         {current.img ? (
                             <motion.div
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.2 }}
-                                className="relative z-10 w-full"
+                                className="relative z-10 w-full group cursor-zoom-in"
+                                onClick={() => setIsZoomed(true)}
                             >
                                 <img
                                     src={current.img}
                                     alt={current.title}
-                                    className="w-full h-auto rounded-xl shadow-2xl border"
+                                    className="w-full h-full rounded-xl shadow-2xl border-2 transition-transform duration-500 group-hover:scale-[1.02]"
                                     style={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20 rounded-xl cursor-zoom-in">
+                                    <div className="bg-white/20 backdrop-blur-md p-4 rounded-full border border-white/30 shadow-xl">
+                                        <Maximize2 className="w-8 h-8 text-white" />
+                                    </div>
+                                </div>
                             </motion.div>
                         ) : (
                             <div className="relative z-10 text-center p-10">
@@ -219,7 +237,7 @@ const PreviewModal = ({ isOpen, onClose, role, isDark }) => {
                         )}
 
                         {/* Background glow using inline styles for dynamic colors */}
-                        <div className="absolute inset-0 blur-[100px] opacity-15 rounded-full" 
+                        <div className="absolute inset-0 blur-[100px] opacity-15 rounded-full"
                             style={{ backgroundColor: colorMap[current.color] || '#7c3aed' }} />
                     </div>
 
@@ -231,6 +249,49 @@ const PreviewModal = ({ isOpen, onClose, role, isDark }) => {
                     </button>
                 </motion.div>
             </div>
+
+            {/* Lightbox Overlay */}
+            <AnimatePresence>
+                {isZoomed && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsZoomed(false)}
+                        className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-2xl bg-black/90 cursor-zoom-out"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className="relative max-w-7xl w-full flex items-center justify-center"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <img
+                                src={current.img}
+                                alt={current.title}
+                                className="max-w-[85vw] max-h-[80vh] object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10"
+                                onClick={() => setIsZoomed(false)}
+
+                            />
+
+                            {/* ESC Hint */}
+                            <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/20 text-white/80 text-sm flex items-center gap-3 shadow-2xl z-[210]">
+                                <kbd className="bg-white/20 px-2 py-1 rounded text-xs font-bold font-sans border border-white/30">ESC</kbd>
+                                <span className="font-medium tracking-wide">Press ESC or click anywhere to exit</span>
+                            </div>
+
+                            {/* Title overlay in light box */}
+                            <div className="absolute -bottom-16 left-0 right-0 text-center">
+                                <h4 className="text-white text-2xl font-semibold tracking-wide drop-shadow-2xl">
+                                    {current.title}
+                                </h4>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </AnimatePresence>
     );
 };
