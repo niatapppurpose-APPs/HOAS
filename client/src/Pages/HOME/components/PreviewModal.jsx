@@ -24,7 +24,7 @@ const PreviewModal = ({ isOpen, onClose, role, isDark }) => {
         'blue': '#7c3aed',
         'teal': '#14b8a6',
         'amber': '#f59e0b',
-        'sky': '#8b5cf6'
+        'sky': '#8b5cf6' 
     };
 
     useEffect(() => {
