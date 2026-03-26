@@ -10,6 +10,8 @@ import NotFound from "./Pages/NotFound"; // 404 page
 import ForcePasswordReset from "./Pages/ForcePasswordReset/ForcePasswordReset";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useTheme } from "./context/ThemeContext";
+import CookieConsent from "./Pages/HOME/components/CookieConsent";
 
 // Public routes that should never be blocked by maintenance mode
 const PUBLIC_ROUTES = ['/', '/login', '/admin-login', '/firebase-mode'];
@@ -18,6 +20,7 @@ const App = () => {
   const { isServerOnline, lastChecked } = useServerStatus();
   const { isAdmin, adminChecked, user, userData } = useAuth();
   const { settings } = useSystemSettings();
+  const { isDark } = useTheme();
   const location = useLocation();
 
 
@@ -64,6 +67,7 @@ const App = () => {
     <>
       <Routes_path />
       <GlobalDeleteModal />
+      <CookieConsent isDark={isDark} />
     </>
   );
 

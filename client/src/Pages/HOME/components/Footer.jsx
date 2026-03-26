@@ -63,7 +63,6 @@ const Footer = React.memo(({ isDark }) => {
                             <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Resources</h4>
                             <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
                                 <li onClick={() => handleLinkClick('https://github.com/niatapppurpose-APPs/HOAS#readme')} className="hover:text-violet-500 cursor-pointer transition-colors">Documentation</li>
-                                <li onClick={() => handleLinkClick(null, 'API Reference')} className="hover:text-violet-500 cursor-pointer transition-colors">API Reference</li>
                                 <li onClick={() => handleLinkClick(null, 'Support')} className="hover:text-violet-500 cursor-pointer transition-colors">Support</li>
                             </ul>
                         </motion.div>
