@@ -1,4 +1,6 @@
 import { memo, useState } from 'react';
+import { db } from '../../../firebase/firebaseConfig';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import {
   Bug,
   X,
@@ -13,14 +15,31 @@ const BugReportModal = memo(({ userData, onClose }) => {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!description.trim()) return;
     setSubmitting(true);
-    setTimeout(() => {
+    try {
+      await addDoc(collection(db, 'supportTickets'), {
+        userId: userData?._id || userData?.uid || 'management',
+        userName: userData?.fullName || userData?.displayName || 'Management',
+        userEmail: userData?.email || 'Unknown',
+        userRole: 'management',
+        college: userData?.collegeName || '',
+        managementId: userData?.managementId || '',
+        subject: 'Bug Report',
+        description: description.trim(),
+        category: 'technical',
+        status: 'open',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
       setSubmitting(false);
       setSubmitted(true);
       setTimeout(() => onClose(), 2000);
-    }, 1200);
+    } catch (err) {
+      console.error('Bug report error:', err);
+      setSubmitting(false);
+    }
   };
 
   return (

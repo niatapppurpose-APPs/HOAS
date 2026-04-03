@@ -416,6 +416,20 @@ const GlobalSystemSettings = () => {
                   {isDark ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
                   <span>Using <strong style={{ color: 'var(--text-primary)' }}>{theme}</strong>{isSystemMode && ' (System)'}</span>
                 </div>
+
+                <div className="pt-4 border-t" style={{ borderColor: 'var(--border-secondary)' }}>
+                  <button
+                    onClick={() => navigate('/OwnersDashboard', { state: { startTour: true } })}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] cursor-pointer"
+                    style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-primary)' }}
+                  >
+                    <Layers className="w-4 h-4 text-indigo-500" />
+                    Restart Dashboard Tour
+                  </button>
+                  <p className="text-[10px] mt-2 opacity-60" style={{ color: 'var(--text-muted)' }}>
+                    Re-run the interactive onboarding tour to explore dashboard features.
+                  </p>
+                </div>
               </div>
             </SectionCard>
 

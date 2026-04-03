@@ -87,7 +87,11 @@ export const onForegroundMessage = (callback) => {
         data: payload.data,
       };
 
-      new Notification(notificationTitle, notificationOptions);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(reg => reg.showNotification(notificationTitle, notificationOptions));
+      } else {
+        new Notification(notificationTitle, notificationOptions);
+      }
     }
 
     // Call the callback with the payload
@@ -109,18 +113,20 @@ export const showNotification = (title, options = {}) => {
   }
 
   if (Notification.permission === 'granted') {
-    const notification = new Notification(title, {
+    const optionsWithIcon = {
       icon: '/Applogo.png',
       badge: '/Applogo.png',
       ...options
-    });
+    };
 
-    // Auto-close after 10 seconds
-    setTimeout(() => {
-      notification.close();
-    }, 10000);
-
-    return notification;
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(reg => reg.showNotification(title, optionsWithIcon));
+      return { close: () => {} }; // Mock object since we don't have direct access to close it this way easily
+    } else {
+      const notification = new Notification(title, optionsWithIcon);
+      setTimeout(() => notification.close(), 10000);
+      return notification;
+    }
   }
 };
 

@@ -7,6 +7,7 @@ import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 import * as cloudFunctions from "../../firebase/cloudFunctions";
 import { useToast } from "../../components/Toast";
+import { useDashboardTour, managementTourSteps } from "../../tours";
 
 // Import components
 import ManagementHeader from "./components/layout/ManagementHeader";
@@ -27,6 +28,9 @@ const ManagementDashboard = () => {
   const [wardens, setWardens] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Auto-start tour on first visit (waits for data to load)
+  useDashboardTour('management', managementTourSteps, { ready: !loading });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; // show 10 users per page in status table
 
@@ -203,21 +207,26 @@ const ManagementDashboard = () => {
 
       {/* Main Content */}
       <div className="pt-20 sm:pt-24 px-3 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-x-hidden">
+        {/* Welcome section for tour targeting */}
+        <div id="mgmt-tour-welcome" />
+
         {/* Top Row: KPI Cards */}
-        <div className="mb-8">
+        <div id="mgmt-tour-kpi" className="mb-8">
           <KPICards stats={stats} />
         </div>
 
         {/* Recent Activity */}
+        <div id="mgmt-tour-activity">
         <RecentActivity
           recentUsers={recentUsers}
           onApprove={handleApprove}
           approvingUserId={approvingUserId}
         />
+        </div>
 
         {/* Bottom Row: Status Table + Visualization */}
         <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 mt-4 sm:mt-8">
-          <div className="flex-1 w-full min-w-0 overflow-x-auto">
+          <div id="mgmt-tour-status-table" className="flex-1 w-full min-w-0 overflow-x-auto">
             <StatusTable
               users={paginatedUsers}
               currentPage={currentPage}

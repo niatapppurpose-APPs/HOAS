@@ -5,6 +5,7 @@ import { db } from '../../firebase/firebaseConfig';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useToast } from '../../components/Toast';
 import WardenHeader from './components/layout/WardenHeader';
+import { useDashboardTour, wardenTourSteps } from '../../tours';
 import './WardenDashboard.css';
 import {
     Shield,
@@ -32,6 +33,9 @@ const WardenDashboard = () => {
     const navigate = useNavigate();
     const toast = useToast();
     const { isCollapsed, setIsCollapsed } = useOutletContext();
+
+    // Auto-start tour on first visit (waits for data to load)
+    useDashboardTour('warden', wardenTourSteps, { ready: !loading && !userDataLoading });
 
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -177,7 +181,7 @@ const WardenDashboard = () => {
             {/* Main Content */}
             <div className="pt-20 md:pt-24 px-4 sm:px-6 lg:px-8 pb-6 md:pb-0">
                 {/* Welcome Banner */}
-                <div className="relative mb-6 md:mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-10 border shadow-2xl transition-all hover:shadow-orange-500/10"
+                <div id="warden-tour-welcome" className="relative mb-6 md:mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-10 border shadow-2xl transition-all hover:shadow-orange-500/10"
                     style={{
                         backgroundColor: 'var(--bg-card)',
                         borderColor: 'var(--border-primary)',
@@ -232,7 +236,7 @@ const WardenDashboard = () => {
                     {/* Left Column: Action Hub and Activity */}
                     <div className="lg:col-span-8 space-y-6 md:y-8">
                         {/* Action Center Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div id="warden-tour-actions" className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {quickActions.map((action, idx) => (
                                 <Link
                                     key={idx}
@@ -257,7 +261,7 @@ const WardenDashboard = () => {
                         </div>
 
                         {/* Recent Activity: Complaints Feed */}
-                        <div className="rounded-[1.25rem] md:rounded-[1.5rem] border overflow-hidden shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                        <div id="warden-tour-activity" className="rounded-[1.25rem] md:rounded-[1.5rem] border overflow-hidden shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
                             <div className="p-5 md:p-8 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-tertiary)' }}>
                                 <div>
                                     <h3 className="text-lg md:text-xl font-black" style={{ color: 'var(--text-primary)' }}>Recent Activity</h3>
@@ -317,7 +321,7 @@ const WardenDashboard = () => {
                     {/* Right Column: Mini Profile & System Status */}
                     <div className="lg:col-span-4 space-y-6 md:y-8">
                         {/* Warden Info Card */}
-                        <div className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 md:p-8 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                        <div id="warden-tour-info" className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 md:p-8 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
                             <div className="flex flex-col items-center text-center">
                                 <div className="w-20 h-20 rounded-lg md:w-24 md:h-24 p-1 mb-4 md:mb-6 shadow-xl hover:rotate-0 ">
                                     <div className="w-full h-full flex items-center justify-center">

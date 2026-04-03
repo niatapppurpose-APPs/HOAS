@@ -7,6 +7,7 @@ import StudentHeader from './components/layout/StudentHeader';
 import StatsCard from '../../components/OwnerServices/StatsCard';
 import { useToast } from '../../components/Toast';
 import Avatar from '../../components/OwnerServices/Avatar';
+import { useDashboardTour, studentTourSteps } from '../../tours';
 import './StudentDashboard.css';
 import {
     GraduationCap,
@@ -35,6 +36,10 @@ const StudentDashboard = () => {
     const { isCollapsed, setIsCollapsed } = useOutletContext();
     const toast = useToast();
     const [isEditing, setIsEditing] = useState(false);
+
+    // Auto-start tour on first visit (waits for data to load)
+    useDashboardTour('student', studentTourSteps, { ready: !userDataLoading });
+
     const [isSaving, setIsSaving] = useState(false);
     const [complaints, setComplaints] = useState([]);
     const [complaintsLoading, setComplaintsLoading] = useState(true);
@@ -202,7 +207,7 @@ const StudentDashboard = () => {
             {/* Main Content */}
             <div className="pt-20 md:pt-24 px-4 sm:px-6 lg:px-8 pb-8">
                 {/* Welcome Banner */}
-                <div className="relative mb-6 md:mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-10 border shadow-2xl transition-all hover:shadow-blue-500/10"
+                <div id="student-tour-welcome" className="relative mb-6 md:mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-10 border shadow-2xl transition-all hover:shadow-blue-500/10"
                     style={{
                         backgroundColor: 'var(--bg-card)',
                         borderColor: 'var(--border-primary)',
@@ -258,7 +263,7 @@ const StudentDashboard = () => {
                     {/* Left Column: Action Grid and Recent Activity */}
                     <div className="lg:col-span-8 space-y-6 md:space-y-8">
                         {/* Quick Actions Grid */}
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div id="student-tour-actions" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             {quickActions.map((action, idx) => (
                                 <button
                                     key={idx}
@@ -278,7 +283,7 @@ const StudentDashboard = () => {
                         </div>
 
                         {/* Recent Complaints Activity */}
-                        <div className="rounded-[1.25rem] md:rounded-[1.5rem] border overflow-hidden shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                        <div id="student-tour-activity" className="rounded-[1.25rem] md:rounded-[1.5rem] border overflow-hidden shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
                             <div className="p-5 md:p-8 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-tertiary)' }}>
                                 <div>
                                     <h3 className="text-lg md:text-xl font-black uppercase tracking-tighter" style={{ color: 'var(--text-primary)' }}>My Recent Activity</h3>
@@ -338,7 +343,7 @@ const StudentDashboard = () => {
                     {/* Right Column: Profile Summary */}
                     <div className="lg:col-span-4 space-y-6 md:space-y-8">
                         {/* Profile Info Card */}
-                        <div className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 md:p-8 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                        <div id="student-tour-info" className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 md:p-8 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
                             <div className="flex flex-col items-center text-center mb-6">
                                 <div className="w-20 h-20 rounded-xl overflow-hidden mb-4 shadow-xl border-2 border-blue-500/20">
                                     <Avatar name={userData?.fullName} image={userData?.photoURL || user?.photoURL} email={userData?.email || user?.email} className="w-full h-full object-cover" />
@@ -469,7 +474,7 @@ const StudentDashboard = () => {
                         </div>
 
                         {/* Leave/Notice Box */}
-                        <div className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 flex items-center gap-4 transition-all hover:shadow-lg"
+                        <div id="student-tour-gatepass" className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 flex items-center gap-4 transition-all hover:shadow-lg"
                             style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
                             <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-600">
                                 <ClipboardCheck className="w-6 h-6" />

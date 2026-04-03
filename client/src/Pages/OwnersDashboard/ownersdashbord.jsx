@@ -8,9 +8,7 @@ import { useModal } from "../../context/ModalContext";
 import { useSystemSettings } from "../../hooks/useSystemSettings";
 import * as cloudFunctions from "../../firebase/cloudFunctions";
 import { useToast } from "../../components/Toast";
-import { driver } from "driver.js";
-import "driver.js/dist/driver.css";
-import { dashboardTourSteps } from "./tourConfig";
+import { useDashboardTour, ownerTourSteps } from "../../tours";
 
 // Import components
 import Header from '../../components/OwnerServices/header';
@@ -66,28 +64,10 @@ const OwnersDashboard = () => {
 
 
 
-  // Tour Driver Effect
-  useEffect(() => {
-    if (location.state?.startTour) {
-      // Clear state
-      window.history.replaceState({}, document.title);
-
-      const driverObj = driver({
-        showProgress: true,
-        animate: true,
-        steps: dashboardTourSteps(isDark),
-        popoverClass: isDark ? 'driverjs-theme-dark' : 'driverjs-theme-light',
-        onDestroy: () => {
-          // Optional: Navigate back or show completion toast
-        }
-      });
-
-      // Delay to ensure rendering
-      setTimeout(() => {
-        driverObj.drive();
-      }, 1000);
-    }
-  }, [location.state, isDark]);
+  // Auto-start tour on first visit (waits for both auth and dashboard data to load)
+  useDashboardTour('owner', ownerTourSteps, { 
+    ready: !loading && adminChecked && !dataLoading && !!user && isAdmin
+  });
 
   // Reset to page 1 when changing tabs
   useEffect(() => {
@@ -419,7 +399,7 @@ const OwnersDashboard = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pt-4">
             <div>
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>Approval Board</h2>
-              <p className="mt-1.5 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Approve or manage 'CO-ADMIN' registrations securely</p>
+              <p className="mt-1.5 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>List of Collages manage By 'ADMIN' registrations securely</p>
             </div>
             <button
               type="button"

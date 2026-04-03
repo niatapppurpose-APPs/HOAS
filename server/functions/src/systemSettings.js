@@ -111,6 +111,7 @@ export const updateSystemSettings = onCall(corsOptions, async (request) => {
       'activityNotifications',
       'twoFactorEnabled',
       'forcePasswordReset',
+      'forcePasswordResetEnabledAt',
     ];
 
     const updateData = {};

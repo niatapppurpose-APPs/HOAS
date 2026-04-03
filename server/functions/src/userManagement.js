@@ -354,6 +354,7 @@ export const createWarden = onCall(corsOptions, async (request) => {
       isOnline: false,
       createdBy: request.auth.uid,
       createdAt: new Date().toISOString(),
+      
       updatedAt: new Date().toISOString(),
     });
 

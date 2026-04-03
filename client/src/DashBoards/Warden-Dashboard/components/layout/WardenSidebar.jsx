@@ -73,16 +73,16 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
   const showContent = isMobile ? !isCollapsed : (!isCollapsed || isPinned);
 
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/warden" },
-    { id: "students", label: "Students", icon: Users, path: "/dashboard/warden/students" },
-    { id: "complaints", label: "Complaints", icon: FileText, path: "/dashboard/warden/complaints" },
-    { id: "leave-requests", label: "Leave Requests", icon: CalendarDays, path: "/dashboard/warden/leave-requests" },
-    { id: "announcements", label: "Announcements", icon: Bell, path: "/dashboard/warden/announcements" },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/warden", tourId: "warden-tour-nav-dashboard" },
+    { id: "students", label: "Students", icon: Users, path: "/dashboard/warden/students", tourId: "warden-tour-nav-students" },
+    { id: "complaints", label: "Complaints", icon: FileText, path: "/dashboard/warden/complaints", tourId: "warden-tour-nav-complaints" },
+    { id: "leave-requests", label: "Leave Requests", icon: CalendarDays, path: "/dashboard/warden/leave-requests", tourId: "warden-tour-nav-leave-requests" },
+    { id: "announcements", label: "Announcements", icon: Bell, path: "/dashboard/warden/announcements", tourId: "warden-tour-nav-announcements" },
   ];
 
   const bottomMenuItems = [
-    { id: "settings", label: "Settings", icon: Settings, path: "/dashboard/warden/settings" },
-    { id: "help", label: "Help & Support", icon: HelpCircle, path: "/dashboard/warden/help" },
+    { id: "settings", label: "Settings", icon: Settings, path: "/dashboard/warden/settings", tourId: "warden-tour-nav-settings" },
+    { id: "help", label: "Help & Support", icon: HelpCircle, path: "/dashboard/warden/help", tourId: "warden-tour-nav-help" },
   ];
 
   const handleMouseEnter = () => {
@@ -120,6 +120,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
 
       {/* Sidebar */}
       <aside
+        id="warden-tour-sidebar"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{
@@ -207,6 +208,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
               return (
                 <button
                   key={item.id}
+                  id={item.tourId}
                   onClick={() => {
                     navigate(item.path);
                     if (window.innerWidth < 1024) setIsCollapsed(true);
@@ -263,6 +265,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
               return (
                 <button
                   key={item.id}
+                  id={item.tourId}
                   onClick={() => {
                     navigate(item.path);
                     if (window.innerWidth < 1024) setIsCollapsed(true);
@@ -301,6 +304,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
 
           {/* User Profile Section */}
           <button
+            id="warden-tour-profile"
             onClick={() => {
               navigate("/dashboard/warden/profile");
               if (window.innerWidth < 1024) setIsCollapsed(true);

@@ -67,15 +67,15 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
   const showContent = isMobile ? !isCollapsed : (!isCollapsed || isPinned);
 
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/student" },
-    { id: "complaints", label: "Complaints", icon: FileText, path: "/dashboard/student/complaints" },
-    { id: "leave", label: "Leave Requests", icon: Calendar, path: "/dashboard/student/leave" },
-    { id: "announcements", label: "Announcements", icon: Bell, path: "/dashboard/student/announcements" },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/student", tourId: "student-tour-nav-dashboard" },
+    { id: "complaints", label: "Complaints", icon: FileText, path: "/dashboard/student/complaints", tourId: "student-tour-nav-complaints" },
+    { id: "leave", label: "Leave Requests", icon: Calendar, path: "/dashboard/student/leave", tourId: "student-tour-nav-leave" },
+    { id: "announcements", label: "Announcements", icon: Bell, path: "/dashboard/student/announcements", tourId: "student-tour-nav-announcements" },
   ];
 
   const bottomMenuItems = [
-    { id: "settings", label: "Settings", icon: Settings, path: "/dashboard/student/settings" },
-    { id: "help", label: "Help & Support", icon: HelpCircle, path: "/dashboard/student/help" },
+    { id: "settings", label: "Settings", icon: Settings, path: "/dashboard/student/settings", tourId: "student-tour-nav-settings" },
+    { id: "help", label: "Help & Support", icon: HelpCircle, path: "/dashboard/student/help", tourId: "student-tour-nav-help" },
   ];
 
   const handleMouseEnter = () => {
@@ -113,6 +113,7 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
 
       {/* Sidebar */}
       <aside
+        id="student-tour-sidebar"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{
@@ -200,6 +201,7 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
               return (
                 <button
                   key={item.id}
+                  id={item.tourId}
                   onClick={() => {
                     navigate(item.path);
                     if (window.innerWidth < 1024) setIsCollapsed(true);
@@ -256,6 +258,7 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
               return (
                 <button
                   key={item.id}
+                  id={item.tourId}
                   onClick={() => {
                     navigate(item.path);
                     if (window.innerWidth < 1024) setIsCollapsed(true);
@@ -294,6 +297,7 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
 
           {/* User Profile Section */}
           <button
+            id="student-tour-profile"
             onClick={() => {
               navigate("/dashboard/student/profile");
               if (window.innerWidth < 1024) setIsCollapsed(true);

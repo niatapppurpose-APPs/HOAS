@@ -77,7 +77,7 @@ async function isNotificationTypeEnabled(type) {
 async function getOwnerTokens() {
   try {
     const usersSnapshot = await db.collection('users')
-      .where('role', '==', 'owner')
+      .where('role', 'in', ['owner', 'admin'])
       .get();
     
     const tokens = [];
@@ -104,9 +104,8 @@ async function sendNotificationToOwners(title, body, data = {}) {
     const tokens = await getOwnerTokens();
     
     if (tokens.length === 0) {
-      logger.warn('No owner tokens found. Notification not sent.');
-      return;
-    }
+        logger.warn('No owner FCM tokens found. Sending only in-app notification.');
+      }
 
     // Create notification document in Firestore for in-app notifications
     const notificationData = {
@@ -117,9 +116,9 @@ async function sendNotificationToOwners(title, body, data = {}) {
       read: false
     };
 
-    // Store notification for each owner
+    // Store notification for each owner/admin
     const usersSnapshot = await db.collection('users')
-      .where('role', '==', 'owner')
+      .where('role', 'in', ['owner', 'admin'])
       .get();
     
     const batch = db.batch();
@@ -133,31 +132,34 @@ async function sendNotificationToOwners(title, body, data = {}) {
     await batch.commit();
 
     // Send push notifications
-    const message = {
-      notification: {
-        title,
-        body
-      },
-      data: {
-        ...data,
-        click_action: 'FLUTTER_NOTIFICATION_CLICK'
-      },
-      tokens
-    };
-
-    const response = await getMessaging().sendEachForMulticast(message);
-    
-    logger.info(`Successfully sent ${response.successCount} notifications`);
-    if (response.failureCount > 0) {
-      logger.warn(`Failed to send ${response.failureCount} notifications`);
-      response.responses.forEach((resp, idx) => {
-        if (!resp.success) {
-          logger.error(`Error sending to token ${tokens[idx]}: ${resp.error}`);
-        }
-      });
+    if (tokens.length > 0) {
+      const message = {
+        notification: {
+          title,
+          body
+        },
+        data: {
+          ...data,
+          click_action: 'FLUTTER_NOTIFICATION_CLICK'
+        },
+        tokens
+      };
+  
+      const response = await getMessaging().sendEachForMulticast(message);
+      
+      logger.info(`Successfully sent ${response.successCount} notifications`);
+      if (response.failureCount > 0) {
+        logger.warn(`Failed to send ${response.failureCount} notifications`);
+        response.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            logger.error(`Error sending to token ${tokens[idx]}: ${resp.error}`);
+          }
+        });
+      }
+      
+      return response;
     }
-    
-    return response;
+    return { successCount: 0, failureCount: 0 };
   } catch (error) {
     logger.error('Error sending notification:', error);
     throw error;

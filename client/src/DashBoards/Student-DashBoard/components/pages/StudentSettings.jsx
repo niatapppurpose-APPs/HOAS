@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import { useTheme } from '../../../../context/ThemeContext';
 import StudentHeader from '../layout/StudentHeader';
@@ -12,13 +12,14 @@ import {
     Settings, Moon, Sun, Bell, Shield, Lock,
     Eye, EyeOff, Loader2, Check, User,
     Globe, Palette, BellRing, KeyRound,
-    Monitor, ChevronRight
+    Monitor, ChevronRight, Layout
 } from 'lucide-react';
 
 const StudentSettings = () => {
     const { userData } = useAuth();
     const { isCollapsed, setIsCollapsed } = useOutletContext();
     const { isDark, toggleTheme } = useTheme();
+    const navigate = useNavigate();
     const toast = useToast();
 
     // Password change state
@@ -191,6 +192,23 @@ const StudentSettings = () => {
                                     <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 flex items-center justify-center ${isDark ? 'left-[calc(100%-1.625rem)]' : 'left-0.5'}`}>
                                         {isDark ? <Moon className="w-3.5 h-3.5 text-indigo-600" /> : <Sun className="w-3.5 h-3.5 text-amber-500" />}
                                     </div>
+                                </button>
+                            </div>
+
+                            <div className="pt-4 border-t" style={{ borderColor: 'var(--border-primary)' }}>
+                                <button
+                                    onClick={() => navigate('/dashboard/student', { state: { startTour: true } })}
+                                    className="w-full flex items-center justify-between p-3 rounded-xl transition-all hover:scale-[1.01]"
+                                    style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Layout className="w-4 h-4 text-purple-500" />
+                                        <div className="text-left">
+                                            <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Restart Dashboard Tour</p>
+                                            <p className="text-[10px] opacity-60" style={{ color: 'var(--text-muted)' }}>Learn how to use your portal</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
                                 </button>
                             </div>
                         </div>

@@ -1,0 +1,97 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   HOAS – Shared Tour Styling (driver.js)
+   Applied globally by the useDashboardTour hook via import.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Light theme popover ─────────────────────────────────────────────── */
+.driverjs-theme-light .driver-popover {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 1.25rem 1.5rem;
+}
+.driverjs-theme-light .driver-popover .driver-popover-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.driverjs-theme-light .driver-popover .driver-popover-description {
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.6;
+}
+.driverjs-theme-light .driver-popover .driver-popover-progress-text {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+.driverjs-theme-light .driver-popover button {
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 0.4rem 0.9rem;
+  transition: all 0.2s;
+}
+.driverjs-theme-light .driver-popover .driver-popover-navigation-btns .driver-popover-next-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border: none;
+}
+.driverjs-theme-light .driver-popover .driver-popover-navigation-btns .driver-popover-prev-btn {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+.driverjs-theme-light .driver-popover .driver-popover-close-btn {
+  color: #94a3b8;
+}
+
+/* ── Dark theme popover ──────────────────────────────────────────────── */
+.driverjs-theme-dark .driver-popover {
+  background: #1e293b;
+  color: #f8fafc;
+  border: 1px solid #334155;
+  border-radius: 1rem;
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.6);
+  padding: 1.25rem 1.5rem;
+}
+.driverjs-theme-dark .driver-popover .driver-popover-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+.driverjs-theme-dark .driver-popover .driver-popover-description {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+.driverjs-theme-dark .driver-popover .driver-popover-progress-text {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+.driverjs-theme-dark .driver-popover button {
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 0.4rem 0.9rem;
+  transition: all 0.2s;
+}
+.driverjs-theme-dark .driver-popover .driver-popover-navigation-btns .driver-popover-next-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border: none;
+}
+.driverjs-theme-dark .driver-popover .driver-popover-navigation-btns .driver-popover-prev-btn {
+  background: #334155;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+}
+.driverjs-theme-dark .driver-popover .driver-popover-close-btn {
+  color: #64748b;
+}
+
+/* ── Overlay ─────────────────────────────────────────────────────────── */
+.driver-overlay {
+  transition: opacity 0.3s ease;
+}

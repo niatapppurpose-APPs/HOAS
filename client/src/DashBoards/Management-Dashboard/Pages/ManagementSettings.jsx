@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/firebaseConfig';
 import { useAuth } from '../../../context/AuthContext';
@@ -7,7 +7,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../components/Toast';
 import LocationAutocomplete from '../../../components/LocationAutocomplete';
 import ManagementHeader from '../components/layout/ManagementHeader';
-import { MapPin, Save, Building2, Loader2, CheckCircle, ImagePlus, Upload, X, Camera } from 'lucide-react';
+import { MapPin, Save, Building2, Loader2, CheckCircle, ImagePlus, Upload, X, Camera, Layout } from 'lucide-react';
 import AppLogo4k from '../../../assets/AppLogo4k.png';
 
 /** Compress an image File to a base64 string ≤ maxKB. */
@@ -48,6 +48,7 @@ const ManagementSettings = () => {
     const { user, userData } = useAuth();
     const { isDark } = useTheme();
     const { isCollapsed, setIsCollapsed } = useOutletContext();
+    const navigate = useNavigate();
     const toast = useToast();
 
     // ── Location state ──
@@ -406,6 +407,33 @@ const ManagementSettings = () => {
                                 </button>
                             </div>
                         </div>
+                    </div>
+
+                    {/* ── Dashboard Tour Section ── */}
+                    <div
+                        className="max-w-2xl rounded-2xl p-6 sm:p-8 border mt-6"
+                        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
+                    >
+                        <div className="flex items-center gap-3 mb-6 pb-6 border-b" style={{ borderColor: 'var(--border-primary)' }}>
+                            <div className="p-2.5 rounded-xl" style={{ background: 'linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))' }}>
+                                <Layout className="w-5 h-5" style={{ color: 'var(--accent-primary,#6366f1)' }} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Interactive Tour</h3>
+                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Re-run the dashboard onboarding tour to see all available management features.</p>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => navigate('/dashboard/management', { state: { startTour: true } })}
+                            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-white transition-all duration-300 hover:scale-[1.02]"
+                            style={{
+                                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.35)',
+                            }}
+                        >
+                            Restart Dashboard Tour
+                        </button>
                     </div>
                 </div>
             </div>

@@ -28,7 +28,6 @@ messaging.onBackgroundMessage((payload) => {
     badge: '/Applogo.png',
     tag: payload.data?.type || 'default',
     data: payload.data,
-    requireInteraction: true,
     actions: [
       {
         action: 'open',
