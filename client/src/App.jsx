@@ -12,6 +12,7 @@ import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useTheme } from "./context/ThemeContext";
 import CookieConsent from "./Pages/HOME/components/CookieConsent";
+import InstallPrompt from "./components/InstallPrompt";
 
 // Public routes that should never be blocked by maintenance mode
 const PUBLIC_ROUTES = ['/', '/login', '/admin-login', '/firebase-mode'];
@@ -68,6 +69,7 @@ const App = () => {
       <Routes_path />
       <GlobalDeleteModal />
       <CookieConsent isDark={isDark} />
+      <InstallPrompt />
     </>
   );
 

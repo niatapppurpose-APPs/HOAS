@@ -12,7 +12,11 @@ import { SystemSettingsProvider } from "./hooks/useSystemSettings.jsx";
 import ErrorModal from "./components/ErrorModal";
 import ErrorBoundary from "./components/ErrorBoundary";
 import * as Tooltip from '@radix-ui/react-tooltip';
+import { registerServiceWorker } from "./registerSW";
 import "./index.css";
+
+// Register PWA service worker
+registerServiceWorker();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>

@@ -1,0 +1,35 @@
+{
+  "name": "HOAS - Hostel Accommodation System",
+  "short_name": "HOAS",
+  "description": "Comprehensive hostel management system for colleges",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e293b",
+  "theme_color": "#6366F1",
+  "orientation": "portrait-primary",
+  "id": "/",
+  "icons": [
+    {
+      "src": "/Applogo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Applogo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Open Dashboard",
+      "url": "/",
+      "icons": [{ "src": "/Applogo.png", "sizes": "any" }]
+    }
+  ]
+}
