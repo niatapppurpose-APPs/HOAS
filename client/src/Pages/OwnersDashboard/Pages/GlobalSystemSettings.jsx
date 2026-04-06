@@ -4,6 +4,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../components/Toast';
 import Header from '../../../components/OwnerServices/header';
+import PWAUpdateSettings from '../../../components/PWAUpdateSettings';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
 import { db, auth } from '../../../firebase/firebaseConfig';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
@@ -249,7 +250,7 @@ const GlobalSystemSettings = () => {
           {/* ══════════════════════════════════════════════════════════════════
            GRID LAYOUT — 2-column on desktop, 1-column on mobile
            ══════════════════════════════════════════════════════════════════ */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-6xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5 w-full max-w-6xl">
 
             {/* ── 1. Role & Access Management ── */}
             <SectionCard title="Role & Access" icon={Shield} accent="#f59e0b" status="active" headerExtra={<RefreshButton onRefresh={loadUsers} loading={mgmtLoading} />}>
@@ -278,10 +279,10 @@ const GlobalSystemSettings = () => {
                                 : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}><User className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} /></div>}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{u.displayName || u.email || 'Unknown'}</p>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{u.email}</span>
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" style={{ backgroundColor: roleColor(u.role) + '20', color: roleColor(u.role) }}>{u.role || 'N/A'}</span>
+                              <p className="text-[13px] sm:text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{u.displayName || u.email || 'Unknown'}</p>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-wrap">
+                                <span className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{u.email}</span>
+                                <span className="w-fit px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" style={{ backgroundColor: roleColor(u.role) + '20', color: roleColor(u.role) }}>{u.role || 'N/A'}</span>
                               </div>
                             </div>
                           </div>
@@ -309,7 +310,7 @@ const GlobalSystemSettings = () => {
                 <SettingRow icon={Timer} title="Complaint SLA" description="Default resolution time">
                   <div className="flex items-center gap-2">
                     <input type="number" value={settings.complaintSlaHours || 48} onChange={e => update({ complaintSlaHours: parseInt(e.target.value) || 48 })} min={1} max={720} disabled={saving}
-                      className="w-20 py-1.5 px-2 rounded-lg border text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
+                      className="w-16 sm:w-20 py-1.5 px-2 rounded-lg border text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                       style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }} />
                     <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>hrs</span>
                   </div>
@@ -323,7 +324,7 @@ const GlobalSystemSettings = () => {
                 <SettingRow icon={Clock} title="Overdue Threshold" description="Mark overdue after this time">
                   <div className="flex items-center gap-2">
                     <input type="number" value={settings.overdueThresholdHours || 72} onChange={e => update({ overdueThresholdHours: parseInt(e.target.value) || 72 })} min={1} max={720} disabled={saving}
-                      className="w-20 py-1.5 px-2 rounded-lg border text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
+                      className="w-16 sm:w-20 py-1.5 px-2 rounded-lg border text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                       style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }} />
                     <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>hrs</span>
                   </div>
@@ -401,10 +402,10 @@ const GlobalSystemSettings = () => {
             {/* ── 5. Appearance (full width) ── */}
             <SectionCard title="Appearance" icon={Palette} accent="#ec4899">
               <div className="space-y-3">
-                <div className="flex flex-wrap gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {THEME_MODES.map(({ id, label, sub, icon: Icon }) => (
                     <button key={id} onClick={() => themeSetters[id]?.()}
-                      className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-300 flex-1 min-w-[100px] cursor-pointer ${mode === id ? 'shadow-lg shadow-indigo-500/20' : 'hover:border-slate-500'}`}
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-300 w-full cursor-pointer ${mode === id ? 'shadow-lg shadow-indigo-500/20' : 'hover:border-slate-500'}`}
                       style={{ backgroundColor: mode === id ? '#6366f1' : 'var(--bg-tertiary)', borderColor: mode === id ? '#6366f1' : 'var(--border-secondary)' }}>
                       <Icon className="w-6 h-6 mb-1.5" style={{ color: mode === id ? '#fff' : 'var(--text-secondary)' }} />
                       <span className="font-semibold text-sm" style={{ color: mode === id ? '#fff' : 'var(--text-primary)' }}>{label}</span>
@@ -466,7 +467,7 @@ const GlobalSystemSettings = () => {
                 {/* Feature Flags */}
                 <div>
                   <h4 className="text-[10px] font-bold mb-2 uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Feature Flags</h4>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {[
                       { key: 'notifications', t: 'Notifications', icon: Bell },
                       { key: 'reports', t: 'Reports', icon: FileText },
@@ -496,13 +497,18 @@ const GlobalSystemSettings = () => {
                     ].map(l => (
                       <SettingRow key={l.key} icon={l.icon} title={l.t} description={l.d}>
                         <input type="number" value={settings[l.key] || 0} onChange={e => update({ [l.key]: parseInt(e.target.value) || 0 })} min={0} max={l.max} disabled={saving}
-                          className="w-20 py-1.5 px-2 rounded-lg border text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
+                          className="w-16 sm:w-20 py-1.5 px-2 rounded-lg border text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                           style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }} />
                       </SettingRow>
                     ))}
                   </div>
                 </div>
               </div>
+            </SectionCard>
+
+            {/* ── 6.5. PWA Update Settings ── */}
+            <SectionCard title="App Updates" icon={RefreshCw} accent="#8b5cf6" status="active">
+              <PWAUpdateSettings />
             </SectionCard>
 
             {/* ── 7. Danger Zone (Inline) ── */}

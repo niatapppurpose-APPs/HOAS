@@ -53,39 +53,39 @@ ToggleSwitch.displayName = 'ToggleSwitch';
 
 /* ── Section Card (static – no dropdown) ── */
 export const SectionCard = React.memo(({ title, icon: Icon, accent = '#6366f1', status, headerExtra, children }) => (
-  <div className="rounded-2xl border overflow-hidden transition-shadow duration-300 hover:shadow-lg"
+  <div className="rounded-2xl border overflow-hidden transition-shadow duration-300 hover:shadow-lg w-full"
     style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
     {/* Header bar */}
-    <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--border-primary)', background: `${accent}06` }}>
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${accent}15` }}>
-          <Icon className="w-[18px] h-[18px]" style={{ color: accent }} />
+    <div className="flex flex-row items-center justify-between px-3 sm:px-5 py-3 sm:py-4 border-b gap-2 sm:gap-0" style={{ borderColor: 'var(--border-primary)', background: `${accent}06` }}>
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${accent}15` }}>
+          <Icon className="w-4 h-4 sm:w-[18px] sm:h-[18px]" style={{ color: accent }} />
         </div>
-        <h3 className="font-semibold text-[15px] tracking-tight" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+        <h3 className="font-semibold text-[13px] sm:text-[15px] tracking-tight truncate" style={{ color: 'var(--text-primary)' }}>{title}</h3>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         {status && <StatusBadge status={status} />}
         {headerExtra}
       </div>
     </div>
     {/* Body */}
-    <div className="p-5">{children}</div>
+    <div className="p-3 sm:p-5">{children}</div>
   </div>
 ));
 SectionCard.displayName = 'SectionCard';
 
 /* ── Setting Row ── */
 export const SettingRow = React.memo(({ icon: Icon, title, description, children, warning = false }) => (
-  <div className="flex items-center justify-between py-3 px-4 rounded-xl gap-4"
+  <div className="flex flex-row items-center justify-between py-3 px-3 sm:px-4 rounded-xl gap-3 sm:gap-4"
     style={{
       backgroundColor: warning ? 'rgba(245,158,11,0.05)' : 'var(--bg-tertiary)',
       border: warning ? '1px solid rgba(245,158,11,0.18)' : '1px solid transparent',
     }}>
-    <div className="flex items-center gap-3 min-w-0">
-      {Icon && <Icon className="w-[18px] h-[18px] flex-shrink-0" style={{ color: warning ? '#f59e0b' : 'var(--text-muted)' }} />}
+    <div className="flex items-center gap-3 min-w-0 flex-1">
+      {Icon && <Icon className="w-4 h-4 sm:w-[18px] sm:h-[18px] flex-shrink-0" style={{ color: warning ? '#f59e0b' : 'var(--text-muted)' }} />}
       <div className="min-w-0">
-        <p className="font-medium text-sm leading-snug" style={{ color: 'var(--text-primary)' }}>{title}</p>
-        {description && <p className="text-[11px] mt-0.5 leading-snug" style={{ color: 'var(--text-muted)' }}>{description}</p>}
+        <p className="font-medium text-[13px] sm:text-sm leading-snug truncate" style={{ color: 'var(--text-primary)' }}>{title}</p>
+        {description && <p className="text-[11px] mt-0.5 leading-snug line-clamp-1 sm:line-clamp-2" style={{ color: 'var(--text-muted)' }}>{description}</p>}
       </div>
     </div>
     <div className="flex-shrink-0">{children}</div>

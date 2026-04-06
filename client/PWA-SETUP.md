@@ -4,23 +4,16 @@
 
 Your HOAS app now supports Progressive Web App (PWA) features! Users can install it to their devices directly from Chrome.
 
-## 📋 Installation Steps
+## 🎨 Features Added 
 
-### Step 1: Install Dependencies
-Run this command in your terminal from the `client` folder:
-```bash
-npm install --save-dev vite-plugin-pwa workbox-window
-```
+✅ **App-like Experience** - Opens in standalone window  
+✅ **Home Screen Icon** - Installs to device  
+✅ **Faster Loading** - Caches static assets  
+✅ **Auto Updates** - Prompts when new version available  
+✅ **Install Prompt** - Custom install banner  
+✅ **Offline 404 Page** - Shows Yeti animation when offline  
 
-### Step 2: Build the App
-```bash
-npm run build
-```
-
-### Step 3: Test Locally
-```bash
-npm run preview
-```
+> ⚠️ **Note**: This app requires an internet connection to function because it depends on Firebase for authentication and data. The "offline" capability only shows a friendly 404 page when disconnected.
 
 ## 🎯 How Users Install the App
 
@@ -36,48 +29,21 @@ npm run preview
 3. Tap "Add to Home Screen" or "Install App"
 4. The app icon will appear on the home screen
 
-## 🎨 Features Added
-
-✅ **Offline Support** - Works without internet  
-✅ **App-like Experience** - Opens in standalone window  
-✅ **Home Screen Icon** - Installs to device  
-✅ **Fast Loading** - Caches resources  
-✅ **Auto Updates** - Prompts when new version available  
-✅ **Install Prompt** - Optional custom install banner  
-
 ## 🔧 Files Created/Modified
 
 - ✅ `public/manifest.json` - App metadata
+- ✅ `public/sw.js` - Service worker for caching
 - ✅ `src/registerSW.js` - Service worker registration
 - ✅ `src/components/InstallPrompt.jsx` - Custom install prompt
-- ✅ `vite.config.js` - PWA plugin configuration
 - ✅ `src/main.jsx` - Service worker registration
+- ✅ `src/App.jsx` - InstallPrompt component added
 - ✅ `index.html` - Manifest link
-
-## 🎨 Optional: Add Install Prompt to Your App
-
-To show a custom install prompt, add this to your main App component:
-
-```jsx
-import InstallPrompt from './components/InstallPrompt';
-
-function App() {
-  return (
-    <>
-      <InstallPrompt />
-      {/* Your other components */}
-    </>
-  );
-}
-```
 
 ## 🖼️ Icons
 
-The app currently uses `/Applogo.png` for all icon sizes. For better quality:
-
-1. Create icon sizes: 192x192, 512x512
-2. Place them in `client/public/`
-3. Update `vite.config.js` to reference the new icons
+The app uses `/Applogo.png` for the install icon. For best results:
+- Use a **512x512 px** PNG image
+- Keep it square with transparent or solid background
 
 ## 🧪 Testing PWA
 

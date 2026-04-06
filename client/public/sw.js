@@ -86,3 +86,56 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// Show notification when service worker is waiting to activate
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    self.skipWaiting().then(() => {
+      // Notify all clients that a new version is available
+      return self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({
+            type: 'UPDATE_AVAILABLE',
+            version: CACHE_NAME
+          });
+        });
+      });
+    })
+  );
+});
+
+// Push notification support for updates
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  
+  if (event.action === 'update') {
+    // Activate the new service worker immediately
+    self.skipWaiting();
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window' }).then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({ type: 'RELOAD_PAGE' });
+        });
+      })
+    );
+  } else if (event.action === 'dismiss') {
+    // Just close the notification
+    return;
+  } else {
+    // Click on notification body - open/focus the app
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        // Check if app is already open
+        for (const client of clients) {
+          if (client.url === self.registration.scope && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // If not, open the app
+        if (self.clients.openWindow) {
+          return self.clients.openWindow('/');
+        }
+      })
+    );
+  }
+});

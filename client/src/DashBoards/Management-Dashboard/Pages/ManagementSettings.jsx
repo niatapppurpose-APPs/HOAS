@@ -7,7 +7,8 @@ import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../components/Toast';
 import LocationAutocomplete from '../../../components/LocationAutocomplete';
 import ManagementHeader from '../components/layout/ManagementHeader';
-import { MapPin, Save, Building2, Loader2, CheckCircle, ImagePlus, Upload, X, Camera, Layout } from 'lucide-react';
+import PWAUpdateSettings from '../../../components/PWAUpdateSettings';
+import { MapPin, Save, Building2, Loader2, CheckCircle, ImagePlus, Upload, X, Camera, Layout, RefreshCw } from 'lucide-react';
 import AppLogo4k from '../../../assets/AppLogo4k.png';
 
 /** Compress an image File to a base64 string ≤ maxKB. */
@@ -434,6 +435,24 @@ const ManagementSettings = () => {
                         >
                             Restart Dashboard Tour
                         </button>
+                    </div>
+
+                    {/* ── App Updates Section ── */}
+                    <div
+                        className="max-w-2xl rounded-2xl p-6 sm:p-8 border mt-6"
+                        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
+                    >
+                        <div className="flex items-center gap-3 mb-6 pb-6 border-b" style={{ borderColor: 'var(--border-primary)' }}>
+                            <div className="p-2.5 rounded-xl" style={{ background: 'linear-gradient(135deg,rgba(139,92,246,0.2),rgba(168,85,247,0.2))' }}>
+                                <RefreshCw className="w-5 h-5" style={{ color: '#8b5cf6' }} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>App Updates</h3>
+                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Control how the app updates</p>
+                            </div>
+                        </div>
+
+                        <PWAUpdateSettings />
                     </div>
                 </div>
             </div>

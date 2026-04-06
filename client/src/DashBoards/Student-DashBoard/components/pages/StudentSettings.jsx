@@ -7,12 +7,13 @@ import StudentHeader from '../layout/StudentHeader';
 import { auth, db } from '../../../../firebase/firebaseConfig';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import PWAUpdateSettings from '../../../../components/PWAUpdateSettings';
 // import { useNotifications } from '../../../../context/NotificationContext';
 import {
     Settings, Moon, Sun, Bell, Shield, Lock,
     Eye, EyeOff, Loader2, Check, User,
     Globe, Palette, BellRing, KeyRound,
-    Monitor, ChevronRight, Layout
+    Monitor, ChevronRight, Layout, RefreshCw
 } from 'lucide-react';
 
 const StudentSettings = () => {
@@ -291,6 +292,11 @@ const StudentSettings = () => {
                                 </div>
                             ))}
                         </div>
+                    </SettingsCard>
+
+                    {/* App Updates */}
+                    <SettingsCard icon={RefreshCw} title="App Updates" description="Control how the app updates" iconColor="text-violet-500">
+                        <PWAUpdateSettings />
                     </SettingsCard>
                 </div>
             </div>

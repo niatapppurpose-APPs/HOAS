@@ -34,12 +34,12 @@ const WardenDashboard = () => {
     const toast = useToast();
     const { isCollapsed, setIsCollapsed } = useOutletContext();
 
-    // Auto-start tour on first visit (waits for data to load)
-    useDashboardTour('warden', wardenTourSteps, { ready: !loading && !userDataLoading });
-
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
     const [pendingCount, setPendingCount] = useState(0);
+
+    // Auto-start tour on first visit (waits for data to load)
+    useDashboardTour('warden', wardenTourSteps, { ready: !loading && !userDataLoading });
 
     useEffect(() => {
         if (!userDataLoading) {
