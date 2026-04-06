@@ -10,16 +10,16 @@
   "id": "/",
   "icons": [
     {
-      "src": "/AppLogo4k.png",
-      "sizes": "any",
+      "src": "/Applogo.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/Applogo.png",
-      "sizes": "192x192 512x512",
+      "src": "/AppLogo4k.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ],
   "categories": ["education", "productivity"],
