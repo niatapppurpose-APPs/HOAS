@@ -32,23 +32,35 @@ const Footer = React.memo(({ isDark }) => {
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)',
             }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex flex-col lg:flex-row items-start gap-12 lg:gap-20 mb-12">
+                <div className="flex flex-col lg:flex-row justify-between items-start gap-12 lg:gap-20 mb-12">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.1 }}
-                        className="flex-shrink-0"
+                        className="flex-shrink-0 w-full lg:w-1/3"
                     >
-                        <div className="flex items-center gap-4 mb-4">
-                            <span className="text-[100px] leading-none font-bold tracking-tighter uppercase" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</span>
+                        <div className="flex items-center gap-4 mb-6">
+                            <span className="text-[80px] md:text-[100px] leading-none font-bold tracking-tighter uppercase" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</span>
                         </div>
-                        <p className="text-sm leading-relaxed max-w-xs" style={{ color: '#64748b' }}>
+                        <p className="text-sm leading-relaxed mb-6" style={{ color: '#64748b' }}>
                             The standard for modern hostel administration. Built for security, designed for usability.
                         </p>
+                        <div className="p-4 rounded-xl border text-xs leading-relaxed transition-colors duration-300"
+                            style={{
+                                backgroundColor: isDark ? 'rgba(245, 158, 11, 0.05)' : '#fffbeb',
+                                borderColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#fde68a',
+                                color: isDark ? '#fcd34d' : '#92400e'
+                            }}>
+                            <div className="font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: isDark ? '#fbbf24' : '#b45309' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                Access Notice
+                            </div>
+                            This platform is specifically developed for college hostel management. Only registered students, Wardens, and administrators can access the system.
+                        </div>
                     </motion.div>
 
-                    <div className='grid grid-cols-2 sm:grid-cols-3 gap-8 sm:gap-100 md:gap-16 pt-4'>
+                    <div className="w-full lg:w-3/5 grid grid-cols-2 sm:grid-cols-3 gap-8 md:gap-12 lg:gap-16 pt-4 lg:pt-8">
                         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
                             <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Platform</h4>
                             <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
