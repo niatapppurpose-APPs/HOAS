@@ -1,6 +1,18 @@
 // Service Worker Registration for PWA (Manual implementation for Vite 7+)
 
 export function registerServiceWorker() {
+  // Unregister Service Worker completely during development to prevent caching issues
+  if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (let registration of registrations) {
+        registration.unregister().then(unregistered => {
+          if (unregistered) console.log('SW unregistered in DEV mode to prevent caching.');
+        });
+      }
+    });
+    return;
+  }
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
       try {
