@@ -22,7 +22,7 @@ const Home = () => {
     const targetRef = useRef(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isAboutOpen, setIsAboutOpen] = useState(false);
-    const { user, isAdmin } = useAuth();
+    const { user, isAdmin, loading } = useAuth();
     const { isDark } = useTheme();
 
     // Lock body scroll when mobile menu is open
@@ -47,10 +47,11 @@ const Home = () => {
     const scale = useTransform(scrollYProgress, [0, 0.5], [0.8, 1]);
 
     const handleNavigate = useCallback(() => {
+        if (loading) return; // Prevent navigation while auth is initializing
         if (isAdmin) navigate('/OwnersDashboard');
         else if (user) navigate('/dashboard');
         else navigate('/login');
-    }, [isAdmin, user, navigate]);
+    }, [isAdmin, user, loading, navigate]);
 
     return (
         <div className="min-h-screen font-sans selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden transition-colors duration-300"
@@ -485,7 +486,7 @@ const Home = () => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.5, type: "spring" }}
-                        onClick={() => navigate('/login')}
+                        onClick={handleNavigate}
                         className="w-full sm:w-auto px-10 py-4 rounded-lg font-bold text-xl transition-all hover:scale-105 active:scale-95"
                         style={{
                             backgroundColor: isDark ? '#ffffff' : '#7c3aed',
@@ -495,7 +496,7 @@ const Home = () => {
                                 : '0 0 40px -10px rgba(124, 58, 237, 0.4)'
                         }}
                     >
-                        {!user ? 'Get Started Here 👋' : 'Go To Dashbaord 👉'}
+                        {!user ? 'Get Started Here 👋' : 'Go To Dashboard 👉'}
                     </motion.button>
                 </div>
             </section>

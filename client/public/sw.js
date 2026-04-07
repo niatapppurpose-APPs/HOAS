@@ -1,5 +1,5 @@
 // PWA Service Worker for HOAS
-const CACHE_NAME = 'hoas-cache-v2';
+const CACHE_NAME = 'hoas-cache-v3';
 const STATIC_ASSETS = [
   '/',
   '/Applogo.png',
@@ -8,6 +8,20 @@ const STATIC_ASSETS = [
   '/yeti-404/script.js',
   '/yeti-404/style.css'
 ];
+
+const NEVER_CACHE_PATHS = [
+  '/index.html',
+  '/sw.js',
+  '/firebase-messaging-sw.js'
+];
+
+const isNavigationRequest = (request) => request.mode === 'navigate';
+const isAssetRequest = (pathname) => pathname.startsWith('/assets/');
+const shouldSkipCache = (pathname) =>
+  NEVER_CACHE_PATHS.includes(pathname) ||
+  pathname.endsWith('.js') ||
+  pathname.endsWith('.css') ||
+  pathname.endsWith('.map');
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
@@ -45,6 +59,31 @@ self.addEventListener('fetch', (event) => {
   // Skip chrome-extension and other non-http requests
   if (!event.request.url.startsWith('http')) return;
 
+  const requestUrl = new URL(event.request.url);
+  const sameOrigin = requestUrl.origin === self.location.origin;
+
+  // Always prefer network for page navigations so new deploys are picked up quickly.
+  if (isNavigationRequest(event.request)) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200 && sameOrigin) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/yeti-404/index.html')))
+    );
+    return;
+  }
+
+  // Avoid caching mutable shell/chunk files that can cause version mismatch after deployment.
+  if (sameOrigin && (isAssetRequest(requestUrl.pathname) || shouldSkipCache(requestUrl.pathname))) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -71,8 +110,7 @@ self.addEventListener('fetch', (event) => {
           return caches.match('/yeti-404/index.html');
         }
         // Try to return cached yeti assets if they're requested offline
-        const url = new URL(event.request.url);
-        if (url.pathname.startsWith('/yeti-404/')) {
+        if (requestUrl.pathname.startsWith('/yeti-404/')) {
           return caches.match(event.request);
         }
       });

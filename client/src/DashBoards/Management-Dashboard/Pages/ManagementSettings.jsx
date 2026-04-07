@@ -181,10 +181,10 @@ const ManagementSettings = () => {
                         Update your college information and preferences
                     </p>
                 </div>
-                <div className='flex justify-around items-center'>
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 items-start'>
                     {/* Settings Card */}
                     <div
-                        className="max-w-2xl rounded-2xl p-6 sm:p-8 border"
+                        className="w-full rounded-2xl p-6 sm:p-8 border"
                         style={{
                             backgroundColor: 'var(--bg-card)',
                             borderColor: 'var(--border-primary)',
@@ -307,7 +307,7 @@ const ManagementSettings = () => {
 
                     {/* ── College Logo Section ── */}
                     <div
-                        className="max-w-2xl rounded-2xl p-6 sm:p-8 border mt-6"
+                        className="w-full rounded-2xl p-6 sm:p-8 border"
                         style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
                     >
                         {/* Header */}
@@ -317,11 +317,11 @@ const ManagementSettings = () => {
                             </div>
                             <div>
                                 <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>College Logo</h3>
-                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Upload your college branding — used across the dashboard &amp; profile banner</p>
+                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Upload your college branding — used across the dashboard & profile banner</p>
                             </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-6 items-start">
+                        <div className="flex flex-col xl:flex-row gap-6 items-start">
                             {/* Dropzone */}
                             <div
                                 onClick={() => fileInputRef.current?.click()}
@@ -412,7 +412,7 @@ const ManagementSettings = () => {
 
                     {/* ── Dashboard Tour Section ── */}
                     <div
-                        className="max-w-2xl rounded-2xl p-6 sm:p-8 border mt-6"
+                        className="w-full rounded-2xl p-6 sm:p-8 border"
                         style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
                     >
                         <div className="flex items-center gap-3 mb-6 pb-6 border-b" style={{ borderColor: 'var(--border-primary)' }}>
@@ -439,7 +439,7 @@ const ManagementSettings = () => {
 
                     {/* ── App Updates Section ── */}
                     <div
-                        className="max-w-2xl rounded-2xl p-6 sm:p-8 border mt-6"
+                        className="w-full rounded-2xl p-6 sm:p-8 border"
                         style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
                     >
                         <div className="flex items-center gap-3 mb-6 pb-6 border-b" style={{ borderColor: 'var(--border-primary)' }}>

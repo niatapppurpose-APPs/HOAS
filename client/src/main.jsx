@@ -15,11 +15,40 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { registerServiceWorker } from "./registerSW";
 import "./index.css";
 
+const CHUNK_RELOAD_FLAG = "hoas_chunk_reload_done";
+
+const recoverFromChunkLoadFailure = (reason) => {
+  const message = String(reason || "").toLowerCase();
+  const isChunkError =
+    message.includes("failed to fetch dynamically imported module") ||
+    message.includes("importing a module script failed") ||
+    message.includes("loading chunk");
+
+  if (!isChunkError) return;
+  if (sessionStorage.getItem(CHUNK_RELOAD_FLAG) === "1") return;
+
+  sessionStorage.setItem(CHUNK_RELOAD_FLAG, "1");
+  window.location.reload();
+};
+
 // Handle Vite dynamic import errors (e.g., when a new deployment invalidates old chunks)
 window.addEventListener('vite:preloadError', (event) => {
   console.log('Caught a Vite dynamic import error, reloading the page...');
   event.preventDefault();
-  window.location.reload();
+  recoverFromChunkLoadFailure(event?.payload || event?.error || "vite:preloadError");
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  recoverFromChunkLoadFailure(event?.reason);
+});
+
+window.addEventListener("error", (event) => {
+  const errorMessage = event?.error?.message || event?.message || "";
+  recoverFromChunkLoadFailure(errorMessage);
+});
+
+window.addEventListener("load", () => {
+  sessionStorage.removeItem(CHUNK_RELOAD_FLAG);
 });
 
 // Register PWA service worker
