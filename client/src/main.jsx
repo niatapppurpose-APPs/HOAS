@@ -15,6 +15,13 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import { registerServiceWorker } from "./registerSW";
 import "./index.css";
 
+// Handle Vite dynamic import errors (e.g., when a new deployment invalidates old chunks)
+window.addEventListener('vite:preloadError', (event) => {
+  console.log('Caught a Vite dynamic import error, reloading the page...');
+  event.preventDefault();
+  window.location.reload();
+});
+
 // Register PWA service worker
 registerServiceWorker();
 
