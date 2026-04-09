@@ -67,6 +67,7 @@ const ManagementWardens = lazy(() => import("../../DashBoards/Management-Dashboa
 const ManagementStudents = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Students"));
 const ManagementHostels = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Hostels"));
 const ManagementReports = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Reports"));
+const ManagementAnalytics = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Analytics/AnalyticsDashboard"));
 const ManagementComplaints = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementComplaints"));
 const ManagementHelp = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/HelpSupport"));
 const ManagementSettings_Page = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementSettings"));
@@ -139,8 +140,11 @@ const Routes_path = () => {
                     <Route path="wardens" element={<ManagementWardens />} />
                     <Route path="students" element={<ManagementStudents />} />
                     <Route path="hostels" element={<ManagementHostels />} />
-                    <Route path="complaints" element={<ManagementComplaints />} />
-                    <Route path="reports" element={
+                    <Route path="complaints" element={<ManagementComplaints />} />                    <Route path="analytics" element={
+                        <FeatureGate feature="analytics" fallback={<FeatureDisabled feature="analytics" />}>
+                            <ManagementAnalytics role="management" />
+                        </FeatureGate>
+                    } />                    <Route path="reports" element={
                         <FeatureGate feature="reports" fallback={<FeatureDisabled feature="reports" />}>
                             <ManagementReports />
                         </FeatureGate>
