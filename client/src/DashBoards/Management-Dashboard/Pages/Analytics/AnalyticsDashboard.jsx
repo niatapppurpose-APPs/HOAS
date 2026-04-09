@@ -15,7 +15,8 @@ const AnalyticsDashboard = ({ role, hostelId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [days, setDays] = useState(7);
-  const { user } = useAuth(); // Extracted from current context setup
+  const { user, userData } = useAuth(); // Extracted from current context setup
+  const activeHostelId = hostelId || (userData?.hostelId);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -31,8 +32,8 @@ const AnalyticsDashboard = ({ role, hostelId }) => {
           where("createdAt", ">=", startTimestamp)
         ];
         
-        if (role === 'warden' && hostelId) {
-          constraints.push(where("hostelId", "==", hostelId));
+        if (role === 'warden' && activeHostelId) {
+          constraints.push(where("hostelId", "==", activeHostelId));
         }
 
         const complaintsQuery = query(collection(db, "complaints"), ...constraints);
@@ -62,10 +63,10 @@ const AnalyticsDashboard = ({ role, hostelId }) => {
       }
     };
 
-    if (role && (role === 'management' || (role === 'warden' && hostelId))) {
+    if (role && (role === 'management' || (role === 'warden' && activeHostelId))) {
       fetchAnalytics();
     }
-  }, [role, hostelId, days]);
+  }, [role, activeHostelId, days]);
 
   if (loading) {
     return (
