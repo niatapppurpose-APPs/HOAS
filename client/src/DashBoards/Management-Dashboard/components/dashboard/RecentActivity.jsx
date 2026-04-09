@@ -1,4 +1,4 @@
-import { CheckCircle, ChevronDown } from "lucide-react";
+import { CheckCircle, ChevronDown, Inbox } from "lucide-react";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 
 
@@ -26,6 +26,8 @@ const RecentActivity = ({ recentUsers, onApprove, approvingUserId, perPage = 8 }
   useEffect(() => {
     setPage(0);
   }, [recentUsers.length, perPage]);
+
+  const isEmpty = recentUsers.length === 0;
 
   return (
     <div className="mb-6 sm:mb-8">
@@ -79,7 +81,7 @@ const RecentActivity = ({ recentUsers, onApprove, approvingUserId, perPage = 8 }
                   <button
                     onClick={handlePageToggle}
                     className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-xl text-[var(--text-muted)] cursor-pointer transition-all hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
-                    title="Next page"
+                    title="Next page" 
                   >
                     <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform ${page !== 0 ? 'rotate-180' : ''}`} />
                   </button>

@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, SearchX } from "lucide-react";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 import ThemeContext from "../../../../context/ThemeContext";
 import { useContext } from 'react';
@@ -14,6 +14,11 @@ const StatusTable = ({ users, currentPage, totalPages, onPageChange, searchTerm 
     }
     return 'from-gray-500/90 to-gray-600/90'; // Default
   };
+
+  const isEmpty = users.length === 0;
+  const emptyMessage = searchTerm.trim()
+    ? 'No matching wardens or students were found.'
+    : 'No wardens or students have been added yet.';
 
   return (
     <div className="mb-6 sm:mb-8 bg-[var(--bg-card)] backdrop-blur-xl border border-[var(--border-primary)] rounded-2xl p-4 sm:p-6 shadow-lg">
@@ -33,6 +38,19 @@ const StatusTable = ({ users, currentPage, totalPages, onPageChange, searchTerm 
 
       {/* table */}
       <div className="w-full overflow-x-auto rounded-xl border border-[var(--border-primary)]">
+        {isEmpty ? (
+          <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 bg-[var(--bg-tertiary)]/30 px-6 py-10 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+              <SearchX className="h-7 w-7" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-[var(--text-primary)] m-0">Nothing to show</h3>
+              <p className="mt-1 text-sm text-[var(--text-muted)] m-0 max-w-md">
+                {emptyMessage}
+              </p>
+            </div>
+          </div>
+        ) : (
         <table className="w-full min-w-[600px] border-collapse">
           <thead>
             <tr className="bg-[var(--bg-tertiary)]/50 border-b border-[var(--border-primary)]">
@@ -67,6 +85,7 @@ const StatusTable = ({ users, currentPage, totalPages, onPageChange, searchTerm 
             ))}
           </tbody>
         </table>
+        )}
       </div>
 
       {/* pagination footer */}

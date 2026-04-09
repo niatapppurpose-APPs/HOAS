@@ -108,6 +108,10 @@ const ManagementDashboard = () => {
   // search state for status table
   const [statusSearch, setStatusSearch] = useState('');
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusSearch]);
+
   // Calculate statistics
   const stats = {
     totalWardens: wardens.length,
