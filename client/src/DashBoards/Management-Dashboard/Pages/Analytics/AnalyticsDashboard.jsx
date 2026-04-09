@@ -49,12 +49,8 @@ const AnalyticsDashboard = ({ role }) => {
   const [data, setData] = useState({ totalComplaints: 0, resolved: 0, pending: 0, categoryBreakdown: [], trendData: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [days, setDays] = useState(30);
-  const { user, userData, logout } = useAuth();
-  
-  const outletContext = useOutletContext();
-  const isCollapsed = outletContext?.isCollapsed;
-  const setIsCollapsed = outletContext?.setIsCollapsed;
+  const [days, setDays] = useState(7);
+  const { user } = useAuth(); // Extracted from current context setup
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -70,9 +66,8 @@ const AnalyticsDashboard = ({ role }) => {
           where("createdAt", ">=", startTimestamp)
         ];
         
-        const mId = userData?.managementId || user?.uid;
-        if (mId) {
-          constraints.push(where("managementId", "==", mId));
+        if (role === 'warden' && hostelId) {
+          constraints.push(where("hostelId", "==", hostelId));
         }
 
         const complaintsQuery = query(collection(db, "complaints"), ...constraints);
@@ -135,10 +130,10 @@ const AnalyticsDashboard = ({ role }) => {
       }
     };
 
-    if (userData !== undefined) {
+    if (role && (role === 'management' || (role === 'warden' && hostelId))) {
       fetchAnalytics();
     }
-  }, [role, userData, user, days]);
+  }, [role, hostelId, days]);
 
   if (loading) {
     return (

@@ -127,6 +127,11 @@ const Routes_path = () => {
                     <Route path="students" element={<WardenStudents />} />
                     <Route path="complaints" element={<WardenComplaints />} />
                     <Route path="leave-requests" element={<WardenLeaveRequests />} />
+                    <Route path="analytics" element={
+                        <FeatureGate feature="analytics" fallback={<FeatureDisabled feature="analytics" />}>
+                            <ManagementAnalytics role="warden" />
+                        </FeatureGate>
+                    } />
                     <Route path="announcements" element={<WardenAnnouncements />} />
                     <Route path="settings" element={<WardenSettings />} />
                     <Route path="help" element={<WardenHelpSupport />} />
