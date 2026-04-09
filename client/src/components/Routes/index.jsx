@@ -59,6 +59,7 @@ const WardenAnnouncements = lazy(() => import("../../DashBoards/Warden-Dashboard
 const WardenSettings = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenSettings"));
 const WardenHelpSupport = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenHelpSupport"));
 const WardenProfile = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenProfile"));
+const WardenAnalytics = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Analytics/AnalyticsDashboard"));
 
 // Management Dashboard - lazy loaded
 const ManagementDashboard = lazy(() => import("../../DashBoards/Management-Dashboard/ManagementDashboard"));
@@ -130,6 +131,11 @@ const Routes_path = () => {
                     <Route path="settings" element={<WardenSettings />} />
                     <Route path="help" element={<WardenHelpSupport />} />
                     <Route path="profile" element={<WardenProfile />} />
+                    <Route path="analytics" element={
+                        <FeatureGate feature="analytics" fallback={<FeatureDisabled feature="analytics" />}>
+                            <WardenAnalytics role="warden" />
+                        </FeatureGate>
+                    } />
                 </Route>
 
                 {/* Management Dashboard with Layout */}

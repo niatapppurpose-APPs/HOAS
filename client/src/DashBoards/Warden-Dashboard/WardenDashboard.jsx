@@ -25,6 +25,7 @@ import {
     ClipboardCheck,
     Calendar,
     ChevronRight,
+    PieChart,
 } from 'lucide-react';
 import Avatar from '../../components/OwnerServices/Avatar';
 
@@ -155,6 +156,13 @@ const WardenDashboard = () => {
             icon: ClipboardCheck,
             path: 'students',
             color: 'green'
+        },
+        {
+            title: 'Analytics',
+            desc: 'View statistics',
+            icon: PieChart,
+            path: 'analytics',
+            color: 'teal'
         },
     ];
 

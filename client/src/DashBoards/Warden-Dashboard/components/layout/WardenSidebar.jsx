@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   X,
   Shield,
+  PieChart,
 } from "lucide-react";
 import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
@@ -39,6 +40,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
     const path = location.pathname;
     if (path.includes('/students')) return 'students';
     if (path.includes('/complaints')) return 'complaints';
+    if (path.includes('/analytics')) return 'analytics';
     if (path.includes('/leave-requests')) return 'leave-requests';
     if (path.includes('/announcements')) return 'announcements';
     if (path.includes('/settings')) return 'settings';
@@ -76,6 +78,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/warden", tourId: "warden-tour-nav-dashboard" },
     { id: "students", label: "Students", icon: Users, path: "/dashboard/warden/students", tourId: "warden-tour-nav-students" },
     { id: "complaints", label: "Complaints", icon: FileText, path: "/dashboard/warden/complaints", tourId: "warden-tour-nav-complaints" },
+    { id: "analytics", label: "Analytics", icon: PieChart, path: "/dashboard/warden/analytics", tourId: "warden-tour-nav-analytics" },
     { id: "leave-requests", label: "Leave Requests", icon: CalendarDays, path: "/dashboard/warden/leave-requests", tourId: "warden-tour-nav-leave-requests" },
     { id: "announcements", label: "Announcements", icon: Bell, path: "/dashboard/warden/announcements", tourId: "warden-tour-nav-announcements" },
   ];
