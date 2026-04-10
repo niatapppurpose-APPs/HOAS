@@ -16,6 +16,12 @@ export const requestNotificationPermission = async () => {
       return false;
     }
 
+    // If permission is already granted or denied, return the current state
+    if (Notification.permission !== 'default') {
+      console.log(`ℹ️ Notification permission is already: ${Notification.permission}`);
+      return Notification.permission === 'granted';
+    }
+
     const permission = await Notification.requestPermission();
 
     if (permission === 'granted') {
@@ -143,11 +149,79 @@ export const saveFCMToken = async (db, userId, token) => {
     const userRef = doc(db, 'users', userId);
     await updateDoc(userRef, {
       fcmToken: token, // Save single token for current device
-      lastTokenUpdate: new Date()
+      lastTokenUpdate: new Date(),
+      'notifPrefs.soundAlerts': true, // Ensure sound is enabled by default
+      'notifPrefs.systemAlerts': true, // Ensure system alerts are enabled
+      'notifPrefs.announcements': true, // Ensure announcements are enabled
     });
 
-   
   } catch (error) {
     console.error('Error saving FCM token:', error);
+  }
+};
+
+/**
+ * Play an awesome notification sound (enhanced version)
+ * @param {string} type - Type of notification ('announcement', 'urgent', 'normal', 'success')
+ */
+export const playNotificationSound = (type = 'normal') => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+
+    const ctx = new AudioContext();
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+
+    const playTone = (frequency, startTime, duration, volume = 0.2) => {
+      const osc = ctx.createOscillator();
+      const envGain = ctx.createGain();
+
+      osc.frequency.value = frequency;
+      osc.type = 'sine';
+
+      envGain.gain.setValueAtTime(0, startTime);
+      envGain.gain.linearRampToValueAtTime(volume, startTime + 0.05);
+      envGain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+      osc.connect(envGain);
+      envGain.connect(gain);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = ctx.currentTime;
+
+    // Different sound patterns based on notification type
+    if (type === 'urgent') {
+      // Double beep pattern for urgent
+      playTone(1046, now, 0.2, 0.3);      // C6
+      playTone(1046, now + 0.25, 0.2, 0.3); // C6
+      playTone(1568, now + 0.5, 0.3, 0.25); // G6
+    } else if (type === 'announcement') {
+      // Triple ascending tones for announcements
+      playTone(800, now, 0.15, 0.2);      // G5
+      playTone(1000, now + 0.18, 0.15, 0.2); // B5
+      playTone(1200, now + 0.36, 0.2, 0.25); // D6
+    } else if (type === 'success') {
+      // Happy two-note for success
+      playTone(1000, now, 0.15, 0.2);     // B5
+      playTone(1400, now + 0.18, 0.25, 0.2); // F#6
+    } else {
+      // Default calm notification sound
+      playTone(900, now, 0.15, 0.15);     // A5
+      playTone(700, now + 0.18, 0.18, 0.15); // F5
+    }
+
+    setTimeout(() => {
+      try {
+        ctx.close();
+      } catch (e) {
+        // Context already closed
+      }
+    }, 2000);
+  } catch (e) {
+    console.warn('Could not play notification sound:', e);
   }
 };

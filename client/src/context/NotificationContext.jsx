@@ -8,6 +8,7 @@ import { collection, query, where, onSnapshot, orderBy, limit, updateDoc, doc } 
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from './AuthContext';
 import * as notificationService from '../firebase/notificationService';
+import { initializeNotificationPrefs } from '../utils/notificationPrefsManager';
 
 const NotificationContext = createContext();
 
@@ -31,8 +32,11 @@ export const NotificationProvider = ({ children }) => {
   const role = userData?.role || null;
 
   // helper to play the custom notification sound
+  // Default to TRUE if preference not set (opt-out model)
   const playSound = () => {
-    if (!userData?.notifPrefs?.soundAlerts) return;
+    const soundEnabled = userData?.notifPrefs?.soundAlerts ?? true;
+    if (!soundEnabled) return;
+
     // generate a short two‑note tone resembling the HOAS notification sound
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -40,25 +44,26 @@ export const NotificationProvider = ({ children }) => {
       const ctx = new AudioContext();
       const gain = ctx.createGain();
       gain.gain.setValueAtTime(0.0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.02);
+      gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
       gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 0.32);
       gain.connect(ctx.destination);
 
-      const playFreq = (freq, start) => {
+      const playFreq = (freq, start, duration = 0.16) => {
         const osc = ctx.createOscillator();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, start);
         osc.connect(gain);
         osc.start(start);
-        osc.stop(start + 0.16);
+        osc.stop(start + duration);
       };
 
       const now = ctx.currentTime;
-      playFreq(1000.25, now);          // C5
-      playFreq(800.25, now + 0.30);   // E5
+      playFreq(1000, now, 0.15);        // High note
+      playFreq(700, now + 0.20, 0.15);  // Mid note
+      playFreq(1000, now + 0.40, 0.20); // High note again (longer)
 
       // close context after tone finishes
-      setTimeout(() => ctx.close(), 1000);
+      setTimeout(() => ctx.close(), 1500);
     } catch (e) {
       console.warn('notification sound failed', e);
     }
@@ -71,14 +76,27 @@ export const NotificationProvider = ({ children }) => {
     playSound();
   };
 
+  // â”€â”€â”€ Initialize notification preferences on login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  useEffect(() => {
+    if (!user) return;
+    // Ensure user has notification preferences initialized
+    initializeNotificationPrefs(user.uid).catch(err =>
+      console.warn('Could not initialize notification preferences:', err)
+    );
+  }, [user?.uid]);
+
   // â”€â”€â”€ FCM setup for ALL logged-in users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!user) return;
     const setup = async () => {
+      // Always try to get FCM token - this will request permission if needed
       const token = await notificationService.getFCMToken();
       if (token) {
         await notificationService.saveFCMToken(db, user.uid, token);
         setPermissionGranted(true);
+      } else {
+        // Permission may have been denied, but we'll still work with Firestore notifications
+        setPermissionGranted(Notification.permission === 'granted');
       }
     };
     setup();
@@ -112,6 +130,8 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     if (!user) return;
     const prefs = userData?.notifPrefs || {};
+    // Default to TRUE if system alerts preference is not set (opt-out model)
+    const systemAlertsEnabled = prefs.systemAlerts !== false;
     const q = query(
       collection(db, 'notifications'),
       where('userId', '==', user.uid),
@@ -121,7 +141,7 @@ export const NotificationProvider = ({ children }) => {
     const unsub = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
-          if (prefs.systemAlerts === false) return; // ignore generic notifications
+          if (!systemAlertsEnabled) return; // ignore only if explicitly disabled
           const d = change.doc.data();
           triggerNotification(d.title, { body: d.body, tag: change.doc.id, data: d });
           setNotifications(prev => [{
@@ -219,6 +239,8 @@ export const NotificationProvider = ({ children }) => {
     if (role !== 'student' && role !== 'warden') return;
     const isInitial = { v: true };
     const prefs = userData?.notifPrefs || {};
+    // Default to TRUE if announcements preference is not set (opt-out model)
+    const announcementsEnabled = prefs.announcements !== false;
     const q = query(
       collection(db, 'announcements'),
       where('managementId', '==', userData.managementId),
@@ -227,7 +249,7 @@ export const NotificationProvider = ({ children }) => {
     );
     const unsub = onSnapshot(q, (snapshot) => {
       if (isInitial.v) { isInitial.v = false; return; }
-      if (!prefs.announcements) return; // skip announcements if turned off
+      if (!announcementsEnabled) return; // skip announcements only if explicitly disabled
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const d = change.doc.data();
