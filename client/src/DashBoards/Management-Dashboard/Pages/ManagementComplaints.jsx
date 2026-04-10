@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, orderBy, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/firebaseConfig';
 import { useAuth } from '../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
@@ -42,8 +42,7 @@ const ManagementComplaints = () => {
         // Fetch all complaints for this management/college
         const q = query(
             collection(db, 'complaints'),
-            where('managementId', '==', userData.managementId),
-            orderBy('createdAt', 'desc')
+            where('managementId', '==', userData.managementId)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -55,11 +54,17 @@ const ManagementComplaints = () => {
             // Check for auto-escalations (if expired and still pending or in-progress)
             const now = new Date();
             const cutoff48h = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-            const processedList = list.map(c => {
-                const createdAt = c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt);
-                const isOverdue = (c.status === 'pending' || c.status === 'in-progress') && createdAt < cutoff48h;
-                return { ...c, isAutoEscalated: isOverdue };
-            });
+            const processedList = list
+                .map(c => {
+                    const createdAt = c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt);
+                    const isOverdue = (c.status === 'pending' || c.status === 'in-progress') && createdAt < cutoff48h;
+                    return { ...c, isAutoEscalated: isOverdue };
+                })
+                .sort((a, b) => {
+                    const timeA = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
+                    const timeB = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
+                    return timeB - timeA;
+                });
 
             setComplaints(processedList);
             setLoading(true);

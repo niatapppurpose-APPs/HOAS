@@ -186,7 +186,6 @@ export const NotificationProvider = ({ children }) => {
       collection(db, 'complaints'),
       where('managementId', '==', userData.managementId),
       where('status', '==', 'pending'),
-      orderBy('createdAt', 'desc'),
       limit(50)
     );
     const unsub = onSnapshot(q, (snapshot) => {
@@ -336,7 +335,6 @@ export const NotificationProvider = ({ children }) => {
     const q = query(
       collection(db, 'complaints'),
       where('managementId', '==', userData.managementId),
-      orderBy('createdAt', 'desc'),
       limit(50)
     );
     const unsub = onSnapshot(q, (snapshot) => {
@@ -370,7 +368,6 @@ export const NotificationProvider = ({ children }) => {
     const q = query(
       collection(db, 'complaints'),
       where('managementId', '==', userData.managementId),
-      orderBy('updatedAt', 'desc'),
       limit(50)
     );
     const unsub = onSnapshot(q, (snapshot) => {
@@ -492,7 +489,6 @@ export const NotificationProvider = ({ children }) => {
     const q = query(
       collection(db, 'complaints'),
       where('managementId', '==', userData.managementId),
-      orderBy('updatedAt', 'desc'),
       limit(30)
     );
     const unsub = onSnapshot(q, (snapshot) => {
