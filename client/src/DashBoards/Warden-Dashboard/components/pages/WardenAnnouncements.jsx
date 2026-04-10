@@ -47,6 +47,17 @@ const WardenAnnouncements = () => {
         content: '',
         priority: 'normal',
         pinned: false,
+        isImmediate: true,
+        scheduledTime: '',
+        isRecurring: false,
+        recurrencePattern: {
+            type: 'daily',
+            daysOfWeek: [1],
+            dayOfMonth: 1,
+            time: '09:00',
+        },
+        recurrenceEndDate: '',
+        status: 'published',
     });
 
     // Fetch announcements
@@ -85,7 +96,23 @@ const WardenAnnouncements = () => {
     }, [userData?.managementId]);
 
     const resetForm = () => {
-        setFormData({ title: '', content: '', priority: 'normal', pinned: false });
+        setFormData({
+            title: '',
+            content: '',
+            priority: 'normal',
+            pinned: false,
+            isImmediate: true,
+            scheduledTime: '',
+            isRecurring: false,
+            recurrencePattern: {
+                type: 'daily',
+                daysOfWeek: [1],
+                dayOfMonth: 1,
+                time: '09:00',
+            },
+            recurrenceEndDate: '',
+            status: 'published',
+        });
         setEditingId(null);
         setShowForm(false);
     };
@@ -97,17 +124,77 @@ const WardenAnnouncements = () => {
             return;
         }
 
+        // Validate scheduling
+        if (!formData.isImmediate) {
+            if (!formData.scheduledTime) {
+                toast.error('Please select a scheduled time');
+                return;
+            }
+            const scheduledDate = new Date(formData.scheduledTime);
+            const now = new Date();
+            if (scheduledDate <= now) {
+                toast.error('Scheduled time must be in the future');
+                return;
+            }
+            if ((scheduledDate - now) < 5 * 60 * 1000) {
+                toast.error('Schedule at least 5 minutes in advance');
+                return;
+            }
+        }
+
+        // Validate recurring
+        if (formData.isRecurring) {
+            if (formData.recurrencePattern.type === 'weekly' && formData.recurrencePattern.daysOfWeek.length === 0) {
+                toast.error('Select at least one day for weekly recurrence');
+                return;
+            }
+            if (formData.recurrenceEndDate) {
+                const endDate = new Date(formData.recurrenceEndDate);
+                const now = new Date();
+                if (endDate <= now) {
+                    toast.error('Recurrence end date must be in the future');
+                    return;
+                }
+            }
+        }
+
         setSubmitting(true);
         try {
+            // Determine status
+            let status = formData.status;
+            if (formData.isRecurring) {
+                status = 'recurring';
+            } else if (!formData.isImmediate) {
+                status = 'scheduled';
+            } else {
+                status = 'published';
+            }
+
+            const dataToSave = {
+                title: formData.title,
+                content: formData.content,
+                priority: formData.priority,
+                pinned: formData.pinned,
+                status,
+                isImmediate: formData.isImmediate,
+                scheduledTime: formData.isImmediate ? null : new Date(formData.scheduledTime),
+                isSent: formData.isImmediate,
+                sentAt: formData.isImmediate ? serverTimestamp() : null,
+                isRecurring: formData.isRecurring,
+                recurrencePattern: formData.isRecurring ? formData.recurrencePattern : null,
+                recurrenceEndDate: formData.isRecurring && formData.recurrenceEndDate ? new Date(formData.recurrenceEndDate) : null,
+                lastPublishedAt: null,
+            };
+
             if (editingId) {
                 await updateDoc(doc(db, 'announcements', editingId), {
-                    ...formData,
+                    ...dataToSave,
                     updatedAt: serverTimestamp(),
                 });
                 toast.success('Announcement updated!');
             } else {
                 await addDoc(collection(db, 'announcements'), {
-                    ...formData,
+                    ...dataToSave,
                     managementId: userData?.managementId || '',
                     collegeName: userData?.collegeName || '',
                     hostelBlock: userData?.hostelBlock || '',
@@ -116,7 +203,15 @@ const WardenAnnouncements = () => {
                     createdAt: serverTimestamp(),
                     updatedAt: serverTimestamp(),
                 });
-                toast.success('Announcement posted!');
+
+                // Show appropriate success message
+                if (formData.isRecurring) {
+                    toast.success(`Recurring announcement scheduled! Will post ${formData.recurrencePattern.type} at ${formData.recurrencePattern.time}`);
+                } else if (!formData.isImmediate) {
+                    toast.success(`Announcement scheduled for ${new Date(formData.scheduledTime).toLocaleString('en-IN')}`);
+                } else {
+                    toast.success('Announcement posted!');
+                }
             }
             resetForm();
         } catch (err) {
@@ -133,6 +228,23 @@ const WardenAnnouncements = () => {
             content: announcement.content || '',
             priority: announcement.priority || 'normal',
             pinned: announcement.pinned || false,
+            isImmediate: announcement.isImmediate !== false,
+            scheduledTime: announcement.scheduledTime
+                ? new Date(announcement.scheduledTime.toDate?.() || announcement.scheduledTime)
+                    .toISOString().slice(0, 16)
+                : '',
+            isRecurring: announcement.isRecurring || false,
+            recurrencePattern: announcement.recurrencePattern || {
+                type: 'daily',
+                daysOfWeek: [1],
+                dayOfMonth: 1,
+                time: '09:00',
+            },
+            recurrenceEndDate: announcement.recurrenceEndDate
+                ? new Date(announcement.recurrenceEndDate.toDate?.() || announcement.recurrenceEndDate)
+                    .toISOString().slice(0, 10)
+                : '',
+            status: announcement.status || 'published',
         });
         setEditingId(announcement.id);
         setShowForm(true);
@@ -172,6 +284,17 @@ const WardenAnnouncements = () => {
         if (!timestamp) return '';
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
         return date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const getStatusDisplay = (announcement) => {
+        if (announcement.status === 'recurring') {
+            return { label: 'Recurring', badge: '🔄', color: 'blue' };
+        } else if (announcement.status === 'scheduled') {
+            return { label: 'Scheduled', badge: '⏰', color: 'amber' };
+        } else if (announcement.status === 'draft') {
+            return { label: 'Draft', badge: '📝', color: 'gray' };
+        }
+        return { label: 'Published', badge: '✅', color: 'green' };
     };
 
     const filtered = announcements.filter(a => {
@@ -261,6 +384,180 @@ const WardenAnnouncements = () => {
                                     className="w-full px-4 py-2.5 rounded-xl border text-sm resize-none"
                                     style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
                                 />
+                            </div>
+
+                            {/* Scheduling Section */}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Schedule</label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(p => ({ ...p, isImmediate: true }))}
+                                            className={`flex-1 px-4 py-2 rounded-xl border text-sm font-bold transition-all ${formData.isImmediate
+                                                ? 'bg-green-500/10 text-green-600 border-green-500'
+                                                : ''}`}
+                                            style={!formData.isImmediate ? { backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' } : undefined}
+                                        >
+                                            📤 Post Now
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(p => ({ ...p, isImmediate: false }))}
+                                            className={`flex-1 px-4 py-2 rounded-xl border text-sm font-bold transition-all ${!formData.isImmediate
+                                                ? 'bg-amber-500/10 text-amber-600 border-amber-500'
+                                                : ''}`}
+                                            style={formData.isImmediate ? { backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' } : undefined}
+                                        >
+                                            ⏰ Schedule Later
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Scheduled Time Input */}
+                                {!formData.isImmediate && (
+                                    <div>
+                                        <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Schedule Date & Time *</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={formData.scheduledTime}
+                                            onChange={(e) => setFormData(p => ({ ...p, scheduledTime: e.target.value }))}
+                                            className="w-full px-4 py-2.5 rounded-xl border text-sm"
+                                            style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                                        />
+                                        <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Schedule at least 5 minutes in advance</p>
+                                    </div>
+                                )}
+
+                                {/* Recurring Toggle */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Repeat</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(p => ({ ...p, isRecurring: !p.isRecurring }))}
+                                        className={`w-full px-4 py-2 rounded-xl border text-sm font-bold transition-all ${formData.isRecurring
+                                            ? 'bg-blue-500/10 text-blue-600 border-blue-500'
+                                            : ''}`}
+                                        style={!formData.isRecurring ? { backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' } : undefined}
+                                    >
+                                        {formData.isRecurring ? '✅ Recurring Enabled' : '❌ No Repeat'}
+                                    </button>
+                                </div>
+
+                                {/* Recurrence Pattern */}
+                                {formData.isRecurring && (
+                                    <div className="space-y-4 rounded-xl p-4" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Frequency</label>
+                                            <select
+                                                value={formData.recurrencePattern.type}
+                                                onChange={(e) => setFormData(p => ({
+                                                    ...p,
+                                                    recurrencePattern: { ...p.recurrencePattern, type: e.target.value }
+                                                }))}
+                                                className="w-full px-4 py-2.5 rounded-xl border text-sm"
+                                                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                                            >
+                                                <option value="daily">Daily</option>
+                                                <option value="weekly">Weekly</option>
+                                                <option value="monthly">Monthly</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Time Input for Recurring */}
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Time to Post</label>
+                                            <input
+                                                type="time"
+                                                value={formData.recurrencePattern.time}
+                                                onChange={(e) => setFormData(p => ({
+                                                    ...p,
+                                                    recurrencePattern: { ...p.recurrencePattern, time: e.target.value }
+                                                }))}
+                                                className="w-full px-4 py-2.5 rounded-xl border text-sm"
+                                                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                                            />
+                                        </div>
+
+                                        {/* Weekly Days Selection */}
+                                        {formData.recurrencePattern.type === 'weekly' && (
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Days of Week</label>
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                                                        <button
+                                                            key={index}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newDays = formData.recurrencePattern.daysOfWeek.includes(index)
+                                                                    ? formData.recurrencePattern.daysOfWeek.filter(d => d !== index)
+                                                                    : [...formData.recurrencePattern.daysOfWeek, index];
+                                                                setFormData(p => ({
+                                                                    ...p,
+                                                                    recurrencePattern: { ...p.recurrencePattern, daysOfWeek: newDays }
+                                                                }));
+                                                            }}
+                                                            className={`py-1.5 rounded text-[11px] font-bold transition-all ${
+                                                                formData.recurrencePattern.daysOfWeek.includes(index)
+                                                                    ? 'bg-purple-500 text-white'
+                                                                    : ''
+                                                            }`}
+                                                            style={!formData.recurrencePattern.daysOfWeek.includes(index) ? {
+                                                                backgroundColor: 'var(--bg-card)',
+                                                                borderColor: 'var(--border-primary)',
+                                                                color: 'var(--text-secondary)',
+                                                                border: '1px solid'
+                                                            } : undefined}
+                                                        >
+                                                            {day}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Monthly Day Selection */}
+                                        {formData.recurrencePattern.type === 'monthly' && (
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Day of Month</label>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    max="31"
+                                                    value={formData.recurrencePattern.dayOfMonth}
+                                                    onChange={(e) => setFormData(p => ({
+                                                        ...p,
+                                                        recurrencePattern: { ...p.recurrencePattern, dayOfMonth: parseInt(e.target.value) }
+                                                    }))}
+                                                    className="w-full px-4 py-2.5 rounded-xl border text-sm"
+                                                    style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Recurrence End Date */}
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>End Date (Optional)</label>
+                                            <input
+                                                type="date"
+                                                value={formData.recurrenceEndDate}
+                                                onChange={(e) => setFormData(p => ({ ...p, recurrenceEndDate: e.target.value }))}
+                                                className="w-full px-4 py-2.5 rounded-xl border text-sm"
+                                                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                                            />
+                                            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Leave blank for indefinite recurrence</p>
+                                        </div>
+
+                                        {/* Recurrence Summary */}
+                                        <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--bg-card)' }}>
+                                            <p className="text-xs" style={{ color: 'var(--text-primary)' }}>
+                                                📅 Will post <strong>{formData.recurrencePattern.type}</strong> at <strong>{formData.recurrencePattern.time}</strong>
+                                                {formData.recurrenceEndDate && ` until ${new Date(formData.recurrenceEndDate).toLocaleDateString('en-IN')}`}
+                                                {!formData.recurrenceEndDate && ' indefinitely'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-4">
@@ -363,6 +660,22 @@ const WardenAnnouncements = () => {
                                                     <span className={`text-[9px] md:text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider ${pCfg.bg} ${pCfg.text} border ${pCfg.border}`}>
                                                         {pCfg.label}
                                                     </span>
+                                                    {/* Status Badge */}
+                                                    {(() => {
+                                                        const statusDisplay = getStatusDisplay(announcement);
+                                                        const statusColors = {
+                                                            green: { bg: 'bg-green-500/10', text: 'text-green-600', border: 'border-green-500/20' },
+                                                            amber: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20' },
+                                                            gray: { bg: 'bg-gray-500/10', text: 'text-gray-600', border: 'border-gray-500/20' },
+                                                            blue: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20' },
+                                                        };
+                                                        const statusColor = statusColors[statusDisplay.color];
+                                                        return (
+                                                            <span className={`text-[9px] md:text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider ${statusColor.bg} ${statusColor.text} border ${statusColor.border}`}>
+                                                                {statusDisplay.badge} {statusDisplay.label}
+                                                            </span>
+                                                        );
+                                                    })()}
                                                     <span className="text-[10px] md:text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                                                         {formatDate(announcement.createdAt)} {formatTime(announcement.createdAt)}
                                                     </span>

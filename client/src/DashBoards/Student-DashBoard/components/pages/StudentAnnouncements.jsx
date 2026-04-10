@@ -90,7 +90,28 @@ const StudentAnnouncements = () => {
         return formatDate(timestamp);
     };
 
+    const getScheduledTimeDisplay = (announcement) => {
+        if (announcement.status !== 'scheduled') return null;
+        if (!announcement.scheduledTime) return null;
+        const scheduledDate = announcement.scheduledTime.toDate ? announcement.scheduledTime.toDate() : new Date(announcement.scheduledTime);
+        const now = new Date();
+        if (scheduledDate > now) {
+            const diffMs = scheduledDate - now;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            if (diffHours > 0) {
+                return `Scheduled in ${diffHours}h ${diffMins}m`;
+            } else {
+                return `Scheduled in ${diffMins}m`;
+            }
+        }
+        return `Coming at ${scheduledDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+    };
+
     const filtered = announcements.filter(a => {
+        // Hide drafts - never show drafts to students
+        if (a.status === 'draft') return false;
+
         // If the announcement targets a specific hostelBlock, only show it to
         // students in that same hostel. Empty/missing hostelBlock = college-wide.
         if (a.hostelBlock && userData?.hostelBlock && a.hostelBlock !== userData.hostelBlock) {
@@ -210,9 +231,15 @@ const StudentAnnouncements = () => {
                                                             <span className={`text-[9px] md:text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider ${priorityCfg.bg} ${priorityCfg.text} border ${priorityCfg.border}`}>
                                                                 {priorityCfg.label}
                                                             </span>
-                                                            <span className="text-[10px] md:text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                                                                {getTimeSince(announcement.createdAt)}
-                                                            </span>
+                                                            {announcement.status === 'scheduled' && getScheduledTimeDisplay(announcement) ? (
+                                                                <span className="text-[10px] md:text-xs font-medium px-2 py-0.5 rounded-md text-amber-600 bg-amber-500/10 border border-amber-500/20">
+                                                                    ⏰ {getScheduledTimeDisplay(announcement)}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] md:text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                                                                    {getTimeSince(announcement.createdAt)}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                     {isExpanded
