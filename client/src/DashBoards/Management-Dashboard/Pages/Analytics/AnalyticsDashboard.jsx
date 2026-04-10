@@ -49,8 +49,12 @@ const AnalyticsDashboard = ({ role }) => {
   const [data, setData] = useState({ totalComplaints: 0, resolved: 0, pending: 0, categoryBreakdown: [], trendData: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [days, setDays] = useState(7);
-  const { user } = useAuth(); // Extracted from current context setup
+  const [days, setDays] = useState(30);
+  const { user, userData, logout } = useAuth();
+  
+  const outletContext = useOutletContext();
+  const isCollapsed = outletContext?.isCollapsed;
+  const setIsCollapsed = outletContext?.setIsCollapsed;
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -66,8 +70,9 @@ const AnalyticsDashboard = ({ role }) => {
           where("createdAt", ">=", startTimestamp)
         ];
         
-        if (role === 'warden' && hostelId) {
-          constraints.push(where("hostelId", "==", hostelId));
+        const mId = userData?.managementId || user?.uid;
+        if (mId) {
+          constraints.push(where("managementId", "==", mId));
         }
 
         const complaintsQuery = query(collection(db, "complaints"), ...constraints);
@@ -130,10 +135,10 @@ const AnalyticsDashboard = ({ role }) => {
       }
     };
 
-    if (role && (role === 'management' || (role === 'warden' && hostelId))) {
+    if (userData !== undefined) {
       fetchAnalytics();
     }
-  }, [role, hostelId, days]);
+  }, [role, userData, user, days]);
 
   if (loading) {
     return (
@@ -184,7 +189,7 @@ const AnalyticsDashboard = ({ role }) => {
         {/* Header & Controls */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-white/10">
           <div>
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
               Complaint Analytics Trends
             </h2>
             <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
