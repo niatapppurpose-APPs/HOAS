@@ -169,6 +169,11 @@ const StudentComplaints = () => {
             return;
         }
 
+        if(!imageFile){
+            toast.warning('Image field id required!')
+            return;
+        }
+        
         setIsSubmitting(true);
         setUploadProgress(0);
 
@@ -434,7 +439,7 @@ const StudentComplaints = () => {
                                 {/* Image Upload */}
                                 <div className="complaints-field">
                                     <label className="complaints-label">
-                                        <ImageIcon size={13} /> Attach Image <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span>
+                                        <ImageIcon  size={13} /> Attach Image <span className='required'    >*</span>
                                     </label>
 
                                     {!imagePreview ? (

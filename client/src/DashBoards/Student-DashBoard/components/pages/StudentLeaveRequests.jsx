@@ -92,10 +92,11 @@ const StudentLeaveRequests = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.leaveType || !formData.startDate || !formData.endDate || !formData.reason) {
+        if (!formData.leaveType || !formData.startDate || !formData.endDate || !formData.reason || !formData.destination || !formData.contactNumber || !formData.parentContact) {
             toast.error('Please fill all required fields');
             return;
         }
+
 
         if (new Date(formData.endDate) < new Date(formData.startDate)) {
             toast.error('End date must be after start date');
@@ -282,7 +283,7 @@ const StudentLeaveRequests = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Start Date *</label>
-                                    <input type="date" name="startDate" value={formData.startDate} onChange={handleChange} required
+                                    <input type="date" name="startDate" value={formData.startDate} onChange={handleChange} 
                                         className="w-full px-4 py-2.5 rounded-xl border text-sm"
                                         style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
                                         min={new Date().toISOString().split('T')[0]}
@@ -290,7 +291,7 @@ const StudentLeaveRequests = () => {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>End Date *</label>
-                                    <input type="date" name="endDate" value={formData.endDate} onChange={handleChange} required
+                                    <input type="date" name="endDate" value={formData.endDate} onChange={handleChange} 
                                         className="w-full px-4 py-2.5 rounded-xl border text-sm"
                                         style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
                                         min={formData.startDate || new Date().toISOString().split('T')[0]}
@@ -307,7 +308,7 @@ const StudentLeaveRequests = () => {
 
                             {/* Destination */}
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Destination</label>
+                                <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Destination *</label>
                                 <div className="relative">
                                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-muted)' }} />
                                     <input type="text" name="destination" value={formData.destination} onChange={handleChange}
@@ -321,7 +322,7 @@ const StudentLeaveRequests = () => {
                             {/* Reason */}
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Reason *</label>
-                                <textarea name="reason" value={formData.reason} onChange={handleChange} required rows={3}
+                                <textarea name="reason" value={formData.reason} onChange={handleChange}  rows={3}
                                     placeholder="Explain the reason for your leave..."
                                     className="w-full px-4 py-2.5 rounded-xl border text-sm resize-none"
                                     style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
@@ -331,16 +332,16 @@ const StudentLeaveRequests = () => {
                             {/* Contact Numbers */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Your Contact</label>
-                                    <input type="tel" name="contactNumber" value={formData.contactNumber} onChange={handleChange}
+                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Your Contact *</label>
+                                    <input type="number" name="contactNumber" value={formData.contactNumber} onChange={handleChange}
                                         placeholder="Your phone number"
                                         className="w-full px-4 py-2.5 rounded-xl border text-sm"
                                         style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Parent Contact</label>
-                                    <input type="tel" name="parentContact" value={formData.parentContact} onChange={handleChange}
+                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>Parent Contact *</label>
+                                    <input type="number" name="parentContact" value={formData.parentContact} onChange={handleChange}
                                         placeholder="Parent/guardian phone"
                                         className="w-full px-4 py-2.5 rounded-xl border text-sm"
                                         style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
