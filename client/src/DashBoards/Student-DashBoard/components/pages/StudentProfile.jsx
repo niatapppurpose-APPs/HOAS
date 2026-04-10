@@ -13,7 +13,7 @@ import Avatar from "../../../../components/OwnerServices/Avatar";
 import ProfileBanner from "../../../../components/ProfileBanner";
 import AppLogo4k from "../../../../assets/AppLogo4k.png";
 import { useToast } from "../../../../components/Toast";
-
+import { ThemeToggle } from "../../../../components/ThemeToggle";
 const StudentProfile = () => {
     const { user, userData, userDataLoading } = useAuth();
     const { isDark } = useTheme();
@@ -144,18 +144,24 @@ const StudentProfile = () => {
             className="min-h-screen p-4 sm:p-6 lg:p-8"
             style={{ background: isDark ? "linear-gradient(135deg,#030712,#0c0a1e,#050816)" : "linear-gradient(135deg,#f8fafc,#eff6ff,#f1f5f9)" }}
         >
-            <button
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-2 mb-6 px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all hover:scale-105"
-                style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}`, color: mutedColor }}
-            >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Back to Dashboard</span>
-                <span className="sm:hidden">Back</span>
-            </button>
-
+            <div className="flex justify-between items-center">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-2 mb-6 px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all hover:scale-105"
+                    style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}`, color: mutedColor }}
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Back to Dashboard</span>
+                    <span className="sm:hidden">Back</span>
+                </button>
+                <div className="flex justify-end items-center p-4">
+                    <div className="p-1 rounded-xl shadow-lg backdrop-blur-md" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
+                        <ThemeToggle />
+                    </div>
+                </div>
+            </div>
             <div className="max-w-4xl mx-auto space-y-6">
-                <div className="rounded-2xl overflow-hidden shadow-xl"
+                <div className="overflow-hidden shadow-xl"
                     style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
                     <ProfileBanner
                         collegeLogo={collegeLogo}
@@ -209,7 +215,7 @@ const StudentProfile = () => {
                     </div>
                 </div>
 
-                <div className="rounded-2xl p-6 shadow-xl"
+                <div className="p-6 shadow-xl"
                     style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
                     <div className="mb-4 flex items-center justify-between gap-3">
                         <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: textColor }}>
@@ -238,7 +244,7 @@ const StudentProfile = () => {
                             </button>
                         </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row items-start gap-5">
+                    <div className="flex flex-col sm:flex-row lg:items-start items-center gap-5">
                         <Avatar
                             uid={user?.uid}
                             image={userData?.photoURL || user?.photoURL}

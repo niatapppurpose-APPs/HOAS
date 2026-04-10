@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import {
     Building2, Mail, MapPin, Shield,
-    Calendar, Award, Users, Home, Pencil, Save, X, Phone
+    Calendar, Award, Users, Home, Pencil, Save, X, Phone, ArrowLeft
 } from "lucide-react";
 import { updateProfile } from "firebase/auth";
 import { collection, query, where, getDocs, limit, doc, updateDoc } from "firebase/firestore";
@@ -14,11 +14,12 @@ import Avatar from "../../../../components/OwnerServices/Avatar";
 import ProfileBanner from "../../../../components/ProfileBanner";
 import AppLogo4k from "../../../../assets/AppLogo4k.png";
 import { useToast } from "../../../../components/Toast";
-
+import { useNavigate } from "react-router";
 const WardenProfile = () => {
     const { user, userData, userDataLoading } = useAuth();
     const { isDark } = useTheme();
     const toast = useToast();
+    const navigate = useNavigate()
 
     const { collegeLogo: layoutLogo, managementData } = useOutletContext() || {};
 
@@ -162,10 +163,22 @@ const WardenProfile = () => {
             className="min-h-screen sm:p-8 md:p-10 lg:p-12"
             style={{ background: isDark ? "linear-gradient(135deg,#030712,#0c0a1e,#050816)" : "linear-gradient(135deg,#f8fafc,#fff7ed,#f1f5f9)" }}
         >
-            <div className="flex justify-end items-center p-4">
-                <div className="p-1 rounded-xl shadow-lg backdrop-blur-md" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
-                    <ThemeToggle />
+            <div className="flex justify-between items-center">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-2 mb-6 px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all hover:scale-105"
+                    style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}`, color: mutedColor }}
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Back to Dashboard</span>
+                    <span className="sm:hidden">Back</span>
+                </button>
+                <div className="flex justify-end items-center p-4">
+                    <div className="p-1 rounded-xl shadow-lg backdrop-blur-md" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
+                        <ThemeToggle />
+                    </div>
                 </div>
+
             </div>
             <div className="max-w-4xl mx-auto space-y-6">
                 <div className="overflow-hidden shadow-xl" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
@@ -222,7 +235,7 @@ const WardenProfile = () => {
                     </div>
                 </div>
 
-                <div className="rounded-2xl p-6 shadow-xl" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
+                <div className="rounded p-6 shadow-xl" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
                     <div className="mb-4 flex items-center justify-between gap-3">
                         <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: textColor }}>
                             <Users className="w-5 h-5" style={{ color: accentColor }} />
@@ -250,7 +263,7 @@ const WardenProfile = () => {
                             </button>
                         </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row items-start gap-5">
+                    <div className="flex flex-col sm:flex-row lg:items-start items-center gap-5">
                         <Avatar
                             uid={user?.uid}
                             image={userData?.photoURL || user?.photoURL}

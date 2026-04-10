@@ -11,8 +11,7 @@ import ProfileBanner from "../../../components/ProfileBanner";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../../firebase/firebaseConfig";
 import AppLogo4k from "../../../assets/AppLogo4k.png";
-
-
+import { ThemeToggle  } from "../../../components/ThemeToggle";
 
 const ManagementProfile = () => {
     const { user, userData, userDataLoading } = useAuth();
@@ -77,7 +76,8 @@ const ManagementProfile = () => {
             }}
         >
             {/* ── Back button ── */}
-            <button
+           <div className="flex items-center justify-between">
+             <button
                 onClick={() => navigate(-1)}
                 className="flex items-center gap-2 mb-4 sm:mb-5 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all hover:scale-105 active:scale-95"
                 style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}`, color: mutedColor }}
@@ -85,7 +85,12 @@ const ManagementProfile = () => {
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back to Dashboard</span>
             </button>
-
+  <div className="flex justify-end items-center p-4">
+                    <div className="p-1 rounded-xl shadow-lg backdrop-blur-md" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
+                        <ThemeToggle />
+                    </div>
+                </div>
+           </div>
             {/* ── No-logo prompt ── */}
             {!collegeLogo && !promptDismissed && (
                 <div

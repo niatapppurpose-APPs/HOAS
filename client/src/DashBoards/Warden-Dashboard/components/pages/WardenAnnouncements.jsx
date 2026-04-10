@@ -680,11 +680,6 @@ const WardenAnnouncements = () => {
                                                         {formatDate(announcement.createdAt)} {formatTime(announcement.createdAt)}
                                                     </span>
                                                 </div>
-                                                {!isExpanded && announcement.content && (
-                                                    <p className="mt-2 text-sm line-clamp-1" style={{ color: 'var(--text-secondary)' }}>
-                                                        {announcement.content}
-                                                    </p>
-                                                )}
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 {isExpanded ? <ChevronUp className="w-5 h-5" style={{ color: 'var(--text-muted)' }} /> : <ChevronDown className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />}
