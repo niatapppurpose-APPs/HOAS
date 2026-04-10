@@ -149,3 +149,4 @@ export async function verifyManagementAccess(context, collegeId) {
     throw new HttpsError('internal', `Authorization check failed: ${error.message}`);
   }
 }
+
