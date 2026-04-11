@@ -7,6 +7,7 @@ import { Loader2, ArrowLeft, Shield, Zap, Eye } from 'lucide-react';
 import Applogo from '../../assets/Applogo.png'
 import { useTheme } from "../../context/ThemeContext";
 import { useRegistrationCheck } from "../../hooks/useSystemSettings";
+import { ThemeToggle } from "../../components/ThemeToggle";
 
 const Login = () => {
   const { user, userData, userDataLoading, loading, isAdmin, claims } = useAuth();
@@ -142,7 +143,9 @@ const Login = () => {
         </div>
 
         {/* Go Home button */}
-        <button
+       <div className="relative z-30 flex justify-between">
+         <button
+          type="button"
           className="fixed top-6 left-6 z-30 flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium backdrop-blur-md border transition-all duration-300 hover:scale-105 active:scale-95 group"
           onClick={() => navigate('/')}
           style={{
@@ -154,6 +157,10 @@ const Login = () => {
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
           Go Home
         </button>
+       <div className="fixed top-6 right-6 z-10 p-2 border border-2 rounded-lg">
+         <ThemeToggle />
+       </div>
+       </div>
 
         {/* Main content */}
         <div className="relative z-10 min-h-screen flex flex-col lg:flex-row items-center justify-center px-4 sm:px-6 lg:px-8 py-12 lg:py-0 gap-8 lg:gap-16 xl:gap-24">

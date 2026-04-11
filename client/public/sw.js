@@ -145,6 +145,47 @@ self.addEventListener('install', (event) => {
 // Push notification support for updates
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
+  const data = event.notification?.data || {};
+  const role = String(data.role || data.userRole || data.recipientRole || '').toLowerCase();
+  const type = String(data.type || data.notificationType || '').toLowerCase();
+
+  const resolveUrl = () => {
+    if (data.url) return data.url;
+
+    if (role === 'student') {
+      if (type.includes('announcement')) return '/dashboard/student/announcements';
+      if (type.includes('leave')) return '/dashboard/student/leave';
+      if (type.includes('support')) return '/dashboard/student/help';
+      if (type.includes('complaint') || type.includes('ticket')) return '/dashboard/student/complaints';
+      return '/dashboard/student';
+    }
+
+    if (role === 'warden') {
+      if (type.includes('announcement')) return '/dashboard/warden/announcements';
+      if (type.includes('leave')) return '/dashboard/warden/leave-requests';
+      if (type.includes('support')) return '/dashboard/warden/help';
+      if (type.includes('complaint') || type.includes('ticket')) return '/dashboard/warden/complaints';
+      return '/dashboard/warden';
+    }
+
+    if (role === 'management') {
+      if (type.includes('complaint') || type.includes('ticket')) return '/dashboard/management/complaints';
+      return '/dashboard/management';
+    }
+
+    if (role === 'owner' || role === 'admin') {
+      if (type.includes('support')) return '/OwnersDashboard/support-tickets';
+      return '/OwnersDashboard';
+    }
+
+    if (type.includes('support')) return '/OwnersDashboard/support-tickets';
+    if (type.includes('approval')) return '/OwnersDashboard';
+    return '/dashboard';
+  };
+
+  const pathToOpen = resolveUrl();
+  const absoluteUrlToOpen = new URL(pathToOpen, self.location.origin).href;
   
   if (event.action === 'update') {
     // Activate the new service worker immediately
@@ -165,13 +206,13 @@ self.addEventListener('notificationclick', (event) => {
       self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
         // Check if app is already open
         for (const client of clients) {
-          if (client.url === self.registration.scope && 'focus' in client) {
+          if ((client.url.includes(pathToOpen) || client.url === self.registration.scope) && 'focus' in client) {
             return client.focus();
           }
         }
         // If not, open the app
         if (self.clients.openWindow) {
-          return self.clients.openWindow('/');
+          return self.clients.openWindow(absoluteUrlToOpen);
         }
       })
     );

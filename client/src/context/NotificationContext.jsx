@@ -11,6 +11,8 @@ import * as notificationService from '../firebase/notificationService';
 import { initializeNotificationPrefs } from '../utils/notificationPrefsManager';
 
 const NotificationContext = createContext();
+let notificationAudioContext = null;
+let notificationAudioUnlocked = false;
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
@@ -31,49 +33,152 @@ export const NotificationProvider = ({ children }) => {
   );
   const role = userData?.role || null;
 
-  // helper to play the custom notification sound
-  // Default to TRUE if preference not set (opt-out model)
+  useEffect(() => {
+    const unlockAudio = async () => {
+      if (notificationAudioUnlocked) return;
+
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+
+        notificationAudioContext = notificationAudioContext || new AudioCtx();
+        if (notificationAudioContext.state === 'suspended') {
+          await notificationAudioContext.resume();
+        }
+
+        const buffer = notificationAudioContext.createBuffer(1, 1, 22050);
+        const source = notificationAudioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(notificationAudioContext.destination);
+        source.start(0);
+
+        notificationAudioUnlocked = true;
+      } catch (error) {
+        console.debug('notification audio unlock skipped:', error);
+      }
+    };
+
+    window.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
+    window.addEventListener('keydown', unlockAudio, { once: true });
+    window.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
+
+    return () => {
+      window.removeEventListener('pointerdown', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
+
+  // Play an iPhone-like tri-tone only for browser notifications.
   const playSound = () => {
     const soundEnabled = userData?.notifPrefs?.soundAlerts ?? true;
     if (!soundEnabled) return;
 
-    // generate a short two‑note tone resembling the HOAS notification sound
     try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
-      gain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 0.32);
-      gain.connect(ctx.destination);
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
 
-      const playFreq = (freq, start, duration = 0.16) => {
+      const ctx = notificationAudioContext || new AudioCtx();
+      notificationAudioContext = ctx;
+
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.12, ctx.currentTime);
+      master.connect(ctx.destination);
+
+      const playTone = (frequency, start, duration, peak = 0.12) => {
         const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, start);
+        osc.frequency.setValueAtTime(frequency, start);
+
+        gain.gain.setValueAtTime(0.0, start);
+        gain.gain.linearRampToValueAtTime(peak, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+
         osc.connect(gain);
+        gain.connect(master);
+
         osc.start(start);
         osc.stop(start + duration);
       };
 
       const now = ctx.currentTime;
-      playFreq(1000, now, 0.15);        // High note
-      playFreq(700, now + 0.20, 0.15);  // Mid note
-      playFreq(1000, now + 0.40, 0.20); // High note again (longer)
+      // iPhone-like "Tri-tone" feel (high, mid, high).
+      playTone(1318.51, now, 0.16, 0.11);
+      playTone(1760.0, now + 0.18, 0.16, 0.12);
+      playTone(2093.0, now + 0.36, 0.20, 0.13);
 
-      // close context after tone finishes
-      setTimeout(() => ctx.close(), 1500);
+      setTimeout(() => {
+        if (notificationAudioContext === ctx) {
+          notificationAudioContext = null;
+        }
+        ctx.close().catch(() => {});
+      }, 1200);
     } catch (e) {
       console.warn('notification sound failed', e);
     }
   };
 
+  const resolveNotificationUrl = (userRole, notificationType = '', notificationTag = '') => {
+    const roleKey = String(userRole || '').toLowerCase();
+    const typeKey = String(notificationType || '').toLowerCase();
+    const tagKey = String(notificationTag || '').toLowerCase();
+    const key = `${typeKey} ${tagKey}`;
+
+    if (roleKey === 'student') {
+      if (key.includes('announcement')) return '/dashboard/student/announcements';
+      if (key.includes('leave')) return '/dashboard/student/leave';
+      if (key.includes('support')) return '/dashboard/student/help';
+      if (key.includes('complaint') || key.includes('ticket')) return '/dashboard/student/complaints';
+      return '/dashboard/student';
+    }
+
+    if (roleKey === 'warden') {
+      if (key.includes('announcement')) return '/dashboard/warden/announcements';
+      if (key.includes('leave')) return '/dashboard/warden/leave-requests';
+      if (key.includes('support')) return '/dashboard/warden/help';
+      if (key.includes('complaint') || key.includes('ticket')) return '/dashboard/warden/complaints';
+      return '/dashboard/warden';
+    }
+
+    if (roleKey === 'management') {
+      if (key.includes('complaint') || key.includes('ticket')) return '/dashboard/management/complaints';
+      return '/dashboard/management';
+    }
+
+    if (roleKey === 'owner' || roleKey === 'admin') {
+      if (key.includes('support')) return '/OwnersDashboard/support-tickets';
+      return '/OwnersDashboard';
+    }
+
+    return '/dashboard';
+  };
+
   // wrapper used throughout the context so that every notification uses
   // the shared playing logic and respects the sound preference.
   const triggerNotification = (title, options) => {
-    notificationService.showNotification(title, options);
-    playSound();
+    const typeFromOptions = options?.data?.type || options?.type || '';
+    const targetUrl = options?.data?.url || resolveNotificationUrl(role, typeFromOptions, options?.tag);
+    const enrichedOptions = {
+      ...options,
+      data: {
+        ...(options?.data || {}),
+        role,
+        type: typeFromOptions,
+        url: targetUrl,
+      },
+    };
+
+    const notification = notificationService.showNotification(title, enrichedOptions);
+    // Play sound only when the browser notification is actually shown.
+    if (notification) {
+      playSound();
+    }
   };
 
   // â”€â”€â”€ Initialize notification preferences on login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -111,6 +216,12 @@ export const NotificationProvider = ({ children }) => {
         // drop all generic/system messages
         return;
       }
+
+      // Foreground FCM path shows browser notification internally when granted.
+      if (Notification.permission === 'granted' && payload?.notification) {
+        playSound();
+      }
+
       const newNotification = {
         id: Date.now().toString(),
         title: sanitize(payload.notification?.title || 'New Notification'),
@@ -650,6 +761,8 @@ export const NotificationProvider = ({ children }) => {
   // â”€â”€â”€ Admin only: support tickets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!user || !isAdmin) return;
+    const isInitial = { v: true };
+    const seenTicketIds = new Set();
     const q = query(
       collection(db, 'supportTickets'),
       where('status', '==', 'open'),
@@ -657,22 +770,35 @@ export const NotificationProvider = ({ children }) => {
       limit(50)
     );
     const unsub = onSnapshot(q, (snapshot) => {
+      if (isInitial.v) {
+        snapshot.docs.forEach((d) => seenTicketIds.add(d.id));
+        isInitial.v = false;
+        return;
+      }
+
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
+          if (seenTicketIds.has(change.doc.id)) return;
+          seenTicketIds.add(change.doc.id);
+
           const d = change.doc.data();
           triggerNotification('New Support Ticket', {
             body: d.subject || 'A new support ticket has been created',
             tag: `ticket-${change.doc.id}`,
           });
-          setNotifications(prev => [{
-            id: `ticket-${change.doc.id}`,
-            title: 'New Support Ticket',
-            body: d.subject || 'A new support ticket has been created',
-            type: 'support',
-            createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : (d.createdAt ? new Date(d.createdAt) : new Date()),
-            read: false,
-            data: { ticketId: change.doc.id, subject: d.subject },
-          }, ...prev]);
+          setNotifications(prev => {
+            const notificationId = `ticket-${change.doc.id}`;
+            if (prev.some((n) => n.id === notificationId)) return prev;
+            return [{
+              id: notificationId,
+              title: 'New Support Ticket',
+              body: d.subject || 'A new support ticket has been created',
+              type: 'support',
+              createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : (d.createdAt ? new Date(d.createdAt) : new Date()),
+              read: false,
+              data: { ticketId: change.doc.id, subject: d.subject },
+            }, ...prev];
+          });
           setUnreadCount(prev => prev + 1);
         }
       });
@@ -713,18 +839,8 @@ export const NotificationProvider = ({ children }) => {
     return granted;
   };
 
-  // play sound once immediately (for manual testing).
-  // this bypasses the user's soundAlerts preference so you can always hear it.
   const playOnce = () => {
-    // temporarily override pref
-    const original = userData?.notifPrefs?.soundAlerts;
-    if (userData && userData.notifPrefs) {
-      userData.notifPrefs.soundAlerts = true;
-    }
     playSound();
-    if (userData && userData.notifPrefs) {
-      userData.notifPrefs.soundAlerts = original;
-    }
   };
 
 

@@ -247,11 +247,6 @@ const StudentAnnouncements = () => {
                                                         : <ChevronDown className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
                                                     }
                                                 </div>
-                                                {!isExpanded && announcement.content && (
-                                                    <p className="mt-2 text-sm line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                                                        {announcement.content}
-                                                    </p>
-                                                )}
                                             </div>
                                         </div>
                                     </div>

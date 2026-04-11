@@ -50,18 +50,61 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   if (event.action === 'open' || !event.action) {
-    const urlToOpen = event.notification.data?.url || '/OwnersDashboard';
+    const data = event.notification.data || {};
+    const role = String(data.role || data.userRole || data.recipientRole || '').toLowerCase();
+    const type = String(data.type || data.notificationType || '').toLowerCase();
+
+    const resolveDefaultUrl = () => {
+      if (data.url) return data.url;
+
+      if (role === 'student') {
+        if (type.includes('announcement')) return '/dashboard/student/announcements';
+        if (type.includes('leave')) return '/dashboard/student/leave';
+        if (type.includes('support')) return '/dashboard/student/help';
+        if (type.includes('complaint') || type.includes('ticket')) return '/dashboard/student/complaints';
+        return '/dashboard/student';
+      }
+
+      if (role === 'warden') {
+        if (type.includes('announcement')) return '/dashboard/warden/announcements';
+        if (type.includes('leave')) return '/dashboard/warden/leave-requests';
+        if (type.includes('support')) return '/dashboard/warden/help';
+        if (type.includes('complaint') || type.includes('ticket')) return '/dashboard/warden/complaints';
+        return '/dashboard/warden';
+      }
+
+      if (role === 'management') {
+        if (type.includes('complaint') || type.includes('ticket')) return '/dashboard/management/complaints';
+        return '/dashboard/management';
+      }
+
+      if (role === 'owner' || role === 'admin') {
+        if (type.includes('support')) return '/OwnersDashboard/support-tickets';
+        return '/OwnersDashboard';
+      }
+
+      if (type.includes('support')) return '/OwnersDashboard/support-tickets';
+      if (type.includes('approval')) return '/OwnersDashboard';
+      if (type.includes('complaint')) return '/dashboard';
+      if (type.includes('announcement')) return '/dashboard';
+      if (type.includes('leave')) return '/dashboard';
+
+      return '/dashboard';
+    };
+
+    const pathToOpen = resolveDefaultUrl();
+    const absoluteUrlToOpen = new URL(pathToOpen, self.location.origin).href;
 
     event.waitUntil(
       clients.matchAll({ type: 'window', includeUncontrolled: true })
         .then((clientList) => {
           for (const client of clientList) {
-            if (client.url.includes(urlToOpen) && 'focus' in client) {
+            if (client.url.includes(pathToOpen) && 'focus' in client) {
               return client.focus();
             }
           }
           if (clients.openWindow) {
-            return clients.openWindow(urlToOpen);
+            return clients.openWindow(absoluteUrlToOpen);
           }
         })
     );

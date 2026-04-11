@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useOutletContext, Link } from 'react-router-dom';
 import { db } from '../../firebase/firebaseConfig';
@@ -54,8 +54,6 @@ const WardenDashboard = () => {
         }
     }, [userData, userDataLoading, navigate]);
 
-    const notificationAudio = useRef(new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
-
     // Fetch recent complaints
     useEffect(() => {
         if (!userData?.managementId) return;
@@ -86,9 +84,6 @@ const WardenDashboard = () => {
                 snapshot.docChanges().forEach((change) => {
                     if (change.type === "added" && change.doc.data().status === 'pending') {
                         const newComplaint = change.doc.data();
-                        // Play tring tring sound
-                        notificationAudio.current.play().catch(e => console.log("Audio play failed:", e));
-
                         // Show visual notification
                         toast.info(`🔔 New Complaint: ${newComplaint.title}`, {
                             description: `From Room ${newComplaint.roomNumber || 'N/A'}`,
