@@ -11,8 +11,7 @@ import * as notificationService from '../firebase/notificationService';
 import { initializeNotificationPrefs } from '../utils/notificationPrefsManager';
 
 const NotificationContext = createContext();
-let notificationAudioContext = null;
-let notificationAudioUnlocked = false;
+let notificationAudio = null;
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
@@ -33,92 +32,23 @@ export const NotificationProvider = ({ children }) => {
   );
   const role = userData?.role || null;
 
-  useEffect(() => {
-    const unlockAudio = async () => {
-      if (notificationAudioUnlocked) return;
-
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-
-        notificationAudioContext = notificationAudioContext || new AudioCtx();
-        if (notificationAudioContext.state === 'suspended') {
-          await notificationAudioContext.resume();
-        }
-
-        const buffer = notificationAudioContext.createBuffer(1, 1, 22050);
-        const source = notificationAudioContext.createBufferSource();
-        source.buffer = buffer;
-        source.connect(notificationAudioContext.destination);
-        source.start(0);
-
-        notificationAudioUnlocked = true;
-      } catch (error) {
-        console.debug('notification audio unlock skipped:', error);
-      }
-    };
-
-    window.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
-    window.addEventListener('keydown', unlockAudio, { once: true });
-    window.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
-
-    return () => {
-      window.removeEventListener('pointerdown', unlockAudio);
-      window.removeEventListener('keydown', unlockAudio);
-      window.removeEventListener('touchstart', unlockAudio);
-    };
-  }, []);
-
-  // Play an iPhone-like tri-tone only for browser notifications.
+  // Play custom WAV sound only for browser notifications.
   const playSound = () => {
     const soundEnabled = userData?.notifPrefs?.soundAlerts ?? true;
     if (!soundEnabled) return;
 
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-
-      const ctx = notificationAudioContext || new AudioCtx();
-      notificationAudioContext = ctx;
-
-      if (ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
+      if (typeof window === 'undefined') return;
+ 
+      if (!notificationAudio) {
+        notificationAudio = new Audio('/mixkit-positive-notification-951.wav');
+        notificationAudio.preload = 'auto';
       }
 
-      const master = ctx.createGain();
-      master.gain.setValueAtTime(0.12, ctx.currentTime);
-      master.connect(ctx.destination);
-
-      const playTone = (frequency, start, duration, peak = 0.12) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(frequency, start);
-
-        gain.gain.setValueAtTime(0.0, start);
-        gain.gain.linearRampToValueAtTime(peak, start + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
-
-        osc.connect(gain);
-        gain.connect(master);
-
-        osc.start(start);
-        osc.stop(start + duration);
-      };
-
-      const now = ctx.currentTime;
-      // iPhone-like "Tri-tone" feel (high, mid, high).
-      playTone(1318.51, now, 0.16, 0.11);
-      playTone(1760.0, now + 0.18, 0.16, 0.12);
-      playTone(2093.0, now + 0.36, 0.20, 0.13);
-
-      setTimeout(() => {
-        if (notificationAudioContext === ctx) {
-          notificationAudioContext = null;
-        }
-        ctx.close().catch(() => {});
-      }, 1200);
+      notificationAudio.currentTime = 0;
+      notificationAudio.play().catch((error) => {
+        console.debug('notification sound blocked by browser:', error);
+      });
     } catch (e) {
       console.warn('notification sound failed', e);
     }
@@ -271,7 +201,6 @@ export const NotificationProvider = ({ children }) => {
     return unsub;
   }, [user, userData?.notifPrefs]);
 
-  // â”€â”€â”€ Student: complaint status updates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!user || role !== 'student') return;
     const isInitial = { v: true };
@@ -308,8 +237,7 @@ export const NotificationProvider = ({ children }) => {
     return unsub;
   }, [user, role, userData?.notifPrefs]);
 
-  // â”€â”€â”€ Warden: new complaints in their college â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  useEffect(() => {
+   useEffect(() => {
     if (!user || role !== 'warden' || !userData?.managementId) return;
     const isInitial = { v: true };
     const prefs = userData?.notifPrefs || {};
