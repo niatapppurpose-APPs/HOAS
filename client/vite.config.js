@@ -23,43 +23,21 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
+        // Only split React and Firebase vendors - let everything else bundle naturally
         manualChunks: (id) => {
-          // Vendor chunks - keep dependencies together to avoid initialization order issues
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')){
             return 'react-vendor';
           }
           if (id.includes('node_modules/firebase')){
             return 'firebase-vendor';
           }
-          if (id.includes('node_modules/leaflet') || id.includes('node_modules/react-leaflet')){
-            return 'leaflet-vendor';
-          }
-          if (id.includes('node_modules/@react-google-maps')){
-            return 'google-maps-vendor';
-          }
-          // DO NOT separate recharts - it needs React accessible. Let it bundle with pages that use it (Analytics)
-          // Heavy pages - split into separate chunks (recharts will be included with analytics page)
-          if (id.includes('Analytics')){
-            return 'analytics-page';
-          }
-          if (id.includes('Pages/Reports')){
-            return 'reports-page';
-          }
-          if (id.includes('EmergencyLocation')){
-            return 'emergency-location';
-          }
-          // Dashboard layout chunks ONLY (not the routes/pages inside)
-          if (id.includes('Pages/OwnersDashboard')){
-            return 'owner-dashboard';
-          }
+          // EVERYTHING ELSE bundles naturally - recharts, leaflet, charts all stay with pages that use them
         }
       }
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000,
     sourcemap: false,
-    target: 'es2020',
-    // Reduce initial chunk size with more aggressive splitting
-    splitVendorChunkPlugin: true
+    target: 'es2020'
   },
   // Optimize dependencies
   optimizeDeps: {
