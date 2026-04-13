@@ -1,7 +1,7 @@
 // Management Dashboard Tour Steps (driver.js)
 // Targets elements rendered by ManagementDashboard + ManagementSidebar
 
-export const managementTourSteps = (isDark) => [
+export const managementTourSteps = () => [
   // Welcome
   {
     element: '#mgmt-tour-welcome',

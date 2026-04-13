@@ -1,7 +1,7 @@
 // Student Dashboard Tour Steps (driver.js)
 // Targets elements rendered by StudentDashboard + StudentSidebar
 
-export const studentTourSteps = (isDark) => [
+export const studentTourSteps = () => [
   // Welcome
   {
     element: '#student-tour-welcome',

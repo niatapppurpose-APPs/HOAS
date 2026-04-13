@@ -94,7 +94,6 @@ export const SystemSettingsProvider = ({ children }) => {
         retryCountRef.current = 0;
       }
     } catch (err) {
-      console.error('Error loading system settings:', err);
 
       if (mountedRef.current) {
         // Use defaults on error so the app still works
@@ -106,7 +105,6 @@ export const SystemSettingsProvider = ({ children }) => {
         if (retryCountRef.current < maxRetries) {
           retryCountRef.current++;
           const backoffMs = Math.min(1000 * Math.pow(2, retryCountRef.current), 10000);
-          console.log(`Retrying settings load in ${backoffMs}ms (attempt ${retryCountRef.current}/${maxRetries})`);
           setTimeout(() => {
             if (mountedRef.current) {
               loadSettings();
@@ -174,7 +172,6 @@ export const SystemSettingsProvider = ({ children }) => {
 export const useSystemSettings = () => {
   const context = useContext(SystemSettingsContext);
   if (!context) {
-    console.warn('useSystemSettings must be used within a SystemSettingsProvider');
     return {
       settings: DEFAULT_SETTINGS,
       loading: false,
@@ -221,7 +218,6 @@ export const useCollegeCapacity = (collegeId, role) => {
           error: null,
         });
       } catch (err) {
-        console.error('Error checking college capacity:', err);
         setCapacity(prev => ({
           ...prev,
           loading: false,
@@ -244,7 +240,6 @@ export const useRegistrationCheck = () => {
   const { settings, loading } = useSystemSettings();
   const [registrationStatus, setRegistrationStatus] = useState({
     allowed: true,
-    reason: null,
     message: null,
   });
 
@@ -254,19 +249,16 @@ export const useRegistrationCheck = () => {
     if (settings.maintenanceMode) {
       setRegistrationStatus({
         allowed: false,
-        reason: 'maintenance',
         message: settings.maintenanceMessage || 'System is under maintenance',
       });
     } else if (!settings.registrationEnabled) {
       setRegistrationStatus({
         allowed: false,
-        reason: 'disabled',
         message: 'New registrations are currently disabled',
       });
     } else {
       setRegistrationStatus({
         allowed: true,
-        reason: null,
         message: null,
       });
     }

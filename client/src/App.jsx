@@ -18,7 +18,7 @@ import InstallPrompt from "./components/InstallPrompt";
 const PUBLIC_ROUTES = ['/', '/login', '/admin-login', '/firebase-mode'];
 
 const App = () => {
-  const { isServerOnline, lastChecked } = useServerStatus();
+  const { isServerOnline } = useServerStatus();
   const { isAdmin, adminChecked, user, userData } = useAuth();
   const { settings } = useSystemSettings();
   const { isDark } = useTheme();

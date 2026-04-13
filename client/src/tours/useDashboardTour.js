@@ -45,7 +45,7 @@ const useDashboardTour = (role, getSteps, options = {}) => {
 
     // Destroy any existing instance
     if (driverRef.current) {
-      try { driverRef.current.destroy(); } catch (_) { /* noop */ }
+      try { driverRef.current.destroy(); } catch (_err) { /* noop */ }
     }
 
     const driverObj = driver({
@@ -103,7 +103,7 @@ const useDashboardTour = (role, getSteps, options = {}) => {
   useEffect(() => {
     return () => {
       if (driverRef.current) {
-        try { driverRef.current.destroy(); } catch (_) { /* noop */ }
+        try { driverRef.current.destroy(); } catch (_err) { /* noop */ }
       }
     };
   }, []);

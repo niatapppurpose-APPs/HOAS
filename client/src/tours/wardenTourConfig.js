@@ -1,7 +1,7 @@
 // Warden Dashboard Tour Steps (driver.js)
 // Targets elements rendered by WardenDashboard + WardenSidebar
 
-export const wardenTourSteps = (isDark) => [
+export const wardenTourSteps = () => [
   // Welcome
   {
     element: '#warden-tour-welcome',

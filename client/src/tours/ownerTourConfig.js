@@ -1,7 +1,7 @@
 // Owner Dashboard Tour Steps (driver.js)
 // Targets elements rendered by OwnersDashboard + Owner Sidebar
 
-export const ownerTourSteps = (isDark) => [
+export const ownerTourSteps = () => [
   // Welcome
   {
     element: '#tour-welcome',

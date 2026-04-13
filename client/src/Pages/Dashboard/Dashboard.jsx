@@ -19,8 +19,6 @@ const Dashboard = () => {
     // BULLETPROOF: Always allow admin/owner to OwnersDashboard, even if userData is missing
     const claimsRole = claims?.role;
     if (isAdmin || claimsRole === 'admin' || claimsRole === 'owner') {
-      // eslint-disable-next-line no-console
-      console.log('[Dashboard Redirect - BULLETPROOF] user:', user?.email, '| claimsRole:', claimsRole, '| isAdmin:', isAdmin, '| userData:', userData);
       navigate('/OwnersDashboard', { replace: true });
       return;
     }
