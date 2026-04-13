@@ -24,21 +24,25 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Vendor chunks
-          if (id.includes('node_modules/react')){
+          // Vendor chunks - keep dependencies together to avoid initialization order issues
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')){
             return 'react-vendor';
           }
           if (id.includes('node_modules/firebase')){
             return 'firebase-vendor';
           }
-          if (id.includes('node_modules/leaflet')){
+          if (id.includes('node_modules/leaflet') || id.includes('node_modules/react-leaflet')){
             return 'leaflet-vendor';
           }
           if (id.includes('node_modules/@react-google-maps')){
             return 'google-maps-vendor';
           }
+          // Keep recharts with other charting dependencies
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3')){
+            return 'charts-vendor';
+          }
           // Heavy pages - split into separate chunks
-          if (id.includes('Analytics/AnalyticsDashboard')){
+          if (id.includes('Analytics')){
             return 'analytics-page';
           }
           if (id.includes('Pages/Reports')){
@@ -47,16 +51,7 @@ export default defineConfig({
           if (id.includes('EmergencyLocation')){
             return 'emergency-location';
           }
-          // UI/Layout chunks by dashboard
-          if (id.includes('DashBoards/Student')){
-            return 'student-dashboard';
-          }
-          if (id.includes('DashBoards/Warden')){
-            return 'warden-dashboard';
-          }
-          if (id.includes('DashBoards/Management')){
-            return 'management-dashboard';
-          }
+          // Dashboard layout chunks ONLY (not the routes/pages inside)
           if (id.includes('Pages/OwnersDashboard')){
             return 'owner-dashboard';
           }
