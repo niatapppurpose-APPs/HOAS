@@ -31,8 +31,8 @@ const ThemeToggle = ({ className = '', size = 'md' }) => {
     const timeout = setTimeout(() => {
       toggleTheme();
       setClickTimeout(null);
-    }, 250); 
-    
+    }, 250);
+
     setClickTimeout(timeout);
   };
 

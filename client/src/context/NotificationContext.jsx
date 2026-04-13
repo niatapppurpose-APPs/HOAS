@@ -110,9 +110,7 @@ export const NotificationProvider = ({ children }) => {
       playSound();
     }
   };
-
-  // â”€â”€â”€ Initialize notification preferences on login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  useEffect(() => {
+ useEffect(() => {
     if (!user) return;
     // Ensure user has notification preferences initialized
     initializeNotificationPrefs(user.uid).catch(err =>
@@ -120,8 +118,7 @@ export const NotificationProvider = ({ children }) => {
     );
   }, [user?.uid]);
 
-  // â”€â”€â”€ FCM setup for ALL logged-in users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  useEffect(() => {
+ useEffect(() => {
     if (!user) return;
     const setup = async () => {
       // Always try to get FCM token - this will request permission if needed
@@ -137,8 +134,7 @@ export const NotificationProvider = ({ children }) => {
     setup();
   }, [user]);
 
-  // â”€â”€â”€ Foreground FCM messages for ALL users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  useEffect(() => {
+ useEffect(() => {
     if (!user) return;
     const unsubscribe = notificationService.onForegroundMessage((payload) => {
       const prefs = userData?.notifPrefs || {};
@@ -166,9 +162,7 @@ export const NotificationProvider = ({ children }) => {
     });
     return unsubscribe;
   }, [user, userData?.notifPrefs]);
-
-  // â”€â”€â”€ Firestore notifications collection (ALL users) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  useEffect(() => {
+ useEffect(() => {
     if (!user) return;
     const prefs = userData?.notifPrefs || {};
     // Default to TRUE if system alerts preference is not set (opt-out model)
@@ -651,8 +645,6 @@ export const NotificationProvider = ({ children }) => {
     }, (err) => console.debug('student support ticket listener error:', err.code));
     return unsub;
   }, [user, role]);
-
-  // â”€â”€â”€ Admin only: pending management approvals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!user || !isAdmin) return;
     const q = query(
@@ -685,9 +677,7 @@ export const NotificationProvider = ({ children }) => {
     });
     return unsub;
   }, [user, isAdmin]);
-
-  // â”€â”€â”€ Admin only: support tickets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  useEffect(() => {
+ useEffect(() => {
     if (!user || !isAdmin) return;
     const isInitial = { v: true };
     const seenTicketIds = new Set();
@@ -734,7 +724,6 @@ export const NotificationProvider = ({ children }) => {
     return unsub;
   }, [user, isAdmin]);
 
-  // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const markAsRead = async (notificationId) => {
     setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
@@ -779,7 +768,7 @@ export const NotificationProvider = ({ children }) => {
       permissionGranted,
       markAsRead,
       markAllAsRead,
-      clearAll,
+      clearAll, 
       requestPermission,
       role,
       playSound,

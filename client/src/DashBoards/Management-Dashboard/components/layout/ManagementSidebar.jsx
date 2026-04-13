@@ -12,6 +12,7 @@ import {
   PieChart,
   Pin,
   Shield,
+  ShieldAlert,
   X,
   MessageSquare
 } from "lucide-react";
@@ -48,6 +49,7 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
     if (path.includes('/students')) return 'students';
     if (path.includes('/hostels')) return 'hostels';
     if (path.includes('/complaints')) return 'complaints';
+    if (path.includes('/emergency-location')) return 'emergency-location';
     if (path.includes('/analytics')) return 'analytics';
     if (path.includes('/reports')) return 'reports';
     if (path.includes('/settings')) return 'settings';
@@ -83,6 +85,7 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/management", tourId: "mgmt-tour-nav-dashboard" },
+    { id: "emergency-location", label: "Emergency Location", icon: ShieldAlert, path: "/dashboard/management/emergency-location", tourId: "mgmt-tour-nav-emergency-location" },
     { id: "wardens", label: "Wardens", icon: Building2, path: "/dashboard/management/wardens", tourId: "mgmt-tour-nav-wardens" },
     { id: "students", label: "Students", icon: Users, path: "/dashboard/management/students", tourId: "mgmt-tour-nav-students" },
     { id: "hostels", label: "Hostels", icon: Home, path: "/dashboard/management/hostels", tourId: "mgmt-tour-nav-hostels" },

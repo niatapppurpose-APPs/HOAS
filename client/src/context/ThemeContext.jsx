@@ -29,15 +29,15 @@ export const ThemeProvider = ({ children }) => {
     try {
       const savedMode = localStorage.getItem('hoas-theme-mode');
       const savedTheme = localStorage.getItem('hoas-theme');
-      
+
       if (savedMode === 'system') {
         return getSystemTheme();
       }
-      
+
       if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
         return savedTheme;
       }
-      
+
       return 'light'; // Default to light
     } catch {
       return 'light';
@@ -48,15 +48,15 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     const applyTheme = (themeValue) => {
       const root = document.documentElement;
-      
+
       // Remove both classes first
       root.classList.remove('light', 'dark');
       // Add current theme class
       root.classList.add(themeValue);
-      
+
       // Set data attribute for CSS selectors
       root.setAttribute('data-theme', themeValue);
-      
+
       // Also set on body for extra compatibility
       document.body.classList.remove('light', 'dark');
       document.body.classList.add(themeValue);
@@ -64,10 +64,9 @@ export const ThemeProvider = ({ children }) => {
     };
 
     applyTheme(theme);
-    
+
     // Save to localStorage
     localStorage.setItem('hoas-theme', theme);
-    
   }, [theme]);
 
   // Listen for system preference changes when in system mode
@@ -75,7 +74,7 @@ export const ThemeProvider = ({ children }) => {
     if (!isSystemMode) return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     const handleChange = (e) => {
       const newTheme = e.matches ? 'dark' : 'light';
       setTheme(newTheme);

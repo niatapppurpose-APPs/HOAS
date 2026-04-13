@@ -8,24 +8,17 @@ import WardenHeader from './components/layout/WardenHeader';
 import { useDashboardTour, wardenTourSteps } from '../../tours';
 import './WardenDashboard.css';
 import {
-    Shield,
     Building2,
     User,
     Phone,
-    Briefcase,
     Loader2,
-    CheckCircle,
-    XCircle,
-    Clock,
     FileText,
     Bell,
     Users,
     ArrowRight,
     MessageSquare,
     ClipboardCheck,
-    Calendar,
     ChevronRight,
-    PieChart,
 } from 'lucide-react';
 import Avatar from '../../components/OwnerServices/Avatar';
 
@@ -152,13 +145,7 @@ const WardenDashboard = () => {
             path: 'students',
             color: 'green'
         },
-        {
-            title: 'Analytics',
-            desc: 'View statistics',
-            icon: PieChart,
-            path: 'analytics',
-            color: 'teal'
-        },
+
     ];
 
     const formatDate = (timestamp) => {
@@ -244,13 +231,13 @@ const WardenDashboard = () => {
                                 <Link
                                     key={idx}
                                     to={action.path}
-                                    className="group relative flex flex-col items-center justify-center rounded-[1.25rem] md:rounded-[1.5rem] border p-4 md:p-6 transition-all hover:scale-[1.05] hover:shadow-2xl"
+                                    className="group relative flex flex-col items-center justify-center rounded-[1.25rem] md:rounded-[1.5rem] border p-4 md:p-6  hover:shadow-2xl"
                                     style={{
                                         backgroundColor: 'var(--bg-card)',
                                         borderColor: 'var(--border-primary)'
                                     }}
                                 >
-                                    <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl bg-${action.color}-500/10 text-${action.color}-500 group-hover:bg-${action.color}-500 group-hover:text-white transition-all duration-300`}>
+                                    <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl bg-${action.color}-500/10 text-${action.color}-500 group-hover:bg-${action.color}-500  transition-all duration-300`}>
                                         <action.icon className="w-5 h-5 md:w-6 md:h-6" />
                                     </div>
                                     <h3 className="mt-3 md:mt-4 text-xs md:text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{action.title}</h3>
@@ -264,7 +251,8 @@ const WardenDashboard = () => {
                         </div>
 
                         {/* Recent Activity: Complaints Feed */}
-                        <div id="warden-tour-activity" className="rounded-[1.25rem] md:rounded-[1.5rem] border overflow-hidden shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                        <div className='p-5'>
+                            <div id="warden-tour-activity" className="rounded-[1.25rem] md:rounded-[1.5rem] border overflow-hidden shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
                             <div className="p-5 md:p-8 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-tertiary)' }}>
                                 <div>
                                     <h3 className="text-lg md:text-xl font-black" style={{ color: 'var(--text-primary)' }}>Recent Activity</h3>
@@ -275,7 +263,7 @@ const WardenDashboard = () => {
                                 </Link>
                             </div>
 
-                            <div className="divide-y max-h-[380px] overflow-y-auto warden-scrollbar" style={{ borderColor: 'var(--border-primary)' }}>
+                            <div className="divide-y max-h-[320px] overflow-y-auto warden-scrollbar" style={{ borderColor: 'var(--border-primary)' }}>
                                 {loading ? (
                                     <div className="p-10 md:p-12 text-center">
                                         <Loader2 className="w-7 h-7 md:w-8 md:h-8 animate-spin mx-auto text-orange-500" />
@@ -319,10 +307,11 @@ const WardenDashboard = () => {
                                 )}
                             </div>
                         </div>
+                        </div>
                     </div>
 
                     {/* Right Column: Mini Profile & System Status */}
-                    <div className="lg:col-span-4 space-y-6 md:y-8">
+                    <div className="lg:col-span-4 space-y-6 md:y-8 relative lg:top-15">
                         {/* Warden Info Card */}
                         <div id="warden-tour-info" className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 md:p-8 shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
                             <div className="flex flex-col items-center text-center">
@@ -361,43 +350,6 @@ const WardenDashboard = () => {
                                 Edit Profile
                             </button>
                         </div>
-
-                        {/* Date & Insight Widget */}
-                        {/* <div className="rounded-[1.25rem] md:rounded-[1.5rem] border p-6 md:p-8"
-                            style={{
-                                backgroundColor: 'var(--bg-card)',
-                                borderColor: 'var(--border-primary)',
-                                background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(249,115,22,0.03) 100%)'
-                            }}>
-                            <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
-                                <div className="p-2.5 md:p-3 rounded-xl md:rounded-2xl bg-blue-500/10 text-blue-500 shadow-inner">
-                                    <Calendar className="w-5 h-5 md:w-6 md:h-6" />
-                                </div>
-                                <div>
-                                    <h3 className="font-black text-base md:text-lg" style={{ color: 'var(--text-primary)' }}>Calendar</h3>
-                                    <p className="text-[10px] md:text-xs font-medium opacity-60" style={{ color: 'var(--text-muted)' }}>Status</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-0.5 md:space-y-1">
-                                <p className="text-3xl md:text-4xl font-black tracking-tighter" style={{ color: 'var(--text-primary)' }}>
-                                    {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                                </p>
-                                <p className="text-[10px] md:text-sm font-bold uppercase tracking-widest opacity-50" style={{ color: 'var(--text-muted)' }}>
-                                    {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric' })}
-                                </p>
-                            </div>
-
-                            <div className="mt-8 md:mt-10 pt-6 md:pt-8 border-t" style={{ borderColor: 'var(--border-primary)' }}>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-1.5 md:gap-2">
-                                        <div className="w-1.5 md:w-2 h-1.5 md:h-2 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>Link</span>
-                                    </div>
-                                    <span className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-green-500/10 text-green-600 text-[8px] md:text-[10px] font-black uppercase">Live</span>
-                                </div>
-                            </div>
-                        </div> */}
                     </div>
                 </div>
             </div>

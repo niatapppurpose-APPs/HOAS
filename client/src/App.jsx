@@ -38,6 +38,15 @@ const App = () => {
     };
   }, []);
 
+  // Request browser notification permission for emergency alerts
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch((err) => {
+        console.warn('Notification permission request failed:', err);
+      });
+    }
+  }, []);
+
   // Track app launches across tabs using localStorage (counts once per browser tab session)
   useEffect(() => {
     const COUNT_KEY = 'HOAS_HOME_VISIT_COUNT';

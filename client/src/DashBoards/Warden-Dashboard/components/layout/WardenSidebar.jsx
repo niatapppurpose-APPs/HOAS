@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   X,
   Shield,
+  ShieldAlert,
   PieChart,
 } from "lucide-react";
 import { useAuth } from "../../../../context/AuthContext";
@@ -40,6 +41,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
     const path = location.pathname;
     if (path.includes('/students')) return 'students';
     if (path.includes('/complaints')) return 'complaints';
+    if (path.includes('/emergency-location')) return 'emergency-location';
     if (path.includes('/analytics')) return 'analytics';
     if (path.includes('/leave-requests')) return 'leave-requests';
     if (path.includes('/announcements')) return 'announcements';
@@ -76,6 +78,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/warden", tourId: "warden-tour-nav-dashboard" },
+    { id: "emergency-location", label: "Emergency Location", icon: ShieldAlert, path: "/dashboard/warden/emergency-location", tourId: "warden-tour-nav-emergency-location" },
     { id: "students", label: "Students", icon: Users, path: "/dashboard/warden/students", tourId: "warden-tour-nav-students" },
     { id: "complaints", label: "Complaints", icon: FileText, path: "/dashboard/warden/complaints", tourId: "warden-tour-nav-complaints" },
     { id: "analytics", label: "Analytics", icon: PieChart, path: "/dashboard/warden/analytics", tourId: "warden-tour-nav-analytics", isNew: true },

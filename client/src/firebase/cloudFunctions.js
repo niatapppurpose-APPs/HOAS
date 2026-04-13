@@ -5,6 +5,7 @@
 
 import { httpsCallable } from 'firebase/functions';
 import { functions, isEmulatorConnected } from './firebaseConfig';
+import { auth } from './firebaseConfig';
 
 // =============================================================================
 // ENVIRONMENT DETECTION
@@ -17,6 +18,67 @@ export const getApiBaseUrl = () => {
   } else {
     return `https://asia-south1-${projectId}.cloudfunctions.net`;
   }
+};
+
+const callLocationApi = async (endpoint, method = 'GET', payload = null) => {
+  if (!auth.currentUser) {
+    throw new Error('You must be signed in');
+  }
+
+  const token = await auth.currentUser.getIdToken();
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/locationApi${endpoint}`;
+
+  const response = await fetch(url, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: payload ? JSON.stringify(payload) : undefined,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data?.error || 'Emergency location request failed');
+  }
+  return data;
+};
+
+export const shareEmergencyLocation = async ({ latitude, longitude, accuracy, expiryMinutes = 30 }) => {
+  return callLocationApi('/share', 'POST', {
+    latitude,
+    longitude,
+    accuracy,
+    expiryMinutes,
+  });
+};
+
+export const updateEmergencyLocation = async ({ latitude, longitude, accuracy }) => {
+  return callLocationApi('/update', 'POST', {
+    latitude,
+    longitude,
+    accuracy,
+  });
+};
+
+export const stopEmergencyLocation = async () => {
+  return callLocationApi('/stop', 'POST');
+};
+
+export const getEmergencyLocationSession = async () => {
+  return callLocationApi('/session', 'GET');
+};
+
+export const getActiveEmergencyLocations = async () => {
+  return callLocationApi('/active', 'GET');
+};
+
+export const getLocationHistory = async (studentId) => {
+  if (!studentId) {
+    throw new Error('Student ID is required');
+  }
+  return callLocationApi(`/history/${studentId}`, 'GET');
 };
 
 // =============================================================================
@@ -337,4 +399,9 @@ export default {
   getStudentOutings,
   getWardenOutings,
   getOutingHistory,
+  shareEmergencyLocation,
+  updateEmergencyLocation,
+  stopEmergencyLocation,
+  getEmergencyLocationSession,
+  getActiveEmergencyLocations,
 };

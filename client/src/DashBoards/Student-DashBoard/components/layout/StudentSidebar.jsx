@@ -8,6 +8,7 @@ import {
   Bell,
   Settings,
   HelpCircle,
+  ShieldAlert,
   Pin,
   ChevronLeft,
   X,
@@ -35,6 +36,7 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
     if (path.includes('/complaints')) return 'complaints';
     if (path.includes('/leave')) return 'leave';
     if (path.includes('/announcements')) return 'announcements';
+    if (path.includes('/emergency-location')) return 'emergency-location';
     if (path.includes('/settings')) return 'settings';
     if (path.includes('/help')) return 'help';
     return 'dashboard';
@@ -68,6 +70,7 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/student", tourId: "student-tour-nav-dashboard" },
+    { id: "emergency-location", label: "Emergency Location", icon: ShieldAlert, path: "/dashboard/student/emergency-location", tourId: "student-tour-nav-emergency-location" },
     { id: "complaints", label: "Complaints", icon: FileText, path: "/dashboard/student/complaints", tourId: "student-tour-nav-complaints" },
     { id: "leave", label: "Leave Requests", icon: Calendar, path: "/dashboard/student/leave", tourId: "student-tour-nav-leave" },
     { id: "announcements", label: "Announcements", icon: Bell, path: "/dashboard/student/announcements", tourId: "student-tour-nav-announcements" },

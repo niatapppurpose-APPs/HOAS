@@ -15,4 +15,5 @@ export * from './src/notifications.js';
 export * from './src/bulkUpload.js';
 export * from './src/complaintFunctions.js';
 export * from './src/outingFunctions.js';
+export * from './src/emergencyLocation.js';
 

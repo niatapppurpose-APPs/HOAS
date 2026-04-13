@@ -47,6 +47,7 @@ const StudentLayout = lazy(() => import("../../DashBoards/Student-DashBoard/comp
 const StudentComplaints = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentComplaints"));
 const StudentLeaveRequests = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentLeaveRequests"));
 const StudentAnnouncements = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentAnnouncements"));
+const StudentEmergencyLocation = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentEmergencyLocation"));
 const StudentSettings = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentSettings"));
 const StudentHelpSupport = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentHelpSupport"));
 const StudentProfile = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentProfile"));
@@ -56,6 +57,7 @@ const WardenStudents = lazy(() => import("../../DashBoards/Warden-Dashboard/comp
 const WardenComplaints = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenComplaints"));
 const WardenLeaveRequests = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenLeaveRequests"));
 const WardenAnnouncements = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenAnnouncements"));
+const WardenEmergencyLocation = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenEmergencyLocation"));
 const WardenSettings = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenSettings"));
 const WardenHelpSupport = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenHelpSupport"));
 const WardenProfile = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenProfile"));
@@ -70,6 +72,7 @@ const ManagementHostels = lazy(() => import("../../DashBoards/Management-Dashboa
 const ManagementReports = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Reports"));
 const ManagementAnalytics = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Analytics/AnalyticsDashboard"));
 const ManagementComplaints = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementComplaints"));
+const ManagementEmergencyLocation = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementEmergencyLocation"));
 const ManagementHelp = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/HelpSupport"));
 const ManagementSettings_Page = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementSettings"));
 const ManagementProfile = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementProfile"));
@@ -112,6 +115,7 @@ const Routes_path = () => {
                                 }>
                     <Route index element={<StudentDashboard />} />
                     <Route path="complaints" element={<StudentComplaints />} />
+                    <Route path="emergency-location" element={<StudentEmergencyLocation />} />
                     <Route path="leave" element={<StudentLeaveRequests />} />
                     <Route path="announcements" element={<StudentAnnouncements />} />
                     <Route path="settings" element={<StudentSettings />} />
@@ -125,6 +129,7 @@ const Routes_path = () => {
                                 }>
                     <Route index element={<WardenDashboard />} />
                     <Route path="students" element={<WardenStudents />} />
+                    <Route path="emergency-location" element={<WardenEmergencyLocation />} />
                     <Route path="complaints" element={<WardenComplaints />} />
                     <Route path="leave-requests" element={<WardenLeaveRequests />} />
                     <Route path="analytics" element={
@@ -151,6 +156,7 @@ const Routes_path = () => {
                     <Route path="wardens" element={<ManagementWardens />} />
                     <Route path="students" element={<ManagementStudents />} />
                     <Route path="hostels" element={<ManagementHostels />} />
+                    <Route path="emergency-location" element={<ManagementEmergencyLocation />} />
                     <Route path="complaints" element={<ManagementComplaints />} />                    <Route path="analytics" element={
                         <FeatureGate feature="analytics" fallback={<FeatureDisabled feature="analytics" />}>
                             <ManagementAnalytics role="management" />
