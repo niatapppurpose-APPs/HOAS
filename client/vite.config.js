@@ -34,9 +34,6 @@ export default defineConfig({
           if (id.includes('node_modules/leaflet')){
             return 'leaflet-vendor';
           }
-          if (id.includes('node_modules/recharts')){
-            return 'charts-vendor';
-          }
           if (id.includes('node_modules/@react-google-maps')){
             return 'google-maps-vendor';
           }
