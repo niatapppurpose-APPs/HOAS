@@ -37,11 +37,8 @@ export default defineConfig({
           if (id.includes('node_modules/@react-google-maps')){
             return 'google-maps-vendor';
           }
-          // Keep recharts with other charting dependencies
-          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3')){
-            return 'charts-vendor';
-          }
-          // Heavy pages - split into separate chunks
+          // DO NOT separate recharts - it needs React accessible. Let it bundle with pages that use it (Analytics)
+          // Heavy pages - split into separate chunks (recharts will be included with analytics page)
           if (id.includes('Analytics')){
             return 'analytics-page';
           }
