@@ -45,6 +45,56 @@ const callLocationApi = async (endpoint, method = 'GET', payload = null) => {
   return data;
 };
 
+const callFeesApi = async (endpoint, method = 'GET', payload = null) => {
+  if (!auth.currentUser) {
+    throw new Error('You must be signed in');
+  }
+
+  const token = await auth.currentUser.getIdToken();
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/feesApi/api/fees${endpoint}`;
+
+  const response = await fetch(url, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: payload ? JSON.stringify(payload) : undefined,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data?.error || 'Fee API request failed');
+  }
+  return data;
+};
+
+const callChatApi = async (endpoint, method = 'GET', payload = null) => {
+  if (!auth.currentUser) {
+    throw new Error('You must be signed in');
+  }
+
+  const token = await auth.currentUser.getIdToken();
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/chatApi/api/chat${endpoint}`;
+
+  const response = await fetch(url, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: payload ? JSON.stringify(payload) : undefined,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data?.error || 'Chat API request failed');
+  }
+  return data;
+};
+
 export const shareEmergencyLocation = async ({ latitude, longitude, accuracy, expiryMinutes = 30 }) => {
   return callLocationApi('/share', 'POST', {
     latitude,
@@ -79,6 +129,84 @@ export const getLocationHistory = async (studentId) => {
     throw new Error('Student ID is required');
   }
   return callLocationApi(`/history/${studentId}`, 'GET');
+};
+
+// =============================================================================
+// FEE MANAGEMENT API
+// =============================================================================
+
+export const uploadFeeData = async ({ records, csvData, fileBase64, fileName }) => {
+  return callFeesApi('/upload', 'POST', {
+    records,
+    csvData,
+    fileBase64,
+    fileName,
+  });
+};
+
+export const getStudentFeeDetails = async (studentId) => {
+  if (!studentId) {
+    throw new Error('studentId is required');
+  }
+  return callFeesApi(`/student/${studentId}`, 'GET');
+};
+
+export const getManagementFeeRecords = async (status = 'all') => {
+  const query = status && status !== 'all' ? `?status=${encodeURIComponent(status)}` : '';
+  return callFeesApi(`/management${query}`, 'GET');
+};
+
+export const getWardenFeeRecords = async () => {
+  return callFeesApi('/warden', 'GET');
+};
+
+export const verifyFeeByManagement = async (studentId, note = '') => {
+  return callFeesApi('/verify-management', 'POST', {
+    studentId,
+    note,
+  });
+};
+
+export const verifyFeeByWarden = async (studentId, approved = true, note = '') => {
+  return callFeesApi('/verify-warden', 'POST', {
+    studentId,
+    approved,
+    note,
+  });
+};
+
+export const uploadStudentFeeProof = async (proofImage) => {
+  return callFeesApi('/upload-proof', 'POST', {
+    proofImage,
+  });
+};
+
+// =============================================================================
+// CONTEXT CHAT API
+// =============================================================================
+
+export const sendContextMessage = async ({ contextType, contextId, message }) => {
+  return callChatApi('/send', 'POST', {
+    contextType,
+    contextId,
+    message,
+  });
+};
+
+export const getContextMessages = async ({ contextType, contextId }) => {
+  if (!contextType || !contextId) {
+    throw new Error('contextType and contextId are required');
+  }
+  const query = `/${encodeURIComponent(contextId)}?contextType=${encodeURIComponent(contextType)}`;
+  return callChatApi(query, 'GET');
+};
+
+export const closeContextConversation = async ({ contextType, contextId, reason = 'closed_by_user' }) => {
+  return callChatApi('/close', 'POST', {
+    contextType,
+    contextId,
+    reason,
+  });
 };
 
 // =============================================================================
@@ -404,4 +532,14 @@ export default {
   stopEmergencyLocation,
   getEmergencyLocationSession,
   getActiveEmergencyLocations,
+  uploadFeeData,
+  getStudentFeeDetails,
+  getManagementFeeRecords,
+  getWardenFeeRecords,
+  verifyFeeByManagement,
+  verifyFeeByWarden,
+  uploadStudentFeeProof,
+  sendContextMessage,
+  getContextMessages,
+  closeContextConversation,
 };

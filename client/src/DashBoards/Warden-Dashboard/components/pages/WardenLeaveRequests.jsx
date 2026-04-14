@@ -24,6 +24,7 @@ import {
   Phone,
   FileText,
 } from 'lucide-react';
+import ContextChatBox from '../../../../components/ContextChat/ContextChatBox';
 
 const STATUS = {
   pending: { label: 'Pending', icon: Clock, style: 'text-amber-600 bg-amber-500/10 border-amber-500/20' },
@@ -196,6 +197,14 @@ const WardenLeaveRequests = () => {
                             {item.reason}
                           </div>
                         )}
+
+                        <div className="mt-3">
+                          <ContextChatBox
+                            contextType="leave"
+                            contextId={item.id}
+                            title="Leave Request Chat"
+                          />
+                        </div>
                       </div>
 
                       {item.status === 'pending' && (

@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   X,
   GraduationCap,
+  Wallet,
 } from "lucide-react";
 import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
@@ -34,6 +35,7 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
   const getActiveItem = () => {
     const path = location.pathname;
     if (path.includes('/complaints')) return 'complaints';
+    if (path.includes('/fees')) return 'fees';
     if (path.includes('/leave')) return 'leave';
     if (path.includes('/announcements')) return 'announcements';
     if (path.includes('/emergency-location')) return 'emergency-location';
@@ -72,6 +74,7 @@ const StudentSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDa
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/student", tourId: "student-tour-nav-dashboard" },
     { id: "emergency-location", label: "Emergency Location", icon: ShieldAlert, path: "/dashboard/student/emergency-location", tourId: "student-tour-nav-emergency-location" },
     { id: "complaints", label: "Complaints", icon: FileText, path: "/dashboard/student/complaints", tourId: "student-tour-nav-complaints" },
+    { id: "fees", label: "Fee Status", icon: Wallet, path: "/dashboard/student/fees", tourId: "student-tour-nav-fees" },
     { id: "leave", label: "Leave Requests", icon: Calendar, path: "/dashboard/student/leave", tourId: "student-tour-nav-leave" },
     { id: "announcements", label: "Announcements", icon: Bell, path: "/dashboard/student/announcements", tourId: "student-tour-nav-announcements" },
   ];

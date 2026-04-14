@@ -16,4 +16,6 @@ export * from './src/bulkUpload.js';
 export * from './src/complaintFunctions.js';
 export * from './src/outingFunctions.js';
 export * from './src/emergencyLocation.js';
+export * from './src/fees.js';
+export * from './src/contextChat.js';
 

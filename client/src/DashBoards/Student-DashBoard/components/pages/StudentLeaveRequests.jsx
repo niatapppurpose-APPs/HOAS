@@ -14,6 +14,7 @@ import {
     ChevronDown, ChevronUp, Filter, Search,
     CalendarDays, ArrowRight, Home, LogOut
 } from 'lucide-react';
+import ContextChatBox from '../../../../components/ContextChat/ContextChatBox';
 
 const STATUS_CONFIG = {
     pending: { label: 'Pending', color: 'amber', icon: Clock },
@@ -478,6 +479,11 @@ const StudentLeaveRequests = () => {
                                                         </button>
                                                     )}
                                                 </div>
+                                                <ContextChatBox
+                                                    contextType="leave"
+                                                    contextId={leave.id}
+                                                    title="Leave Request Chat"
+                                                />
                                             </div>
                                         )}
                                     </div>

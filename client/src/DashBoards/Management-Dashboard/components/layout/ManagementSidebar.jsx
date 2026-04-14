@@ -14,7 +14,8 @@ import {
   Shield,
   ShieldAlert,
   X,
-  MessageSquare
+  MessageSquare,
+  Wallet
 } from "lucide-react";
 import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
@@ -49,6 +50,7 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
     if (path.includes('/students')) return 'students';
     if (path.includes('/hostels')) return 'hostels';
     if (path.includes('/complaints')) return 'complaints';
+    if (path.includes('/fees')) return 'fees';
     if (path.includes('/emergency-location')) return 'emergency-location';
     if (path.includes('/analytics')) return 'analytics';
     if (path.includes('/reports')) return 'reports';
@@ -90,6 +92,7 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
     { id: "students", label: "Students", icon: Users, path: "/dashboard/management/students", tourId: "mgmt-tour-nav-students" },
     { id: "hostels", label: "Hostels", icon: Home, path: "/dashboard/management/hostels", tourId: "mgmt-tour-nav-hostels" },
     { id: "complaints", label: "Complaints", icon: MessageSquare, path: "/dashboard/management/complaints", tourId: "mgmt-tour-nav-complaints" },
+    { id: "fees", label: "Fee Management", icon: Wallet, path: "/dashboard/management/fees", tourId: "mgmt-tour-nav-fees" },
     { id: "analytics", label: "Analytics", icon: PieChart, path: "/dashboard/management/analytics", tourId: "mgmt-tour-nav-analytics" },
     { id: "reports", label: "Reports", icon: FileText, path: "/dashboard/management/reports", tourId: "mgmt-tour-nav-reports" },
   ];

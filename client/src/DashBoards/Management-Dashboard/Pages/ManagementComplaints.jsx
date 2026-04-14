@@ -25,6 +25,7 @@ import {
     MessageSquareText,
 } from 'lucide-react';
 import { useToast } from '../../../components/Toast';
+import ContextChatBox from '../../../components/ContextChat/ContextChatBox';
 
 const ManagementComplaints = () => {
     const { userData } = useAuth();
@@ -473,6 +474,13 @@ const ManagementComplaints = () => {
                                     )}
                                 </div>
                             )}
+
+                            <ContextChatBox
+                                contextType="complaint"
+                                contextId={selectedComplaint.id}
+                                title="Complaint Context Chat"
+                                readOnly
+                            />
 
                             {/* Complaint Timeline */}
                             {selectedComplaint.complaintHistory && selectedComplaint.complaintHistory.length > 0 && (
