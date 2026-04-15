@@ -15,17 +15,9 @@ export { requestOuting, approveOuting, rejectOuting, markStudentReturn } from '.
 // Query Services
 export { getStudentOutings, getWardenOutings, getOutingHistory } from './outingServices.js';
 
-// Helpers (for internal use)
-export {
-  calculateTimingStatus,
-  getSystemSettings,
-  areOutingsEnabled,
-  getStudentData,
-  getUserData,
-  sendNotification,
-  validateOutingRequest,
-  validateApprovalData,
-} from './outingHelpers.js';
+// Helpers (for internal use only - NOT exported as Cloud Functions)
+// These are utility functions used internally by outing functions
+// Do NOT export these - they conflict with actual Cloud Functions
 
 // Scheduled Functions
 export { autoMarkLateOutings, outingStatusChange } from './outingScheduler.js';
