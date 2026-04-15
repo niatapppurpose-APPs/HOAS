@@ -20,7 +20,7 @@ import crypto from 'crypto';
  * - A throwaway random password is used for auth.createUser() — never stored or sent.
  * - Student receives a secure password reset link via email.
  */
-export const createStudent = onCall(corsOptions, async (request) => {
+export const createStudent = onCall({ ...corsOptions, timeoutSeconds: 300 }, async (request) => {
     try {
         logger.info('📋 createStudent called');
 
@@ -43,15 +43,20 @@ export const createStudent = onCall(corsOptions, async (request) => {
             hostelRoom, 
             fatherName,
             address,
-            wardenId // optional explicit assignment
+            wardenId, // optional explicit assignment
+            totalFee,
+            paidFee
         } = request.data;
 
-        // ─── 2. Input Validation ───────────────────────────────────
+        // ─── 2. Input Validation ──────────────────────────────────
         if (!name || !email) {
             throw new HttpsError('invalid-argument', 'name and email are required');
         }
         if (!collegeName) {
             throw new HttpsError('invalid-argument', 'collegeName is required');
+        }
+        if (totalFee === undefined || paidFee === undefined) {
+             throw new HttpsError('invalid-argument', 'totalFee and paidFee are required');
         }
 
         // ─── 3. Authorization (RBAC) ──────────────────────────────
@@ -120,6 +125,11 @@ export const createStudent = onCall(corsOptions, async (request) => {
                 createdBy: request.auth.uid,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
+                feeDetails: {
+                    totalFee: Number(totalFee),
+                    paidFee: Number(paidFee),
+                    pendingFee: Number(totalFee) - Number(paidFee),
+                },
             };
             if (wardenId) {
                 studentData.wardenId = wardenId;

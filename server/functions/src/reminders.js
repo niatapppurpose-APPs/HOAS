@@ -14,10 +14,10 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onCall } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
-import { Resend } from 'resend';
+import { createTransporter } from './email/emailService.js';
+import { getFromAddress } from './email/emailConfig.js';
 
 const db = getFirestore();
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Interim statuses that should have reminders
 const INTERIM_STATUSES = ['pending', 'in-progress', 'warden-resolved', 'disputed'];
@@ -55,10 +55,10 @@ async function getStudentEmail(studentId) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Helper: Send email reminder via Resend
-// ─────────────────────────────────────────────────────────────
+// Helper: Send email reminder via Nodemailer
+// ─────────────────────────────────────────────────────────────────
 async function sendReminderEmail(studentEmail, studentName, complaint) {
-  if (!studentEmail || !process.env.RESEND_API_KEY) {
+  if (!studentEmail) {
     logger.warn('Missing email configuration, skipping email reminder');
     return false;
   }
@@ -133,18 +133,14 @@ async function sendReminderEmail(studentEmail, studentName, complaint) {
       </div>
     `;
 
-    const response = await resend.emails.send({
-      from: 'HOAS Reminders <reminders@hoas.example.com>',
+    const transporter = createTransporter();
+    await transporter.sendMail({
+      from: getFromAddress(),
       to: studentEmail,
       subject: `Reminder: "${complaint.title}" - Status Update`,
       html: htmlContent,
       replyTo: 'support@hoas.example.com'
     });
-
-    if (response.error) {
-      logger.error('Resend email send error:', response.error);
-      return false;
-    }
 
     logger.info(`Email reminder sent to ${studentEmail} for complaint ${complaint.id}`);
     return true;
@@ -371,5 +367,124 @@ export const getReminderStats = onCall(async (request) => {
   } catch (error) {
     logger.error('Error getting reminder stats:', error);
     throw new Error(`Failed to get stats: ${error.message}`);
+  }
+});
+
+// ==========================================
+// Scheduled Auto Verification & Reminders
+// ==========================================
+export const autoVerifyAndRemindStudents = onSchedule('every 1 hours', async (event) => {
+  logger.info('Running autoVerifyAndRemindStudents...');
+  const now = new Date();
+  
+  try {
+    const studentsSnap = await db.collection('users').where('role', '==', 'student').get();
+    let batch = db.batch();
+    let updates = 0;
+    
+    for (const docSnap of studentsSnap.docs) {
+      const student = docSnap.data();
+      const needsVerification = student.managementVerification === 'Unverified' || student.wardenVerification === 'Unverified' || !student.managementVerification || !student.wardenVerification;
+      
+      if (!needsVerification) {
+        continue;
+      }
+      
+      const paidFee = student.feeDetails?.paidFee || 0;
+      if (paidFee === 0) continue; // Do not auto-verify if paid is 0
+      
+      const createdAtStr = student.createdAt || student.autoVerifyStartTime;
+      if (!createdAtStr) continue; 
+      
+      const createdAt = new Date(createdAtStr);
+      const hoursSinceCreation = (now - createdAt) / (1000 * 60 * 60);
+      const isExplicitlyUnverified = !!student.unverifyReason;
+      
+      const lastReminderStr = student.lastUnverifyReminderSentAt;
+      const lastDailyReminder = lastReminderStr ? new Date(lastReminderStr) : null;
+      const hoursSinceLastReminder = lastDailyReminder ? (now - lastDailyReminder) / (1000 * 60 * 60) : 24;
+      
+      if (isExplicitlyUnverified) {
+         // Active denial with reason: notify each day via app
+         if (hoursSinceLastReminder >= 24) {
+             const notifRef = docSnap.ref.collection('notifications').doc();
+             batch.set(notifRef, {
+                 title: 'Verification Pending',
+                 message: 'Please review your verification status. Reason: ' + student.unverifyReason,
+                 type: 'verification_alert',
+                 read: false,
+                 createdAt: now.toISOString()
+             });
+             
+             batch.update(docSnap.ref, { lastUnverifyReminderSentAt: now.toISOString() });
+             updates++;
+         }
+      } else {
+         // Management missed to verify
+         if (hoursSinceCreation >= 23 && hoursSinceCreation < 24 && !student.autoVerifyWarningSent) {
+             if (student.managementId) {
+                const notifRef = db.collection('users').doc(student.managementId).collection('notifications').doc();
+                batch.set(notifRef, {
+                    title: 'Auto-Verification Alert',
+                    message: 'Student ' + (student.fullName || student.name) + ' will be automatically verified in 1 hour unless you unverify.',
+                    type: 'system_alert',
+                    read: false,
+                    createdAt: now.toISOString()
+                });
+                
+                // Fetch management email to send warning
+                const mgtDoc = await db.collection('users').doc(student.managementId).get();
+                if (mgtDoc.exists && mgtDoc.data().email) {
+                    try {
+                        const transporter = createTransporter();
+                        await transporter.sendMail({
+                            from: getFromAddress(),
+                            to: mgtDoc.data().email,
+                            subject: 'Action Required: Auto-Verification Pending',
+                            html: `<p>Student <b>${student.fullName || student.name}</b> has been waiting for verification for 23 hours.</p>
+                                   <p>If no action is taken, they will be automatically verified in 1 hour.</p>
+                                   <p>Please log in to your dashboard to review and explicitly verify or unverify them.</p>`
+                        });
+                    } catch(e) {
+                        logger.error('Failed to send auto-verify warning email:', e);
+                    }
+                }
+             }
+             batch.update(docSnap.ref, { autoVerifyWarningSent: true });
+             updates++;
+         } else if (hoursSinceCreation >= 24) {
+             // 24 hours passed without explicit unverify
+             batch.update(docSnap.ref, {
+                 managementVerification: 'Verify',
+                 wardenVerification: 'Verify',
+                 autoVerifiedAt: now.toISOString()
+             });
+             
+             const notifRef = docSnap.ref.collection('notifications').doc();
+             batch.set(notifRef, {
+                 title: 'Account Verified automatically',
+                 message: 'Your account has been automatically verified.',
+                 type: 'system_alert',
+                 read: false,
+                 createdAt: now.toISOString()
+             });
+             updates++;
+         }
+      }
+      
+      if (updates >= 400) {
+         await batch.commit();
+         batch = db.batch();
+         updates = 0;
+      }
+    }
+    
+    if (updates > 0) {
+      await batch.commit();
+    }
+    
+    logger.info('Auto-verification check completed successfully.');
+  } catch (error) {
+    logger.error('Error during auto verification:', error);
   }
 });

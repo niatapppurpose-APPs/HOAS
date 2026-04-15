@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase/firebaseConfig";
-import { Clock, Building2, CheckCircle, Loader2 } from "lucide-react";
+import { Clock, Building2, CheckCircle, Loader2, X, IndianRupee } from "lucide-react";
 import AnimatedLogoutButton from "../../components/AnimatedLogoutButton";
 
 const WaitingApproval = () => {
@@ -28,7 +28,11 @@ const WaitingApproval = () => {
         } else if (userData.role === "warden") {
           navigate("/dashboard/warden", { replace: true });
         } else if (userData.role === "student") {
-          navigate("/dashboard/student", { replace: true });
+          const needsPayment = !userData?.feeDetails?.paidFee || userData?.feeDetails?.paidFee === 0;
+          const unverified = !userData?.managementVerification || userData?.managementVerification === 'Unverified' || !userData?.wardenVerification || userData?.wardenVerification === 'Unverified';
+          if (!needsPayment && !unverified) {
+            navigate("/dashboard/student", { replace: true });
+          }
         } else if (userData.role === "admin" || userData.role === "owner") {
           navigate("/OwnersDashboard", { replace: true });
         }
@@ -56,6 +60,8 @@ const WaitingApproval = () => {
   }
 
   const isDenied = userData?.status?.toLowerCase() === "denied";
+  const needsPayment = !userData?.feeDetails?.paidFee || userData?.feeDetails?.paidFee === 0;
+  const unverifyReason = userData?.unverifyReason;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -108,6 +114,36 @@ const WaitingApproval = () => {
                 <p className="text-slate-400 text-sm leading-relaxed">
                   Your request has been reviewed and denied by the administration.
                   Please contact support if you believe this is an error.
+                </p>
+              </>
+            ) : needsPayment ? (
+              <>
+                <div className="inline-flex p-4 rounded-full bg-amber-500/20 mb-4 animate-bounce">
+                  <IndianRupee className="w-12 h-12 text-amber-400" />
+                </div>
+                <h2 className="text-xl font-semibold text-white mb-2">
+                  Payment Required
+                </h2>
+                <div className="text-slate-400 text-sm leading-relaxed">
+                  Account verification is locked until your initial payment is received. 
+                  <br />
+                  <span className="text-indigo-400 font-semibold">Current Balance: ₹0</span>
+                </div>
+              </>
+            ) : unverifyReason ? (
+              <>
+                <div className="inline-flex p-4 rounded-full bg-rose-500/20 mb-4">
+                  <X className="w-12 h-12 text-rose-400" />
+                </div>
+                <h2 className="text-xl font-semibold text-white mb-2">
+                  Action Required
+                </h2>
+                <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 mb-4 text-left">
+                  <p className="text-[10px] uppercase font-bold text-rose-400 tracking-widest mb-1">Reason from Management:</p>
+                  <p className="text-slate-300 text-sm italic">"{unverifyReason}"</p>
+                </div>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  Please address the issue above and contact management if needed.
                 </p>
               </>
             ) : (

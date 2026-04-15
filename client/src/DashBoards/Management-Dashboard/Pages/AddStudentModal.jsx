@@ -7,7 +7,7 @@ import { db } from '../../../firebase/firebaseConfig';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import {
     X, User, Mail, Phone, BookOpen, Building2, CheckCircle2,
-    GraduationCap, Briefcase
+    GraduationCap, Briefcase, IndianRupee
 } from 'lucide-react';
 
 const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
@@ -26,7 +26,9 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
         hostelBlock: '',
         hostelRoom: '',
         fatherName: '',
-        address: ''
+        address: '',
+        totalFee: '',
+        paidFee: 0,
     });
     const [hostels, setHostels] = useState([]);
 
@@ -101,6 +103,9 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
         if (!formData.email.trim()) return 'Email is required';
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return 'Invalid email format';
         if (!formData.studentId.trim()) return 'Student ID is required';
+        if (formData.totalFee === '' || Number(formData.totalFee) <= 0) return 'Total Fee is required and must be greater than zero';
+        if (formData.paidFee === '' || Number(formData.paidFee) < 0) return 'Paid Fee must be a valid number';
+        if (Number(formData.paidFee) > Number(formData.totalFee)) return 'Paid Fee cannot be strictly greater than Total Fee';
         return null;
     };
 
@@ -132,6 +137,8 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
                 collegeName: college,
                 managementId: userData?.uid || user?.uid,
                 wardenId: selectedWarden || undefined,
+                totalFee: Number(formData.totalFee),
+                paidFee: Number(formData.paidFee),
             });
 
             setSuccess(true);
@@ -150,7 +157,7 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
         setFormData({ 
             fullName: '', email: '', studentId: '', phone: '', 
             course: '', branch: '', year: '', hostelBlock: '', hostelRoom: '', 
-            fatherName: '', address: '' 
+            fatherName: '', address: '', totalFee: '', paidFee: 0 
         });
         setSuccess(false);
         setError('');
@@ -421,7 +428,7 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
                                         <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: textSecondary }} />
                                     </div>
                                 </div>
-                                
+
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium" style={{ color: textPrimary }}>Home Address</label>
                                     <div className="relative">
@@ -434,6 +441,40 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
                                             placeholder="123 Example Street"
                                         />
                                         <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: textSecondary }} />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium" style={{ color: textPrimary }}>Total Fee <span className="text-red-500">*</span></label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={formData.totalFee}
+                                            onChange={(e) => handleChange('totalFee', e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none transition-all placeholder-opacity-50"
+                                            style={{ backgroundColor: inputBg, border: `1px solid ${inputBorder}`, color: textPrimary }}
+                                            placeholder="150000"
+                                            min="1"
+                                            required
+                                        />
+                                        <IndianRupee className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: textSecondary }} />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium" style={{ color: textPrimary }}>Paid Fee <span className="text-red-500">*</span></label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={formData.paidFee}
+                                            onChange={(e) => handleChange('paidFee', e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none transition-all placeholder-opacity-50"
+                                            style={{ backgroundColor: inputBg, border: `1px solid ${inputBorder}`, color: textPrimary }}
+                                            placeholder="0"
+                                            min="0"
+                                            required
+                                        />
+                                        <IndianRupee className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: textSecondary }} />
                                     </div>
                                 </div>
 

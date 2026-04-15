@@ -19,7 +19,7 @@ import {
  * Uses centralized SMTP config from emailConfig.js.
  * @returns {import('nodemailer').Transporter}
  */
-function createTransporter() {
+export function createTransporter() {
     const smtpConfig = getSmtpConfig();
     return nodemailer.createTransport(smtpConfig);
 }

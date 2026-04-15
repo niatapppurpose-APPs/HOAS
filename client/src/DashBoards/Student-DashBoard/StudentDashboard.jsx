@@ -116,6 +116,12 @@ const StudentDashboard = () => {
                 navigate('/waiting-approval');
             } else if (userData.role !== 'student') {
                 navigate('/dashboard');
+            } else {
+                const needsPayment = !userData.feeDetails?.paidFee || userData.feeDetails?.paidFee === 0;
+                const unverified = !userData.managementVerification || userData.managementVerification === 'Unverified' || !userData.wardenVerification || userData.wardenVerification === 'Unverified';
+                if (needsPayment || unverified) {
+                    navigate('/waiting-approval');
+                }
             }
         }
     }, [userData, userDataLoading, navigate]);

@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
  */
 export const detectColumns = (headerRow) => {
     let nameCol = -1, studentIdCol = -1, emailCol = -1, snoCol = -1;
+    let totalFeeCol = -1, paidFeeCol = -1, pendingFeeCol = -1;
 
     headerRow.forEach((header, idx) => {
         const h = String(header || '').trim().toLowerCase();
@@ -16,12 +17,16 @@ export const detectColumns = (headerRow) => {
             nameCol = idx;
         } else if (emailCol === -1 && /(e[-\s]?mail|g[-\s]?mail|gmail)/.test(h)) {
             emailCol = idx;
-        } else if (studentIdCol === -1 && /(student|roll|reg|enrol)/.test(h) && !/mail/.test(h)) {
-            studentIdCol = idx;
+        } else if (pendingFeeCol === -1 && /pending/.test(h)) {
+            pendingFeeCol = idx;
+        } else if (paidFeeCol === -1 && /paid/.test(h)) {
+            paidFeeCol = idx;
+        } else if (totalFeeCol === -1 && /total/.test(h)) {
+            totalFeeCol = idx;
         }
     });
 
-    return { nameCol, studentIdCol, emailCol, snoCol };
+    return { nameCol, studentIdCol, emailCol, snoCol, totalFeeCol, paidFeeCol, pendingFeeCol };
 };
 
 /**
@@ -37,7 +42,7 @@ export const parseExcel = (fileData) => {
     if (jsonData.length < 2) return [];
 
     const headerRow = jsonData[0] || [];
-    let { nameCol, studentIdCol, emailCol, snoCol } = detectColumns(headerRow);
+    let { nameCol, studentIdCol, emailCol, snoCol, totalFeeCol, paidFeeCol, pendingFeeCol } = detectColumns(headerRow);
 
     // Fallback to position-based detection if headers not recognized
     if (nameCol === -1 || emailCol === -1) {
@@ -62,11 +67,27 @@ export const parseExcel = (fileData) => {
 
         if (!name || !email) continue;
 
+        let totalFee = totalFeeCol >= 0 ? Number(row[totalFeeCol]) || 0 : 0;
+        let paidFee = paidFeeCol >= 0 ? Number(row[paidFeeCol]) || 0 : 0;
+        let pendingFee = pendingFeeCol >= 0 ? Number(row[pendingFeeCol]) : null;
+
+        // Validation / auto-calculation
+        if (pendingFee === null) {
+            pendingFee = totalFee - paidFee;
+        }
+
         students.push({
             sno: snoCol >= 0 ? (row[snoCol] || i) : i,
             name,
             studentId: studentIdCol >= 0 ? String(row[studentIdCol] || '').trim() : '',
             email,
+            feeDetails: {
+                totalFee,
+                paidFee,
+                pendingFee
+            },
+            managementVerification: 'Unverified',
+            wardenVerification: 'Unverified'
         });
     }
 

@@ -280,6 +280,9 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
                                                 <th className="py-2 px-3 text-left">Name</th>
                                                 <th className="py-2 px-3 text-left">StudentId</th>
                                                 <th className="py-2 px-3 text-left">G-Mail</th>
+                                                <th className="py-2 px-3 text-left">Total Fee</th>
+                                                <th className="py-2 px-3 text-left">Paid Fee</th>
+                                                <th className="py-2 px-3 text-left">Pending Fee</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -288,6 +291,9 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
                                                 <td className="py-1.5 px-3">Shaik Ayaan</td>
                                                 <td className="py-1.5 px-3">STU001</td>
                                                 <td className="py-1.5 px-3">ayaan@niat.com</td>
+                                                <td className="py-1.5 px-3">50000</td>
+                                                <td className="py-1.5 px-3">20000</td>
+                                                <td className="py-1.5 px-3">30000</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -341,6 +347,9 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
                                                 <th className="px-4 py-2.5 text-left text-xs font-semibold" style={{ color: textSecondary }}>Name</th>
                                                 <th className="px-4 py-2.5 text-left text-xs font-semibold" style={{ color: textSecondary }}>Student ID</th>
                                                 <th className="px-4 py-2.5 text-left text-xs font-semibold" style={{ color: textSecondary }}>Email</th>
+                                                <th className="px-4 py-2.5 text-left text-xs font-semibold" style={{ color: textSecondary }}>Total Fee</th>
+                                                <th className="px-4 py-2.5 text-left text-xs font-semibold" style={{ color: textSecondary }}>Paid Fee</th>
+                                                <th className="px-4 py-2.5 text-left text-xs font-semibold" style={{ color: textSecondary }}>Pending Fee</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -360,6 +369,9 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-2.5" style={{ color: textSecondary }}>{student.email}</td>
+                                                    <td className="px-4 py-2.5" style={{ color: textSecondary }}>{student.feeDetails?.totalFee || 0}</td>
+                                                    <td className="px-4 py-2.5" style={{ color: textSecondary }}>{student.feeDetails?.paidFee || 0}</td>
+                                                    <td className="px-4 py-2.5" style={{ color: textSecondary }}>{student.feeDetails?.pendingFee || 0}</td>
                                                 </tr>
                                             ))}
                                         </tbody>

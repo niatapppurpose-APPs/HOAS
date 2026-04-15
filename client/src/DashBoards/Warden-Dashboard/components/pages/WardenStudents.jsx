@@ -5,7 +5,7 @@ import { useToast } from '../../../../components/Toast';
 import WardenHeader from '../layout/WardenHeader';
 import Avatar from '../../../../components/OwnerServices/Avatar';
 import { db } from '../../../../firebase/firebaseConfig';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import {
     Users, Search, Filter, Loader2, GraduationCap,
     Phone, Mail, Home, Hash, Building2, ChevronDown,
@@ -56,6 +56,19 @@ const WardenStudents = () => {
 
         return () => unsubscribe();
     }, [userData?.managementId]);
+
+    const handleVerificationChange = async (studentId, value) => {
+        try {
+            const studentRef = doc(db, 'users', studentId);
+            await updateDoc(studentRef, {
+                wardenVerification: value
+            });
+            toast.success(`Warden verification updated to ${value}`);
+        } catch (err) {
+            console.error("Error updating verification:", err);
+            toast.error("Failed to update status");
+        }
+    };
 
     const filteredStudents = useMemo(() => {
         let result = [...students];
@@ -214,43 +227,92 @@ const WardenStudents = () => {
                             filteredStudents.map((student) => (
                                 <div
                                     key={student.id}
-                                    className="p-4 md:p-5 flex items-center gap-3 md:gap-4 hover:bg-orange-500/5 transition-all cursor-pointer group"
+                                    className="p-3 md:p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4 hover:bg-orange-500/5 transition-all cursor-pointer group border-b border-gray-100 dark:border-gray-800 last:border-0"
                                     onClick={() => setSelectedStudent(student)}
                                 >
-                                    <div className="flex-shrink-0 w-full h-full md:w-12 md:h-12 rounded-xl overflow-hidden border-2 border-orange-500/10 group-hover:border-orange-500/30 transition-all">
-                                        <Avatar name={student.fullName} image={student.photoURL} size="sm" className="w-full h-full" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-sm md:text-base font-bold truncate group-hover:text-orange-500 transition-colors" style={{ color: 'var(--text-primary)' }}>
-                                                {student.fullName || 'Unnamed'}
-                                            </p>
-                                            <span className={`text-[9px] md:text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${student.status === 'approved'
-                                                ? 'bg-green-500/10 text-green-600 border border-green-500/20'
-                                                : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
-                                                }`}>
-                                                {student.status || 'pending'}
-                                            </span>
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className="flex-shrink-0 w-10 h-10 md:w-11 md:h-11 rounded-xl overflow-hidden border-2 border-orange-500/10 group-hover:border-orange-500/30 transition-all">
+                                            <Avatar name={student.fullName} image={student.photoURL} size="sm" className="w-full h-full" />
                                         </div>
-                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                                            {student.roomNumber && (
-                                                <span className="text-[10px] md:text-xs font-medium flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                                                    <Home className="w-3 h-3" /> Room {student.roomNumber}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <p className="text-sm md:text-base font-bold truncate group-hover:text-orange-500 transition-colors" style={{ color: 'var(--text-primary)' }}>
+                                                    {student.fullName || 'Unnamed'}
+                                                </p>
+                                                <span className={`text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase ${student.status === 'approved'
+                                                    ? 'bg-green-500/10 text-green-600 border border-green-500/20'
+                                                    : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
+                                                    }`}>
+                                                    {student.status || 'pending'}
                                                 </span>
-                                            )}
-                                            {student.hostelBlock && (
-                                                <span className="text-[10px] md:text-xs font-medium flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                                                    <Building2 className="w-3 h-3" /> {student.hostelBlock}
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                                                {student.roomNumber && (
+                                                    <span className="text-[10px] md:text-xs font-medium flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                                                        <Home className="w-3 h-3" /> Room {student.roomNumber}
+                                                    </span>
+                                                )}
+                                                {student.hostelBlock && (
+                                                    <span className="text-[10px] md:text-xs font-medium flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                                                        <Building2 className="w-3 h-3" /> {student.hostelBlock}
+                                                    </span>
+                                                )}
+                                                {student.studentId && (
+                                                    <span className="text-[10px] md:text-xs font-medium flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                                                        <Hash className="w-3 h-3" /> {student.studentId}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap xl:flex-nowrap items-center gap-3 xl:gap-5 text-xs" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex items-center gap-2 bg-orange-500/10 px-2.5 py-1.5 rounded-lg text-orange-600 dark:text-orange-400 font-semibold border border-orange-500/20 whitespace-nowrap">
+                                            <span>Total: ₹{student.feeDetails?.totalFee || 0}</span>
+                                            <span className="w-px h-3 bg-orange-500/30"></span>
+                                            <span className="text-emerald-600 dark:text-emerald-400">Paid: ₹{student.feeDetails?.paidFee || 0}</span>
+                                            <span className="w-px h-3 bg-orange-500/30"></span>
+                                            <span className="text-rose-600 dark:text-rose-400">Pending: ₹{student.feeDetails?.pendingFee || 0}</span>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-transparent dark:border-gray-700/30">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="font-bold text-[10px] tracking-wider uppercase opacity-60" style={{ color: 'var(--text-muted)' }}>WV:</span>
+                                                <select 
+                                                    value={student.wardenVerification || 'Unverified'} 
+                                                    onChange={(e) => handleVerificationChange(student.id, e.target.value)}
+                                                    disabled={!student.feeDetails?.paidFee || student.feeDetails?.paidFee === 0}
+                                                    title={(!student.feeDetails?.paidFee || student.feeDetails?.paidFee === 0) ? "Verification locked: Student has paid ₹0" : "Update Warden Verification"}
+                                                    className={`bg-transparent border border-orange-500/20 rounded py-0.5 px-1 text-xs font-semibold focus:ring-1 focus:ring-orange-500 hover:border-orange-500/50 transition-colors ${(!student.feeDetails?.paidFee || student.feeDetails?.paidFee === 0) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                                    style={{ color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                                                >
+                                                    <option value="Unverified">Unverified</option>
+                                                    <option value="Verify">Verify</option>
+                                                </select>
+                                            </div>
+
+                                            <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
+
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="font-bold text-[10px] tracking-wider uppercase opacity-60" style={{ color: 'var(--text-muted)' }}>MV:</span>
+                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${student.managementVerification === 'Verify' ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}`}>
+                                                    {student.managementVerification || 'Unverified'}
                                                 </span>
-                                            )}
-                                            {student.studentId && (
-                                                <span className="text-[10px] md:text-xs font-medium flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                                                    <Hash className="w-3 h-3" /> {student.studentId}
+                                            </div>
+                                        </div>
+
+                                        <div className="w-auto xl:w-24 flex justify-end">
+                                            {(student.managementVerification === 'Verify' && student.wardenVerification === 'Verify') ? (
+                                                <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-gradient-to-r from-emerald-500 to-green-500 text-white flex items-center gap-1 w-max shadow-sm">
+                                                    <CheckCircle size={10} /> Verified
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 py-1 rounded text-[10px] font-bold uppercase text-amber-600 bg-amber-500/10 border border-amber-500/20 flex items-center gap-1 w-max shadow-sm">
+                                                    <Clock size={10} /> Pending
                                                 </span>
                                             )}
                                         </div>
                                     </div>
-                                    <Eye className="hidden sm:block w-4 h-4 opacity-0 group-hover:opacity-60 transition-all" style={{ color: 'var(--text-muted)' }} />
                                 </div>
                             ))
                         )}

@@ -75,7 +75,6 @@ const ManagementReports = lazy(() => import("../../DashBoards/Management-Dashboa
 const ManagementAnalytics = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Analytics/AnalyticsDashboard"));
 const ManagementComplaints = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementComplaints"));
 const ManagementEmergencyLocation = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementEmergencyLocation"));
-const FeeManagement = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/FeeManagement"));
 const ManagementHelp = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/HelpSupport"));
 const ManagementSettings_Page = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementSettings"));
 const ManagementProfile = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementProfile"));
@@ -162,7 +161,6 @@ const Routes_path = () => {
                     <Route path="students" element={<ManagementStudents />} />
                     <Route path="hostels" element={<ManagementHostels />} />
                     <Route path="emergency-location" element={<ManagementEmergencyLocation />} />
-                    <Route path="fees" element={<FeeManagement />} />
                     <Route path="complaints" element={<ManagementComplaints />} />
                     <Route path="analytics" element={
                         <FeatureGate feature="analytics" fallback={<FeatureDisabled feature="analytics" />}>

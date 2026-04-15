@@ -390,7 +390,7 @@ export const createWarden = async (wardenData) => {
  * Create a new student manually (Management)
  */
 export const createStudent = async (studentData) => {
-  const callable = httpsCallable(functions, 'createStudent');
+  const callable = httpsCallable(functions, 'createStudent', { timeout: 300000 });
   try {
     const result = await callable(studentData);
     return result.data;

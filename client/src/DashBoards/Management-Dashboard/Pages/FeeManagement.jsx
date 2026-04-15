@@ -88,7 +88,20 @@ const FeeManagement = () => {
         fileBase64,
         fileName: file.name,
       });
-      toast.success(`Upload complete: ${result.created} created, ${result.updated} updated`);
+      const skipped = Number(result?.skipped || 0);
+      const imported = Number(result?.created || 0) + Number(result?.updated || 0);
+
+      if (imported > 0) {
+        toast.success(`Upload complete: ${result.created} created, ${result.updated} updated${skipped ? `, ${skipped} skipped` : ''}`);
+      } else {
+        const firstReason = result?.errors?.[0]?.reason || 'No matching students were found for the uploaded IDs';
+        toast.error(`Upload failed: ${firstReason}`);
+      }
+
+      if (skipped && result?.errors?.length) {
+        const sample = result.errors.slice(0, 3).map((entry) => `${entry.studentId}: ${entry.reason}`).join(' | ');
+        toast.warning(`Skipped rows sample - ${sample}`);
+      }
       await fetchRecords(filter);
     } catch (error) {
       toast.error(error.message || 'Fee upload failed');
@@ -105,15 +118,23 @@ const FeeManagement = () => {
 
     setUploading(true);
     try {
-      await uploadFeeData({
+      const result = await uploadFeeData({
         records: [{
           studentId: manualRow.studentId.trim(),
           totalAmount: Number(manualRow.totalAmount),
           paidAmount: Number(manualRow.paidAmount || 0),
         }],
       });
+
+      const imported = Number(result?.created || 0) + Number(result?.updated || 0);
+      if (!imported) {
+        const firstReason = result?.errors?.[0]?.reason || 'Student was not found under your management scope';
+        toast.error(`Manual add failed: ${firstReason}`);
+        return;
+      }
+
       setManualRow({ studentId: '', totalAmount: '', paidAmount: '' });
-      toast.success('Manual fee row uploaded');
+      toast.success(`Manual fee row uploaded (${result.created ? 'created' : 'updated'})`);
       await fetchRecords(filter);
     } catch (error) {
       toast.error(error.message || 'Manual upload failed');

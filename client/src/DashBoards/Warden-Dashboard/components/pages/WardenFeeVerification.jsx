@@ -2,30 +2,61 @@ import { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import WardenHeader from '../layout/WardenHeader';
-import { getWardenFeeRecords, verifyFeeByWarden } from '../../../../firebase/cloudFunctions';
+import { useAuth } from '../../../../context/AuthContext';
+import { db } from '../../../../firebase/firebaseConfig';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { Search, CheckCircle2, Clock, FileText, Image as ImageIcon, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
+import Avatar from '../../../../components/OwnerServices/Avatar';
 
-const statusBadgeClass = (status) => {
-  if (status === 'fully_paid') return 'bg-green-100 text-green-700 border border-green-200';
-  if (status === 'partially_paid') return 'bg-amber-100 text-amber-700 border border-amber-200';
-  return 'bg-red-100 text-red-700 border border-red-200';
+const statusMap = {
+  'fully_paid': { label: 'Fully Paid', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+  'partially_paid': { label: 'Partially Paid', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+  'unpaid': { label: 'Unpaid', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20' },
 };
 
 const WardenFeeVerification = () => {
   const { isCollapsed, setIsCollapsed } = useOutletContext();
   const toast = useToast();
+  const { userData } = useAuth();
 
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [noteMap, setNoteMap] = useState({});
   const [search, setSearch] = useState('');
+  const [hoveredDoc, setHoveredDoc] = useState(null);
 
   const fetchRecords = async () => {
+    if (!userData?.managementId) return;
     setLoading(true);
     try {
-      const result = await getWardenFeeRecords();
-      setRecords(Array.isArray(result.records) ? result.records : []);
+      const q = query(
+        collection(db, 'users'), 
+        where('role', '==', 'student'), 
+        where('managementId', '==', userData.managementId)
+      );
+      const snapshot = await getDocs(q);
+      const list = snapshot.docs.map(docSnap => {
+         const data = docSnap.data();
+         let paymentStatus = 'unpaid';
+         if (data.feeDetails?.totalFee > 0 && data.feeDetails?.pendingFee === 0) paymentStatus = 'fully_paid';
+         else if (data.feeDetails?.paidFee > 0) paymentStatus = 'partially_paid';
+         return {
+            id: docSnap.id,
+            studentName: data.fullName || 'Unnamed',
+            studentId: data.studentId || 'N/A',
+            photoURL: data.photoURL || '',
+            totalAmount: data.feeDetails?.totalFee || 0,
+            paidAmount: data.feeDetails?.paidFee || 0,
+            remainingAmount: data.feeDetails?.pendingFee || 0,
+            paymentStatus,
+            proofImage: data.feeProofImage || null,
+            proofType: data.feeProofType || 'image',
+            proofName: data.feeProofName || 'Document',
+            isVerifiedByWarden: data.wardenVerification === 'Verify',
+         };
+      });
+      setRecords(list);
     } catch (error) {
-      toast.error(error.message || 'Failed to load warden fee queue');
+      toast.error(error.message || 'Failed to load reports');
     } finally {
       setLoading(false);
     }
@@ -34,7 +65,7 @@ const WardenFeeVerification = () => {
   useEffect(() => {
     fetchRecords();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [userData?.managementId]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -45,91 +76,138 @@ const WardenFeeVerification = () => {
     );
   }, [records, search]);
 
-  const submit = async (studentId, approved) => {
-    try {
-      await verifyFeeByWarden(studentId, approved, noteMap[studentId] || '');
-      toast.success(approved ? 'Record approved by warden' : 'Record rejected by warden');
-      await fetchRecords();
-    } catch (error) {
-      toast.error(error.message || 'Failed to submit warden verification');
-    }
-  };
-
   return (
     <>
       <WardenHeader
-        title="Fee Verification"
+        title="Student Fee Reports"
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
       />
 
-      <div className="pt-20 md:pt-24 px-4 sm:px-6 lg:px-8 pb-8 space-y-4">
-        <div className="rounded-2xl border p-4" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>Records Sent By Management</h2>
+      <div className="pt-20 md:pt-24 px-4 sm:px-6 lg:px-8 pb-12 w-full max-w-7xl mx-auto space-y-6">
+        
+        {/* Header Section */}
+        <div className="rounded-3xl p-6 md:p-8 border shadow-sm flex flex-col md:flex-row items-center justify-between gap-6"
+             style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+          <div>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent mb-2">Student Fee Details</h2>
+            <p className="font-medium" style={{ color: 'var(--text-muted)' }}>Review student fee reports and verify attached proofs.</p>
+          </div>
+          <div className="relative w-full md:w-80 border-2 border-transparent focus-within:border-orange-500/30 rounded-2xl transition-colors overflow-hidden"
+               style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 opacity-50" style={{ color: 'var(--text-primary)' }} />
             <input
+              type="text"
+              placeholder="Search by student name or ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search student"
-              className="px-3 py-2 rounded-lg border text-sm min-w-[220px]"
+              className="w-full pl-12 pr-4 py-3 bg-transparent border-none outline-none focus:ring-0 text-sm font-medium"
+              style={{ color: 'var(--text-primary)' }}
             />
           </div>
         </div>
 
-        <div className="rounded-2xl border p-4" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+        {/* List Section */}
+        <div className="rounded-3xl border shadow-sm overflow-visible min-h-[50vh]"
+             style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
           {loading ? (
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading...</p>
+            <div className="flex flex-col items-center justify-center h-64" style={{ color: 'var(--text-muted)' }}>
+               <Loader2 className="w-8 h-8 text-orange-500 animate-spin mb-3" />
+               <p className="text-sm font-medium animate-pulse">Scanning records...</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64" style={{ color: 'var(--text-muted)' }}>
+               <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                 <FileText className="w-8 h-8 opacity-40" />
+               </div>
+               <p className="text-sm font-bold opacity-80">No fee reports matched your criteria.</p>
+            </div>
           ) : (
-            <div className="space-y-4">
-              {filtered.map((record) => (
-                <div key={record.id} className="rounded-xl border p-4" style={{ borderColor: 'var(--border-primary)' }}>
-                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
-                    <div>
-                      <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{record.studentName}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{record.studentId}</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(record.paymentStatus)}`}>
-                          {record.paymentStatus === 'fully_paid' ? 'Fully Paid' : record.paymentStatus === 'partially_paid' ? 'Partially Paid' : 'Pending'}
-                        </span>
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Total: {record.totalAmount}</span>
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Paid: {record.paidAmount}</span>
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Remaining: {record.remainingAmount}</span>
+            <div className="divide-y" style={{ borderColor: 'var(--border-primary)' }}>
+              {filtered.map((record) => {
+                const isPdf = record.proofType === 'pdf';
+                const sMap = statusMap[record.paymentStatus] || statusMap['unpaid'];
+                
+                return (
+                  <div key={record.id} className="p-4 sm:p-6 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 relative hover:bg-orange-500/5 hover:bg-opacity-5">
+                    
+                    {/* Left: Student Identity */}
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                      <Avatar name={record.studentName} image={record.photoURL} size="lg"  />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h3 className="font-bold truncate max-w-[200px]" style={{ color: 'var(--text-primary)' }}>
+                            {record.studentName}
+                          </h3>
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] uppercase font-bold border shrink-0 ${sMap.bg} ${sMap.color} shadow-sm`}>
+                            {sMap.label}
+                          </span>
+                        </div>
+                        <p className="text-xs font-semibold uppercase tracking-widest truncate" style={{ color: 'var(--text-muted)' }}>
+                          ID: {record.studentId}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    {/* Right: Actions */}
+                    <div className="flex items-center justify-between md:justify-end gap-3 sm:gap-4 shrink-0 overflow-visible z-10 w-full md:w-auto">
+                      
                       {record.proofImage ? (
-                        <a href={record.proofImage} target="_blank" rel="noreferrer" className="text-xs underline text-blue-600">View Proof</a>
+                        <div 
+                           className="relative flex items-center"
+                           onMouseEnter={() => setHoveredDoc(record.id)}
+                           onMouseLeave={() => setHoveredDoc(null)}
+                        >
+                          <a href={record.proofImage} target="_blank" rel="noreferrer" className="group flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:py-2 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500 hover:text-white transition-all border border-orange-500/20 duration-300">
+                            {isPdf ? <FileText className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
+                            <span className="text-xs font-bold">Preview Record</span>
+                            <ExternalLink className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-opacity" />
+                          </a>
+
+                          {hoveredDoc === record.id && (
+                            <div className="absolute top-10 right-0 md:top-1/2 md:-translate-y-1/2 md:-left-[360px] z-[99] w-[300px] sm:w-[350px] border shadow-2xl rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 p-2 pointer-events-none transform origin-top md:origin-right h-auto max-h-[400px]"
+                                 style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                              <div className="px-3 py-2 flex items-center justify-between border-b" style={{ borderColor: 'var(--border-primary)' }}>
+                                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{isPdf ? 'PDF Render' : 'Image Preview'}</p>
+                                <span className="text-[10px] px-2 py-0.5 rounded font-mono truncate max-w-[120px]" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
+                                  {record.proofName || "Doc"}
+                                </span>
+                              </div>
+                              <div className="w-full aspect-[4/3] rounded-xl overflow-hidden border mt-2 flex items-center justify-center p-1" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)' }}>
+                                {isPdf ? (
+                                  <iframe src={`${record.proofImage}#toolbar=0`} title="Preview" className="w-full h-full rounded-lg pointer-events-none bg-white" />
+                                ) : (
+                                  <img src={record.proofImage} className="w-full h-full object-contain rounded-lg" alt="Proof" />
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       ) : (
-                        <span className="text-xs text-red-500">No proof uploaded</span>
+                        <div className="px-3 py-1.5 sm:py-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 border-dashed"
+                             style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-muted)' }}>
+                          <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" /> <span className="">No Proof</span>
+                        </div>
                       )}
+
+                      <div className="w-px h-6 sm:h-8 hidden md:block" style={{ backgroundColor: 'var(--border-primary)' }}></div>
+
+                      <div className="flex items-center">
+                        {record.isVerifiedByWarden ? (
+                          <div className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 shadow-sm">
+                            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> WV: Verified
+                          </div>
+                        ) : (
+                          <div className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 text-[10px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 shadow-sm">
+                            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> WV: Pending
+                          </div>
+                        )}
+                      </div>
+
                     </div>
                   </div>
-
-                  <div className="mt-3 grid md:grid-cols-[1fr_auto_auto] gap-2">
-                    <input
-                      placeholder="Optional note"
-                      className="px-3 py-2 rounded-lg border text-sm"
-                      value={noteMap[record.id] || ''}
-                      onChange={(e) => setNoteMap((prev) => ({ ...prev, [record.id]: e.target.value }))}
-                    />
-                    <button
-                      onClick={() => submit(record.id, true)}
-                      disabled={!record.proofImage || record.isVerifiedByWarden}
-                      className="px-3 py-2 rounded-lg text-sm bg-emerald-600 text-white font-semibold disabled:opacity-50"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => submit(record.id, false)}
-                      className="px-3 py-2 rounded-lg text-sm bg-rose-600 text-white font-semibold"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {!filtered.length && <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No records to review.</p>}
+                );
+              })}
             </div>
           )}
         </div>

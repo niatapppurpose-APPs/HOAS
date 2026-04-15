@@ -92,7 +92,6 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
     { id: "students", label: "Students", icon: Users, path: "/dashboard/management/students", tourId: "mgmt-tour-nav-students" },
     { id: "hostels", label: "Hostels", icon: Home, path: "/dashboard/management/hostels", tourId: "mgmt-tour-nav-hostels" },
     { id: "complaints", label: "Complaints", icon: MessageSquare, path: "/dashboard/management/complaints", tourId: "mgmt-tour-nav-complaints" },
-    { id: "fees", label: "Fee Management", icon: Wallet, path: "/dashboard/management/fees", tourId: "mgmt-tour-nav-fees" },
     { id: "analytics", label: "Analytics", icon: PieChart, path: "/dashboard/management/analytics", tourId: "mgmt-tour-nav-analytics" },
     { id: "reports", label: "Reports", icon: FileText, path: "/dashboard/management/reports", tourId: "mgmt-tour-nav-reports" },
   ];

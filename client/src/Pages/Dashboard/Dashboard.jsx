@@ -31,7 +31,14 @@ const Dashboard = () => {
     } else if (role === 'warden') {
       navigate('/dashboard/warden', { replace: true });
     } else if (role === 'student') {
-      navigate('/dashboard/student', { replace: true });
+      const needsPayment = !userData?.feeDetails?.paidFee || userData?.feeDetails?.paidFee === 0;
+      const unverified = !userData?.managementVerification || userData?.managementVerification === 'Unverified' || !userData?.wardenVerification || userData?.wardenVerification === 'Unverified';
+      
+      if (needsPayment || unverified) {
+        navigate('/waiting-approval', { replace: true });
+      } else {
+        navigate('/dashboard/student', { replace: true });
+      }
     } else {
       // No role assigned yet — await owner/management provisioning
       navigate('/waiting-approval', { replace: true });

@@ -128,31 +128,86 @@ async function getUserOrThrow(userId) {
   return userSnap.data();
 }
 
-async function resolveStudentRef(inputStudentId, managementId) {
+function getManagementScopeIds(userId, userData) {
+  const ids = [userId];
+  if (userData?.managementId && userData.managementId !== userId) {
+    ids.push(userData.managementId);
+  }
+  return ids;
+}
+
+function studentInManagementScope(studentUser, managementScopeIds) {
+  const studentManagementId = studentUser?.managementId;
+  return Boolean(studentManagementId) && managementScopeIds.includes(studentManagementId);
+}
+
+async function resolveStudentRef(inputStudentId, managementScopeIds) {
   const directDoc = await db.collection(USERS_COLLECTION).doc(inputStudentId).get();
   if (directDoc.exists) {
-    return {
-      uid: directDoc.id,
-      data: directDoc.data(),
-    };
+    const directData = directDoc.data();
+    if (directData?.role === 'student' && studentInManagementScope(directData, managementScopeIds)) {
+      return {
+        uid: directDoc.id,
+        data: directData,
+      };
+    }
   }
 
+  // Query by studentId and filter in memory so we don't rely on brittle composite indexes.
   const byStudentId = await db.collection(USERS_COLLECTION)
-    .where('role', '==', 'student')
-    .where('managementId', '==', managementId)
     .where('studentId', '==', inputStudentId)
-    .limit(1)
+    .limit(10)
     .get();
 
   if (!byStudentId.empty) {
-    const docSnap = byStudentId.docs[0];
-    return {
-      uid: docSnap.id,
-      data: docSnap.data(),
-    };
+    const match = byStudentId.docs.find((docSnap) => {
+      const data = docSnap.data();
+      return data?.role === 'student' && studentInManagementScope(data, managementScopeIds);
+    });
+
+    if (match) {
+      return {
+        uid: match.id,
+        data: match.data(),
+      };
+    }
   }
 
   return null;
+}
+
+function ensureManagementRoleScopeAccess(userData, managementScopeIds, targetManagementId) {
+  if (userData?.role !== 'management') return true;
+  return Boolean(targetManagementId) && managementScopeIds.includes(targetManagementId);
+}
+
+function scopeQueryForManagementRole(query, userData, managementScopeIds) {
+  if (userData?.role !== 'management') return query;
+  // Prefer exact college scope (managementId) if available; fallback to UID scope.
+  const scopedId = userData.managementId || managementScopeIds[0];
+  return query.where('managementId', '==', scopedId);
+}
+
+function scopeRecordAccessForManagementRole(userData, managementScopeIds, record) {
+  if (userData?.role !== 'management') return true;
+  return Boolean(record?.managementId) && managementScopeIds.includes(record.managementId);
+}
+
+function scopeUserAccessForManagementRole(userData, managementScopeIds, studentUser) {
+  if (userData?.role !== 'management') return true;
+  return studentInManagementScope(studentUser, managementScopeIds);
+}
+
+function getWardenScopeIds(userId, userData) {
+  const ids = [userId];
+  if (userData?.wardenId && userData.wardenId !== userId) {
+    ids.push(userData.wardenId);
+  }
+  return ids;
+}
+
+function wardenOwnsRecord(wardenScopeIds, record) {
+  return Boolean(record?.wardenId) && wardenScopeIds.includes(record.wardenId);
 }
 
 function ensureManagementOrAdmin(userData, res) {
@@ -229,6 +284,7 @@ app.post('/api/fees/upload', async (req, res) => {
     }
 
     const uploader = await getUserOrThrow(userId);
+    const managementScopeIds = getManagementScopeIds(userId, userData);
     const now = nowTs();
 
     let created = 0;
@@ -238,7 +294,7 @@ app.post('/api/fees/upload', async (req, res) => {
 
     for (const row of sanitizedRows) {
       try {
-        const studentResolved = await resolveStudentRef(row.studentId, userId);
+        const studentResolved = await resolveStudentRef(row.studentId, managementScopeIds);
 
         if (!studentResolved) {
           skipped += 1;
@@ -253,7 +309,7 @@ app.post('/api/fees/upload', async (req, res) => {
           continue;
         }
 
-        if (userData.role === 'management' && studentUser.managementId !== userId) {
+        if (!scopeUserAccessForManagementRole(userData, managementScopeIds, studentUser)) {
           skipped += 1;
           errors.push({ studentId: row.studentId, reason: 'Student does not belong to current management' });
           continue;
@@ -345,10 +401,10 @@ app.get('/api/fees/management', async (req, res) => {
 
     const status = String(req.query.status || '').trim();
 
+    const managementScopeIds = getManagementScopeIds(userId, userData);
+
     let q = db.collection(FEES_COLLECTION);
-    if (userData.role === 'management') {
-      q = q.where('managementId', '==', userId);
-    }
+    q = scopeQueryForManagementRole(q, userData, managementScopeIds);
     if (status && ['fully_paid', 'partially_paid', 'pending'].includes(status)) {
       q = q.where('paymentStatus', '==', status);
     }
@@ -390,10 +446,12 @@ app.get('/api/fees/student/:id', async (req, res) => {
 
     const data = feeDoc.data();
 
+    const managementScopeIds = getManagementScopeIds(userId, userData);
+
     const allowed =
       userData.role === 'admin' ||
       userData.role === 'owner' ||
-      (userData.role === 'management' && data.managementId === userId) ||
+      (userData.role === 'management' && scopeRecordAccessForManagementRole(userData, managementScopeIds, data)) ||
       (userData.role === 'warden' && data.wardenId === userId) ||
       (userData.role === 'student' && (data.studentUid === userId || feeDoc.id === userId));
 
@@ -417,8 +475,10 @@ app.get('/api/fees/warden', async (req, res) => {
     const { userId, userData } = auth;
     if (!ensureWarden(userData, res)) return;
 
+    const wardenScopeIds = getWardenScopeIds(userId, userData);
+
     const snap = await db.collection(FEES_COLLECTION)
-      .where('wardenId', '==', userId)
+      .where('wardenId', 'in', wardenScopeIds)
       .where('isVerifiedByManagement', '==', true)
       .get();
 
@@ -447,6 +507,7 @@ app.post('/api/fees/verify-management', async (req, res) => {
     }
 
     const targetRef = db.collection(FEES_COLLECTION).doc(studentId);
+    const managementScopeIds = getManagementScopeIds(userId, userData);
     const now = nowTs();
 
     const updated = await db.runTransaction(async (tx) => {
@@ -456,7 +517,7 @@ app.post('/api/fees/verify-management', async (req, res) => {
       }
 
       const current = snap.data();
-      if (userData.role === 'management' && current.managementId !== userId) {
+      if (!ensureManagementRoleScopeAccess(userData, managementScopeIds, current.managementId)) {
         throw new Error('Not allowed to verify this student record');
       }
 
@@ -511,6 +572,7 @@ app.post('/api/fees/verify-warden', async (req, res) => {
     }
 
     const targetRef = db.collection(FEES_COLLECTION).doc(studentId);
+    const wardenScopeIds = getWardenScopeIds(userId, userData);
     const now = nowTs();
 
     const updated = await db.runTransaction(async (tx) => {
@@ -520,7 +582,7 @@ app.post('/api/fees/verify-warden', async (req, res) => {
       }
 
       const current = snap.data();
-      if (current.wardenId !== userId) {
+      if (!wardenOwnsRecord(wardenScopeIds, current)) {
         throw new Error('Not allowed to verify this student record');
       }
 
