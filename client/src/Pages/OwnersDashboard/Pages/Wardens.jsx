@@ -44,17 +44,6 @@ const Wardens = () => {
         }
     };
 
-    const assignWarden = () => {
-        // preserve current page state so user can return after assigning
-        const state = {
-            searchText: searchListWarden,
-            scrollPosition: window.scrollY,
-            returnPath: '/OwnersDashboard/wardens'
-        };
-        sessionStorage.setItem('wardensPageState', JSON.stringify(state));
-        navigate('/OwnersDashboard/assign-warden');
-    };
-
     // TODO: Replace with actual college and hostel data from props/context
     const contextInfo = {
         collegeName: "Professional Institution",
@@ -289,8 +278,8 @@ const Wardens = () => {
                                 title="No Wardens Assigned"
                                 subtitle="This hostel needs warden supervision"
                                 description={`No wardens have been assigned to ${contextInfo.hostelBlock} yet. Assign a warden to help manage students, handle daily operations, and maintain hostel discipline.`}
-                                ctaLabel="Assign Warden"
-                                onCta={assignWarden}
+                                ctaLabel="Open Search"
+                                onCta={() => { setSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
                                 videoSrc={!isDark ? NoDataLight : NoDataDark}
                                 className="max-w-5xl mx-auto"
                             />

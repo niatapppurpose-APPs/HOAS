@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useOutletContext, Link } from "react-router-dom";
-import { Users, Bell, MessageSquare, User, ShieldCheck } from "lucide-react";
+import { Users, Bell, MessageSquare, User, ShieldCheck, Building } from "lucide-react";
 
 import { collection, query, where, onSnapshot, doc, limit } from "firebase/firestore";
 
@@ -226,7 +226,7 @@ const ManagementDashboard = () => {
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
                 <div className="text-center md:text-left">
                     <h1 className="text-2xl sm:text-3xl md:text-4xl font-mono tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                        Welcome back, <span className="bg-clip-text text-indigo-500">{userData.fullName} 👋</span>
+                        Welcome back, <span className="bg-clip-text text-indigo-500">{userData.collegeName || 'Management'} 👋</span>
                     </h1>
                     <p className="mt-2 text-sm md:text-base opacity-70" style={{ color: 'var(--text-secondary)' }}>Your management command center</p>
                     <div className="mt-6 flex flex-wrap gap-3 justify-center md:justify-start">
@@ -272,7 +272,7 @@ const ManagementDashboard = () => {
                 { title: 'Wardens', icon: ShieldCheck, path: 'wardens', color: 'indigo', count: stats.pendingWardens > 0 ? stats.pendingWardens : null },
                 { title: 'Students', icon: Users, path: 'students', color: 'blue', count: stats.pendingStudents > 0 ? stats.pendingStudents : null },
                 { title: 'Complaints', icon: MessageSquare, path: 'complaints', color: 'orange' },
-                { title: 'Notice Board', icon: Bell, path: 'announcements', color: 'purple' },
+                { title: 'Hostels', icon: Building, path: 'hostels', color: 'red' },
             ].map((action, idx) => (
                 <button
                     key={idx}

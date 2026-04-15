@@ -31,12 +31,6 @@ const RecentActivity = ({ recentUsers, onApprove, approvingUserId, perPage = 8 }
 
   return (
     <div className="mb-6 sm:mb-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1.5">
-        <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] m-0">Recent Activity</h2>
-      
-      </div>
-      <p className="text-sm text-[var(--text-muted)] m-0 mb-6">Manage pending warden and student registrations</p>
-
       <div className="flex flex-col gap-3 sm:gap-4 overflow-scroll">
         {visibleUsers.map((user) => (
           <div key={user.id} className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 p-4 sm:p-5 bg-[var(--bg-card)] backdrop-blur-xl border border-[var(--border-primary)] rounded-2xl transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-[var(--accent-primary)]">
