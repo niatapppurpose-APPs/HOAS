@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useOutletContext, Link } from 'react-router-dom';
 import { db } from '../../firebase/firebaseConfig';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, limit } from 'firebase/firestore';
 import StudentHeader from './components/layout/StudentHeader';
 import StatsCard from '../../components/OwnerServices/StatsCard';
 import { useToast } from '../../components/Toast';
@@ -74,7 +74,8 @@ const StudentDashboard = () => {
         setComplaintsLoading(true);
         const q = query(
             collection(db, 'complaints'),
-            where('studentId', '==', user.uid)
+            where('studentId', '==', user.uid),
+            limit(10)
         );
 
         const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {

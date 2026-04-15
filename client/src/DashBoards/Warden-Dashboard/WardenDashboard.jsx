@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useOutletContext, Link } from 'react-router-dom';
 import { db } from '../../firebase/firebaseConfig';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, limit } from 'firebase/firestore';
 import { useToast } from '../../components/Toast';
 import WardenHeader from './components/layout/WardenHeader';
 import { useDashboardTour, wardenTourSteps } from '../../tours';
@@ -55,6 +55,7 @@ const WardenDashboard = () => {
         const q = query(
             collection(db, 'complaints'),
             where('managementId', '==', userData.managementId),
+            limit(20)
         );
 
         let isInitialLoad = true;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 
-import { collection, query, where, onSnapshot, doc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, limit } from "firebase/firestore";
 
 import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
@@ -45,12 +45,14 @@ const ManagementDashboard = () => {
     const wardensQuery = query(
       collection(db, "users"),
       where("role", "==", "warden"),
-      ...baseConstraints
+      ...baseConstraints,
+      limit(50)
     );
     const studentsQuery = query(
       collection(db, "users"),
       where("role", "==", "student"),
-      ...baseConstraints
+      ...baseConstraints,
+      limit(100)
     );
 
     const unsubscribeWardens = onSnapshot(wardensQuery, (snapshot) => {
