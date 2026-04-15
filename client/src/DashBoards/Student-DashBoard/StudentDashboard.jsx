@@ -38,7 +38,7 @@ const StudentDashboard = () => {
     const [isEditing, setIsEditing] = useState(false);
 
     // Auto-start tour on first visit (waits for data to load)
-    useDashboardTour('student', studentTourSteps, { ready: !userDataLoading });
+    useDashboardTour('student', studentTourSteps, { ready: false });
 
     const [isSaving, setIsSaving] = useState(false);
     const [complaints, setComplaints] = useState([]);
@@ -78,10 +78,7 @@ const StudentDashboard = () => {
             limit(10)
         );
 
-        const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
-            // Skip empty cache results — wait for the real network response
-            if (snapshot.metadata.fromCache && snapshot.empty) return;
-
+        const unsubscribe = onSnapshot(q, (snapshot) => {
             const list = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()

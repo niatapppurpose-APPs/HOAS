@@ -30,7 +30,7 @@ const ManagementDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   // Auto-start tour on first visit (waits for data to load)
-  useDashboardTour('management', managementTourSteps, { ready: !loading });
+  useDashboardTour('management', managementTourSteps, { ready: false });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; // show 10 users per page in status table
 

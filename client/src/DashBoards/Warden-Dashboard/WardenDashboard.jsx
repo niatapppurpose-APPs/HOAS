@@ -33,7 +33,7 @@ const WardenDashboard = () => {
     const [pendingCount, setPendingCount] = useState(0);
 
     // Auto-start tour on first visit (waits for data to load)
-    useDashboardTour('warden', wardenTourSteps, { ready: !loading && !userDataLoading });
+    useDashboardTour('warden', wardenTourSteps, { ready: false });
 
     useEffect(() => {
         if (!userDataLoading) {
@@ -60,10 +60,7 @@ const WardenDashboard = () => {
 
         let isInitialLoad = true;
 
-        const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
-            // Skip empty cache results — wait for the real network response
-            if (snapshot.metadata.fromCache && snapshot.empty) return;
-
+        const unsubscribe = onSnapshot(q, (snapshot) => {
             const list = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
