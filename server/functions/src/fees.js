@@ -1,14 +1,38 @@
+/**
+ * Fees Management API
+ * Express routes for fee management, verification, and payments
+ */
+
 import express from 'express';
-import XLSX from 'xlsx';
 import { onRequest } from 'firebase-functions/v2/https';
 import { db, corsHandler } from './config.js';
 import { authenticateRequest } from './reportHelpers.js';
+import {
+  FEES_COLLECTION,
+  USERS_COLLECTION,
+  nowTs,
+  computeAmounts,
+  sanitizeRow,
+  toClientFeeRecord,
+  isSafeProofUrl,
+  getManagementScopeIds,
+  studentInManagementScope,
+  resolveStudentRef,
+  ensureManagementRoleScopeAccess,
+  scopeQueryForManagementRole,
+  scopeRecordAccessForManagementRole,
+  scopeUserAccessForManagementRole,
+  getWardenScopeIds,
+  wardenOwnsRecord,
+  ensureManagementOrAdmin,
+  ensureWarden,
+  ensureStudent,
+  getUserOrThrow,
+  normalizeUploadRecords,
+} from './feesHelpers.js';
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
-
-const FEES_COLLECTION = 'studentFees';
-const USERS_COLLECTION = 'users';
 
 function runCors(req, res) {
   return new Promise((resolve, reject) => {
@@ -35,238 +59,7 @@ app.options(/.*/, (req, res) => {
   res.status(200).send('ok');
 });
 
-function nowTs() {
-  return Date.now();
-}
-
-function toNumber(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function computeAmounts(totalAmount, paidAmount) {
-  const total = Math.max(0, Number(totalAmount) || 0);
-  const paid = Math.min(total, Math.max(0, Number(paidAmount) || 0));
-  const remaining = Math.max(0, total - paid);
-
-  let paymentStatus = 'pending';
-  if (paid >= total && total > 0) {
-    paymentStatus = 'fully_paid';
-  } else if (paid > 0) {
-    paymentStatus = 'partially_paid';
-  }
-
-  return {
-    totalAmount: total,
-    paidAmount: paid,
-    remainingAmount: remaining,
-    paymentStatus,
-  };
-}
-
-function sanitizeRow(row) {
-  if (!row || typeof row !== 'object') return null;
-
-  const rawStudentId = row.studentId ?? row.studentID ?? row.StudentId ?? row.StudentID;
-  if (!rawStudentId) return null;
-
-  const studentId = String(rawStudentId).trim();
-  const totalAmount = toNumber(row.totalAmount ?? row.total ?? row.TotalAmount ?? row.Total);
-  const paidAmount = toNumber(row.paidAmount ?? row.paid ?? row.PaidAmount ?? row.Paid);
-
-  if (!studentId || totalAmount <= 0 || paidAmount < 0) {
-    return null;
-  }
-
-  return {
-    studentId,
-    ...computeAmounts(totalAmount, paidAmount),
-  };
-}
-
-function parseCsvData(csvData) {
-  const workbook = XLSX.read(csvData, { type: 'string' });
-  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-  return XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
-}
-
-function parseExcelBase64(fileBase64, fileName = '') {
-  const workbook = XLSX.read(fileBase64, { type: 'base64' });
-  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
-
-  if (!rows.length) {
-    throw new Error(`No rows found in ${fileName || 'uploaded file'}`);
-  }
-
-  return rows;
-}
-
-function normalizeUploadRecords(payload) {
-  const { records, csvData, fileBase64, fileName } = payload || {};
-
-  if (Array.isArray(records) && records.length) {
-    return records;
-  }
-
-  if (typeof csvData === 'string' && csvData.trim()) {
-    return parseCsvData(csvData);
-  }
-
-  if (typeof fileBase64 === 'string' && fileBase64.trim()) {
-    return parseExcelBase64(fileBase64, fileName);
-  }
-
-  throw new Error('Provide records, csvData, or fileBase64');
-}
-
-async function getUserOrThrow(userId) {
-  const userSnap = await db.collection(USERS_COLLECTION).doc(userId).get();
-  if (!userSnap.exists) {
-    throw new Error('User not found');
-  }
-  return userSnap.data();
-}
-
-function getManagementScopeIds(userId, userData) {
-  const ids = [userId];
-  if (userData?.managementId && userData.managementId !== userId) {
-    ids.push(userData.managementId);
-  }
-  return ids;
-}
-
-function studentInManagementScope(studentUser, managementScopeIds) {
-  const studentManagementId = studentUser?.managementId;
-  return Boolean(studentManagementId) && managementScopeIds.includes(studentManagementId);
-}
-
-async function resolveStudentRef(inputStudentId, managementScopeIds) {
-  const directDoc = await db.collection(USERS_COLLECTION).doc(inputStudentId).get();
-  if (directDoc.exists) {
-    const directData = directDoc.data();
-    if (directData?.role === 'student' && studentInManagementScope(directData, managementScopeIds)) {
-      return {
-        uid: directDoc.id,
-        data: directData,
-      };
-    }
-  }
-
-  // Query by studentId and filter in memory so we don't rely on brittle composite indexes.
-  const byStudentId = await db.collection(USERS_COLLECTION)
-    .where('studentId', '==', inputStudentId)
-    .limit(10)
-    .get();
-
-  if (!byStudentId.empty) {
-    const match = byStudentId.docs.find((docSnap) => {
-      const data = docSnap.data();
-      return data?.role === 'student' && studentInManagementScope(data, managementScopeIds);
-    });
-
-    if (match) {
-      return {
-        uid: match.id,
-        data: match.data(),
-      };
-    }
-  }
-
-  return null;
-}
-
-function ensureManagementRoleScopeAccess(userData, managementScopeIds, targetManagementId) {
-  if (userData?.role !== 'management') return true;
-  return Boolean(targetManagementId) && managementScopeIds.includes(targetManagementId);
-}
-
-function scopeQueryForManagementRole(query, userData, managementScopeIds) {
-  if (userData?.role !== 'management') return query;
-  // Prefer exact college scope (managementId) if available; fallback to UID scope.
-  const scopedId = userData.managementId || managementScopeIds[0];
-  return query.where('managementId', '==', scopedId);
-}
-
-function scopeRecordAccessForManagementRole(userData, managementScopeIds, record) {
-  if (userData?.role !== 'management') return true;
-  return Boolean(record?.managementId) && managementScopeIds.includes(record.managementId);
-}
-
-function scopeUserAccessForManagementRole(userData, managementScopeIds, studentUser) {
-  if (userData?.role !== 'management') return true;
-  return studentInManagementScope(studentUser, managementScopeIds);
-}
-
-function getWardenScopeIds(userId, userData) {
-  const ids = [userId];
-  if (userData?.wardenId && userData.wardenId !== userId) {
-    ids.push(userData.wardenId);
-  }
-  return ids;
-}
-
-function wardenOwnsRecord(wardenScopeIds, record) {
-  return Boolean(record?.wardenId) && wardenScopeIds.includes(record.wardenId);
-}
-
-function ensureManagementOrAdmin(userData, res) {
-  if (!['management', 'admin', 'owner'].includes(userData?.role)) {
-    res.status(403).json({ error: 'Only management can perform this action' });
-    return false;
-  }
-  return true;
-}
-
-function ensureWarden(userData, res) {
-  if (userData?.role !== 'warden') {
-    res.status(403).json({ error: 'Only wardens can perform this action' });
-    return false;
-  }
-  return true;
-}
-
-function ensureStudent(userData, res) {
-  if (userData?.role !== 'student') {
-    res.status(403).json({ error: 'Only students can perform this action' });
-    return false;
-  }
-  return true;
-}
-
-function isSafeProofUrl(url) {
-  if (!url || typeof url !== 'string') return false;
-  const safe = /^(https:\/\/firebasestorage\.googleapis\.com\/|https:\/\/storage\.googleapis\.com\/|https:\/\/.*\.googleusercontent\.com\/)/i;
-  return safe.test(url);
-}
-
-function toClientFeeRecord(record, id) {
-  return {
-    id,
-    studentUid: record.studentUid || null,
-    studentId: record.studentId,
-    studentName: record.studentName || 'Unknown Student',
-    totalAmount: record.totalAmount,
-    paidAmount: record.paidAmount,
-    remainingAmount: record.remainingAmount,
-    paymentStatus: record.paymentStatus,
-    proofImage: record.proofImage || '',
-    isVerifiedByManagement: Boolean(record.isVerifiedByManagement),
-    isVerifiedByWarden: Boolean(record.isVerifiedByWarden),
-    uploadedBy: record.uploadedBy || '',
-    uploadedByName: record.uploadedByName || '',
-    verifiedByManagementAt: record.verifiedByManagementAt || null,
-    verifiedByWardenAt: record.verifiedByWardenAt || null,
-    verifiedByManagementBy: record.verifiedByManagementBy || null,
-    verifiedByWardenBy: record.verifiedByWardenBy || null,
-    managementId: record.managementId || null,
-    wardenId: record.wardenId || null,
-    updatedAt: record.updatedAt || null,
-    createdAt: record.createdAt || null,
-    history: Array.isArray(record.history) ? record.history : [],
-  };
-}
-
+// Upload fee records from CSV/Excel
 app.post('/api/fees/upload', async (req, res) => {
   try {
     const auth = await authenticateRequest(req, res, 'json');
@@ -391,6 +184,7 @@ app.post('/api/fees/upload', async (req, res) => {
   }
 });
 
+// Get fees for management review
 app.get('/api/fees/management', async (req, res) => {
   try {
     const auth = await authenticateRequest(req, res, 'json');
@@ -400,7 +194,6 @@ app.get('/api/fees/management', async (req, res) => {
     if (!ensureManagementOrAdmin(userData, res)) return;
 
     const status = String(req.query.status || '').trim();
-
     const managementScopeIds = getManagementScopeIds(userId, userData);
 
     let q = db.collection(FEES_COLLECTION);
@@ -420,6 +213,7 @@ app.get('/api/fees/management', async (req, res) => {
   }
 });
 
+// Get student's fee record
 app.get('/api/fees/student/:id', async (req, res) => {
   try {
     const auth = await authenticateRequest(req, res, 'json');
@@ -445,7 +239,6 @@ app.get('/api/fees/student/:id', async (req, res) => {
     }
 
     const data = feeDoc.data();
-
     const managementScopeIds = getManagementScopeIds(userId, userData);
 
     const allowed =
@@ -467,6 +260,7 @@ app.get('/api/fees/student/:id', async (req, res) => {
   }
 });
 
+// Get fees for warden verification
 app.get('/api/fees/warden', async (req, res) => {
   try {
     const auth = await authenticateRequest(req, res, 'json');
@@ -492,6 +286,7 @@ app.get('/api/fees/warden', async (req, res) => {
   }
 });
 
+// Management verification of fees
 app.post('/api/fees/verify-management', async (req, res) => {
   try {
     const auth = await authenticateRequest(req, res, 'json');
@@ -557,6 +352,7 @@ app.post('/api/fees/verify-management', async (req, res) => {
   }
 });
 
+// Warden verification of fees
 app.post('/api/fees/verify-warden', async (req, res) => {
   try {
     const auth = await authenticateRequest(req, res, 'json');
@@ -627,6 +423,7 @@ app.post('/api/fees/verify-warden', async (req, res) => {
   }
 });
 
+// Student uploads payment proof
 app.post('/api/fees/upload-proof', async (req, res) => {
   try {
     const auth = await authenticateRequest(req, res, 'json');
