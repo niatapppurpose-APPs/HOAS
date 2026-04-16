@@ -7,7 +7,7 @@ import NotificationBell from "./NotificationBell";
 import AnimatedLogoutButton from "../AnimatedLogoutButton";
 
 
-const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = true, setIsCollapsed }) => {
+const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = true, setIsCollapsed, headerExtra }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const toast = useToast();
@@ -55,6 +55,11 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
             )}
           </div>
           <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+            {headerExtra && (
+              <div className="hidden md:flex items-center mr-0 md:mr-2">
+                {headerExtra}
+              </div>
+            )}
             {pendingCount > 0 && (
               <span className="px-2 sm:px-4 py-1 rounded-full bg-red-500/20 text-red-400 text-[10px] sm:text-sm font-medium border border-red-500/30 animate-pulse flex-shrink-0">
                 <span className="hidden sm:inline">{pendingCount} Pending</span>
