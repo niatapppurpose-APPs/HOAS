@@ -38,7 +38,7 @@ async function areNotificationsEnabled() {
   // Check the feature flag – default to true if not set
   if (settings.features?.notifications === false) {
     logger.info('Notifications feature is DISABLED globally. Skipping notification.');
-    return false;
+    return false;ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
   }
   return true;
 }
@@ -87,6 +87,7 @@ async function getOwnerTokens() {
         tokens.push(userData.fcmToken);
       }
     });
+    
     
     logger.info(`Found ${tokens.length} owner tokens`);
     return tokens;

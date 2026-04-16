@@ -114,12 +114,12 @@ const GlobalSystemSettings = () => {
     finally { setLoading(false); }
   }, [toast, initialLoad]);
 
- const loadUsers = useCallback(async () => {
-      setMgmtLoading(true);
-      try { const r = await cloudFunctions.getAllManagementUsers(); setMgmtUsers(r?.users || []); }
-      catch { setMgmtUsers([]); }
-      finally { setMgmtLoading(false); }
-    }, []);
+  const loadUsers = useCallback(async () => {
+    setMgmtLoading(true);
+    try { const r = await cloudFunctions.getAllManagementUsers(); setMgmtUsers(r?.users || []); }
+    catch { setMgmtUsers([]); }
+    finally { setMgmtLoading(false); }
+  }, []);
 
   useEffect(() => { loadData(false); loadUsers(); }, []);
 
@@ -225,10 +225,36 @@ const GlobalSystemSettings = () => {
   return (
     <>
       <Header title="Settings" handleLogout={handleLogout} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <div className="flex pt-24 p-4 min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="flex flex-col pt-24 p-4 md:p-6 lg:p-8 min-h-screen gap-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
 
+        <div className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-end gap-3 mb-2">
+          <div className="flex flex-row items-center gap-3 flex-wrap">
+            <div className="flex flex-row items-center gap-3">
+              <div>
+                {loading ? (
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"><Loader2 className="w-3 h-3 animate-spin" />Syncing</span>
+                ) : dataSource === 'server' ? (
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><CheckCircle className="w-3 h-3" />Synced</span>
+                ) : (
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><AlertTriangle className="w-3 h-3" />Local</span>
+                )}
+              </div>
+              <button onClick={() => loadData(true)} disabled={loading}
+                className="p-2.5 rounded-xl border transition hover:scale-105 cursor-pointer"
+                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+            {hasChanges && (
+              <button onClick={save} disabled={saving}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-500/25 transition hover:scale-[1.02] disabled:opacity-50 cursor-pointer">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}Save Changes
+              </button>
+            )}
+          </div>
+        </div>
 
-        <div >
+        <div className="flex-1 w-full max-w-6xl mx-auto">
           {/* ── Alerts ── */}
           {dataSource === 'local' && !loading && loadError && (
             <div className="mb-4 p-3 rounded-xl flex items-center gap-3 border border-amber-500/25" style={{ backgroundColor: 'rgba(245,158,11,0.05)' }}>
@@ -369,7 +395,7 @@ const GlobalSystemSettings = () => {
                   <SettingRow icon={LogOut} title="Auto Logout Timer" description="Logout after inactivity">
                     <div className="flex items-center gap-2">
                       {/* Auto logout removed */}
-                       
+
                       <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>min</span>
                     </div>
                   </SettingRow>
@@ -517,7 +543,7 @@ const GlobalSystemSettings = () => {
                 <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                   Irreversible actions related to your account security and data permanence.
                 </p>
-                
+
                 {!showDeleteForm ? (
                   <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5">
                     <div className="flex items-center justify-between gap-4">
@@ -525,7 +551,7 @@ const GlobalSystemSettings = () => {
                         <p className="text-sm font-semibold text-red-500">Delete Account</p>
                         <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Purge your account and all associated data</p>
                       </div>
-                      <button 
+                      <button
                         onClick={() => setShowDeleteForm(true)}
                         className="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-xs font-bold transition-all border border-red-500/30 cursor-pointer"
                       >
@@ -584,7 +610,7 @@ const GlobalSystemSettings = () => {
                     >
                       {isDeletingAccount ? <Loader2 size={16} className="animate-spin" /> : <><Trash2 size={14} /> Request Permanent Purge</>}
                     </button>
-                    
+
                     <p className="text-[10px] text-center text-muted-foreground italic">
                       Clicking above will trigger a final toast confirmation.
                     </p>
@@ -607,34 +633,7 @@ const GlobalSystemSettings = () => {
           </div>
         </div>
 
-        <div className="mb-6 flex flex-1 flex-col sm:flex-row items-start justify-end gap-4">
 
-          <div className="flex flex-col items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-5" >
-              <div>
-                {loading ? (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"><Loader2 className="w-3 h-3 animate-spin" />Syncing</span>
-                ) : dataSource === 'server' ? (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><CheckCircle className="w-3 h-3" />Synced</span>
-                ) : (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><AlertTriangle className="w-3 h-3" />Local</span>
-                )}
-              </div>
-              <button onClick={() => loadData(true)} disabled={loading}
-                className="p-2.5 rounded-xl border transition hover:scale-105 cursor-pointer"
-                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-            {hasChanges && (
-              <button onClick={save} disabled={saving}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-500/25 transition hover:scale-[1.02] disabled:opacity-50 cursor-pointer">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}Save Changes
-              </button>
-            )}
-          </div>
-
-        </div>
       </div>
 
       {/* ── Access Logs Modal ── */}
