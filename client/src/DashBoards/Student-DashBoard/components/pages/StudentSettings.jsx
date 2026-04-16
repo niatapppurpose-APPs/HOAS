@@ -13,7 +13,7 @@ import {
     Settings, Moon, Sun, Bell, Shield, Lock,
     Eye, EyeOff, Loader2, Check, User,
     Globe, Palette, BellRing, KeyRound,
-    Monitor, ChevronRight, Layout, RefreshCw
+    Monitor, ChevronRight, Layout, RefreshCw, Trash2, FileText, XCircle
 } from 'lucide-react';
 
 const StudentSettings = () => {
@@ -124,6 +124,87 @@ const StudentSettings = () => {
             }
             return updated;
         });
+    };
+
+    const [trashedItems, setTrashedItems] = useState([]);
+    const [loadingTrash, setLoadingTrash] = useState(true);
+
+    useEffect(() => {
+        const fetchTrash = async () => {
+            if (!userData?.uid) return;
+            try {
+                const userRef = doc(db, 'users', userData.uid);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                    const data = userSnap.data();
+                    let currentTrash = data.trashedFeeReports || [];
+                    const now = new Date();
+                    
+                    // Auto-delete items older than 15 days
+                    const filteredTrash = currentTrash.filter(item => {
+                        const trashedDate = new Date(item.trashedAt);
+                        const diffTime = Math.abs(now - trashedDate);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        return diffDays <= 15;
+                    });
+
+                    // If items were auto-deleted, update Firestore
+                    if (filteredTrash.length !== currentTrash.length) {
+                        await updateDoc(userRef, { trashedFeeReports: filteredTrash });
+                    }
+
+                    setTrashedItems(filteredTrash);
+                }
+            } catch (error) {
+                console.error("Error fetching trash:", error);
+            } finally {
+                setLoadingTrash(false);
+            }
+        };
+
+        fetchTrash();
+    }, [userData?.uid]);
+
+    const handleRestoreItem = async (index) => {
+        if (!userData?.uid) return;
+        try {
+            const itemToRestore = trashedItems[index];
+            const updatedTrash = trashedItems.filter((_, i) => i !== index);
+            
+            const userRef = doc(db, 'users', userData.uid);
+            const userSnap = await getDoc(userRef);
+            let currentReports = userSnap.exists() ? (userSnap.data().feeReports || []) : [];
+            
+            // Remove 'trashedAt' for restoration
+            const { trashedAt, ...restoredItem } = itemToRestore;
+            currentReports.push({ ...restoredItem, uploadedAt: new Date().toISOString() });
+
+            await updateDoc(userRef, {
+                trashedFeeReports: updatedTrash,
+                feeReports: currentReports
+            });
+            
+            setTrashedItems(updatedTrash);
+            toast.success("Document restored from trash");
+        } catch (error) {
+            toast.error("Failed to restore document");
+        }
+    };
+
+    const handlePermanentDelete = async (index) => {
+        const confirm = await toast.confirm("Permanently delete this document? This action cannot be undone.");
+        if (!confirm || !userData?.uid) return;
+
+        try {
+            const updatedTrash = trashedItems.filter((_, i) => i !== index);
+            const userRef = doc(db, 'users', userData.uid);
+            await updateDoc(userRef, { trashedFeeReports: updatedTrash });
+            
+            setTrashedItems(updatedTrash);
+            toast.success("Document permanently deleted");
+        } catch (error) {
+            toast.error("Failed to delete document");
+        }
     };
 
     const SettingsCard = ({ icon: Icon, title, description, children, iconColor = 'text-blue-500' }) => (
@@ -297,6 +378,54 @@ const StudentSettings = () => {
                     {/* App Updates */}
                     <SettingsCard icon={RefreshCw} title="App Updates" description="Control how the app updates" iconColor="text-violet-500">
                         <PWAUpdateSettings />
+                    </SettingsCard>
+
+                    {/* Trash Management */}
+                    <SettingsCard icon={Trash2} title="Trash Management" description="Items are kept for 15 days before permanent deletion" iconColor="text-rose-500">
+                        <div className="space-y-3">
+                            {loadingTrash ? (
+                                <div className="py-6 flex items-center justify-center">
+                                    <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+                                </div>
+                            ) : trashedItems.length > 0 ? (
+                                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+                                    {trashedItems.map((item, i) => {
+                                        const trashedDate = new Date(item.trashedAt);
+                                        const expiryDate = new Date(trashedDate);
+                                        expiryDate.setDate(expiryDate.getDate() + 15);
+                                        const daysLeft = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+                                        
+                                        return (
+                                            <div key={i} className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-xl border transition-all" style={{ borderColor: 'var(--border-disabled)', backgroundColor: 'var(--bg-tertiary)' }}>
+                                                <div className="flex items-center gap-4 mb-3 sm:mb-0 w-full sm:w-auto">
+                                                    <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border" style={{ borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-card)' }}>
+                                                        <FileText className="w-5 h-5 opacity-60 text-rose-500" />
+                                                    </div>
+                                                    <div className="min-w-0" style={{ width: 'calc(100% - 60px)' }}>
+                                                        <p className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>{item.name || 'Untitled Document'}</p>
+                                                        <p className="text-[10px] font-medium uppercase tracking-wider text-rose-500 mt-1">Deleted: {trashedDate.toLocaleDateString()} • {daysLeft} days left</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 w-full sm:w-auto border-t sm:border-0 pt-3 sm:pt-0" style={{ borderColor: 'var(--border-primary)' }}>
+                                                    <button onClick={() => handleRestoreItem(i)} className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 transition-colors">
+                                                        Restore
+                                                    </button>
+                                                    <button onClick={() => handlePermanentDelete(i)} className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 transition-colors">
+                                                        <XCircle className="w-4 h-4 inline sm:hidden mr-1" />
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="py-8 flex flex-col items-center justify-center opacity-60 border-2 border-dashed rounded-xl" style={{ borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-tertiary)' }}>
+                                    <Trash2 className="w-8 h-8 mb-2" style={{ color: 'var(--text-muted)' }} />
+                                    <p className="text-sm font-medium text-center" style={{ color: 'var(--text-muted)' }}>Your trash is empty.</p>
+                                </div>
+                            )}
+                        </div>
                     </SettingsCard>
                 </div>
             </div>

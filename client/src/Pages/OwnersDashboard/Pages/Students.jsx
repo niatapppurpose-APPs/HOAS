@@ -5,7 +5,7 @@ import { db } from '../../../firebase/firebaseConfig';
 import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
 import Avatar from '../../../components/OwnerServices/Avatar';
-import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmModal';
+import { useToast } from '../../../components/Toast';
 import { HashLoader } from "react-spinners";
 
 import search from './Search.mp4'
@@ -21,8 +21,8 @@ const Students = () => {
     const navigate = useNavigate();
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [deleteModal, setDeleteModal] = useState({ isOpen: false, student: null });
-    const [isDeleting, setIsDeleting] = useState(false);
+    const toast = useToast();
+    
     const [searchListStudent, setSearchListStudent] = useState('')
     const [searchOpen, setSearchOpen] = useState(false);
     const [error, setError] = useState(null);
@@ -118,8 +118,17 @@ const Students = () => {
         return state;
     };
 
-    const handleRemove = (student) => {
-        setDeleteModal({ isOpen: true, student });
+    const handleRemove = async (student) => {
+        const confirmed = await toast.confirm("Are you sure you want to remove this student?", null, { confirmText: "Yes, Remove", cancelText: "Cancel" });
+        if (confirmed) {
+            try {
+                await deleteUserAccount(student.id);
+                toast.success('Student removed successfully');
+            } catch (err) {
+                console.error('Failed to delete student:', err);
+                toast.error(err.message || 'Failed to remove student');
+            }
+        }
     };
 
     if (simulateError) {
@@ -287,64 +296,56 @@ const Students = () => {
                             {searchStudent.map((student) => (
                                 <div
                                     key={student.id}
-                                    className="rounded-xl p-4 hover:border-slate-600/50 transition-all"
-                                    style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
+                                    className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 rounded-xl p-3 transition-all hover:bg-black/5 dark:hover:bg-white/5"
+                                    style={{
+                                        backgroundColor: 'var(--bg-card)',
+                                        border: '1px solid var(--border-primary)',
+                                        borderLeftWidth: '4px',
+                                        borderLeftColor: student.isOnline ? "green" : "red",
+                                    }}
                                 >
-                                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-
-                                        {/* Left: Student Info */}
-                                        <div className="flex items-center gap-4 flex-1 min-w-0">
-
-                                            <Avatar
-                                                image={student.photoURL}
-                                                name={student.fullName || student.displayName || student.email}
-                                                size="xl"
-                                            />
-
-                                            <div className="flex-1 min-w-0">
-                                                {/* Name and Badge */}
-                                                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                    <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
-                                                        {student.fullName || student.displayName || 'Unknown Student'}
-                                                    </h3>
-
-                                                    {/* Student Badge */}
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-xs font-medium">
-                                                        <GraduationCap className="w-3 h-3" />
-                                                        Student
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <Avatar
+                                            image={student.photoURL}
+                                            name={student.fullName || student.displayName || student.email}
+                                            size="md"
+                                        />
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h3 className="font-bold text-sm truncate" style={{ color: 'var(--text-primary)' }}>
+                                                    {student.fullName || student.displayName || 'Unknown Student'}
+                                                </h3>
+                                                <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-sm">
+                                                    Student
+                                                </span>
+                                                {student.hostelBlock && (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase" style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)' }}>
+                                                        {student.hostelBlock}
                                                     </span>
-                                                    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md border" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-tertiary)' }}>
-
-                                                        {student.collegeName || contextInfo.collegeName}
-                                                    </span>
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                                                        <Shield className="w-3.5 h-3.5 opacity-80" />
-                                                        {student.hostelBlock || 'No block assigned'}
-                                                    </span>
-                                                </div>
-
-                                                {/* Email */}
-                                                {student.email && (
-                                                    <div className="flex items-center gap-1.5 text-sm mb-2" style={{ color: 'var(--text-muted)' }}>
-                                                        <Mail className="w-3.5 h-3.5" />
-                                                        <span className="truncate">{student.email}</span>
-                                                    </div>
                                                 )}
+                                                <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800/50">
+                                                    {student.collegeName || contextInfo.collegeName}
+                                                </span>
                                             </div>
+                                            {student.email && (
+                                                <div className="flex items-center gap-1.5 text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                                                    <Mail className="w-3 h-3" />
+                                                    <span className="truncate">{student.email}</span>
+                                                </div>
+                                            )}
                                         </div>
+                                    </div>
 
-                                        {/* Right: Action Buttons */}
-                                        <div className="flex items-center gap-2 flex-shrink-0">
-                                            {/* Remove Button */}
-                                            <button
-                                                onClick={() => handleRemove(student)}
-                                                className="p-2 rounded-lg transition-all border border-1 border-[#E1251B]"
-                                                style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}
-                                                title="Remove Student"
-                                            >
-                                                <UserMinus className="text-[#E1251B] w-6 h-6" />
-                                            </button>
-                                        </div>
+                                    {/* Right: Action Buttons */}
+                                    <div className="flex flex-wrap xl:flex-nowrap items-center gap-3 xl:gap-6 text-xs">
+                                        <button
+                                            onClick={() => handleRemove(student)}
+                                            className="p-2 rounded-lg transition-all border border-1 border-[#E1251B] flex items-center justify-center"
+                                            style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                                            title="Remove Student"
+                                        >
+                                            <UserMinus className="text-[#E1251B] w-4 h-4" />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -353,30 +354,7 @@ const Students = () => {
                 </section>
             </div>
 
-            {/* Delete Confirmation Modal */}
-            <DeleteConfirmModal
-                isOpen={deleteModal.isOpen}
-                onClose={() => setDeleteModal({ isOpen: false, student: null })}
-                onConfirm={async () => {
-                    if (!deleteModal.student) return;
-                    setIsDeleting(true);
-                    try {
-                        await deleteUserAccount(deleteModal.student.id);
-                        setDeleteModal({ isOpen: false, student: null });
-                    } catch (err) {
-                        console.error('Failed to delete student:', err);
-                        setError(err.message || 'Delete failed');
-                    } finally {
-                        setIsDeleting(false);
-                    }
-                }}
-                collegeName={deleteModal.student?.fullName || deleteModal.student?.email}
-                isDeleting={isDeleting}
-                wardenCount={0}
-                studentCount={0}
-                showDetails={false}
-                title="Delete Student"
-            />
+            
         </>
     );
 };

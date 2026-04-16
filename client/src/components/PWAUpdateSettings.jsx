@@ -96,8 +96,8 @@ const PWAUpdateSettings = () => {
   };
 
   const handleNotificationToggle = async () => {
-    if (!notificationsEnabled) {
-      // Request permission
+    // If not enabled OR we don't have permission yet, treat it as turning ON
+    if (!notificationsEnabled || notificationPermission !== 'granted') {
       if ('Notification' in window) {
         const permission = await Notification.requestPermission();
         setNotificationPermission(permission);
@@ -105,9 +105,13 @@ const PWAUpdateSettings = () => {
         if (permission === 'granted') {
           setNotificationsEnabled(true);
           localStorage.setItem('hoas-update-notifications', 'true');
+        } else {
+          setNotificationsEnabled(false);
+          localStorage.setItem('hoas-update-notifications', 'false');
         }
       }
     } else {
+      // We are enabled and have permission, so turn OFF
       setNotificationsEnabled(false);
       localStorage.setItem('hoas-update-notifications', 'false');
     }

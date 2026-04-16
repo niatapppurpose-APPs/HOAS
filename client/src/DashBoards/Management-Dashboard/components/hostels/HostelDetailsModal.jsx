@@ -287,7 +287,7 @@ const HostelDetailsModal = ({ isOpen, onClose, hostelId }) => {
                                                             {student.studentId || student.rollNumber || '-'}
                                                         </td>
                                                         <td className="px-6 py-3 text-sm" style={{ color: 'var(--text-primary)' }}>
-                                                            <span className="px-2 py-1 bg-gray-100 rounded-md font-mono text-xs border">
+                                                            <span className="px-2 py-1 rounded-md font-mono text-xs border" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)', borderColor: 'var(--border-primary)' }}>
                                                                 {student.roomNumber || 'Not assigned'}
                                                             </span>
                                                         </td>

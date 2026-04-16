@@ -7,7 +7,7 @@ import Header from '../../../components/OwnerServices/header';
 import Avatar from '../../../components/OwnerServices/Avatar';
 import { HashLoader } from "react-spinners";
 import { User, Mail, Shield, Eye, Edit2, UserMinus, Building2, Search, X, RefreshCw } from 'lucide-react';
-import DeleteConfirmModal from '../../../components/OwnerServices/DeleteConfirmModal';
+import { useToast } from '../../../components/Toast';
 import EmptyState from '../../../components/OwnerServices/EmptyState';
 import { useTheme } from '../../../context/ThemeContext';
 import NoDataLight from '../../../assets/No-Data.avif';
@@ -18,8 +18,8 @@ const Wardens = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [wardens, setWardens] = useState([]);
-    const [deleteModal, setDeleteModal] = useState({ isOpen: false, warden: null });
-    const [isDeleting, setIsDeleting] = useState(false);
+    const toast = useToast();
+    
     const [loading, setLoading] = useState(true);
     const [searchListWarden, setSearchListWarden] = useState('')
     const [searchOpen, setSearchOpen] = useState(false);
@@ -108,8 +108,17 @@ const Wardens = () => {
         return state;
     };
 
-    const handleRemove = (warden) => {
-        setDeleteModal({ isOpen: true, warden });
+    const handleRemove = async (warden) => {
+        const confirmed = await toast.confirm("Are you sure you want to remove this warden?", null, { confirmText: "Yes, Remove", cancelText: "Cancel" });
+        if (confirmed) {
+            try {
+                await deleteUserAccount(warden.id);
+                toast.success('Warden removed successfully');
+            } catch (err) {
+                console.error('Failed to delete warden:', err);
+                toast.error(err.message || 'Failed to remove warden');
+            }
+        }
     };
 
     const getRoleBadgeColor = (role) => {
@@ -287,103 +296,67 @@ const Wardens = () => {
                     ) : (
                         <div className="space-y-3">
                             {searchWarden.map((warden) => (
-                                <div
-                                    key={warden.id}
-                                    className="rounded-lg p-4 hover:border-slate-600/50 transition-all"
-                                    style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
-                                >
-                                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div
+        key={warden.id}
+        className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 rounded-xl p-3 transition-all hover:bg-black/5 dark:hover:bg-white/5"
+        style={{
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-primary)',
+            borderLeftWidth: '4px',
+            borderLeftColor: warden.isOnline ? "green" : "red",
+        }}
+    >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+            <Avatar
+                image={warden.photoURL}
+                name={warden.fullName || warden.displayName || warden.email}
+                size="md"
+            />
+            <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-sm truncate" style={{ color: 'var(--text-primary)' }}>
+                        {warden.fullName || warden.displayName || 'Unknown Warden'}
+                    </h3>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase bg-gradient-to-r ${getRoleBadgeColor(getRoleLabel(warden))} text-white shadow-sm`}>
+                        {getRoleLabel(warden)}
+                    </span>
+                    {warden.hostelBlock && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                            {warden.hostelBlock}
+                        </span>
+                    )}
+                    {warden.collegeName && (
+                        <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800/50">
+                            {warden.collegeName || contextInfo.collegeName}
+                        </span>
+                    )}
+                </div>
+                {warden.email && (
+                    <div className="flex items-center gap-1.5 text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                        <Mail className="w-3 h-3" />
+                        <span className="truncate">{warden.email}</span>
+                    </div>
+                )}
+            </div>
+        </div>
 
-                                        {/* Left: Student Info */}
-                                        <div className="flex items-center gap-4 flex-1 min-w-0">
-
-                                            <Avatar
-                                                image={warden.photoURL}
-                                                name={warden.fullName || warden.displayName || warden.email}
-                                                size="xl"
-                                            />
-
-                                            <div className="flex-1 min-w-0">
-                                                {/* Name and Badge */}
-                                                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                    <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
-                                                        {warden.fullName || warden.displayName || 'Unknown Warden'}
-                                                    </h3>
-
-                                                    {/* Warden Badge */}
-                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r ${getRoleBadgeColor(getRoleLabel(warden))} text-white text-xs font-medium`}>
-                                                        {getRoleLabel(warden)}
-                                                    </span>
-                                                      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md border" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-tertiary)' }}>
-                                                        {warden.collegeName || contextInfo.collegeName}
-                                                    </span>
-                                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                                                        <Shield className="w-3.5 h-3.5 opacity-80" />
-                                                        {warden.hostelBlock || 'No block assigned'}
-                                                    </span>
-                                                </div>
-
-                                                {/* Email */}
-                                                {warden.email && (
-                                                    <div className="flex items-center gap-1.5 text-sm mb-2" style={{ color: 'var(--text-muted)' }}>
-                                                        <Mail className="w-3.5 h-3.5" />
-                                                        <span className="truncate">{warden.email}</span>
-                                                    </div>
-                                                )}
-
-                                                {/* College and Hostel Badges */}
-                                                <div className="flex flex-wrap items-center gap-4 mt-1">
-                                                    {/* Professional Institution Badge */}
-                                                  
-
-                                                    {/* Premium Hostel Badge */}
-                                                   
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Right: Action Buttons */}
-                                        <div className="flex items-center gap-2 flex-shrink-0">
-                                            {/* Remove Button */}
-                                            <button
-                                                onClick={() => handleRemove(warden)}
-                                                className="p-2 rounded-lg transition-all border border-1 border-[#E1251B]"
-                                                style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}
-                                                title="Remove Warden"
-                                                aria-label={`Remove ${warden.fullName || warden.displayName || warden.email || 'warden'}`}
-                                            >
-                                                <UserMinus className="text-[#E1251B] w-6 h-6" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+        <div className="flex flex-wrap xl:flex-nowrap items-center gap-3 xl:gap-6 text-xs">
+            <button
+                onClick={() => handleRemove(warden)}
+                className="p-2 rounded-lg transition-all border border-[#E1251B] flex items-center justify-center"
+                style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                title="Remove Warden"
+            >
+                <UserMinus className="text-[#E1251B] w-4 h-4" />
+            </button>
+        </div>
+    </div>
+))}
                         </div>
                     )}
                 </section>
             </div>
-            <DeleteConfirmModal
-                isOpen={deleteModal.isOpen}
-                onClose={() => setDeleteModal({ isOpen: false, warden: null })}
-                onConfirm={async () => {
-                    if (!deleteModal.warden) return;
-                    setIsDeleting(true);
-                    try {
-                        await deleteUserAccount(deleteModal.warden.id);
-                        setDeleteModal({ isOpen: false, warden: null });
-                        setError(null);
-                    } catch (err) {
-                        console.error('Failed to delete warden:', err);
-                        setError(err.message || 'Delete failed');
-                    } finally {
-                        setIsDeleting(false);
-                    }
-                }}
-                collegeName={deleteModal.warden?.fullName || deleteModal.warden?.displayName || deleteModal.warden?.email || 'this warden'}
-                isDeleting={isDeleting}
-                showDetails={false}
-                title="Delete Warden"
-            />
+            
         </>
     );
 };

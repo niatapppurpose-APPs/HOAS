@@ -203,57 +203,43 @@ const Wardens = () => {
         ) : (searchWardenList.map(warden => (
           <div
             key={warden.id}
-            className="rounded-xl p-4 hover:border-slate-600/50 transition-all"
-
+            className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 rounded-xl p-3 transition-all hover:bg-black/5 dark:hover:bg-white/5"
             style={{
-              backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)',
-              borderColor: warden.isOnline ? "green" : "red",
-
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-primary)',
+              borderLeftWidth: '4px',
+              borderLeftColor: warden.isOnline ? "green" : "red",
             }}
           >
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-
-              {/* Left: Warden Info */}
-              <div className="flex items-center gap-4 flex-1 min-w-0">
-
-                <Avatar
-                  image={warden.photoURL}
-                  name={warden.fullName || warden.email}
-                  size="lg"
-                />
-
-                <div className="flex-1 min-w-0">
-                  {/* Name and Badge */}
-                  <div className="flex items-center gap-2 sm:gap-8 mb-1 flex-wrap">
-                    <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
-                      {warden.fullName || 'Unknown Warden'}
-                    </h3>
-                    {/* College and Hostel Badges */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* Professional Institution Badge */}
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-600/90 to-indigo-600/90 text-white text-xs font-semibold shadow-lg border border-purple-500/30">
-                        <Building2 className="w-3.5 h-3.5" />
-                        {warden.collegeName || contextInfo.collegeName}
-
-                      </span>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r ${getRoleBadgeColor(getRoleLabel(warden))} text-white text-xs font-medium shadow-md`}>
-                        <Shield className="w-3.5 h-3.5" />
-                        {getRoleLabel(warden)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  {warden.email && (
-                    <div className="flex items-center gap-1.5 text-sm mb-2" style={{ color: 'var(--text-muted)' }}>
-                      <Mail className="w-3.5 h-3.5" />
-                      <span className="truncate">{warden.email}</span>
-                    </div>
-                  )}
-
-
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Avatar
+                image={warden.photoURL}
+                name={warden.fullName || warden.email}
+                size="md"
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-bold text-sm truncate" style={{ color: 'var(--text-primary)' }}>
+                    {warden.fullName || 'Unknown Warden'}
+                  </h3>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase bg-gradient-to-r ${getRoleBadgeColor(getRoleLabel(warden))} text-white shadow-sm`}>
+                    {getRoleLabel(warden)}
+                  </span>
+                  <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800/50">
+                    {warden.collegeName || contextInfo.collegeName}
+                  </span>
                 </div>
+                {warden.email && (
+                  <div className="flex items-center gap-1.5 text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                    <Mail className="w-3 h-3" />
+                    <span className="truncate">{warden.email}</span>
+                  </div>
+                )}
               </div>
+            </div>
+
+            <div className="flex flex-wrap xl:flex-nowrap items-center gap-3 xl:gap-6 text-xs">
+                 {/* Reserved for future Warden actions */}
             </div>
           </div>
         ))))}

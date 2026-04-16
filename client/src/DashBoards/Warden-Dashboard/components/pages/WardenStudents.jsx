@@ -227,88 +227,102 @@ const WardenStudents = () => {
                             filteredStudents.map((student) => (
                                 <div
                                     key={student.id}
-                                    className="p-3 md:p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4 hover:bg-orange-500/5 transition-all cursor-pointer group border-b border-gray-100 dark:border-gray-800 last:border-0"
+                                    className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 rounded-xl p-3 transition-all hover:bg-black/5 dark:hover:bg-white/5 mb-3"
                                     onClick={() => setSelectedStudent(student)}
+                                    style={{
+                                        backgroundColor: 'var(--bg-card)',
+                                        border: '1px solid var(--border-primary)',
+                                        borderLeftWidth: '4px',
+                                        borderLeftColor: student.status === 'approved' ? "green" : "red",
+                                        cursor: 'pointer'
+                                    }}
                                 >
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <div className="flex-shrink-0 w-10 h-10 md:w-11 md:h-11 rounded-xl overflow-hidden border-2 border-orange-500/10 group-hover:border-orange-500/30 transition-all">
-                                            <Avatar name={student.fullName} image={student.photoURL} size="sm" className="w-full h-full" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
+                                        <Avatar
+                                            image={student.photoURL}
+                                            name={student.fullName || 'Unnamed'}
+                                            size="md"
+                                        />
+                                        <div className="min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <p className="text-sm md:text-base font-bold truncate group-hover:text-orange-500 transition-colors" style={{ color: 'var(--text-primary)' }}>
+                                                <h3 className="font-bold text-sm truncate" style={{ color: 'var(--text-primary)' }}>
                                                     {student.fullName || 'Unnamed'}
-                                                </p>
-                                                <span className={`text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase ${student.status === 'approved'
-                                                    ? 'bg-green-500/10 text-green-600 border border-green-500/20'
-                                                    : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
-                                                    }`}>
+                                                </h3>
+                                                <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase ${student.status === 'approved' ? 'bg-green-500/10 text-green-600 border border-green-500/20' : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'}`}>
                                                     {student.status || 'pending'}
                                                 </span>
-                                            </div>
-                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
                                                 {student.roomNumber && (
-                                                    <span className="text-[10px] md:text-xs font-medium flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                                                        <Home className="w-3 h-3" /> Room {student.roomNumber}
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                                                        <Home className="w-3 h-3 inline-block mr-1 opacity-70" /> Room {student.roomNumber}
                                                     </span>
                                                 )}
                                                 {student.hostelBlock && (
-                                                    <span className="text-[10px] md:text-xs font-medium flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                                                        <Building2 className="w-3 h-3" /> {student.hostelBlock}
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                                                        {student.hostelBlock}
                                                     </span>
                                                 )}
                                                 {student.studentId && (
-                                                    <span className="text-[10px] md:text-xs font-medium flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                                                        <Hash className="w-3 h-3" /> {student.studentId}
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800/50">
+                                                        <Hash className="w-3 h-3 inline-block mr-0.5 opacity-70" />{student.studentId}
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-wrap xl:flex-nowrap items-center gap-3 xl:gap-5 text-xs" onClick={(e) => e.stopPropagation()}>
-                                        <div className="flex items-center gap-2 bg-orange-500/10 px-2.5 py-1.5 rounded-lg text-orange-600 dark:text-orange-400 font-semibold border border-orange-500/20 whitespace-nowrap">
-                                            <span>Total: ₹{student.feeDetails?.totalFee || 0}</span>
-                                            <span className="w-px h-3 bg-orange-500/30"></span>
-                                            <span className="text-emerald-600 dark:text-emerald-400">Paid: ₹{student.feeDetails?.paidFee || 0}</span>
-                                            <span className="w-px h-3 bg-orange-500/30"></span>
-                                            <span className="text-rose-600 dark:text-rose-400">Pending: ₹{student.feeDetails?.pendingFee || 0}</span>
+                                    <div className="flex flex-wrap xl:flex-nowrap items-center gap-3 xl:gap-6 text-xs" onClick={(e) => e.stopPropagation()}>
+                                        {/* Fee Details */}
+                                        <div className="flex items-center gap-2 md:gap-3 border border-gray-200 dark:border-gray-700/50 bg-black/5 dark:bg-white/5 px-2.5 py-1.5 rounded-lg whitespace-nowrap">
+                                            <div>
+                                                <span className="font-semibold text-gray-500 dark:text-gray-400 mr-1">Total:</span>
+                                                <span style={{ color: 'var(--text-primary)' }} className="font-mono font-medium">₹{student.feeDetails?.totalFee || 0}</span>
+                                            </div>
+                                            <div className="w-px h-3 bg-gray-300 dark:bg-gray-600"></div>
+                                            <div>
+                                                <span className="font-semibold text-gray-500 dark:text-gray-400 mr-1">Paid:</span>
+                                                <span className="text-green-600 dark:text-green-400 font-mono font-bold">₹{student.feeDetails?.paidFee || 0}</span>
+                                            </div>
+                                            <div className="w-px h-3 bg-gray-300 dark:bg-gray-600"></div>
+                                            <div>
+                                                <span className="font-semibold text-gray-500 dark:text-gray-400 mr-1">Pending:</span>
+                                                <span className="text-red-500 font-mono font-bold">₹{student.feeDetails?.pendingFee || 0}</span>
+                                            </div>
                                         </div>
 
+                                        {/* Verifications */}
                                         <div className="flex items-center gap-3 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-transparent dark:border-gray-700/30">
                                             <div className="flex items-center gap-1.5">
-                                                <span className="font-bold text-[10px] tracking-wider uppercase opacity-60" style={{ color: 'var(--text-muted)' }}>WV:</span>
+                                                <span className="font-bold text-[10px] uppercase opacity-70" style={{ color: 'var(--text-muted)' }}>WV:</span>
                                                 <select 
                                                     value={student.wardenVerification || 'Unverified'} 
                                                     onChange={(e) => handleVerificationChange(student.id, e.target.value)}
                                                     disabled={!student.feeDetails?.paidFee || student.feeDetails?.paidFee === 0}
                                                     title={(!student.feeDetails?.paidFee || student.feeDetails?.paidFee === 0) ? "Verification locked: Student has paid ₹0" : "Update Warden Verification"}
-                                                    className={`bg-transparent border border-orange-500/20 rounded py-0.5 px-1 text-xs font-semibold focus:ring-1 focus:ring-orange-500 hover:border-orange-500/50 transition-colors ${(!student.feeDetails?.paidFee || student.feeDetails?.paidFee === 0) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                                    style={{ color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                                                    className={`bg-transparent border border-gray-300 dark:border-gray-600 rounded py-0.5 px-1 text-xs font-semibold focus:ring-1 focus:ring-indigo-500 transition-colors ${(!student.feeDetails?.paidFee || student.feeDetails?.paidFee === 0) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                                    style={{ color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}
                                                 >
-                                                    <option value="Unverified">Unverified</option>
-                                                    <option value="Verify">Verify</option>
+                                                    <option value="Unverified" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Unverified</option>
+                                                    <option value="Verify" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Verify</option>
                                                 </select>
                                             </div>
-
                                             <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
-
                                             <div className="flex items-center gap-1.5">
-                                                <span className="font-bold text-[10px] tracking-wider uppercase opacity-60" style={{ color: 'var(--text-muted)' }}>MV:</span>
-                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${student.managementVerification === 'Verify' ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}`}>
+                                                <span className="font-bold text-[10px] uppercase opacity-70" style={{ color: 'var(--text-muted)' }}>MV:</span>
+                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${student.managementVerification === 'Verify' ? 'bg-green-100 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800/50 dark:text-green-400' : 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800/50 dark:text-red-400'}`}>
                                                     {student.managementVerification || 'Unverified'}
                                                 </span>
                                             </div>
                                         </div>
 
+                                        {/* Status */}
                                         <div className="w-auto xl:w-24 flex justify-end">
                                             {(student.managementVerification === 'Verify' && student.wardenVerification === 'Verify') ? (
-                                                <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-gradient-to-r from-emerald-500 to-green-500 text-white flex items-center gap-1 w-max shadow-sm">
-                                                    <CheckCircle size={10} /> Verified
+                                                <span className="px-2 py-1 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1 shadow-sm w-max">
+                                                    <CheckCircle size={12} /> Verified
                                                 </span>
                                             ) : (
-                                                <span className="px-2 py-1 rounded text-[10px] font-bold uppercase text-amber-600 bg-amber-500/10 border border-amber-500/20 flex items-center gap-1 w-max shadow-sm">
-                                                    <Clock size={10} /> Pending
+                                                <span className="px-2 py-1 bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1 border border-gray-200 dark:border-gray-700 w-max">
+                                                    <CircleX size={12} className="opacity-70" /> Pending
                                                 </span>
                                             )}
                                         </div>

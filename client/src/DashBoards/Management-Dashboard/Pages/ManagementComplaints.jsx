@@ -26,10 +26,15 @@ import {
 } from 'lucide-react';
 import { useToast } from '../../../components/Toast';
 import ContextChatBox from '../../../components/ContextChat/ContextChatBox';
+import { useTheme } from '../../../context/ThemeContext';
+import EmptyState from '../../../components/OwnerServices/EmptyState';
+import NoDataLight from '../../../assets/No-Data.avif';
+import NoDataDark from '../../../assets/NoDataDark.png';
 
 const ManagementComplaints = () => {
     const { userData } = useAuth();
     const { isCollapsed, setIsCollapsed } = useOutletContext();
+    const { isDark } = useTheme();
     const toast = useToast();
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -136,84 +141,38 @@ const ManagementComplaints = () => {
             />
 
             <div className="pt-20 sm:pt-24 px-3 sm:px-4 lg:px-8 py-4 sm:pb-8">
-                {/* Stats Overview */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                    <div className="p-4 rounded-2xl border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
-                                <MessageSquare size={20} />
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Total Complaints</p>
-                                <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{stats.total}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="p-4 rounded-2xl border" style={{ backgroundColor: stats.escalated > 0 ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-card)', borderColor: stats.escalated > 0 ? 'rgba(239, 68, 68, 0.3)' : 'var(--border-primary)' }}>
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-600">
-                                <AlertTriangle size={20} />
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium text-red-600/70">Escalated</p>
-                                <p className="text-xl font-bold text-red-600">{stats.escalated}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="p-4 rounded-2xl border" style={{ backgroundColor: stats.disputed > 0 ? 'rgba(249, 115, 22, 0.05)' : 'var(--bg-card)', borderColor: stats.disputed > 0 ? 'rgba(249, 115, 22, 0.3)' : 'var(--border-primary)' }}>
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600">
-                                <ShieldAlert size={20} />
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium text-orange-600/70">Disputed</p>
-                                <p className="text-xl font-bold text-orange-600">{stats.disputed}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="p-4 rounded-2xl border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
-                                <Clock size={20} />
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Pending Warden</p>
-                                <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{stats.pending}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="p-4 rounded-2xl border" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-600">
-                                <CheckCircle2 size={20} />
-                            </div>
-                            <div>
-                                <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Resolved</p>
-                                <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{stats.resolved}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {/* Filters & Search - Now contains counts */}
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 mt-2">
+                    <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-xl w-full md:w-auto" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                        {['all', 'escalated', 'disputed', 'pending', 'resolved'].map((f) => {
+                            let displayName = f;
+                            let count = 0;
+                            if (f === 'all') { displayName = 'All'; count = stats.total; }
+                            else if (f === 'escalated') { displayName = 'Escalated'; count = stats.escalated; }
+                            else if (f === 'disputed') { displayName = 'Disputed'; count = stats.disputed; }
+                            else if (f === 'pending') { displayName = 'Pending'; count = stats.pending; }
+                            else if (f === 'resolved') { displayName = 'Resolved'; count = stats.resolved; }
 
-                {/* Filters & Search */}
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                    <div className="flex items-center gap-2 p-1 rounded-xl" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                        {['all', 'escalated', 'disputed', 'pending', 'resolved'].map((f) => (
-                            <button
-                                key={f}
-                                onClick={() => setFilter(f)}
-                                className={`px-4 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${filter === f
-                                    ? f === 'escalated' ? 'bg-red-600 text-white shadow-lg'
-                                        : f === 'disputed' ? 'bg-orange-600 text-white shadow-lg'
-                                            : 'bg-blue-600 text-white shadow-lg'
-                                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                                    }`}
-                            >
-                                {f === 'disputed' && '🚩 '}{f}
-                                {f === 'escalated' && stats.escalated > 0 && ` (${stats.escalated})`}
-                                {f === 'disputed' && stats.disputed > 0 && ` (${stats.disputed})`}
-                            </button>
-                        ))}
+                            return (
+                                <button
+                                    key={f}
+                                    onClick={() => setFilter(f)}
+                                    className={`px-4 py-2 flex-1 md:flex-none justify-center rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${filter === f
+                                        ? f === 'escalated' ? 'bg-red-600 text-white shadow-lg'
+                                            : f === 'disputed' ? 'bg-orange-600 text-white shadow-lg'
+                                                : 'bg-blue-600 text-white shadow-lg'
+                                        : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5'
+                                        }`}
+                                >
+                                    {f === 'disputed' && <Flag size={14} className={filter === f ? 'text-white' : 'text-orange-500'} />}
+                                    {f === 'escalated' && <AlertTriangle size={14} className={filter === f ? 'text-white' : 'text-red-500'} />}
+                                    <span>{displayName}</span>
+                                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === f ? 'bg-white/20 font-black' : 'bg-gray-200/50 dark:bg-gray-700/50'}`}>
+                                        {count}
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
                     <div className="relative w-full md:w-80">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -253,19 +212,26 @@ const ManagementComplaints = () => {
                                     </tr>
                                 ) : filteredComplaints.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-20 text-center">
-                                            <div className="flex flex-col items-center gap-2 opacity-30">
-                                                {filter === 'escalated' ? (
-                                                    <>
-                                                        <AlertTriangle size={48} />
-                                                        <p className="text-sm font-bold">No escalated complaints</p>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <MessageSquare size={48} />
-                                                        <p className="text-sm font-bold">No complaints found</p>
-                                                    </>
-                                                )}
+                                        <td colSpan="5" className="p-0">
+                                            <div className="py-12">
+                                                <EmptyState
+                                                    title={searchTerm 
+                                                        ? `No matches for "${searchTerm}"` 
+                                                        : `No ${filter === 'all' ? '' : filter} complaints`}
+                                                    description={searchTerm 
+                                                        ? "Try a different student name, room number, or complaint title."
+                                                        : filter === 'escalated' 
+                                                            ? "Great job! There are no complaints requiring management escalation." 
+                                                            : filter === 'disputed' 
+                                                                ? "No disputed complaints currently need your attention."
+                                                                : filter === 'pending'
+                                                                    ? "All caught up! No pending complaints."
+                                                                    : "You're all caught up. The system is functioning normally with no complaints."}
+                                                    ctaLabel={searchTerm ? "Clear Search" : null}
+                                                    onCta={searchTerm ? () => setSearchTerm('') : undefined}
+                                                    videoSrc={!isDark ? NoDataLight : NoDataDark}
+                                                    className="max-w-2xl mx-auto border-none shadow-none bg-transparent dark:bg-transparent"
+                                                />
                                             </div>
                                         </td>
                                     </tr>
