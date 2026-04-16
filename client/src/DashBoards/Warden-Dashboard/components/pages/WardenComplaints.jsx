@@ -188,33 +188,6 @@ const WardenComplaints = () => {
             />
 
             <div className="pt-24 px-4 sm:px-6 lg:px-8 pb-8">
-                {/* ── Hero ─────────────────────────────────── */}
-                <div className="warden-complaints-hero">
-                    <div className="warden-complaints-hero-content">
-                        <h2>Complaint Management</h2>
-                        <p>Review and resolve student complaints for {userData?.collegeName || 'your college'}</p>
-                        <div className="warden-stats-row">
-                            <div className="warden-stat-chip">
-                                <FileText size={13} /> {stats.total} Total
-                            </div>
-                            <div className="warden-stat-chip">
-                                <Clock size={13} /> {stats.pending} Pending
-                            </div>
-                            <div className="warden-stat-chip">
-                                <Loader2 size={13} /> {stats.inProgress} In Progress
-                            </div>
-                            <div className="warden-stat-chip">
-                                <CheckCircle2 size={13} /> {stats.resolved} Resolved
-                            </div>
-                            {stats.disputed > 0 && (
-                                <div className="warden-stat-chip warden-stat-disputed">
-                                    <ShieldAlert size={13} /> {stats.disputed} Disputed!
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
                 {/* ── Complaints Card ──────────────────────── */}
                 <div className="warden-complaints-card">
                     <div className="warden-complaints-card-header">
@@ -247,7 +220,7 @@ const WardenComplaints = () => {
                     </div>
 
                     {/* List */}
-                    <div className="warden-scroll" style={{ maxHeight: '600px', overflowY: 'auto' }}>
+                    <div className="warden-scroll" style={{ maxHeight: '600px', overflowY: 'scroll' }}>
                         {loading ? (
                             <div className="warden-empty">
                                 <Loader2 size={32} className="warden-spinner" style={{ color: '#f97316' }} />

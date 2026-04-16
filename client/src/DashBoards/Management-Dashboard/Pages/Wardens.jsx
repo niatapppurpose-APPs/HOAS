@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import ManagementHeader from "../components/layout/ManagementHeader";
 import { collection, query, where, onSnapshot, doc, deleteDoc, getDocs } from 'firebase/firestore';
-import { User, Shield, Eye, Edit2, UserMinus, X, RefreshCw, CircleX, CheckCircle } from 'lucide-react';
+import { User, Shield, Eye, Edit2, X, RefreshCw, CircleX, CheckCircle } from 'lucide-react';
 import { db } from '../../../firebase/firebaseConfig';
 import Avatar from "../../../components/OwnerServices/Avatar";
 import { Building2, Mail, Search, Filter, Plus } from "lucide-react";
@@ -253,20 +253,6 @@ const Wardens = () => {
 
 
                 </div>
-              </div>
-
-              {/* Right: Action Buttons */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {/* Remove Button */}
-                <button
-                  onClick={() => handleRemove(warden)}
-                  className="p-2 rounded-lg transition-all border border-1 border-[#E1251B]"
-                  style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}
-                  title="Remove Warden"
-                  aria-label={`Remove ${warden.fullName || warden.displayName || warden.email || 'warden'}`}
-                >
-                  <UserMinus className="text-[#E1251B] w-6 h-6" />
-                </button>
               </div>
             </div>
           </div>

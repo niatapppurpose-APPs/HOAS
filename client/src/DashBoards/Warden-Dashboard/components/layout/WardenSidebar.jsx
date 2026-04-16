@@ -80,13 +80,14 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/warden", tourId: "warden-tour-nav-dashboard" },
-    { id: "emergency-location", label: "Emergency Location", icon: ShieldAlert, path: "/dashboard/warden/emergency-location", tourId: "warden-tour-nav-emergency-location" },
     { id: "students", label: "Students", icon: Users, path: "/dashboard/warden/students", tourId: "warden-tour-nav-students" },
     { id: "complaints", label: "Complaints", icon: FileText, path: "/dashboard/warden/complaints", tourId: "warden-tour-nav-complaints" },
-    { id: "fees", label: "Student Fee Reports", icon: Wallet, path: "/dashboard/warden/fees", tourId: "warden-tour-nav-fees" },
-    { id: "analytics", label: "Analytics", icon: PieChart, path: "/dashboard/warden/analytics", tourId: "warden-tour-nav-analytics", isNew: true },
     { id: "leave-requests", label: "Leave Requests", icon: CalendarDays, path: "/dashboard/warden/leave-requests", tourId: "warden-tour-nav-leave-requests" },
     { id: "announcements", label: "Announcements", icon: Bell, path: "/dashboard/warden/announcements", tourId: "warden-tour-nav-announcements" },
+    { id: "analytics", label: "Analytics", icon: PieChart, path: "/dashboard/warden/analytics", tourId: "warden-tour-nav-analytics", isNew: true },
+    { id: "fees", label: "Student Fee Reports", icon: Wallet, path: "/dashboard/warden/fees", tourId: "warden-tour-nav-fees" },
+
+    { id: "emergency-location", label: "Emergency Location", icon: ShieldAlert, path: "/dashboard/warden/emergency-location", tourId: "warden-tour-nav-emergency-location" },
   ];
 
   const bottomMenuItems = [

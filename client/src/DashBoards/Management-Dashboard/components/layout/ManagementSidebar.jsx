@@ -87,12 +87,12 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard/management", tourId: "mgmt-tour-nav-dashboard" },
-    { id: "emergency-location", label: "Emergency Location", icon: ShieldAlert, path: "/dashboard/management/emergency-location", tourId: "mgmt-tour-nav-emergency-location" },
     { id: "wardens", label: "Wardens", icon: Building2, path: "/dashboard/management/wardens", tourId: "mgmt-tour-nav-wardens" },
     { id: "students", label: "Students", icon: Users, path: "/dashboard/management/students", tourId: "mgmt-tour-nav-students" },
     { id: "hostels", label: "Hostels", icon: Home, path: "/dashboard/management/hostels", tourId: "mgmt-tour-nav-hostels" },
     { id: "complaints", label: "Complaints", icon: MessageSquare, path: "/dashboard/management/complaints", tourId: "mgmt-tour-nav-complaints" },
     { id: "analytics", label: "Analytics", icon: PieChart, path: "/dashboard/management/analytics", tourId: "mgmt-tour-nav-analytics" },
+    { id: "emergency-location", label: "Emergency Location", icon: ShieldAlert, path: "/dashboard/management/emergency-location", tourId: "mgmt-tour-nav-emergency-location" },
     { id: "reports", label: "Reports", icon: FileText, path: "/dashboard/management/reports", tourId: "mgmt-tour-nav-reports" },
   ];
 
