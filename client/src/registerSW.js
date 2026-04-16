@@ -29,9 +29,26 @@ export function registerServiceWorker() {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 // New content available
-                if (confirm('New version available! Reload to update?')) {
+                const savedMode = localStorage.getItem('hoas-update-mode') || 'manual';
+                const savedNotifPref = localStorage.getItem('hoas-update-notifications') !== 'false'; // Default to true
+
+                if (savedNotifPref && 'Notification' in window && Notification.permission === 'granted') {
+                  registration.showNotification('HOAS Update Available', {
+                    body: 'A new version of HOAS is ready to install.',
+                    icon: '/Applogo.png',
+                    badge: '/Applogo.png',
+                    tag: 'app-update',
+                    requireInteraction: true,
+                    data: { url: window.location.origin }
+                  });
+                }
+
+                if (savedMode === 'auto') {
                   newWorker.postMessage({ type: 'SKIP_WAITING' });
                   window.location.reload();
+                } else if (savedMode === 'manual') {
+                  // The PWAUpdateSettings component will handle the UI for manual updates
+                  console.log('Update available. Manual update mode is active.');
                 }
               }
             });

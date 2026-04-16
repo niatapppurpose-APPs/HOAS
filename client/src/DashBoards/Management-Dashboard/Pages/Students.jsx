@@ -124,7 +124,7 @@ const Students = () => {
       setUnverifyModal({ show: true, studentId, reason: "" });
       return;
     }
-    
+
     try {
       const studentRef = doc(db, 'users', studentId);
       await updateDoc(studentRef, {
@@ -332,8 +332,8 @@ const Students = () => {
                   <div className="flex items-center gap-3 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-transparent dark:border-gray-700/30">
                     <div className="flex items-center gap-1.5">
                       <span className="font-bold text-[10px] uppercase opacity-70" style={{ color: 'var(--text-muted)' }}>MV:</span>
-                      <select 
-                        value={student.managementVerification || 'Unverified'} 
+                      <select
+                        value={student.managementVerification || 'Unverified'}
                         onChange={(e) => handleVerificationChange(student.id, 'managementVerification', e.target.value)}
                         disabled={!student.feeDetails?.paidFee || student.feeDetails?.paidFee === 0}
                         title={(!student.feeDetails?.paidFee || student.feeDetails?.paidFee === 0) ? "Verification locked: Student has paid ₹0" : "Update Management Verification"}
@@ -378,7 +378,7 @@ const Students = () => {
         onClose={() => setShowBulkUpload(false)}
         collegeName={userData?.collegeName}
       />
-      
+
       {/* Add Single Student Modal */}
       <AddStudentModal
         isOpen={showAddStudent}
@@ -389,8 +389,8 @@ const Students = () => {
       {/* Unverify Reason Modal */}
       {unverifyModal.show && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-2xl border shadow-2xl p-6" 
-               style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+          <div className="w-full max-w-md rounded-2xl border shadow-2xl p-6"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
             <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Reason for Un-verifying</h3>
             <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
               Please provide a detailed reason (at least 2 lines) for marking this student as unverified. This will be sent as a notification.
@@ -403,14 +403,14 @@ const Students = () => {
               style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
             />
             <div className="flex gap-3">
-              <button 
-                className="flex-1 px-4 py-2 rounded-xl text-sm font-bold border" 
+              <button
+                className="flex-1 px-4 py-2 rounded-xl text-sm font-bold border"
                 style={{ borderColor: 'var(--border-disabled)', color: 'var(--text-secondary)' }}
                 onClick={() => setUnverifyModal({ show: false, studentId: null, reason: "" })}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="flex-1 px-4 py-2 rounded-xl text-sm font-bold bg-rose-600 text-white hover:bg-rose-700 transition-colors"
                 onClick={confirmUnverify}
               >

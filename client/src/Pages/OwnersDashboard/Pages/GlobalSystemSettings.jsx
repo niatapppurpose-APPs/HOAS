@@ -222,36 +222,40 @@ const GlobalSystemSettings = () => {
 
   const themeSetters = useMemo(() => ({ light: setLightMode, dark: setDarkMode, system: setSystemMode }), [setLightMode, setDarkMode, setSystemMode]);
 
+  const headerActions = (
+    <div className="flex flex-row items-center gap-3">
+      <div className="flex flex-row items-center gap-3">
+        <div>
+          {loading ? (
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"><Loader2 className="w-3 h-3 animate-spin" />Syncing</span>
+          ) : dataSource === 'server' ? (
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><CheckCircle className="w-3 h-3" />Synced</span>
+          ) : (
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><AlertTriangle className="w-3 h-3" />Local</span>
+          )}
+        </div>
+        <button onClick={() => loadData(true)} disabled={loading}
+          className="p-2.5 rounded-xl border transition hover:scale-105 cursor-pointer"
+          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+      {hasChanges && (
+        <button onClick={save} disabled={saving}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-500/25 transition hover:scale-[1.02] disabled:opacity-50 cursor-pointer whitespace-nowrap">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" /> : <Save className="w-4 h-4 flex-shrink-0" />}<span className="md:inline hidden">Save Changes</span><span className="inline md:hidden">Save</span>
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <>
-      <Header title="Settings" handleLogout={handleLogout} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <div className="flex flex-col pt-24 p-4 md:p-6 lg:p-8 min-h-screen gap-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <Header title="Settings" handleLogout={handleLogout} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} headerExtra={headerActions} />
+      <div className="flex flex-col px-4 pb-4 pt-24 md:px-6 md:pb-6 md:pt-28 lg:px-8 lg:pb-8 lg:pt-32 min-h-screen gap-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
 
-        <div className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-end gap-3 mb-2">
-          <div className="flex flex-row items-center gap-3 flex-wrap">
-            <div className="flex flex-row items-center gap-3">
-              <div>
-                {loading ? (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"><Loader2 className="w-3 h-3 animate-spin" />Syncing</span>
-                ) : dataSource === 'server' ? (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><CheckCircle className="w-3 h-3" />Synced</span>
-                ) : (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><AlertTriangle className="w-3 h-3" />Local</span>
-                )}
-              </div>
-              <button onClick={() => loadData(true)} disabled={loading}
-                className="p-2.5 rounded-xl border transition hover:scale-105 cursor-pointer"
-                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-            {hasChanges && (
-              <button onClick={save} disabled={saving}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-500/25 transition hover:scale-[1.02] disabled:opacity-50 cursor-pointer">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}Save Changes
-              </button>
-            )}
-          </div>
+        <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center gap-3 mb-2 relative z-10 md:hidden">
+          {headerActions}
         </div>
 
         <div className="flex-1 w-full max-w-6xl mx-auto">
