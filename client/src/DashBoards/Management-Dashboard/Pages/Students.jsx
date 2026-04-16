@@ -340,8 +340,8 @@ const Students = () => {
                         className={`bg-transparent border border-gray-300 dark:border-gray-600 rounded py-0.5 px-1 text-xs font-semibold focus:ring-1 focus:ring-indigo-500 transition-colors ${(!student.feeDetails?.paidFee || student.feeDetails?.paidFee === 0) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                         style={{ color: 'var(--text-primary)' }}
                       >
-                        <option value="Unverified">Unverified</option>
-                        <option value="Verify">Verify</option>
+                        <option value="Unverified" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Unverified</option>
+                        <option value="Verify" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Verify</option>
                       </select>
                     </div>
                     <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
