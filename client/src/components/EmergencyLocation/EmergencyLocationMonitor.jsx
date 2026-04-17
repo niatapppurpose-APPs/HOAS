@@ -293,8 +293,7 @@ const EmergencyLocationMonitor = ({ title = 'Emergency Live Locations', tone = '
           </div>
 
           {/* Map View */}
-          <div className="lg:col-span-8 min-h-[400px] h-[500px] relative rounded-[2rem] overflow-hidden border shadow-2xl z-10"
-            style={{ borderColor: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(226, 232, 240, 1)' }}>
+          <div className={`lg:col-span-8 min-h-[400px] h-[500px] relative rounded-[2rem] overflow-hidden border shadow-2xl z-10 ${isDark ? 'dark-map-wrapper bg-slate-900 border-slate-700/60' : 'bg-slate-100 border-slate-300 light-map-wrapper'}`}>
             {selectedLocation ? (
               <>
                 <div className={`absolute top-4 left-4 z-[1000] px-4 py-2 rounded-xl backdrop-blur-xl border shadow-lg flex items-center gap-2
@@ -306,30 +305,28 @@ const EmergencyLocationMonitor = ({ title = 'Emergency Live Locations', tone = '
                 <MapContainer
                   center={displayPosition || [selectedLocation.latitude, selectedLocation.longitude]}
                   zoom={17}
-                  className="w-full h-full"
+                  className={`w-full h-full ${isDark ? 'dark-map-tiles' : 'light-map-tiles'}`}
                   scrollWheelZoom
                   zoomControl={false}
                 >
                   <TileLayer
-                    attribution="&copy; OpenStreetMap"
-                    url={isDark
-                      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'}
+                    attribution="&copy; <a href='https://openstreetmap.org/copyright'>OpenStreetMap</a>"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
                   <MapViewportController center={displayPosition || [selectedLocation.latitude, selectedLocation.longitude]} />
                   {selectedPath.length > 1 && (
                     <Polyline
                       positions={selectedPath}
-                      pathOptions={{ color: colors.track, weight: 4, opacity: 0.8 }}
+                      pathOptions={{ color: isDark ? '#ef4444' : '#2563eb', weight: 4, opacity: 0.8 }}
                     />
                   )}
                   <Circle
                     center={displayPosition || [selectedLocation.latitude, selectedLocation.longitude]}
                     radius={Math.max(Number(selectedLocation.accuracy) || 25, 20)}
                     pathOptions={{
-                      color: isDark ? '#ef4444' : colors.accuracyBorder,
-                      fillColor: isDark ? '#ef4444' : colors.accuracyFill,
-                      fillOpacity: isDark ? 0.2 : 0.12,
+                      color: isDark ? '#3b82f6' : '#2563eb',
+                      fillColor: isDark ? '#3b82f6' : '#3b82f6',
+                      fillOpacity: isDark ? 0.2 : 0.15,
                       weight: 1.5,
                       dashArray: '4 4'
                     }}
@@ -338,7 +335,7 @@ const EmergencyLocationMonitor = ({ title = 'Emergency Live Locations', tone = '
                     center={displayPosition || [selectedLocation.latitude, selectedLocation.longitude]}
                     radius={10}
                     pathOptions={{
-                      color: isDark ? '#fff' : colors.markerBorder,
+                      color: '#fff',
                       fillColor: '#ef4444',
                       fillOpacity: 1,
                       weight: 3,

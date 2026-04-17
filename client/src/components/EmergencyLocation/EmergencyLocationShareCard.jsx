@@ -449,7 +449,7 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
         </div>
 
         {/* The Advanced Map Area */}
-        <div className={`relative z-10 rounded-[2rem] overflow-hidden border transition-colors duration-500 relative ${isDark ? 'bg-slate-900 border-slate-700/60' : 'bg-slate-100 border-slate-300'} h-[500px] shadow-2xl`}>
+        <div className={`relative z-10 rounded-[2rem] overflow-hidden border transition-colors duration-500 relative ${isDark ? 'bg-slate-900 border-slate-700/60 dark-map-wrapper' : 'bg-slate-100 border-slate-300'} h-[500px] shadow-2xl`}>
 
           {/* Radar background if no coords */}
           {!coords && (
@@ -486,10 +486,8 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
                 zoomControl={false}
               >
                 <TileLayer
-                  attribution="&copy; OpenStreetMap"
-                  url={isDark
-                    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'}
+                  attribution="&copy; <a href='https://openstreetmap.org/copyright'>OpenStreetMap</a>"
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
                 {/* Accuracy Radius */}
