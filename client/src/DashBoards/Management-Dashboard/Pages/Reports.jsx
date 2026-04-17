@@ -10,6 +10,7 @@ import "../ManagementDashboard.css";
 
 const Reports = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchFilter, setSearchFilter] = useState("all");
   const { isCollapsed, setIsCollapsed } = useOutletContext();
   const { userData, user } = useAuth();
 
@@ -121,10 +122,18 @@ const Reports = () => {
     }
   }, [user?.uid]);
 
-  const filteredUploads = uploads.filter(upload =>
-    upload.uploadedByEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    new Date(upload.createdAt).toLocaleDateString().includes(searchTerm)
-  );
+  const filteredUploads = uploads.filter(upload => {
+    const term = searchTerm.toLowerCase();
+    if (!term) return true;
+    if (searchFilter === "email") return upload.uploadedByEmail?.toLowerCase().includes(term);
+    if (searchFilter === "date") return new Date(upload.createdAt).toLocaleDateString().includes(term);
+
+    // all
+    return (
+      upload.uploadedByEmail?.toLowerCase().includes(term) ||
+      new Date(upload.createdAt).toLocaleDateString().includes(term)
+    );
+  });
 
   return (
     <>
@@ -154,19 +163,27 @@ const Reports = () => {
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
+          <div className="flex-1 max-w-md flex items-center p-1.5 rounded-xl border transition-all focus-within:ring-2 focus-within:ring-indigo-500/50" 
+            style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
+            <select
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              className="bg-gray-100 dark:bg-white/5 border-none outline-none text-xs font-bold py-2.5 px-3 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              <option value="all">All</option>
+              <option value="email">Email</option>
+              <option value="date">Date</option>
+            </select>
+            <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
+            <Search size={18} className="text-gray-400 flex-shrink-0 ml-1" />
             <input
               type="text"
-              placeholder="Search by email or date..."
+              placeholder={`Search by ${searchFilter === 'all' ? 'any' : searchFilter}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-              style={{
-                backgroundColor: 'var(--bg-secondary)',
-                borderColor: 'var(--border-color)',
-                color: 'var(--text-primary)'
-              }}
+              className="w-full bg-transparent border-none outline-none px-2 py-1"
+              style={{ color: 'var(--text-primary)' }}
             />
           </div>
           <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5"

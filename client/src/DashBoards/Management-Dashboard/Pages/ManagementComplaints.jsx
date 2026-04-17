@@ -32,7 +32,7 @@ import NoDataLight from '../../../assets/No-Data.avif';
 import NoDataDark from '../../../assets/NoDataDark.png';
 
 const ManagementComplaints = () => {
-    const { userData } = useAuth();
+    const { userData, user } = useAuth();
     const { isCollapsed, setIsCollapsed } = useOutletContext();
     const { isDark } = useTheme();
     const toast = useToast();
@@ -40,15 +40,19 @@ const ManagementComplaints = () => {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all'); // all, escalated, pending, disputed, resolved
     const [searchTerm, setSearchTerm] = useState('');
+    const [searchFilter, setSearchFilter] = useState('all');
     const [selectedComplaint, setSelectedComplaint] = useState(null);
 
+    // The management user's UID is stored as `managementId` on complaints
+    const managementUid = user?.uid || userData?.uid;
+
     useEffect(() => {
-        if (!userData || !userData.managementId) return;
+        if (!managementUid) return;
 
         // Fetch all complaints for this management/college
         const q = query(
             collection(db, 'complaints'),
-            where('managementId', '==', userData.managementId)
+            where('managementId', '==', managementUid)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -73,21 +77,34 @@ const ManagementComplaints = () => {
                 });
 
             setComplaints(processedList);
-            setLoading(true);
-            setTimeout(() => setLoading(false), 500); // Smooth transition
+            setLoading(false);
         }, (err) => {
             console.error("Error fetching complaints for management:", err);
             setLoading(false);
         });
 
         return () => unsubscribe();
-    }, [userData]);
+    }, [managementUid]);
 
     const filteredComplaints = complaints.filter(c => {
-        const matchesSearch =
-            c.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.roomNumber?.toLowerCase().includes(searchTerm.toLowerCase());
+        const term = searchTerm.toLowerCase();
+        let matchesSearch = true;
+        
+        if (term) {
+            if (searchFilter === 'student') {
+                matchesSearch = !!c.studentName?.toLowerCase().includes(term);
+            } else if (searchFilter === 'title') {
+                matchesSearch = !!c.title?.toLowerCase().includes(term);
+            } else if (searchFilter === 'room') {
+                matchesSearch = !!c.roomNumber?.toLowerCase().includes(term);
+            } else {
+                matchesSearch = !!(
+                    c.studentName?.toLowerCase().includes(term) ||
+                    c.title?.toLowerCase().includes(term) ||
+                    c.roomNumber?.toLowerCase().includes(term)
+                );
+            }
+        }
 
         if (filter === 'escalated') return matchesSearch && (c.isEscalated || c.isAutoEscalated || c.status === 'escalated');
         if (filter === 'disputed') return matchesSearch && c.status === 'disputed';
@@ -174,15 +191,28 @@ const ManagementComplaints = () => {
                             );
                         })}
                     </div>
-                    <div className="relative w-full md:w-80">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <div className="flex items-center w-full md:w-auto p-1.5 rounded-xl border transition-all focus-within:ring-2 focus-within:ring-indigo-500/50" 
+                        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                        <select
+                            value={searchFilter}
+                            onChange={(e) => setSearchFilter(e.target.value)}
+                            className="bg-gray-100 dark:bg-white/5 border-none outline-none text-xs font-bold py-2 px-2 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                            style={{ color: 'var(--text-secondary)' }}
+                        >
+                            <option value="all">All</option>
+                            <option value="student">Student</option>
+                            <option value="title">Title</option>
+                            <option value="room">Room</option>
+                        </select>
+                        <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
+                        <Search size={16} className="text-gray-400 flex-shrink-0" />
                         <input
                             type="text"
-                            placeholder="Search student, title or room..."
+                            placeholder={`Search by ${searchFilter === 'all' ? 'any' : searchFilter}...`}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                            className="w-full md:w-56 bg-transparent border-none outline-none px-2 text-sm"
+                            style={{ color: 'var(--text-primary)' }}
                         />
                     </div>
                 </div>
@@ -217,7 +247,7 @@ const ManagementComplaints = () => {
                                                 <EmptyState
                                                     title={searchTerm 
                                                         ? `No matches for "${searchTerm}"` 
-                                                        : `No ${filter === 'all' ? '' : filter} complaints`}
+                                                        : filter === 'all' ? 'No complaints' : `No ${filter} complaints`}
                                                     description={searchTerm 
                                                         ? "Try a different student name, room number, or complaint title."
                                                         : filter === 'escalated' 

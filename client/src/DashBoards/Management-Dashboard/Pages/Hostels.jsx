@@ -15,6 +15,7 @@ import HostelDetailsModal from "../components/hostels/HostelDetailsModal";
 const Hostels = () => {
   const toast = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchFilter, setSearchFilter] = useState("all");
   const [hostels, setHostels] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -97,11 +98,20 @@ const Hostels = () => {
     setEditingHostel(null);
   };
 
-  const filteredHostels = hostels.filter(h =>
-    h.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    h.block?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    h.location?.address?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredHostels = hostels.filter(h => {
+    const term = searchTerm.toLowerCase();
+    if (!term) return true;
+    if (searchFilter === "name") return h.name?.toLowerCase().includes(term);
+    if (searchFilter === "block") return h.block?.toLowerCase().includes(term);
+    if (searchFilter === "address") return h.location?.address?.toLowerCase().includes(term);
+
+    // all
+    return (
+      h.name?.toLowerCase().includes(term) ||
+      h.block?.toLowerCase().includes(term) ||
+      h.location?.address?.toLowerCase().includes(term)
+    );
+  });
 
   return (
     <>
@@ -139,15 +149,28 @@ const Hostels = () => {
 
         {/* Search and Filters */}
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="flex-1 flex items-center p-1.5 rounded-xl border transition-all focus-within:ring-2 focus-within:ring-indigo-500/50" 
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+            <select
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              className="bg-gray-100 dark:bg-white/5 border-none outline-none text-xs font-bold py-2.5 px-3 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              <option value="all">All</option>
+              <option value="name">Name</option>
+              <option value="block">Block</option>
+              <option value="address">Address</option>
+            </select>
+            <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
+            <Search size={18} className="text-gray-400 flex-shrink-0 ml-1" />
             <input
               type="text"
-              placeholder="Search hostels by name, block, or address..."
+              placeholder={`Search by ${searchFilter === 'all' ? 'any' : searchFilter}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl transition-colors outline-none focus:ring-2 focus:ring-indigo-500"
-              style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-primary)', color: 'var(--text-primary)' }}
+              className="w-full bg-transparent border-none outline-none px-2 py-1"
+              style={{ color: 'var(--text-primary)' }}
             />
           </div>
           <button

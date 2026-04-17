@@ -18,7 +18,9 @@ import { useToast } from "../../../components/Toast";
 const Students = () => {
   const { isCollapsed, setIsCollapsed } = useOutletContext();
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchFilter, setSearchFilter] = useState("all");
   const [blockFilter, setBlockFilter] = useState("");
+  const [minPendingFee, setMinPendingFee] = useState(0);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null)
@@ -86,9 +88,23 @@ const Students = () => {
     return 'from-gray-500/90 to-gray-600/90'; // Default
   };
 
-  const serachStudentList = students.filter((student) => (
-    student.fullName.includes(searchTerm)
-  ))
+  const serachStudentList = students.filter((student) => {
+    const pendingFee = Number(student.feeDetails?.pendingFee) || 0;
+    if (pendingFee < minPendingFee) return false;
+
+    const term = searchTerm.toLowerCase();
+    if (!term) return true;
+    if (searchFilter === "name") return student.fullName?.toLowerCase().includes(term);
+    if (searchFilter === "email") return student.email?.toLowerCase().includes(term);
+    if (searchFilter === "role") return student.role?.toLowerCase().includes(term);
+    // all
+    return (
+      student.fullName?.toLowerCase().includes(term) ||
+      student.email?.toLowerCase().includes(term) ||
+      student.role?.toLowerCase().includes(term) ||
+      student.hostelBlock?.toLowerCase().includes(term)
+    );
+  });
 
 
   const handleRefresh = async () => {
@@ -199,17 +215,50 @@ const Students = () => {
         </div>
 
         {/* Search and Filter */}
-        <div className="toolbar">
-          <div className="search-box">
-            <Search size={20} />
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <div className="search-box !p-1.5 flex items-center group focus-within:ring-2 focus-within:ring-indigo-500/50 transition-all flex-1 min-w-[280px]">
+            <select
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              className="bg-gray-100 dark:bg-white/5 border-none outline-none text-xs font-bold py-2.5 px-3 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              <option value="all">All</option>
+              <option value="name">Name</option>
+              <option value="email">Email</option>
+              <option value="role">Role</option>
+            </select>
+            <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
+            <Search size={18} className="text-gray-400 flex-shrink-0" />
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search students..."
+              placeholder={`Search by ${searchFilter === 'all' ? 'any' : searchFilter}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-transparent border-none outline-none text-sm px-2"
+              style={{ color: 'var(--text-primary)' }}
             />
           </div>
+          
+          <div className="flex items-center gap-3 px-4 py-2 rounded-xl border transition-all"
+               style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Min Pending Fee</span>
+              <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>₹{minPendingFee.toLocaleString()}</span>
+            </div>
+            <input 
+              type="range" 
+              min="0" 
+              max="200000" 
+              step="5000"
+              value={minPendingFee} 
+              onChange={(e) => setMinPendingFee(Number(e.target.value))}
+              className="w-24 sm:w-32 accent-rose-500 cursor-pointer"
+              title="Filter by Minimum Pending Fee"
+            />
+          </div>
+
           <button
             onClick={handleRefresh}
             className="p-2.5 rounded-xl border cursor-pointer transition-all duration-300 group"

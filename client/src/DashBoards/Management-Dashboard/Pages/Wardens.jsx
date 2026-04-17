@@ -17,6 +17,7 @@ import NoDataDark from '../../../assets/NoDataDark.png';
 
 const Wardens = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchFilter, setSearchFilter] = useState("all");
   const { isCollapsed, setIsCollapsed } = useOutletContext();
   const [getwarden, setGetAllwarden] = useState([])
   const [loading, setLoading] = useState(null)
@@ -104,9 +105,21 @@ const Wardens = () => {
 
 
 
-  const searchWardenList = getwarden.filter(warden => (
-    warden.fullName.includes(searchTerm)
-  ))
+  const searchWardenList = getwarden.filter(warden => {
+    const term = searchTerm.toLowerCase();
+    if (!term) return true;
+    if (searchFilter === "name") return warden.fullName?.toLowerCase().includes(term);
+    if (searchFilter === "email") return warden.email?.toLowerCase().includes(term);
+    const roleMatch = getRoleLabel(warden)?.toLowerCase().includes(term);
+    if (searchFilter === "role") return roleMatch;
+    
+    // all
+    return (
+      warden.fullName?.toLowerCase().includes(term) ||
+      warden.email?.toLowerCase().includes(term) ||
+      roleMatch
+    );
+  });
   return (
     <>
       {/* Header */}
@@ -138,16 +151,29 @@ const Wardens = () => {
 
         {/* Search and Filter */}
         <div className="toolbar">
-          <div className="search-box">
-            <Search size={20} />
+          <div className="search-box !p-1.5 flex items-center group focus-within:ring-2 focus-within:ring-indigo-500/50 transition-all">
+            <select
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              className="bg-gray-100 dark:bg-white/5 border-none outline-none text-xs font-bold py-2.5 px-3 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              <option value="all">All</option>
+              <option value="name">Name</option>
+              <option value="email">Email</option>
+              <option value="role">Role</option>
+            </select>
+            <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
+            <Search size={18} className="text-gray-400 flex-shrink-0" />
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search wardens..."
+              placeholder={`Search by ${searchFilter === 'all' ? 'any' : searchFilter}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-transparent border-none outline-none text-sm px-2"
+              style={{ color: 'var(--text-primary)' }}
             />
-
           </div>
           <button
             onClick={handleRefresh}
