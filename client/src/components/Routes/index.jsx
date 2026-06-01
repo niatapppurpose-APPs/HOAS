@@ -101,14 +101,14 @@ const Routes_path = () => {
                 {/* ------------------------------ Home Page to User role page --------------------------- */}
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/waiting-approval" element={<WaitingApproval />} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/waiting-approval" element={<ProtectedRoute><WaitingApproval /></ProtectedRoute>} />
                 <Route path="/firebase-mode" element={<FirebaseModePage />} />
 
                 {/* ------------------------------ Profile Pages ----------------------------------------- */}
-                <Route path="/profile/student-profile" element={<StudentProfile />} />
-                <Route path="/profile/warden-profile" element={<WardenProfile />} />
-                <Route path="/profile/management-profile" element={<ManagementProfile />} />
+                <Route path="/profile/student-profile" element={<ProtectedRoute roles={["student"]}><StudentProfile /></ProtectedRoute>} />
+                <Route path="/profile/warden-profile" element={<ProtectedRoute roles={["warden"]}><WardenProfile /></ProtectedRoute>} />
+                <Route path="/profile/management-profile" element={<ProtectedRoute roles={["management"]}><ManagementProfile /></ProtectedRoute>} />
 
                 {/* ------------------------------ Dashboards ---------------------------------------------*/}
                 {/* Student Dashboard with Layout */}

@@ -6,21 +6,9 @@ import { auth, db, isEmulator } from './config.js';
  */
 export async function verifyAuthToken(token) {
   try {
-    // In emulator mode AND development only, allow decode without verification
-    const isDev = process.env.NODE_ENV === 'development' || process.env.FUNCTIONS_EMULATOR === 'true';
-    if (isEmulator && isDev) {
-      console.log('⚠️  Emulator+Dev: Decoding token without full verification');
-      try {
-        return await auth.verifyIdToken(token, false);
-      } catch (e) {
-        console.log('Emulator token verification failed, attempting decode:', e.message);
-        // Only decode if not in production
-        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-        console.log('Decoded token payload:', payload);
-        return payload;
-      }
-    }
-    // In production, always verify properly
+    // In production and emulator, always verify properly via Admin SDK.
+    // The SDK automatically handles emulator tokens if the environment is set correctly.
+    // This prevents "token spoofing" attacks that could occur by mimicking emulator mode.
     return await auth.verifyIdToken(token);
   } catch (error) {
     console.error('Token verification error:', error);

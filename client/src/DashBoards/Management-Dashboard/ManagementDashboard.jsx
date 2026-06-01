@@ -12,8 +12,6 @@ import { useDashboardTour, managementTourSteps } from "../../tours";
 
 // Import components
 import ManagementHeader from "./components/layout/ManagementHeader";
-// import QuickApproval from "./components/dashboard/QuickApproval";
-import RecentActivity from "./components/dashboard/RecentActivity";
 import StatusTable from "./components/dashboard/StatusTable";
 // Import styles
 import "./ManagementDashboard.css";
@@ -109,10 +107,11 @@ const ManagementDashboard = () => {
 
   // search state for status table
   const [statusSearch, setStatusSearch] = useState('');
+  const [statusSearchFilter, setStatusSearchFilter] = useState('all');
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusSearch]);
+  }, [statusSearch, statusSearchFilter]);
 
   // Calculate statistics
   const stats = {
@@ -146,11 +145,17 @@ const ManagementDashboard = () => {
 
   // apply status table search filter
   const filteredUsers = allUsers.filter(u => {
-    const tokens = statusSearch.toLowerCase().split(/\s+/).filter(t => t);
-    if (tokens.length === 0) return true;
+    const q = statusSearch.trim().toLowerCase();
+    if (!q) return true;
+
+    if (statusSearchFilter === 'name') return (u.displayName || '').toLowerCase().includes(q);
+    if (statusSearchFilter === 'email') return (u.email || '').toLowerCase().includes(q);
+    if (statusSearchFilter === 'role') return (u.role || '').toLowerCase().includes(q);
+
     const name = u.displayName?.toLowerCase() || '';
     const mail = u.email?.toLowerCase() || '';
-    return tokens.every(tok => name.includes(tok) || mail.includes(tok));
+    const role = u.role?.toLowerCase() || '';
+    return name.includes(q) || mail.includes(q) || role.includes(q);
   });
 
   const paginatedUsers = filteredUsers.slice(
@@ -299,14 +304,7 @@ const ManagementDashboard = () => {
         {/* Top Row: KPI Cards */}
         
 
-        {/* Recent Activity */}
-        <div id="mgmt-tour-activity">
-        <RecentActivity
-          recentUsers={recentUsers}
-          onApprove={handleApprove}
-          approvingUserId={approvingUserId}
-        />
-        </div>
+        
 
         {/* Bottom Row: Status Table + Visualization */}
         <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 mt-4 sm:mt-8">
@@ -318,6 +316,8 @@ const ManagementDashboard = () => {
               onPageChange={setCurrentPage}
               searchTerm={statusSearch}
               onSearchChange={setStatusSearch}
+              searchFilter={statusSearchFilter}
+              onSearchFilterChange={setStatusSearchFilter}
             />
           </div>
           {/* <div className="w-full xl:w-[400px] 2xl:w-[500px] flex-shrink-0">

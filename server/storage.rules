@@ -1,9 +1,68 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow read/write access to all files for authenticated users (development mode)
-    match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+
+    // ─── Helper: Check if user is authenticated ───
+    function isAuth() {
+      return request.auth != null;
     }
+
+    // ─── Helper: Check if user is the file owner ───
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
+    // ─── Helper: Limit upload size (5MB) ───
+    function isValidFileSize() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // ─── Helper: Only allow image/pdf content types ───
+    function isValidContentType() {
+      return request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/pdf';
+    }
+
+    // ─── User profile photos: users/{userId}/profile/* ───
+    // Only the user themselves can upload/delete their own profile photo
+    // Any authenticated user can read profile photos (needed for display)
+    match /users/{userId}/profile/{fileName} {
+      allow read: if isAuth();
+      allow write: if isOwner(userId) && isValidFileSize() && isValidContentType();
+    }
+
+    // ─── Fee payment proofs: fees/{studentId}/{fileName} ───
+    // Students can upload their own payment proof
+    // Any authenticated user can read (management/wardens need to verify)
+    match /fees/{studentId}/{fileName} {
+      allow read: if isAuth();
+      allow write: if isOwner(studentId) && isValidFileSize() && isValidContentType();
+    }
+
+    // ─── College logos: colleges/{managementId}/{fileName} ───
+    // Only the management user can upload/update their college logo
+    // Any authenticated user can read (logos are displayed publicly in the app)
+    match /colleges/{managementId}/{fileName} {
+      allow read: if isAuth();
+      allow write: if isOwner(managementId) && isValidFileSize() && isValidContentType();
+    }
+
+    // ─── Complaint attachments: complaints/{complaintId}/{fileName} ───
+    // Any authenticated user can read (wardens/management review complaints)
+    // Any authenticated user can upload (students attach evidence)
+    match /complaints/{complaintId}/{fileName} {
+      allow read: if isAuth();
+      allow write: if isAuth() && isValidFileSize() && isValidContentType();
+    }
+
+    // ─── Bulk upload files: uploads/{managementId}/{fileName} ───
+    // Only management can upload bulk CSV/Excel files
+    match /uploads/{managementId}/{fileName} {
+      allow read: if isOwner(managementId);
+      allow write: if isOwner(managementId) && request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // ─── Default: deny everything else ───
+    // Any path not explicitly matched above is denied
   }
 }

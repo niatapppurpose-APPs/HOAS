@@ -507,6 +507,21 @@ export const getOutingHistory = async () => {
   }
 };
 
+/**
+ * Student requests a leave
+ */
+export const requestLeave = async (leaveData) => {
+  const callable = httpsCallable(functions, 'requestLeave');
+  try {
+    const result = await callable(leaveData);
+    return result.data;
+  } catch (error) {
+    console.error('Error requesting leave:', error);
+    const message = error.message || error.code || 'Unknown error';
+    throw new Error(message);
+  }
+};
+
 export default {
   approveUser,
   denyUser,
@@ -527,6 +542,7 @@ export default {
   getStudentOutings,
   getWardenOutings,
   getOutingHistory,
+  requestLeave,
   shareEmergencyLocation,
   updateEmergencyLocation,
   stopEmergencyLocation,

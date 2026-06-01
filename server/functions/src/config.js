@@ -41,13 +41,12 @@ export const allowedOrigins = [
 ];
 
 // CORS options for v2 callable functions
-// Using 'true' allows all origins - Firebase callable functions handle auth via tokens, not CORS
-// This is safe because authentication is verified via Firebase Auth tokens, not origin
+// Restrict to allowedOrigins to prevent unauthorized sites from calling your backend.
 // 'invoker: public' is REQUIRED for v2 functions (Cloud Run) to allow unauthenticated HTTP
 // requests through — including browser CORS preflight (OPTIONS) requests. Without it, Cloud Run
 // rejects the preflight with 403 before the function code can set CORS headers.
 export const corsOptions = {
-  cors: true,           // Allow all origins for callable functions - auth is handled via tokens
+  cors: allowedOrigins,
   invoker: 'public',    // Allow Cloud Run to accept unauthenticated invocations (CORS preflight)
 };
 

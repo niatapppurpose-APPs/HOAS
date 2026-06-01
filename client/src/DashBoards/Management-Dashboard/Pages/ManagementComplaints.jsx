@@ -25,7 +25,6 @@ import {
     MessageSquareText,
 } from 'lucide-react';
 import { useToast } from '../../../components/Toast';
-import ContextChatBox from '../../../components/ContextChat/ContextChatBox';
 import { useTheme } from '../../../context/ThemeContext';
 import EmptyState from '../../../components/OwnerServices/EmptyState';
 import NoDataLight from '../../../assets/No-Data.avif';
@@ -199,10 +198,10 @@ const ManagementComplaints = () => {
                             className="bg-gray-100 dark:bg-white/5 border-none outline-none text-xs font-bold py-2 px-2 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
                             style={{ color: 'var(--text-secondary)' }}
                         >
-                            <option value="all">All</option>
-                            <option value="student">Student</option>
-                            <option value="title">Title</option>
-                            <option value="room">Room</option>
+                            <option value="all" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>All</option>
+                            <option value="student" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Student</option>
+                            <option value="title" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Title</option>
+                            <option value="room" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Room</option>
                         </select>
                         <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
                         <Search size={16} className="text-gray-400 flex-shrink-0" />
@@ -470,13 +469,6 @@ const ManagementComplaints = () => {
                                     )}
                                 </div>
                             )}
-
-                            <ContextChatBox
-                                contextType="complaint"
-                                contextId={selectedComplaint.id}
-                                title="Complaint Context Chat"
-                                readOnly
-                            />
 
                             {/* Complaint Timeline */}
                             {selectedComplaint.complaintHistory && selectedComplaint.complaintHistory.length > 0 && (

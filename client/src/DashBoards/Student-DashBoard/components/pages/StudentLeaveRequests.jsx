@@ -5,16 +5,16 @@ import { useToast } from '../../../../components/Toast';
 import StudentHeader from '../layout/StudentHeader';
 import { db } from '../../../../firebase/firebaseConfig';
 import {
-    collection, addDoc, query, where, onSnapshot,
-    serverTimestamp, doc, updateDoc, orderBy
+    collection, query, where, onSnapshot,
+    doc, updateDoc, serverTimestamp
 } from 'firebase/firestore';
+import { requestLeave } from '../../../../firebase/cloudFunctions';
 import {
     Calendar, Clock, Plus, X, MapPin, FileText,
     CheckCircle, XCircle, Loader2, AlertCircle,
     ChevronDown, ChevronUp, Filter, Search,
     CalendarDays, ArrowRight, Home, LogOut
 } from 'lucide-react';
-import ContextChatBox from '../../../../components/ContextChat/ContextChatBox';
 
 const STATUS_CONFIG = {
     pending: { label: 'Pending', color: 'amber', icon: Clock },
@@ -106,20 +106,7 @@ const StudentLeaveRequests = () => {
 
         setSubmitting(true);
         try {
-            await addDoc(collection(db, 'leaveRequests'), {
-                studentId: user.uid,
-                studentName: userData?.fullName || user?.displayName || '',
-                studentEmail: user.email,
-                roomNumber: userData?.roomNumber || '',
-                hostelBlock: userData?.hostelBlock || '',
-                collegeName: userData?.collegeName || '',
-                managementId: userData?.managementId || '',
-                wardenId: userData?.wardenId || '',
-                ...formData,
-                status: 'pending',
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-            });
+            await requestLeave(formData);
 
             toast.success('Leave request submitted successfully!');
             setFormData({
@@ -129,7 +116,7 @@ const StudentLeaveRequests = () => {
             setShowForm(false);
         } catch (error) {
             console.error('Submit error:', error);
-            toast.error('Failed to submit leave request');
+            toast.error(error.message || 'Failed to submit leave request');
         } finally {
             setSubmitting(false);
         }
@@ -479,11 +466,6 @@ const StudentLeaveRequests = () => {
                                                         </button>
                                                     )}
                                                 </div>
-                                                <ContextChatBox
-                                                    contextType="leave"
-                                                    contextId={leave.id}
-                                                    title="Leave Request Chat"
-                                                />
                                             </div>
                                         )}
                                     </div>

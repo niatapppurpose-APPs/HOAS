@@ -4,17 +4,17 @@ import { useTheme } from '../../../../context/ThemeContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import StudentHeader from '../layout/StudentHeader';
-import { db } from '../../../../firebase/firebaseConfig';
 import {
     collection,
-    addDoc,
     query,
     where,
     onSnapshot,
-    serverTimestamp,
     doc,
     updateDoc,
+    serverTimestamp,
 } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../../../../firebase/firebaseConfig';
 import {
     FileText,
     Send,
@@ -193,35 +193,12 @@ const StudentComplaints = () => {
                 }
             }
 
-            const now = new Date();
-            const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000); // 48 Hours from now
-
-            await addDoc(collection(db, 'complaints'), {
-                studentId: user.uid,
-                studentName: userData?.fullName || user.displayName || 'Student',
-                studentEmail: user.email,
-                collegeName: userData?.collegeName || '',
-                managementId: userData?.managementId || '',
-                roomNumber: userData?.roomNumber || '',
+            const fileComplaintFn = httpsCallable(functions, 'fileComplaint');
+            await fileComplaintFn({
                 category,
                 title: title.trim(),
                 description: description.trim(),
                 imageUrl,
-                status: 'pending',
-                response: null,
-                isEscalated: false,
-                studentReviewStatus: null,
-                disputeReason: null,
-                disputeCount: 0,
-                escalationReason: null,
-                complaintHistory: [{
-                    action: 'created',
-                    timestamp: now.toISOString(),
-                    by: 'student',
-                }],
-                expiresAt: expiresAt,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
             });
 
             // Reset form
@@ -232,7 +209,9 @@ const StudentComplaints = () => {
             toast.success('Complaint submitted successfully! 🎉');
         } catch (err) {
             console.error('Failed to submit complaint:', err);
-            toast.error('Failed to submit complaint. Please try again.');
+            // Handle specific Cloud Function errors
+            const errorMessage = err.message || 'Failed to submit complaint. Please try again.';
+            toast.error(errorMessage);
         } finally {
             setIsSubmitting(false);
             setUploadProgress(0);

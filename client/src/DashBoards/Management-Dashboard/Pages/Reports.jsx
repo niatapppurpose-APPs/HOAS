@@ -171,9 +171,9 @@ const Reports = () => {
               className="bg-gray-100 dark:bg-white/5 border-none outline-none text-xs font-bold py-2.5 px-3 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
               style={{ color: 'var(--text-secondary)' }}
             >
-              <option value="all">All</option>
-              <option value="email">Email</option>
-              <option value="date">Date</option>
+              <option value="all" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>All</option>
+              <option value="email" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Email</option>
+              <option value="date" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Date</option>
             </select>
             <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
             <Search size={18} className="text-gray-400 flex-shrink-0 ml-1" />

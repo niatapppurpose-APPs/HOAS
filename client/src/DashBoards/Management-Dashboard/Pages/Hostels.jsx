@@ -157,10 +157,10 @@ const Hostels = () => {
               className="bg-gray-100 dark:bg-white/5 border-none outline-none text-xs font-bold py-2.5 px-3 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
               style={{ color: 'var(--text-secondary)' }}
             >
-              <option value="all">All</option>
-              <option value="name">Name</option>
-              <option value="block">Block</option>
-              <option value="address">Address</option>
+              <option value="all" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>All</option>
+              <option value="name" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Name</option>
+              <option value="block" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Block</option>
+              <option value="address" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Address</option>
             </select>
             <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
             <Search size={18} className="text-gray-400 flex-shrink-0 ml-1" />

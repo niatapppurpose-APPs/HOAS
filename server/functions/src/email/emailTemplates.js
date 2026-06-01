@@ -1,4 +1,4 @@
-﻿/**
+/**
  * HOAS Email Templates — Responsive HTML
  * Pure functions: data in → styled HTML string out.
  */
@@ -104,19 +104,20 @@ function credentialBox(emailVal, passwordVal) {
 /* =====================================================
    1. STUDENT WELCOME EMAIL
    ===================================================== */
-export function studentWelcomeTemplate({ name, studentId, email, institution, password, resetLink }) {
+export function studentWelcomeTemplate({ name, studentId, email, institution, resetLink }) {
     const loginUrl = APP_URL;
 
     const resetSection = resetLink
-        ? `${sectionTitle('Change Your Password')}
-      <p style="font-size:14px;color:#475569;margin:0 0 12px;">Use the secure link below to set a new password:</p>
+        ? `${sectionTitle('Set Your Password')}
+      <p style="font-size:14px;color:#475569;margin:0 0 12px;">Click the button below to set your password and activate your account:</p>
       <div style="text-align:center;margin:16px 0;">
-        <a href="${resetLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:12px 30px;border-radius:8px;">
-          Reset Password
+        <a href="${resetLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#16a34a,#15803d);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:8px;letter-spacing:0.5px;">
+          Set Your Password
         </a>
       </div>
       ${infoBox('This link is valid for <strong>1 hour</strong>. If it has expired, use the <strong>"Forgot Password"</strong> option on the login page.')}`
-        : '';
+        : `${sectionTitle('Set Your Password')}
+      ${infoBox('Use the <strong>"Forgot Password"</strong> option on the login page to set your password. Enter your email address and you will receive a password reset link.')}`;
 
     const body = `
       <p style="font-size:16px;color:#1e293b;margin:0 0 6px;">Dear <strong>${name}</strong>,</p>
@@ -131,11 +132,6 @@ export function studentWelcomeTemplate({ name, studentId, email, institution, pa
         infoRow('Email', email) +
         infoRow('Institution', institution)
       )}
-
-      ${sectionTitle('Login Credentials')}
-      ${credentialBox(email, password)}
-
-      ${warningBox('Please change your password immediately after your first login for security.')}
 
       ${resetSection}
 
@@ -155,8 +151,20 @@ export function studentWelcomeTemplate({ name, studentId, email, institution, pa
 /* =====================================================
    2. WARDEN WELCOME EMAIL
    ===================================================== */
-export function wardenWelcomeTemplate({ name, email, institution, hostelBlock, password }) {
+export function wardenWelcomeTemplate({ name, email, institution, hostelBlock, resetLink }) {
 const loginUrl = APP_URL
+
+    const resetSection = resetLink
+        ? `${sectionTitle('Set Your Password')}
+      <p style="font-size:14px;color:#475569;margin:0 0 12px;">Click the button below to set your password and activate your account:</p>
+      <div style="text-align:center;margin:16px 0;">
+        <a href="${resetLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#16a34a,#15803d);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:8px;letter-spacing:0.5px;">
+          Set Your Password
+        </a>
+      </div>
+      ${infoBox('This link is valid for <strong>1 hour</strong>. If it has expired, use the <strong>"Forgot Password"</strong> option on the login page.')}`
+        : `${sectionTitle('Set Your Password')}
+      ${infoBox('Use the <strong>"Forgot Password"</strong> option on the login page to set your password. Enter your email address and you will receive a password reset link.')}`;
 
     const body = `
       <p style="font-size:16px;color:#1e293b;margin:0 0 6px;">Dear <strong>${name}</strong>,</p>
@@ -172,14 +180,9 @@ const loginUrl = APP_URL
         infoRow('Hostel Block', hostelBlock || 'Not assigned')
       )}
 
-      ${sectionTitle('Login Credentials')}
-      ${credentialBox(email, password)}
-
-      ${warningBox('Please change this password immediately after your first login via <strong>Profile Settings</strong>.')}
+      ${resetSection}
 
       ${ctaButton('Login to HOAS', loginUrl)}
-
-      ${infoBox('If you forget your password later, use the <strong>"Forgot Password"</strong> option on the login page to request a reset link.')}
 
       <p style="font-size:12px;color:#94a3b8;text-align:center;margin:20px 0 0;">
         If you did not request this account, please contact the administrator immediately.
@@ -195,8 +198,20 @@ const loginUrl = APP_URL
 /* =====================================================
    3. MANAGEMENT WELCOME EMAIL
    ===================================================== */
-export function managementWelcomeTemplate({ name, email, collegeName, password }) {
+export function managementWelcomeTemplate({ name, email, collegeName, resetLink }) {
 const loginUrl = APP_URL
+
+    const resetSection = resetLink
+        ? `${sectionTitle('Set Your Password')}
+      <p style="font-size:14px;color:#475569;margin:0 0 12px;">Click the button below to set your password and activate your account:</p>
+      <div style="text-align:center;margin:16px 0;">
+        <a href="${resetLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#16a34a,#15803d);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:8px;letter-spacing:0.5px;">
+          Set Your Password
+        </a>
+      </div>
+      ${infoBox('This link is valid for <strong>1 hour</strong>. If it has expired, use the <strong>"Forgot Password"</strong> option on the login page.')}`
+        : `${sectionTitle('Set Your Password')}
+      ${infoBox('Use the <strong>"Forgot Password"</strong> option on the login page to set your password. Enter your email address and you will receive a password reset link.')}`;
 
     const body = `
       <p style="font-size:16px;color:#1e293b;margin:0 0 6px;">Dear <strong>${name}</strong>,</p>
@@ -211,10 +226,7 @@ const loginUrl = APP_URL
         infoRow('Institution', collegeName)
       )}
 
-      ${sectionTitle('Login Credentials')}
-      ${credentialBox(email, password)}
-
-      ${warningBox('This is a temporary password. Please change it immediately after your first login via <strong>Profile Settings</strong>.')}
+      ${resetSection}
 
       ${ctaButton('Login to HOAS', loginUrl)}
 

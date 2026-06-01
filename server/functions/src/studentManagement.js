@@ -197,7 +197,6 @@ export const createStudent = onCall({ ...corsOptions, timeoutSeconds: 300 }, asy
             studentId: studentId || '',
             email,
             institution: collegeName,
-            password: throwawayPassword,
             resetLink,
         });
 

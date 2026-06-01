@@ -10,7 +10,6 @@ import {
     Clock,
 } from 'lucide-react';
 import { STATUS_CONFIG, formatDate, getCategoryLabel } from './complaintConstants';
-import ContextChatBox from '../../../../components/ContextChat/ContextChatBox';
 
 const ComplaintDetailModal = memo(({
     complaint,
@@ -111,12 +110,6 @@ const ComplaintDetailModal = memo(({
                             )}
                         </div>
                     )}
-
-                    <ContextChatBox
-                        contextType="complaint"
-                        contextId={complaint.id}
-                        title="Complaint Context Chat"
-                    />
 
                     {/* ── Review Section (Warden-Resolved) ── */}
                     {complaint.status === 'warden-resolved' && !showDisputeModal && (

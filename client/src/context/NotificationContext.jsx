@@ -1,7 +1,12 @@
 // Sanitize notification strings to prevent XSS
 function sanitize(str) {
   if (typeof str !== 'string') return str;
-  return str.replace(/[<>]/g, '');
+  return str
+    .replace(/[<>]/g, '') // Remove < and >
+    .replace(/on\w+="[^"]*"/gi, '') // Remove onEvent="..."
+    .replace(/on\w+='[^']*'/gi, '') // Remove onEvent='...'
+    .replace(/javascript:/gi, '') // Remove javascript: URIs
+    .replace(/expression\(/gi, ''); // Remove CSS expressions
 }
 import { createContext, useContext, useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, orderBy, limit, updateDoc, doc } from 'firebase/firestore';

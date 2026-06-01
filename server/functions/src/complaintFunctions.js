@@ -16,11 +16,125 @@
 
 import { onDocumentUpdated, onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getMessaging } from 'firebase-admin/messaging';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
+import { corsOptions } from './config.js';
 
 const db = getFirestore();
+
+// ═════════════════════════════════════════════════════════════
+// SECURE: File Complaint with Anti-Spam Protection
+// ═════════════════════════════════════════════════════════════
+export const fileComplaint = onCall(corsOptions, async (request) => {
+    const { auth, data } = request;
+
+    // 1. Authenticated Check
+    if (!auth) {
+        throw new HttpsError('unauthenticated', 'You must be logged in to file a complaint.');
+    }
+
+    const { uid } = auth;
+    const { category, title, description, imageUrl } = data;
+
+    // 2. Input Validation
+    if (!category || !title?.trim() || !description?.trim()) {
+        throw new HttpsError('invalid-argument', 'Category, title, and description are required.');
+    }
+
+    if (description.trim().length < 20) {
+        throw new HttpsError('invalid-argument', 'Description must be at least 20 characters long.');
+    }
+
+    try {
+        // 3. SPAM PROTECTION: 2-Minute Cooldown
+        const lastComplaintQuery = await db.collection('complaints')
+            .where('studentId', '==', uid)
+            .orderBy('createdAt', 'desc')
+            .limit(1)
+            .get();
+
+        if (!lastComplaintQuery.empty) {
+            const lastData = lastComplaintQuery.docs[0].data();
+            const lastTime = lastData.createdAt?.toDate?.()?.getTime() || 0;
+            const now = Date.now();
+            const waitTime = 2 * 60 * 1000; // 2 minutes
+
+            if (now - lastTime < waitTime) {
+                const remainingSeconds = Math.ceil((waitTime - (now - lastTime)) / 1000);
+                throw new HttpsError(
+                    'resource-exhausted', 
+                    `Please wait ${remainingSeconds} seconds before filing another complaint.`
+                );
+            }
+        }
+
+        // 4. SPAM PROTECTION: Max 5 Pending/In-Progress Complaints
+        const pendingSnapshot = await db.collection('complaints')
+            .where('studentId', '==', uid)
+            .where('status', 'in', ['pending', 'in-progress'])
+            .get();
+
+        if (pendingSnapshot.size >= 5) {
+            throw new HttpsError(
+                'resource-exhausted', 
+                'You have too many open complaints (Max 5). Please wait for them to be resolved.'
+            );
+        }
+
+        // 5. Fetch user data for metadata
+        const userDoc = await db.collection('users').doc(uid).get();
+        if (!userDoc.exists) {
+            throw new HttpsError('not-found', 'Student profile does not exist.');
+        }
+        const userData = userDoc.data();
+
+        // 6. Create the complaint
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000); // 48 Hours SLA
+
+        const complaintData = {
+            studentId: uid,
+            studentName: userData.fullName || userData.displayName || 'Student',
+            studentEmail: userData.email,
+            collegeName: userData.collegeName || '',
+            managementId: userData.managementId || '',
+            roomNumber: userData.roomNumber || '',
+            category,
+            title: title.trim(),
+            description: description.trim(),
+            imageUrl: imageUrl || null,
+            status: 'pending',
+            response: null,
+            isEscalated: false,
+            studentReviewStatus: null,
+            disputeReason: null,
+            disputeCount: 0,
+            escalationReason: null,
+            complaintHistory: [{
+                action: 'created',
+                timestamp: now.toISOString(),
+                by: 'student',
+            }],
+            expiresAt: expiresAt,
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        };
+
+        const docRef = await db.collection('complaints').add(complaintData);
+
+        return {
+            success: true,
+            complaintId: docRef.id,
+            message: 'Complaint submitted successfully!'
+        };
+    } catch (error) {
+        if (error instanceof HttpsError) throw error;
+        logger.error('Error filing complaint:', error);
+        throw new HttpsError('internal', 'An unexpected error occurred while filing your complaint.');
+    }
+});
 
 // ─────────────────────────────────────────────────────────────
 // Helper: Read system settings from Firestore

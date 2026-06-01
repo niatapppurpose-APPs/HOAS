@@ -131,13 +131,7 @@ export const AuthProvider = ({ children }) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setUserData(data);
-        // If role implies admin/owner and we haven't already marked admin,
-        // update isAdmin accordingly. This covers cases where custom
-        // claims aren't set but Firestore has the correct role.
-        if (!isAdmin && (data.role === 'admin' || data.role === 'owner')) {
-          setIsAdmin(true);
-        }
-        // Ensure adminChecked is true once we know the role from Firestore.
+        // Ensure adminChecked is true once we have the user state.
         if (!adminChecked) {
           setAdminChecked(true);
         }

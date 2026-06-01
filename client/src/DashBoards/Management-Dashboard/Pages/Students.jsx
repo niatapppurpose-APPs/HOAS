@@ -223,10 +223,10 @@ const Students = () => {
               className="bg-gray-100 dark:bg-white/5 border-none outline-none text-xs font-bold py-2.5 px-3 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
               style={{ color: 'var(--text-secondary)' }}
             >
-              <option value="all">All</option>
-              <option value="name">Name</option>
-              <option value="email">Email</option>
-              <option value="role">Role</option>
+              <option value="all" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>All</option>
+              <option value="name" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Name</option>
+              <option value="email" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Email</option>
+              <option value="role" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Role</option>
             </select>
             <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
             <Search size={18} className="text-gray-400 flex-shrink-0" />
@@ -282,14 +282,18 @@ const Students = () => {
           </button>
         </div>
 
-        {/* This is for when Search student are not found this will display */}
-        {searchTerm.trim() && students.length > 0 && serachStudentList.length === 0 && !loading ? (
+        {/* This is for when Search or Filter student are not found this will display */}
+        {(searchTerm.trim() || minPendingFee > 0) && students.length > 0 && serachStudentList.length === 0 && !loading ? (
           <div className="mb-4">
             <EmptyState
-              title={`No matches for "${searchTerm}"`}
-              description={"Try a different name, or clear the search to see all students."}
-              ctaLabel="Clear search"
-              onCta={clearSearchStudent}
+              title={searchTerm.trim() ? `No matches for "${searchTerm}"` : `No matches found for this fee range`}
+              description={"Try a different name, or clear the filters to see all students."}
+              ctaLabel="Clear filters"
+              onCta={() => {
+                setSearchTerm('');
+                setMinPendingFee(0);
+                searchInputRef.current?.focus();
+              }}
               videoSrc={!isDark ? NoDataLight : NoDataDark}
               className="max-w-5xl mx-auto"
             />

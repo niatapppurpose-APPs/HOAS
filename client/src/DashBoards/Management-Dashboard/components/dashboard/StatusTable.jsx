@@ -1,8 +1,8 @@
-import { ChevronLeft, ChevronRight, SearchX } from "lucide-react";
+import { ChevronLeft, ChevronRight, SearchX, Search } from "lucide-react";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 import ThemeContext from "../../../../context/ThemeContext";
 import { useContext } from 'react';
-const StatusTable = ({ users, currentPage, totalPages, onPageChange, searchTerm = '', onSearchChange }) => {
+const StatusTable = ({ users, currentPage, totalPages, onPageChange, searchTerm = '', onSearchChange, searchFilter = 'all', onSearchFilterChange }) => {
   // read theme context so we can adjust styling
   const { isDark } = useContext(ThemeContext);
   // Helper function to get role badge color
@@ -23,15 +23,31 @@ const StatusTable = ({ users, currentPage, totalPages, onPageChange, searchTerm 
   return (
     <div className="mb-6 sm:mb-8 bg-[var(--bg-card)] backdrop-blur-xl border border-[var(--border-primary)] rounded-2xl p-4 sm:p-6 shadow-lg">
       {/* header with search bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-10 flex-wrap">
         <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] m-0">Wardens & Students Status</h2>
-        <div className="mt-3 sm:mt-0">
+        
+        <div className="flex items-center p-2 rounded-2xl border-2 border-transparent focus-within:border-indigo-500/30 transition-all overflow-hidden flex-1 max-w-100 sm:justify-end"
+             style={{ backgroundColor: 'var(--bg-tertiary)', border: `1px solid ${isDark ? 'var(--border-disabled)' : 'var(--border-primary)'}` }}>
+          <select
+            value={searchFilter}
+            onChange={(e) => onSearchFilterChange?.(e.target.value)}
+            className="bg-transparent border-none outline-none text-xs font-bold py-2 px-2 cursor-pointer hover:opacity-80 transition-opacity"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            <option value="all" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>All</option>
+            <option value="name" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Name</option>
+            <option value="email" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Email</option>
+            <option value="role" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Role</option>
+          </select>
+          <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+          <Search className="w-5 h-5 opacity-50 ml-2 shrink-0" style={{ color: 'var(--text-primary)' }} />
           <input
             type="text"
-            placeholder="Search Students By Wardens..."
+            placeholder={`Search by ${searchFilter === 'all' ? 'any' : searchFilter}...`}
             value={searchTerm}
             onChange={e => onSearchChange?.(e.target.value)}
-            className={`w-full sm:w-64 px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] text-sm border ${isDark ? 'border-white text-white' : 'border-black text-black'}`}
+            className="w-full sm:w-64 pl-2 pr-4 py-2 bg-transparent border-none outline-none focus:ring-0 text-sm font-medium min-w-[150px]"
+            style={{ color: 'var(--text-primary)' }}
           />
         </div>
       </div>

@@ -11,7 +11,6 @@ import {
   MessageSquareText,
 } from 'lucide-react';
 import { STATUS_CONFIG, formatDate, getCategoryLabel } from './wardenComplaintConstants';
-import ContextChatBox from '../../../../components/ContextChat/ContextChatBox';
 
 const WardenComplaintDetailModal = React.memo(({
   complaint,
@@ -201,12 +200,6 @@ const WardenComplaintDetailModal = React.memo(({
               )}
             </div>
           )}
-
-          <ContextChatBox
-            contextType="complaint"
-            contextId={complaint.id}
-            title="Complaint Context Chat"
-          />
         </div>
       </div>
     </div>

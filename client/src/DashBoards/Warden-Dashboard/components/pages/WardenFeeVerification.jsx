@@ -22,6 +22,8 @@ const WardenFeeVerification = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [searchFilter, setSearchFilter] = useState('all');
+  const [minPendingFee, setMinPendingFee] = useState(0);
   const [hoveredDoc, setHoveredDoc] = useState(null);
 
   const fetchRecords = async () => {
@@ -68,13 +70,24 @@ const WardenFeeVerification = () => {
   }, [userData?.managementId]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return records;
-    return records.filter((r) =>
-      (r.studentName || '').toLowerCase().includes(q) ||
-      (r.studentId || '').toLowerCase().includes(q)
-    );
-  }, [records, search]);
+    return records.filter((r) => {
+      // Filter by min pending fee
+      if (r.remainingAmount < minPendingFee) return false;
+
+      const q = search.trim().toLowerCase();
+      if (!q) return true;
+
+      if (searchFilter === 'name') return (r.studentName || '').toLowerCase().includes(q);
+      if (searchFilter === 'id') return (r.studentId || '').toLowerCase().includes(q);
+      if (searchFilter === 'status') return (r.paymentStatus || '').toLowerCase().includes(q);
+
+      return (
+        (r.studentName || '').toLowerCase().includes(q) ||
+        (r.studentId || '').toLowerCase().includes(q) ||
+        (r.paymentStatus || '').toLowerCase().includes(q)
+      );
+    });
+  }, [records, search, searchFilter, minPendingFee]);
 
   return (
     <>
@@ -87,23 +100,58 @@ const WardenFeeVerification = () => {
       <div className="pt-20 md:pt-24 px-4 sm:px-6 lg:px-8 pb-12 w-full max-w-7xl mx-auto space-y-6">
         
         {/* Header Section */}
-        <div className="rounded-3xl p-6 md:p-8 border shadow-sm flex flex-col md:flex-row items-center justify-between gap-6"
+        <div className="rounded-3xl p-6 md:p-8 border shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6"
              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
           <div>
             <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent mb-2">Student Fee Details</h2>
             <p className="font-medium" style={{ color: 'var(--text-muted)' }}>Review student fee reports and verify attached proofs.</p>
           </div>
-          <div className="relative w-full md:w-80 border-2 border-transparent focus-within:border-orange-500/30 rounded-2xl transition-colors overflow-hidden"
-               style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 opacity-50" style={{ color: 'var(--text-primary)' }} />
-            <input
-              type="text"
-              placeholder="Search by student name or ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-transparent border-none outline-none focus:ring-0 text-sm font-medium"
-              style={{ color: 'var(--text-primary)' }}
-            />
+          
+          <div className="flex flex-col gap-4 w-full md:w-auto">
+            {/* Amazon-style Search Bar */}
+            <div className="flex items-center p-1.5 rounded-2xl border-2 border-transparent focus-within:border-orange-500/30 transition-all overflow-hidden"
+                 style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+              <select
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                className="bg-transparent border-none outline-none text-xs font-bold py-2 px-2 cursor-pointer hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                <option value="all" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>All</option>
+                <option value="name" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Name</option>
+                <option value="id" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>ID</option>
+                <option value="status" style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>Status</option>
+              </select>
+              <div className="w-[1px] h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+              <Search className="w-5 h-5 opacity-50 ml-2 shrink-0" style={{ color: 'var(--text-primary)' }} />
+              <input
+                type="text"
+                placeholder={`Search by ${searchFilter === 'all' ? 'any' : searchFilter}...`}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full sm:w-64 pl-2 pr-4 py-2 bg-transparent border-none outline-none focus:ring-0 text-sm font-medium min-w-[200px]"
+                style={{ color: 'var(--text-primary)' }}
+              />
+            </div>
+
+            {/* Range Slider for Pending Fee */}
+            <div className="flex items-center justify-between md:justify-start gap-4 px-4 py-3 rounded-2xl border transition-all"
+                 style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Min Pending Fee</span>
+                <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>₹{minPendingFee.toLocaleString()}</span>
+              </div>
+              <input 
+                type="range" 
+                min="0" 
+                max="200000" 
+                step="5000"
+                value={minPendingFee} 
+                onChange={(e) => setMinPendingFee(Number(e.target.value))}
+                className="w-24 sm:w-32 accent-orange-500 cursor-pointer"
+                title="Filter by Minimum Pending Fee"
+              />
+            </div>
           </div>
         </div>
 
@@ -120,7 +168,15 @@ const WardenFeeVerification = () => {
                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                  <FileText className="w-8 h-8 opacity-40" />
                </div>
-               <p className="text-sm font-bold opacity-80">No fee reports matched your criteria.</p>
+               <p className="text-sm font-bold opacity-80 mb-4">No fee reports matched your criteria.</p>
+               {(search.trim() || minPendingFee > 0) && (
+                 <button
+                    onClick={() => { setSearch(''); setMinPendingFee(0); }}
+                    className="px-4 py-2 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 transition-colors"
+                 >
+                    Clear Filters
+                 </button>
+               )}
             </div>
           ) : (
             <div className="divide-y" style={{ borderColor: 'var(--border-primary)' }}>

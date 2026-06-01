@@ -125,26 +125,36 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Scrollbar Styles - Completely Hidden */
+/* Custom Scrollbar Styles - Premium Sleek Design */
 * {
-  -ms-overflow-style: none !important;
-  /* IE and Edge */
-  scrollbar-width: none !important;
-  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
-/* Chrome, Safari, Opera */
-*::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-/* Firefox Scrollbar Support */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Chrome, Safari, etc. - Firefox handled above */
 html,
 body {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  scrollbar-width: thin !important;
+  -ms-overflow-style: auto !important;
 }
 
 /* Search input theming and cleanup for consistent cross-theme appearance */
