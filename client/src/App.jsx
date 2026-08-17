@@ -62,7 +62,7 @@ const App = () => {
     }
   }, []);
 
-  // Show 404 (Yeti) if browser is offline (network disconnected)
+  // Show 404 (Yeti) if browser is offline (network disconnected) have added
   if (!isOnline) {
     return <NotFound />;
   }
