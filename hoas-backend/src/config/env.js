@@ -11,7 +11,7 @@ export const env = {
   firebaseServiceAccountPath: resolve(process.cwd(), required('FIREBASE_SERVICE_ACCOUNT_PATH', '')),
   firebaseDevMode: required('FIREBASE_DEV_MODE', 'false') === 'true',
   devTokenSecret: required('DEV_TOKEN_SECRET', ''),
-  allowedOrigins: required('ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:3000')
+  allowedOrigins: required('ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:3000,https://hoas-client-4n13.vercel.app,https://hoas.onrender.com')
     .split(',')
     .map((origin) => origin.trim()),
   smtp: {
@@ -23,4 +23,5 @@ export const env = {
     fromEmail: required('SMTP_FROM_EMAIL', ''),
   },
   appUrl: required('HOAS_APP_URL', 'http://localhost:5173'),
+  renderUrl: required('RENDER_URL', 'https://hoas.onrender.com'),
 };

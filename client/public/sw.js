@@ -73,7 +73,10 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/yeti-404/index.html')))
+        .catch(() => {
+          // Return cached response or yeti 404 page, always return a valid Response
+          return caches.match('/yeti-404/index.html') || new Response('<!DOCTYPE html><html><head><title>Offline</title></head><body><h1>Offline</h1><p>You are offline.</p></body></html>', { headers: { 'Content-Type': 'text/html' } });
+        })
     );
     return;
   }
