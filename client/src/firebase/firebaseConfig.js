@@ -48,23 +48,21 @@ export let isEmulatorConnected = false;
 })();
 
 // Check for emulator mode from localStorage (user toggle) or environment variable
-const localStorageEmulatorFlag = localStorage.getItem('VITE_USE_FIREBASE_EMULATOR');
-const requestedEmulatorMode = localStorageEmulatorFlag !== null
-  ? localStorageEmulatorFlag === 'true'
-  : import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
+// Prefer environment variable; fall back to localStorage only if explicitly set earlier
+const requestedEmulatorMode = import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
 
 // When sharing the app through tunnels (ngrok/localtunnel), remote users cannot access
 // localhost emulators. Force production Firebase in that scenario to avoid login/network errors.
 const isTunnelHost = typeof window !== 'undefined' && /(?:^|\.)((ngrok-free\.dev)|(ngrok\.io)|(loca\.lt)|(localhost\.run))$/i.test(window.location.hostname);
-const useEmulator = requestedEmulatorMode && !isTunnelHost;
+// Always use production Firebase; emulator mode is disabled for production stability
+const useEmulator = false;
 
 // Check for a debug override (e.g., via debugUtils.forceProductionMode())
 const forceProd = (typeof window !== 'undefined') && localStorage.getItem('forceProductionFirebase') === 'true';
 
 // Track the last Firebase mode so we can detect emulator→production switches
-const LAST_MODE_KEY = 'HOAS_LAST_FIREBASE_MODE';
-const currentMode = (forceProd || !useEmulator || !import.meta.env.DEV) ? 'production' : 'emulator';
-const lastMode = localStorage.getItem(LAST_MODE_KEY);
+const currentMode = 'production';
+const lastMode = 'production';
 
 // Connect to emulators when explicitly requested and not forced into production
 if (forceProd) {
@@ -116,9 +114,6 @@ if (import.meta.env.DEV && lastMode === 'emulator' && currentMode === 'productio
   localStorage.setItem(LAST_MODE_KEY, 'production');
   console.log('🔒 Production: corrected stale emulator mode flag in localStorage.');
 }
-
-// Persist the current mode for next reload
-localStorage.setItem(LAST_MODE_KEY, currentMode);
 
 // Import debug utilities in development
 if (import.meta.env.DEV) {

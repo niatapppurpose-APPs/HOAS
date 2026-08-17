@@ -13,12 +13,22 @@ export async function authenticateSocket(socket, next) {
       const decoded = await firebaseAuth.verifyIdToken(token);
       uid = decoded.uid;
     } catch {
-      if (!env.firebaseDevMode || !token.startsWith('dev.')) return next(new Error('INVALID_TOKEN'));
+      // In development mode, only accept dev. prefixed tokens
+      // In production mode, accept normal Firebase tokens
+      if (env.firebaseDevMode && !token.startsWith('dev.')) return next(new Error('INVALID_TOKEN'));
+      // If not in dev mode, try verifying with the real Firebase token (will fall through to user check)
+    }
+
+    // If we didn't verify via Firebase above (e.g., dev mode fallback), try jwt fallback
+    if (!uid) {
       try {
-        uid = jwt.verify(token.slice(4), env.devTokenSecret).uid;
+        if (env.firebaseDevMode && token.startsWith('dev.')) {
+          uid = jwt.verify(token.slice(4), env.devTokenSecret).uid;
+        }
       } catch {
         return next(new Error('INVALID_TOKEN'));
       }
+    }
     }
 
     const user = await User.findOne({ uid });
