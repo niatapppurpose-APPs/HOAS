@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useEffect } from "react";
@@ -12,10 +12,11 @@ const WaitingApproval = () => {
   const { user, userData, userDataLoading, loading } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // If not logged in, redirect to login
-    if (!loading && !user) {
+    if (!loading && !user && location.pathname !== "/login") {
       navigate("/login", { replace: true });
       return;
     }
@@ -43,7 +44,7 @@ const WaitingApproval = () => {
         // Stay on this page but show denied message
       }
     }
-  }, [user, userData, userDataLoading, loading, navigate]);
+  }, [user, userData, userDataLoading, loading, navigate, location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -65,6 +66,8 @@ const WaitingApproval = () => {
       </div>
     );
   }
+
+  if (!user) return <Navigate to="/login" replace />;
 
   const isDenied = userData?.status?.toLowerCase() === "denied";
   const isUnknownRole = !userData?.role || userData.role === "unknown";

@@ -58,7 +58,7 @@ export default function useSocket() {
         console.log('Socket.IO disconnected');
       });
     });
-  }, [user, userData]);
+  }, [user]);
 
   useEffect(() => {
     return () => {

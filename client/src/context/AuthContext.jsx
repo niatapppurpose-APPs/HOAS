@@ -87,6 +87,7 @@ export const AuthProvider = ({ children }) => {
 
           // Fetch profile & role from backend in the background (non-blocking)
           (async () => {
+            setUserDataLoading(true);
             try {
               const tokenResult = await currentUser.getIdTokenResult(false);
               const userClaims = tokenResult.claims;
@@ -98,6 +99,8 @@ export const AuthProvider = ({ children }) => {
               setIsAdmin(false);
               setClaims(null);
               setAdminChecked(true);
+            } finally {
+              setUserDataLoading(false);
             }
           })();
         } else {
@@ -116,18 +119,6 @@ export const AuthProvider = ({ children }) => {
       }
     };
   }, []);
-
-  // Refresh profile whenever auth user changes
-  useEffect(() => {
-    if (!user) {
-      setUserData(null);
-      setUserDataLoading(false);
-      return;
-    }
-
-    setUserDataLoading(true);
-    fetchProfile().finally(() => setUserDataLoading(false));
-  }, [user?.uid]);
 
   // Function to refresh role & profile from backend
   const refreshAdminStatus = async () => {

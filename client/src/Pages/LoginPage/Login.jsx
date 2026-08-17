@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import LoginButton from "./LoginButton";
 import RedirectingPage from "./RedirectingPage";
@@ -12,6 +12,7 @@ import { ThemeToggle } from "../../components/ThemeToggle";
 const Login = () => {
   const { user, userData, userDataLoading, loading, isAdmin, claims } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDark } = useTheme()
   const [showRedirecting, setShowRedirecting] = useState(false);
   const [minDelayPassed, setMinDelayPassed] = useState(false);
@@ -71,12 +72,12 @@ if (user && (!userDataLoading || minDelayPassed)) {
               navigate(`/dashboard/${role}`, { replace: true });
             }
           } else if (status === 'pending') {
-            navigate("/waiting-approval", { replace: true });
+             if (location.pathname !== "/waiting-approval") navigate("/waiting-approval", { replace: true });
           } else if (status === 'denied') {
-            navigate("/waiting-approval", { replace: true });
+             if (location.pathname !== "/waiting-approval") navigate("/waiting-approval", { replace: true });
           } else {
             // Unknown status - default to pending
-            navigate("/waiting-approval", { replace: true });
+             if (location.pathname !== "/waiting-approval") navigate("/waiting-approval", { replace: true });
           }
         } else {
           // No userData yet — if the user has admin/owner claim we can bypass waiting
@@ -89,7 +90,7 @@ if (user && (!userDataLoading || minDelayPassed)) {
       }
     }
   
-  }, [user, userData, userDataLoading, loading, navigate, minDelayPassed]);
+   }, [user, userData, userDataLoading, loading, navigate, location.pathname, minDelayPassed]);
 
   // Show redirecting page only for fresh logins, while waiting for data or delay
   if (showRedirecting && user && (userDataLoading || !minDelayPassed)) {
