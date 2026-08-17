@@ -14,7 +14,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { registerServiceWorker } from "./registerSW";
 import "./index.css";
-
+import "./firebase/firebaseConfig";  // Or whatever your path is
 const CHUNK_RELOAD_FLAG = "hoas_chunk_reload_done";
 
 const recoverFromChunkLoadFailure = (reason) => {
