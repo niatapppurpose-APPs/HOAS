@@ -62,8 +62,9 @@ if (user && (!userDataLoading || minDelayPassed)) {
       const alreadyLoggedIn = wasAlreadyLoggedInRef.current === true;
       if (alreadyLoggedIn || minDelayPassed) {
         if (userData) {
-          const { role, status } = userData;
-          if (status === "approved") {
+           const { role } = userData;
+           const status = String(userData.status || '').toLowerCase();
+           if (status === "approved") {
             if (role === 'admin' || role === 'owner') {
               navigate('/OwnersDashboard', { replace: true });
             } else {

@@ -105,7 +105,8 @@ const Routes_path = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/waiting-approval" element={<ProtectedRoute><WaitingApproval /></ProtectedRoute>} />
+                {/* WaitingApproval handles its own auth loading/redirect so denied users do not loop. */}
+                <Route path="/waiting-approval" element={<WaitingApproval />} />
                 <Route path="/firebase-mode" element={<Navigate to="/" replace />} />
 
                 {/* ------------------------------ Profile Pages ----------------------------------------- */}
