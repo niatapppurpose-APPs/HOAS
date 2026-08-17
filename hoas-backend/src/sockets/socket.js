@@ -1,0 +1,1 @@
+export { initSocket, getIo } from '../services/socket.service.js';
