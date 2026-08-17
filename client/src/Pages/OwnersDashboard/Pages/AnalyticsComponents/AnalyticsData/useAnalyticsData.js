@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { collection, getDocs, onSnapshot } from 'firebase/firestore';
-import { db } from '../../../../../firebase/firebaseConfig';
+import { listUsers } from '../../../../../firebase/cloudFunctions';
 import {
   calculateStats,
   generateCollegeDistribution,
@@ -8,6 +7,16 @@ import {
   generateUserTrend,
   normalizeCreatedAt,
 } from './analyticsTransforms';
+
+const mapUsers = (users = []) =>
+  users
+    .map((u) => ({
+      id: u._id,
+      uid: u.uid,
+      ...u,
+      createdAt: normalizeCreatedAt(u.createdAt),
+    }))
+    .filter(u => u.role !== 'admin' && u.role !== 'owner');
 
 // Fetch + compute all Analytics datasets (keeps Analytics.jsx small and UI-only).
 export function useAnalyticsData() {
@@ -59,54 +68,35 @@ export function useAnalyticsData() {
   useEffect(() => {
     isMountedRef.current = true;
 
-    const unsubscribe = onSnapshot(
-      collection(db, 'users'),
-      (snapshot) => {
+    const load = async () => {
+      try {
+        const { users } = await listUsers({});
         if (!isMountedRef.current) return;
-
-        const users = snapshot.docs
-          .map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              ...data,
-              createdAt: normalizeCreatedAt(data.createdAt),
-            };
-          })
-          .filter(u => u.role !== 'admin' && u.role !== 'owner');
-
-        computeAndSet(users);
+        computeAndSet(mapUsers(users));
         setLastUpdated(new Date());
         setLoading(false);
         setRefreshing(false);
-      },
-      (error) => {
-        console.error('Error listening to users:', error);
-        setLoading(false);
-      },
-    );
+      } catch (error) {
+        console.error('Error loading users:', error);
+        if (isMountedRef.current) setLoading(false);
+      }
+    };
+
+    load();
+
+    const interval = setInterval(load, 60000);
 
     return () => {
       isMountedRef.current = false;
-      unsubscribe();
+      clearInterval(interval);
     };
   }, [computeAndSet]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      const snapshot = await getDocs(collection(db, 'users'));
-      const users = snapshot.docs
-        .map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            createdAt: normalizeCreatedAt(data.createdAt),
-          };
-        })
-        .filter(u => u.role !== 'admin' && u.role !== 'owner');
-      computeAndSet(users);
+      const { users } = await listUsers({});
+      computeAndSet(mapUsers(users));
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Manual refresh error:', error);

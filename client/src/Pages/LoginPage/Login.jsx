@@ -40,23 +40,23 @@ const Login = () => {
         // Fresh login — show the animation
         setShowRedirecting(true);
         setMinDelayPassed(false);
-
-        const timer = setTimeout(() => {
-          setMinDelayPassed(true);
-        }, 5000);
-
-        return () => clearTimeout(timer);
       }
-      // else: user was already logged in on mount — skip animation, navigate immediately
     }
     previousUserRef.current = user;
   }, [user]);
+
+  // Guarantee navigation even if the animation timer is somehow lost
+  useEffect(() => {
+    if (!showRedirecting) return;
+    const timer = setTimeout(() => setMinDelayPassed(true), 5000);
+    return () => clearTimeout(timer);
+  }, [showRedirecting]);
 
   useEffect(() => {
     // Don't navigate if still loading auth state
     if (loading) return;
 
-    if (user && !userDataLoading) {
+if (user && (!userDataLoading || minDelayPassed)) {
       // If user was already logged in when page loaded, navigate immediately (no delay)
       // If it's a fresh login, wait for the minimum delay
       const alreadyLoggedIn = wasAlreadyLoggedInRef.current === true;
@@ -69,13 +69,18 @@ const Login = () => {
             } else {
               navigate(`/dashboard/${role}`, { replace: true });
             }
+          } else if (status === 'pending') {
+            navigate("/waiting-approval", { replace: true });
+          } else if (status === 'denied') {
+            // Show denied state
+            navigate("/login", { replace: true });
           } else {
+            // Unknown status - default to pending
             navigate("/waiting-approval", { replace: true });
           }
         } else {
           // No userData yet — if the user has admin/owner claim we can bypass waiting
-          const claimsRole = claims?.role;
-          if (isAdmin || claimsRole === 'admin' || claimsRole === 'owner') {
+          if (isAdmin || userData?.role === 'admin' || userData?.role === 'owner') {
             navigate('/OwnersDashboard', { replace: true });
           } else {
             navigate("/waiting-approval", { replace: true });
@@ -83,6 +88,7 @@ const Login = () => {
         }
       }
     }
+  
   }, [user, userData, userDataLoading, loading, navigate, minDelayPassed]);
 
   // Show redirecting page only for fresh logins, while waiting for data or delay

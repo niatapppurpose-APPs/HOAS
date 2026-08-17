@@ -3,8 +3,7 @@
  * Handles initialization and management of user notification preferences
  */
 
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
+import { updateProfile, getMe } from '../firebase/cloudFunctions';
 
 // Default notification preferences for new users
 export const DEFAULT_NOTIF_PREFS = {
@@ -27,38 +26,20 @@ export const DEFAULT_NOTIF_PREFS = {
  */
 export const initializeNotificationPrefs = async (userId) => {
   try {
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      console.warn(`User ${userId} does not exist`);
-      return;
-    }
-
-    const userData = userSnap.data();
-
-    // If notifPrefs doesn't exist or is incomplete, initialize/merge with defaults
-    if (!userData.notifPrefs || Object.keys(userData.notifPrefs).length === 0) {
-      await updateDoc(userRef, {
-        notifPrefs: DEFAULT_NOTIF_PREFS,
-      });
+    const user = await getMe();
+    if (!user?.notificationPrefs || Object.keys(user.notificationPrefs).length === 0) {
+      await updateProfile({ notificationPrefs: DEFAULT_NOTIF_PREFS });
       console.log(`✅ Initialized notification preferences for user ${userId}`);
     } else {
-      // Merge with defaults to add any missing keys
       const mergedPrefs = {
         ...DEFAULT_NOTIF_PREFS,
-        ...userData.notifPrefs, // Keep user's existing preferences
+        ...user.notificationPrefs,
       };
-
-      // Only update if there are missing keys
       const hasAllKeys = Object.keys(DEFAULT_NOTIF_PREFS).every(
-        (key) => key in userData.notifPrefs
+        (key) => key in user.notificationPrefs
       );
-
       if (!hasAllKeys) {
-        await updateDoc(userRef, {
-          notifPrefs: mergedPrefs,
-        });
+        await updateProfile({ notificationPrefs: mergedPrefs });
         console.log(`✅ Updated notification preferences for user ${userId}`);
       }
     }
@@ -75,10 +56,9 @@ export const initializeNotificationPrefs = async (userId) => {
  */
 export const enableNotifPref = async (userId, prefKey) => {
   try {
-    const userRef = doc(db, 'users', userId);
-    await updateDoc(userRef, {
-      [`notifPrefs.${prefKey}`]: true,
-    });
+    const user = await getMe();
+    const current = user?.notificationPrefs || {};
+    await updateProfile({ notificationPrefs: { ...current, [prefKey]: true } });
     console.log(`✅ Enabled ${prefKey} for user ${userId}`);
   } catch (error) {
     console.error(`Error enabling ${prefKey}:`, error);
@@ -93,10 +73,9 @@ export const enableNotifPref = async (userId, prefKey) => {
  */
 export const disableNotifPref = async (userId, prefKey) => {
   try {
-    const userRef = doc(db, 'users', userId);
-    await updateDoc(userRef, {
-      [`notifPrefs.${prefKey}`]: false,
-    });
+    const user = await getMe();
+    const current = user?.notificationPrefs || {};
+    await updateProfile({ notificationPrefs: { ...current, [prefKey]: false } });
     console.log(`✅ Disabled ${prefKey} for user ${userId}`);
   } catch (error) {
     console.error(`Error disabling ${prefKey}:`, error);
@@ -110,16 +89,8 @@ export const disableNotifPref = async (userId, prefKey) => {
  */
 export const getNotificationPrefs = async (userId) => {
   try {
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      console.warn(`User ${userId} does not exist`);
-      return DEFAULT_NOTIF_PREFS;
-    }
-
-    const userData = userSnap.data();
-    return userData.notifPrefs || DEFAULT_NOTIF_PREFS;
+    const user = await getMe();
+    return user?.notificationPrefs || DEFAULT_NOTIF_PREFS;
   } catch (error) {
     console.error(`Error getting notification preferences:`, error);
     return DEFAULT_NOTIF_PREFS;
@@ -133,10 +104,7 @@ export const getNotificationPrefs = async (userId) => {
  */
 export const resetNotificationPrefs = async (userId) => {
   try {
-    const userRef = doc(db, 'users', userId);
-    await updateDoc(userRef, {
-      notifPrefs: DEFAULT_NOTIF_PREFS,
-    });
+    await updateProfile({ notificationPrefs: DEFAULT_NOTIF_PREFS });
     console.log(`✅ Reset notification preferences for user ${userId}`);
   } catch (error) {
     console.error(`Error resetting notification preferences:`, error);

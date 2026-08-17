@@ -63,7 +63,21 @@ export const getFCMToken = async () => {
       return null;
     }
   } catch (error) {
-    console.error('Error getting FCM token:', error);
+    if (error?.name === 'VersionError' || /requested version/i.test(error?.message || '')) {
+      try {
+        await new Promise((resolve) => {
+          const req = indexedDB.deleteDatabase('firebase-messaging-database');
+          req.onsuccess = () => resolve();
+          req.onerror = () => resolve();
+          req.onblocked = () => resolve();
+        });
+        const retryToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+        if (retryToken) return retryToken;
+      } catch (retryError) {
+        console.warn('FCM token retry failed:', retryError);
+      }
+    }
+    console.warn('FCM token unavailable, continuing with polling:', error?.message || error);
     return null;
   }
 };
@@ -144,17 +158,11 @@ export const showNotification = (title, options = {}) => {
  */
 export const saveFCMToken = async (db, userId, token) => {
   try {
-    const { doc, updateDoc } = await import('firebase/firestore');
-
-    const userRef = doc(db, 'users', userId);
-    await updateDoc(userRef, {
-      fcmToken: token, // Save single token for current device
-      lastTokenUpdate: new Date(),
-      'notifPrefs.soundAlerts': true, // Ensure sound is enabled by default
-      'notifPrefs.systemAlerts': true, // Ensure system alerts are enabled
-      'notifPrefs.announcements': true, // Ensure announcements are enabled
+    const { updateProfile } = await import('./cloudFunctions');
+    await updateProfile({
+      fcmToken: token,
+      notificationPrefs: { soundAlerts: true, systemAlerts: true, announcements: true },
     });
-
   } catch (error) {
     console.error('Error saving FCM token:', error);
   }

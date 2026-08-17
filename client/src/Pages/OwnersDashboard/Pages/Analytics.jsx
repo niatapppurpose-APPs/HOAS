@@ -7,6 +7,7 @@ import RefreshButton from './AnalyticsComponents/RefreshButton'; // Manual refre
 import StatsGrid from './AnalyticsComponents/StatsGrid'; // KPI summary cards
 import CollegeDistributionChart from './AnalyticsComponents/CollegeDistributionChart'; // Per-college distribution pie
 import RoleApprovalChart from './AnalyticsComponents/RoleApprovalChart'; // Approval % per role
+import UserTrendChart from './AnalyticsComponents/UserTrendChart'; // 30-day registration trend line chart
 import { useAnalyticsData } from './AnalyticsComponents/AnalyticsData/useAnalyticsData';
 
 const Analytics = () => {
@@ -76,6 +77,9 @@ const Analytics = () => {
         {!loading && (
           <>
             <StatsGrid stats={stats} />
+
+            {/* User Registration Trend (last 30 days) */}
+            <UserTrendChart data={userTrendData} dateRange={dateRange} />
 
 
             {/* Two Chart Row */}

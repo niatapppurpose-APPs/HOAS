@@ -6,8 +6,7 @@ import { useToast } from '../../../components/Toast';
 import Header from '../../../components/OwnerServices/header';
 import PWAUpdateSettings from '../../../components/PWAUpdateSettings';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
-import { db, auth } from '../../../firebase/firebaseConfig';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { auth } from '../../../firebase/firebaseConfig';
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { StatusBadge, ToggleSwitch, SectionCard, SettingRow } from './components/SettingsComponents';
 import AccessLogsModal from './components/AccessLogsModal';
@@ -123,23 +122,22 @@ const GlobalSystemSettings = () => {
 
   useEffect(() => { loadData(false); loadUsers(); }, []);
 
-  /* ── Real-time streaming: keep settings in sync across sessions ── */
+  /* ── Settings refresh on mount (server-driven, no Firestore listener) ── */
   useEffect(() => {
-    const unsub = onSnapshot(
-      doc(db, 'systemSettings', 'global'),
-      (snap) => {
-        if (snap.exists()) {
-          const serverSettings = snap.data();
-          setSettings(prev => ({ ...prev, ...serverSettings }));
+    let cancelled = false;
+    cloudFunctions.getSystemSettings()
+      .then((res) => {
+        if (cancelled) return;
+        if (res?.settings) {
+          setSettings(prev => ({ ...prev, ...res.settings }));
           setDataSource('server');
           setLoadError(null);
         }
-      },
-      (err) => {
-        console.warn('Settings realtime listener error:', err);
-      }
-    );
-    return () => unsub();
+      })
+      .catch((err) => {
+        console.warn('Settings load error:', err);
+      });
+    return () => { cancelled = true; };
   }, []);
 
   const update = (u) => { setSettings(p => ({ ...p, ...u })); setHasChanges(true); };
@@ -155,7 +153,7 @@ const GlobalSystemSettings = () => {
     setBusy(uid);
     try {
       const next = status === 'approved' ? 'suspended' : 'approved';
-      await setDoc(doc(db, 'users', uid), { status: next, updatedAt: new Date().toISOString() }, { merge: true });
+      await cloudFunctions.setUserStatus(uid, next);
       toast.success(`Account ${next === 'approved' ? 'activated' : 'deactivated'}`);
       loadUsers();
     } catch { toast.error('Action failed'); }
@@ -396,10 +394,23 @@ const GlobalSystemSettings = () => {
                   <SettingRow icon={Key} title="Force Password Reset" description="All users must reset password" warning={settings.forcePasswordReset}>
                     <ToggleSwitch enabled={settings.forcePasswordReset ?? false} onChange={v => update({ forcePasswordReset: v, ...(v ? { forcePasswordResetEnabledAt: new Date().toISOString() } : {}) })} disabled={saving} />
                   </SettingRow>
-                  <SettingRow icon={LogOut} title="Auto Logout Timer" description="Logout after inactivity">
+                  <SettingRow icon={LogOut} title="Auto Logout Timer" description="Logout after inactivity" warning={(settings.autoLogoutMinutes ?? 0) > 0}>
                     <div className="flex items-center gap-2">
-                      {/* Auto logout removed */}
-
+                      <ToggleSwitch 
+                        enabled={(settings.autoLogoutMinutes ?? 0) > 0}
+                        onChange={(v) => update({ autoLogoutMinutes: v ? 30 : 0 })}
+                        disabled={saving}
+                      />
+                      <input
+                        type="number"
+                        min={0}
+                        max={1440}
+                        value={settings.autoLogoutMinutes ?? 0}
+                        disabled={saving || (settings.autoLogoutMinutes ?? 0) === 0}
+                        onChange={(e) => update({ autoLogoutMinutes: Math.max(0, Math.min(1440, Number(e.target.value) || 0)) })}
+                        className="w-20 px-2 py-1.5 rounded-lg border text-sm outline-none disabled:opacity-40"
+                        style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                      />
                       <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>min</span>
                     </div>
                   </SettingRow>
@@ -416,7 +427,7 @@ const GlobalSystemSettings = () => {
                   {[
                     { label: '2FA', on: settings.twoFactorEnabled ?? false, icon: Fingerprint },
                     { label: 'Force Reset', on: settings.forcePasswordReset ?? false, icon: Key },
-                    // Auto Logout removed
+                    { label: 'Auto Logout', on: (settings.autoLogoutMinutes ?? 0) > 0, icon: LogOut },
                     { label: 'Logs', on: true, icon: ScrollText },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-2 p-2 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)' }}>

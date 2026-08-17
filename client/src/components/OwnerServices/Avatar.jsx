@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { doc, setDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
-import { db, auth } from "../../firebase/firebaseConfig";
+import { auth } from "../../firebase/firebaseConfig";
 import { useToast } from "../Toast";
 import { Camera, Loader2 } from "lucide-react";
+import { updateProfile as apiUpdateProfile } from "../../firebase/cloudFunctions";
 
 // Reusable Avatar Component with fallback chain: image → initials
 const Avatar = ({
@@ -56,6 +56,7 @@ const Avatar = ({
 
 
   const sizeClasses = {
+    xs: "w-6 h-6 text-[10px]",
     sm: "w-8 h-8 text-xs",
     md: "w-10 h-10 text-sm",
     lg: "w-12 h-12 text-base",
@@ -147,15 +148,7 @@ const Avatar = ({
             await updateProfile(auth.currentUser, { photoURL: url });
           }
 
-          await Promise.all(
-            collections.map((col) =>
-              setDoc(
-                doc(db, col, resolvedUid),
-                { photoURL: url, updatedAt: new Date().toISOString() },
-                { merge: true }
-              )
-            )
-          );
+          await apiUpdateProfile({ avatarUrl: url }).catch(() => {});
 
           uploadedUrlRef.current = url;
           setPhotoURL(url);

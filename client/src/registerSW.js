@@ -21,7 +21,7 @@ export function registerServiceWorker() {
         });
         
         console.log('SW registered:', registration.scope);
-        
+         
         // Check for updates
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;

@@ -23,6 +23,7 @@ import Avatar from '../../../../components/OwnerServices/Avatar';
 import AppLogo4k from '../../../../assets/AppLogo4k.png';
 import NewBadge from "../../../../components/NewBadge";
 import { isNavItemNew, dismissNavItemFeatures } from "../../../../data/newFeatures";
+import MobileBottomNav from "../../../../components/MobileBottomNav";
 
 const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
   const { user, userData } = useAuth();
@@ -126,8 +127,15 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
 
   const handleDateYear = () => new Date().getFullYear();
 
+  const bottomNavItems = [
+    ...menuItems,
+    ...bottomMenuItems,
+    { id: "profile", label: "Profile", path: "/dashboard/management/profile", isProfile: true },
+  ];
+
   return (
     <>
+      <div className="hidden lg:block">
       {/* Mobile Overlay */}
       <div
         className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300 ${!isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"}`}
@@ -436,6 +444,16 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
           </div>
         </div>
       )}
+      </div>
+
+      <MobileBottomNav
+        items={bottomNavItems}
+        activeId={activeItem}
+        accentVar="var(--management-accent)"
+        accentVar2="var(--management-accent-2)"
+        avatar={userData?.photoURL || user?.photoURL}
+        user={user}
+      />
     </>
   );
 };

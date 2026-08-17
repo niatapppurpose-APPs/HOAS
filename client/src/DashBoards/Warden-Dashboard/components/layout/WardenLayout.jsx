@@ -1,40 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "../../../../firebase/firebaseConfig";
 import WardenSidebar from './WardenSidebar';
 import { useAuth } from '../../../../context/AuthContext';
 import { useTheme } from '../../../../context/ThemeContext';
 
 const WardenLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [managementData, setManagementData] = useState(null);
   const { userData } = useAuth();
   const { isDark } = useTheme();
 
-  // Fetch management data (college logo, location, etc.)
-  useEffect(() => {
-    const managementId = userData?.managementId;
-    if (!managementId) {
-      setManagementData(null);
-      return;
-    }
-
-    const managementRef = doc(db, "users", managementId);
-    const unsubscribe = onSnapshot(managementRef, (snap) => {
-      if (snap.exists()) {
-        setManagementData(snap.data());
-      } else {
-        setManagementData(null);
-      }
-    }, () => {
-      setManagementData(null);
-    });
-
-    return () => unsubscribe();
-  }, [userData]);
-
-  const collegeLogo = managementData?.collegeLogo || null;
+  const collegeLogo = userData?.collegeId?.logoUrl || userData?.collegeLogo || null;
 
   const themeInfo = userData?.theme || {
     primary: '#f97316', // Orange theme for warden
@@ -68,12 +43,11 @@ const WardenLayout = () => {
           isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}
           collegeLogo={collegeLogo}
-          managementData={managementData}
         />
 
-        <main className={`transition-all duration-300 ease-in-out ml-0 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-72'
+        <main className={`transition-all duration-300 ease-in-out ml-0 pb-24 lg:pb-0 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-72'
           }`}>
-          <Outlet context={{ isCollapsed, setIsCollapsed, collegeLogo, managementData }} />
+          <Outlet context={{ isCollapsed, setIsCollapsed, collegeLogo }} />
         </main>
       </div>
     </div>

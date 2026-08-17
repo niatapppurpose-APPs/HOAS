@@ -4,11 +4,10 @@ import {
     Building2, MapPin, ArrowLeft,
     Calendar, Award, Users, Home, GraduationCap, BookOpen, Pencil, Save, X, Phone
 } from "lucide-react";
-import { doc, updateDoc } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
+import { updateProfile as apiUpdateProfile } from "../../../../firebase/cloudFunctions";
 import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
-import { db } from "../../../../firebase/firebaseConfig";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 import ProfileBanner from "../../../../components/ProfileBanner";
 import AppLogo4k from "../../../../assets/AppLogo4k.png";
@@ -76,20 +75,10 @@ const StudentProfile = () => {
 
         setSaving(true);
         try {
-            await updateDoc(doc(db, "users", user.uid), {
-                fullName: trimmedName,
-                displayName: trimmedName,
+            await apiUpdateProfile({
+                name: trimmedName,
                 phone: trimmedPhone,
-                studentId: trimmedStudentCode,
-                rollNumber: trimmedStudentCode,
-                roomNumber: trimmedRoomNumber,
-                hostelRoom: trimmedRoomNumber,
-                course: trimmedCourse,
-                branch: trimmedBranch,
-                year: trimmedYear,
-                fatherName: trimmedFatherName,
                 address: trimmedAddress,
-                updatedAt: new Date().toISOString(),
             });
 
             if (user.displayName !== trimmedName) {

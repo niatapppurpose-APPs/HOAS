@@ -38,6 +38,7 @@ const DEFAULT_SETTINGS = {
   // Security defaults
   twoFactorEnabled: false,
   forcePasswordReset: false,
+  autoLogoutMinutes: 0,
 };
 
 // Context for sharing system settings across the app

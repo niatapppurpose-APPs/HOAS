@@ -4,8 +4,7 @@ import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import WardenHeader from '../layout/WardenHeader';
 import Avatar from '../../../../components/OwnerServices/Avatar';
-import { db } from '../../../../firebase/firebaseConfig';
-import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { listUsers } from '../../../../firebase/cloudFunctions';
 import {
     Users, Search, Filter, Loader2, GraduationCap,
     Phone, Mail, Home, Hash, Building2, ChevronDown,
@@ -28,46 +27,47 @@ const WardenStudents = () => {
 
     // Fetch students under this warden
     useEffect(() => {
-        if (!userData?.managementId) {
+        if (!userData?.collegeId) {
             setLoading(false);
             return;
         }
 
-        const q = query(
-            collection(db, 'users'),
-            where('role', '==', 'student'),
-            where('managementId', '==', userData.managementId)
-        );
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
-            if (snapshot.metadata.fromCache && snapshot.empty) return;
+        const load = async () => {
+            try {
+                const { users } = await listUsers({ role: 'student' });
+                if (cancelled) return;
+                const list = (users || []).map(u => ({
+                    id: u._id,
+                    uid: u.uid,
+                    ...u,
+                    fullName: u.name,
+                    roomNumber: u.roomNumber || '',
+                    photoURL: u.avatarUrl,
+                }));
+                setStudents(list);
+                setLoading(false);
+            } catch (error) {
+                console.error('Students fetch error:', error);
+                toast.error('Failed to load students');
+                setLoading(false);
+            }
+        };
 
-            const list = snapshot.docs.map(d => ({
-                id: d.id,
-                ...d.data()
-            }));
-            setStudents(list);
-            setLoading(false);
-        }, (error) => {
-            console.error('Students fetch error:', error);
-            toast.error('Failed to load students');
-            setLoading(false);
-        });
+        load();
 
-        return () => unsubscribe();
-    }, [userData?.managementId]);
+        const interval = setInterval(load, 30000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
+    }, [userData?.collegeId]);
 
     const handleVerificationChange = async (studentId, value) => {
-        try {
-            const studentRef = doc(db, 'users', studentId);
-            await updateDoc(studentRef, {
-                wardenVerification: value
-            });
-            toast.success(`Warden verification updated to ${value}`);
-        } catch (err) {
-            console.error("Error updating verification:", err);
-            toast.error("Failed to update status");
-        }
+        console.warn('Warden verification updates are not available in this build', { studentId, value });
+        toast.info('Verification updates are managed centrally in this build');
     };
 
     const filteredStudents = useMemo(() => {

@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import ManagementHeader from "../components/layout/ManagementHeader";
-import { collection, query, where, onSnapshot, doc, deleteDoc, getDocs } from 'firebase/firestore';
 import { User, Shield, Eye, Edit2, X, RefreshCw, CircleX, CheckCircle } from 'lucide-react';
-import { db } from '../../../firebase/firebaseConfig';
 import Avatar from "../../../components/OwnerServices/Avatar";
 import { Building2, Mail, Search, Filter, Plus } from "lucide-react";
 import "../ManagementDashboard.css";
@@ -14,6 +12,24 @@ import { useAuth } from "../../../context/AuthContext";
 import AddWardenModal from './AddWardenModal';
 import NoDataLight from '../../../assets/No-Data.avif';
 import NoDataDark from '../../../assets/NoDataDark.png';
+import * as cloudFunctions from '../../../firebase/cloudFunctions';
+
+const mapUser = (u) => ({
+  id: u._id,
+  uid: u.uid,
+  fullName: u.name || u.displayName,
+  displayName: u.name || u.displayName,
+  email: u.email,
+  role: u.role,
+  status: u.status,
+  isOnline: u.isOnline,
+  photoURL: u.avatarUrl || u.photoURL,
+  hostelBlock: u.hostelBlock,
+  collegeName: u.collegeName,
+  wardenRole: u.wardenRole,
+  position: u.position,
+  createdAt: u.createdAt,
+});
 
 const Wardens = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,14 +48,8 @@ const Wardens = () => {
     if (!managementUid) return;
     setLoading(true);
     try {
-      const q = query(
-        collection(db, 'users'),
-        where('role', '==', 'warden'),
-        where('managementId', '==', managementUid)
-      );
-      const snapshot = await getDocs(q);
-      const wardenList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      setGetAllwarden(wardenList);
+      const { users } = await cloudFunctions.listUsers({ role: 'warden' });
+      setGetAllwarden((users || []).map(mapUser));
       setError(null);
     } catch (err) {
       console.error('Failed to refresh wardens:', err);
@@ -59,22 +69,28 @@ const Wardens = () => {
 
   useEffect(() => {
     if (!managementUid) return; // wait until auth resolves
+    let cancelled = false;
     let timer;
 
-    const q = query(
-      collection(db, 'users'),
-      where('role', '==', 'warden'),
-      where('managementId', '==', managementUid)
-    );
+    const fetchWardens = async () => {
+      try {
+        const { users } = await cloudFunctions.listUsers({ role: 'warden' });
+        if (cancelled) return;
+        setGetAllwarden((users || []).map(mapUser));
+        timer = setTimeout(() => setLoading(false), 1000);
+      } catch (err) {
+        console.error('Failed to fetch wardens:', err);
+        if (!cancelled) {
+          setError(err.message || 'Failed to fetch wardens');
+          setLoading(false);
+        }
+      }
+    };
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const wardenlist = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setGetAllwarden(wardenlist);
-      timer = setTimeout(() => setLoading(false), 2000);
-    });
+    fetchWardens();
 
     return () => {
-      unsubscribe();
+      cancelled = true;
       if (timer) clearTimeout(timer);
     };
   }, [managementUid]);
@@ -97,9 +113,15 @@ const Wardens = () => {
     return 'Warden'; // Default
   };
 
-  const handleRemove = (warden) => {
-    // TODO: Implement remove functionality
-    console.log('Remove warden:', warden);
+  const handleRemove = async (warden) => {
+    if (!window.confirm(`Are you sure you want to remove ${warden.fullName || warden.email}?`)) return;
+    try {
+      await cloudFunctions.deleteUserAccount(warden.id);
+      setGetAllwarden(prev => prev.filter(w => w.id !== warden.id));
+    } catch (err) {
+      console.error('Remove warden failed:', err);
+      setError(err.message || 'Failed to remove warden');
+    }
   };
 
 

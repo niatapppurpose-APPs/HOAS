@@ -2,10 +2,8 @@ import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import ManagementHeader from "../components/layout/ManagementHeader";
 import {  FileText, Search, Filter, Download, FileSpreadsheet, CheckCircle2, AlertTriangle, Clock, Loader2, ExternalLink } from "lucide-react";
-import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
-import { ref, getDownloadURL } from "firebase/storage";
-import { db, storage } from "../../../firebase/firebaseConfig";
 import { useAuth } from "../../../context/AuthContext";
+import * as cloudFunctions from "../../../firebase/cloudFunctions";
 import "../ManagementDashboard.css";
 
 const Reports = () => {
@@ -39,87 +37,38 @@ const Reports = () => {
   useEffect(() => {
     if (!user?.uid) return;
 
-    // Filter by the uploader's UID — most reliable tenant isolation
-    console.log("Fetching uploads for management:", user.uid);
+    let cancelled = false;
 
-    try {
-      const q = query(
-        collection(db, "bulkUploads"),
-        where("uploadedBy", "==", user.uid),
-        orderBy("createdAt", "desc")
-      );
+    const fetchReports = async () => {
+      setLoading(true);
+      try {
+        const { records } = await cloudFunctions.getManagementFeeRecords();
+        if (cancelled) return;
 
-      const unsubscribe = onSnapshot(q, async (snapshot) => {
-        console.log("Snapshot received, docs count:", snapshot.docs.length);
-
-        // Process uploads and generate fresh download URLs if needed
-        const uploadsData = await Promise.all(snapshot.docs.map(async (doc) => {
-          const data = doc.data();
-          let validDownloadUrl = data.downloadUrl;
-
-          // Attempt to refresh the download URL using the client SDK
-          // This fixes the "412 Service Account" error by using the current user's token
-          if (data.downloadUrl) {
-            const storagePath = getStoragePathFromUrl(data.downloadUrl);
-            if (storagePath) {
-              try {
-                const storageRef = ref(storage, storagePath);
-                validDownloadUrl = await getDownloadURL(storageRef);
-              } catch (err) {
-                console.warn(`Failed to refresh URL for ${storagePath}:`, err);
-                // Fallback to original if refresh fails
-              }
-            }
-          }
-
-          return {
-            id: doc.id,
-            ...data,
-            downloadUrl: validDownloadUrl
-          };
+        const mapped = (records || []).map(r => ({
+          id: r._id,
+          createdAt: r.createdAt,
+          uploadedByEmail: r.studentEmail || r.studentName || 'Unknown',
+          totalStudents: 1,
+          createdCount: r.status === 'verified' ? 1 : 0,
+          failedCount: 0,
+          downloadUrl: r.proofImageUrl,
         }));
 
-        console.log("Uploads data processed");
-        setUploads(uploadsData);
+        mapped.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setUploads(mapped);
         setLoading(false);
-      }, (error) => {
-        console.error("Error fetching bulk uploads:", error);
-        // Fallback: try without ordering to see if it's an index issue
-        if (error.code === 'failed-precondition') {
-          console.log("Index missing, retrying without sort...");
-          const simpleQ = query(
-            collection(db, "bulkUploads"),
-            where("uploadedBy", "==", user.uid)
-          );
-          onSnapshot(simpleQ, async (snap) => {
-            const dataPromises = snap.docs.map(async d => {
-              const data = d.data();
-              let validUrl = data.downloadUrl;
-              if (data.downloadUrl) {
-                const storagePath = getStoragePathFromUrl(data.downloadUrl);
-                if (storagePath) {
-                  try {
-                    const sRef = ref(storage, storagePath);
-                    validUrl = await getDownloadURL(sRef);
-                  } catch (e) { }
-                }
-              }
-              return { id: d.id, ...data, downloadUrl: validUrl };
-            });
-            const data = await Promise.all(dataPromises);
-            data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            setUploads(data);
-            setLoading(false);
-          });
-        } else {
-          setLoading(false);
-        }
-      });
-      return () => unsubscribe();
-    } catch (err) {
-      console.error("Setup error:", err);
-      setLoading(false);
-    }
+      } catch (err) {
+        console.error("Error fetching fee records:", err);
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user?.uid]);
 
   const filteredUploads = uploads.filter(upload => {

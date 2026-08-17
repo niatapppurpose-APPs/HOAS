@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS = {
   activityNotifications: true,
   twoFactorEnabled: false,
   forcePasswordReset: false,
+  autoLogoutMinutes: 0,
 };
 
 export const roleColor = (r) =>

@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../../firebase/firebaseConfig';
 import { useAuth } from '../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import ManagementHeader from '../components/layout/ManagementHeader';
@@ -29,6 +27,22 @@ import { useTheme } from '../../../context/ThemeContext';
 import EmptyState from '../../../components/OwnerServices/EmptyState';
 import NoDataLight from '../../../assets/No-Data.avif';
 import NoDataDark from '../../../assets/NoDataDark.png';
+import * as cloudFunctions from '../../../firebase/cloudFunctions';
+
+const mapComplaint = (c) => {
+  const createdAt = c.createdAt ? new Date(c.createdAt) : null;
+  const now = new Date();
+  const cutoff48h = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+  const isOverdue = (c.status === 'pending' || c.status === 'in-progress') && createdAt && createdAt < cutoff48h;
+  return {
+    id: c._id,
+    ...c,
+    studentName: c.studentId?.name || c.studentName,
+    studentEmail: c.studentId?.email || c.studentEmail,
+    createdAt,
+    isAutoEscalated: isOverdue,
+  };
+};
 
 const ManagementComplaints = () => {
     const { userData, user } = useAuth();
@@ -48,41 +62,34 @@ const ManagementComplaints = () => {
     useEffect(() => {
         if (!managementUid) return;
 
-        // Fetch all complaints for this management/college
-        const q = query(
-            collection(db, 'complaints'),
-            where('managementId', '==', managementUid)
-        );
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const list = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+        const fetchComplaints = async () => {
+            try {
+                const { complaints } = await cloudFunctions.getManagementComplaints();
+                if (cancelled) return;
 
-            // Check for auto-escalations (if expired and still pending or in-progress)
-            const now = new Date();
-            const cutoff48h = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-            const processedList = list
-                .map(c => {
-                    const createdAt = c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt);
-                    const isOverdue = (c.status === 'pending' || c.status === 'in-progress') && createdAt < cutoff48h;
-                    return { ...c, isAutoEscalated: isOverdue };
-                })
-                .sort((a, b) => {
-                    const timeA = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
-                    const timeB = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
-                    return timeB - timeA;
-                });
+                const processedList = (complaints || [])
+                    .map(mapComplaint)
+                    .sort((a, b) => {
+                        const timeA = a.createdAt ? a.createdAt.getTime() : 0;
+                        const timeB = b.createdAt ? b.createdAt.getTime() : 0;
+                        return timeB - timeA;
+                    });
 
-            setComplaints(processedList);
-            setLoading(false);
-        }, (err) => {
-            console.error("Error fetching complaints for management:", err);
-            setLoading(false);
-        });
+                setComplaints(processedList);
+                setLoading(false);
+            } catch (err) {
+                console.error("Error fetching complaints for management:", err);
+                setLoading(false);
+            }
+        };
 
-        return () => unsubscribe();
+        fetchComplaints();
+
+        return () => {
+            cancelled = true;
+        };
     }, [managementUid]);
 
     const filteredComplaints = complaints.filter(c => {

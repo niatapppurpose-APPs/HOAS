@@ -1,10 +1,39 @@
 import { useState, useEffect } from "react";
 import { X, Building2, MapPin, Users, Settings, UserCircle, Trash2, Plus, Mail } from "lucide-react";
-import { db } from "../../../../firebase/firebaseConfig";
-import { collection, doc, onSnapshot, getDoc, updateDoc, arrayRemove } from "firebase/firestore";
+import { listUsers } from "../../../../firebase/cloudFunctions";
+import { getHostels, updateHostel } from "../../../../firebase/hostelApi";
 import { useToast } from "../../../../components/Toast";
 import AssignWardenModal from './AssignWardenModal';
 import AssignStudentModal from './AssignStudentModal';
+
+const toId = (item) => (typeof item === 'string' ? item : item?._id || item?.id);
+
+const resolveMember = (item, users) => {
+    if (item && typeof item === 'object' && item.name) {
+        return {
+            id: item._id || item.id,
+            displayName: item.name,
+            email: item.email,
+            photoURL: item.avatarUrl || item.photoURL,
+            studentId: item.studentId,
+            rollNumber: item.rollNumber,
+            roomNumber: item.roomNumber,
+        };
+    }
+    const id = toId(item);
+    const u = users.find(x => x._id === id || x.id === id);
+    return u
+        ? {
+            id: u._id,
+            displayName: u.name || u.displayName,
+            email: u.email,
+            photoURL: u.avatarUrl || u.photoURL,
+            studentId: u.studentId,
+            rollNumber: u.rollNumber,
+            roomNumber: u.roomNumber,
+        }
+        : { id };
+};
 
 const HostelDetailsModal = ({ isOpen, onClose, hostelId }) => {
     const toast = useToast();
@@ -19,71 +48,62 @@ const HostelDetailsModal = ({ isOpen, onClose, hostelId }) => {
     useEffect(() => {
         if (!isOpen || !hostelId) return;
 
-        setLoading(true);
-        const hostelRef = doc(db, "hostels", hostelId);
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(hostelRef, async (hostelSnap) => {
-            if (hostelSnap.exists()) {
-                const data = { id: hostelSnap.id, ...hostelSnap.data() };
-                setHostel(data);
+        const fetchDetails = async () => {
+            setLoading(true);
+            try {
+                const hostels = await getHostels();
+                if (cancelled) return;
 
-                // Fetch warden details
-                if (data.wardens && data.wardens.length > 0) {
-                    try {
-                        const wardenPromises = data.wardens.map(id => getDoc(doc(db, "users", id)));
-                        const wardenDocs = await Promise.all(wardenPromises);
-                        setWardens(wardenDocs.filter(d => d.exists()).map(d => ({ id: d.id, ...d.data() })));
-                    } catch (error) {
-                        console.error("Error fetching wardens", error);
-                    }
-                } else {
-                    setWardens([]);
+                const data = hostels.find(h => h._id === hostelId || h.id === hostelId);
+                if (!data) {
+                    toast.error("Hostel not found");
+                    onClose();
+                    return;
                 }
 
-                // Fetch student details
-                if (data.students && data.students.length > 0) {
-                    try {
-                        const studentPromises = data.students.map(id => getDoc(doc(db, "users", id)));
-                        const studentDocs = await Promise.all(studentPromises);
-                        setStudents(studentDocs.filter(d => d.exists()).map(d => ({ id: d.id, ...d.data() })));
-                    } catch (error) {
-                        console.error("Error fetching students", error);
-                    }
-                } else {
-                    setStudents([]);
-                }
-            } else {
-                toast.error("Hostel not found");
-                onClose();
+                setHostel({ ...data, id: data._id });
+
+                const wardenIds = Array.isArray(data.wardens) ? data.wardens : [];
+                const studentIds = Array.isArray(data.students) ? data.students : [];
+
+                const [{ users: wardenUsers }, { users: studentUsers }] = await Promise.all([
+                    listUsers({ role: 'warden' }),
+                    listUsers({ role: 'student' }),
+                ]);
+                if (cancelled) return;
+
+                setWardens(wardenIds.map(id => resolveMember(id, wardenUsers || [])));
+                setStudents(studentIds.map(id => resolveMember(id, studentUsers || [])));
+            } catch (err) {
+                console.error("Error fetching hostel details:", err);
+                toast.error("Failed to load hostel details");
+            } finally {
+                if (!cancelled) setLoading(false);
             }
-            setLoading(false);
-        }, (err) => {
-            console.error("Error fetching hostel details:", err);
-            toast.error("Failed to load hostel details");
-            setLoading(false);
-        });
+        };
 
-        return () => unsubscribe();
+        fetchDetails();
+
+        return () => {
+            cancelled = true;
+        };
     }, [isOpen, hostelId]);
 
     const removeWarden = async (wardenId) => {
         if (!window.confirm("Are you sure you want to remove this warden from the hostel?")) return;
 
         try {
-            // 1. Remove from hostel document
-            const hostelRef = doc(db, "hostels", hostelId);
-            await updateDoc(hostelRef, {
-                wardens: arrayRemove(wardenId)
-            });
+            const currentWardens = (hostel?.wardens || []).map(toId).filter(Boolean);
+            const next = currentWardens.filter(id => id !== wardenId);
 
-            // 2. Remove hostel reference from user document
-            const wardenRef = doc(db, "users", wardenId);
-            await updateDoc(wardenRef, {
-                hostelId: null,
-                hostelBlock: null,
-                hostelName: null
-            });
+            await updateHostel(hostelId, { wardens: next });
 
+            console.warn('Removing hostel reference from user document not available in this build');
+
+            setHostel(prev => prev ? { ...prev, wardens: next } : prev);
+            setWardens(prev => prev.filter(w => w.id !== wardenId));
             toast.success("Warden removed successfully");
         } catch (error) {
             console.error("Error removing warden", error);
@@ -95,20 +115,15 @@ const HostelDetailsModal = ({ isOpen, onClose, hostelId }) => {
         if (!window.confirm("Are you sure you want to remove this student from the hostel?")) return;
 
         try {
-            // 1. Remove from hostel document
-            const hostelRef = doc(db, "hostels", hostelId);
-            await updateDoc(hostelRef, {
-                students: arrayRemove(studentId)
-            });
+            const currentStudents = (hostel?.students || []).map(toId).filter(Boolean);
+            const next = currentStudents.filter(id => id !== studentId);
 
-            // 2. Remove hostel reference from user document
-            const studentRef = doc(db, "users", studentId);
-            await updateDoc(studentRef, {
-                hostelId: null,
-                hostelBlock: null,
-                assignedWarden: null
-            });
+            await updateHostel(hostelId, { students: next });
 
+            console.warn('Removing hostel reference from user document not available in this build');
+
+            setHostel(prev => prev ? { ...prev, students: next } : prev);
+            setStudents(prev => prev.filter(s => s.id !== studentId));
             toast.success("Student removed successfully");
         } catch (error) {
             console.error("Error removing student", error);

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
 export const useServerStatus = (checkInterval = 5000) => {
   const [isServerOnline, setIsServerOnline] = useState(true);
   const [lastChecked, setLastChecked] = useState(new Date());
@@ -7,18 +9,21 @@ export const useServerStatus = (checkInterval = 5000) => {
   useEffect(() => {
     const checkServer = async () => {
       try {
-        // Try to fetch a resource from the dev server
-        const response = await fetch(window.location.origin, {
-          method: 'HEAD',
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000);
+        const response = await fetch(`${API_BASE}/health`, {
+          method: 'GET',
           cache: 'no-cache',
+          signal: controller.signal,
         });
-        
-        if (response.ok || response.status === 304) {
+        clearTimeout(timeout);
+
+        if (response.ok) {
           setIsServerOnline(true);
         } else {
           setIsServerOnline(false);
         }
-        setLastChecked(new Date()); 
+        setLastChecked(new Date());
       } catch (error) {
         // Network error means server is down
         setIsServerOnline(false);

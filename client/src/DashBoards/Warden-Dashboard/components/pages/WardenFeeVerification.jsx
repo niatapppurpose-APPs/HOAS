@@ -3,8 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import WardenHeader from '../layout/WardenHeader';
 import { useAuth } from '../../../../context/AuthContext';
-import { db } from '../../../../firebase/firebaseConfig';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { getWardenFeeRecords } from '../../../../firebase/cloudFunctions';
 import { Search, CheckCircle2, Clock, FileText, Image as ImageIcon, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
 import Avatar from '../../../../components/OwnerServices/Avatar';
 
@@ -27,34 +26,27 @@ const WardenFeeVerification = () => {
   const [hoveredDoc, setHoveredDoc] = useState(null);
 
   const fetchRecords = async () => {
-    if (!userData?.managementId) return;
+    if (!userData?.collegeId) return;
     setLoading(true);
     try {
-      const q = query(
-        collection(db, 'users'), 
-        where('role', '==', 'student'), 
-        where('managementId', '==', userData.managementId)
-      );
-      const snapshot = await getDocs(q);
-      const list = snapshot.docs.map(docSnap => {
-         const data = docSnap.data();
-         let paymentStatus = 'unpaid';
-         if (data.feeDetails?.totalFee > 0 && data.feeDetails?.pendingFee === 0) paymentStatus = 'fully_paid';
-         else if (data.feeDetails?.paidFee > 0) paymentStatus = 'partially_paid';
-         return {
-            id: docSnap.id,
-            studentName: data.fullName || 'Unnamed',
-            studentId: data.studentId || 'N/A',
-            photoURL: data.photoURL || '',
-            totalAmount: data.feeDetails?.totalFee || 0,
-            paidAmount: data.feeDetails?.paidFee || 0,
-            remainingAmount: data.feeDetails?.pendingFee || 0,
-            paymentStatus,
-            proofImage: data.feeProofImage || null,
-            proofType: data.feeProofType || 'image',
-            proofName: data.feeProofName || 'Document',
-            isVerifiedByWarden: data.wardenVerification === 'Verify',
-         };
+      const { records } = await getWardenFeeRecords();
+      const list = (records || []).map(fee => {
+        const isVerified = fee.status === 'verified' || fee.status === 'paid';
+        const proof = fee.proofImageUrl || null;
+        return {
+          id: fee._id,
+          studentName: fee.studentName || 'Unnamed',
+          studentId: fee.studentId || 'N/A',
+          photoURL: fee.studentPhoto || '',
+          totalAmount: fee.amount || 0,
+          paidAmount: isVerified ? (fee.amount || 0) : 0,
+          remainingAmount: isVerified ? 0 : (fee.amount || 0),
+          paymentStatus: isVerified ? 'fully_paid' : 'unpaid',
+          proofImage: proof,
+          proofType: proof && /\.pdf($|\?)/i.test(proof) ? 'pdf' : 'image',
+          proofName: fee.month ? `${fee.month} ${fee.year} receipt` : 'Document',
+          isVerifiedByWarden: fee.status === 'verified',
+        };
       });
       setRecords(list);
     } catch (error) {
@@ -67,7 +59,7 @@ const WardenFeeVerification = () => {
   useEffect(() => {
     fetchRecords();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userData?.managementId]);
+  }, [userData?.collegeId]);
 
   const filtered = useMemo(() => {
     return records.filter((r) => {

@@ -22,6 +22,7 @@ import Avatar from '../../../../components/OwnerServices/Avatar';
 import AppLogo4k from '../../../../assets/AppLogo4k.png';
 import NewBadge from "../../../../components/NewBadge";
 import { isNavItemNew, dismissNavItemFeatures } from "../../../../data/newFeatures";
+import MobileBottomNav from "../../../../components/MobileBottomNav";
 const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementData }) => {
   const { user, userData } = useAuth();
   const { isDark } = useTheme();
@@ -120,8 +121,15 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
 
   const handleDateYear = () => new Date().getFullYear();
 
+  const bottomNavItems = [
+    ...menuItems,
+    ...bottomMenuItems,
+    { id: "profile", label: "Profile", path: "/dashboard/warden/profile", isProfile: true },
+  ];
+
   return (
     <>
+      <div className="hidden lg:block">
       {/* Mobile Overlay */}
       <div
         className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300 ${!isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"}`}
@@ -391,6 +399,16 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
           </div>
         </div>
       )}
+      </div>
+
+      <MobileBottomNav
+        items={bottomNavItems}
+        activeId={activeItem}
+        accentVar="var(--warden-accent)"
+        accentVar2="var(--warden-accent-2)"
+        avatar={userData?.photoURL || user?.photoURL}
+        user={user}
+      />
     </>
   );
 };

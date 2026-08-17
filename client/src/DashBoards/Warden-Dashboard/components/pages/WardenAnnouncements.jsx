@@ -3,11 +3,9 @@ import { useAuth } from '../../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import WardenHeader from '../layout/WardenHeader';
-import { db } from '../../../../firebase/firebaseConfig';
 import {
-    collection, addDoc, query, where, onSnapshot,
-    serverTimestamp, doc, updateDoc, deleteDoc
-} from 'firebase/firestore';
+    getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement,
+} from '../../../../firebase/cloudFunctions';
 import {
     Bell, Megaphone, Plus, X, Pin, Edit2, Trash2,
     Loader2, Search, ChevronDown, ChevronUp,
@@ -62,38 +60,48 @@ const WardenAnnouncements = () => {
 
     // Fetch announcements
     useEffect(() => {
-        if (!userData?.managementId) {
+        if (!userData?.collegeId) {
             setLoading(false);
             return;
         }
 
-        const q = query(
-            collection(db, 'announcements'),
-            where('managementId', '==', userData.managementId)
-        );
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
-            if (snapshot.metadata.fromCache && snapshot.empty) return;
+        const load = async () => {
+            try {
+                const { announcements } = await getAnnouncements();
+                if (cancelled) return;
 
-            const list = snapshot.docs.map(d => ({
-                id: d.id,
-                ...d.data()
-            })).sort((a, b) => {
-                if (a.pinned && !b.pinned) return -1;
-                if (!a.pinned && b.pinned) return 1;
-                const tA = a.createdAt?.toMillis?.() ?? 0;
-                const tB = b.createdAt?.toMillis?.() ?? 0;
-                return tB - tA;
-            });
-            setAnnouncements(list);
-            setLoading(false);
-        }, (error) => {
-            console.error('Announcements fetch error:', error);
-            setLoading(false);
-        });
+                const list = (announcements || []).map(a => ({
+                    id: a._id,
+                    ...a,
+                    pinned: a.isPinned,
+                    content: a.body,
+                    createdAt: a.createdAt,
+                })).sort((a, b) => {
+                    if (a.pinned && !b.pinned) return -1;
+                    if (!a.pinned && b.pinned) return 1;
+                    const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    return tB - tA;
+                });
+                setAnnouncements(list);
+                setLoading(false);
+            } catch (error) {
+                console.error('Announcements fetch error:', error);
+                setLoading(false);
+            }
+        };
 
-        return () => unsubscribe();
-    }, [userData?.managementId]);
+        load();
+
+        const interval = setInterval(load, 30000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
+    }, [userData?.collegeId]);
 
     const resetForm = () => {
         setFormData({
@@ -172,36 +180,20 @@ const WardenAnnouncements = () => {
 
             const dataToSave = {
                 title: formData.title,
-                content: formData.content,
+                body: formData.content,
                 priority: formData.priority,
-                pinned: formData.pinned,
+                isPinned: formData.pinned,
                 status,
-                isImmediate: formData.isImmediate,
-                scheduledTime: formData.isImmediate ? null : new Date(formData.scheduledTime),
-                isSent: formData.isImmediate,
-                sentAt: formData.isImmediate ? serverTimestamp() : null,
-                isRecurring: formData.isRecurring,
-                recurrencePattern: formData.isRecurring ? formData.recurrencePattern : null,
-                recurrenceEndDate: formData.isRecurring && formData.recurrenceEndDate ? new Date(formData.recurrenceEndDate) : null,
-                lastPublishedAt: null,
+                hostelBlock: userData?.hostelBlock || '',
             };
 
             if (editingId) {
-                await updateDoc(doc(db, 'announcements', editingId), {
-                    ...dataToSave,
-                    updatedAt: serverTimestamp(),
-                });
+                await updateAnnouncement(editingId, dataToSave);
                 toast.success('Announcement updated!');
             } else {
-                await addDoc(collection(db, 'announcements'), {
+                await createAnnouncement({
                     ...dataToSave,
-                    managementId: userData?.managementId || '',
-                    collegeName: userData?.collegeName || '',
-                    hostelBlock: userData?.hostelBlock || '',
-                    postedBy: userData?.fullName || user?.displayName || 'Warden',
-                    postedById: user.uid,
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp(),
+                    collegeId: userData?.collegeId?._id,
                 });
 
                 // Show appropriate success message
@@ -253,7 +245,7 @@ const WardenAnnouncements = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Delete this announcement permanently?')) return;
         try {
-            await deleteDoc(doc(db, 'announcements', id));
+            await deleteAnnouncement(id);
             toast.success('Announcement deleted');
         } catch (err) {
             console.error('Delete error:', err);
@@ -263,10 +255,7 @@ const WardenAnnouncements = () => {
 
     const handleTogglePin = async (announcement) => {
         try {
-            await updateDoc(doc(db, 'announcements', announcement.id), {
-                pinned: !announcement.pinned,
-                updatedAt: serverTimestamp(),
-            });
+            await updateAnnouncement(announcement.id, { isPinned: !announcement.pinned });
             toast.success(announcement.pinned ? 'Unpinned' : 'Pinned to top');
         } catch (err) {
             console.error('Pin error:', err);

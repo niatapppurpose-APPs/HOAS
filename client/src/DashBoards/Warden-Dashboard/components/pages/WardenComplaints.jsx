@@ -3,18 +3,9 @@ import { useAuth } from '../../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import WardenHeader from '../layout/WardenHeader';
-import { db } from '../../../../firebase/firebaseConfig';
 import { STATUS_CONFIG, FILTER_OPTIONS, formatDate, getCategoryLabel } from './wardenComplaintConstants';
 import WardenComplaintDetailModal from './WardenComplaintDetailModal';
-import {
-    collection,
-    query,
-    where,
-    onSnapshot,
-    doc,
-    updateDoc,
-    serverTimestamp,
-} from 'firebase/firestore';
+import { getWardenComplaints, updateComplaintStatus } from '../../../../firebase/cloudFunctions';
 import {
     FileText,
     Clock,
@@ -52,37 +43,38 @@ const WardenComplaints = () => {
 
     // ── Fetch complaints for this warden's college ───────────
     useEffect(() => {
-        // The warden and students share the same managementId
-        const mId = userData?.managementId;
-        if (!mId) return;
+        if (!userData?.collegeId) return;
 
-        const q = query(
-            collection(db, 'complaints'),
-            where('managementId', '==', mId)
-        );
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(
-            q,
-            (snapshot) => {
-                const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-                // Sort newest first client-side
+        const load = async () => {
+            try {
+                const { complaints } = await getWardenComplaints();
+                if (cancelled) return;
+                const data = (complaints || []).map((c) => ({ id: c._id, ...c }));
                 data.sort((a, b) => {
-                    const timeA = a.createdAt?.toMillis?.() || 0;
-                    const timeB = b.createdAt?.toMillis?.() || 0;
+                    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
                     return timeB - timeA;
                 });
                 setComplaints(data);
                 setLoading(false);
-            },
-            (err) => {
+            } catch (err) {
                 console.error('Error fetching complaints:', err);
                 toast.error('Failed to load complaints');
                 setLoading(false);
             }
-        );
+        };
 
-        return () => unsubscribe();
-    }, [userData?.managementId]);
+        load();
+
+        const interval = setInterval(load, 30000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
+    }, [userData?.collegeId]);
 
     // ── Filtered (memoized) ─────────────────────────────────────────
     const filteredComplaints = useMemo(() =>
@@ -106,37 +98,7 @@ const WardenComplaints = () => {
     const updateStatus = async (complaintId, newStatus, response = null, complaint = null) => {
         setIsUpdating(true);
         try {
-            const updateData = {
-                status: newStatus,
-                updatedAt: serverTimestamp(),
-                respondedBy: userData?.fullName || 'Warden',
-                respondedAt: serverTimestamp(),
-            };
-            if (response) {
-                updateData.response = response;
-            }
-
-            // Build history entry
-            const existingComplaint = complaint || complaints.find(c => c.id === complaintId);
-            const history = existingComplaint?.complaintHistory || [];
-            const historyEntry = {
-                action: newStatus === 'warden-resolved' ? 'warden_resolved' : `status_${newStatus}`,
-                timestamp: new Date().toISOString(),
-                by: 'warden',
-                wardenName: userData?.fullName || 'Warden',
-            };
-            if (response) {
-                historyEntry.response = response;
-            }
-            history.push(historyEntry);
-            updateData.complaintHistory = history;
-
-            // If warden is re-resolving a disputed complaint
-            if (newStatus === 'warden-resolved') {
-                updateData.wardenResolvedAt = serverTimestamp();
-            }
-
-            await updateDoc(doc(db, 'complaints', complaintId), updateData);
+            await updateComplaintStatus(complaintId, newStatus, response || '');
             toast.success(
                 newStatus === 'warden-resolved'
                     ? 'Marked as resolved — waiting for student confirmation'

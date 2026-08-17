@@ -17,7 +17,7 @@ export const approveUser = onCall(corsOptions, async (request) => {
       throw new HttpsError('unauthenticated', 'User must be authenticated');
     }
 
-    const { userId } = request.data;
+    const { userId, approverRole } = request.data;
     if (!userId) {
       throw new HttpsError('invalid-argument', 'userId is required');
     }
@@ -48,15 +48,12 @@ export const approveUser = onCall(corsOptions, async (request) => {
       throw permError;
     }
 
-    // Determine actual role from token
-    const actualRole = request.auth.token.role || (request.auth.token.admin ? 'admin' : 'management');
-
     // Update user status
     await db.collection('users').doc(userId).update({
       status: 'approved',
       approvedAt: new Date().toISOString(),
       approvedBy: request.auth.uid,
-      approverRole: actualRole,
+      approverRole: approverRole || 'admin',
       updatedAt: new Date().toISOString()
     });
 
@@ -253,7 +250,7 @@ export const createManagement = onCall(corsOptions, async (request) => {
       phone: phone || '',
       collegeLogo: collegeLogo || null,
       role: 'management',
-      status: 'approved',
+      status: 'pending',
       createdBy: request.auth.uid,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -261,22 +258,13 @@ export const createManagement = onCall(corsOptions, async (request) => {
 
     logger.info('✅ Firestore document created for:', userRecord.uid);
 
-    // Generate a secure password reset link — never send the throwaway password
-    let resetLink = null;
-    try {
-      resetLink = await auth.generatePasswordResetLink(email);
-      logger.info('✅ Password reset link generated for management:', email);
-    } catch (linkError) {
-      logger.error('❌ Failed to generate reset link for management:', linkError.message);
-    }
-
-    // Send welcome email with reset link (NO password)
+    // Send welcome email with account credentials
     let emailSent = false;
     emailSent = await sendManagementWelcomeEmail({
       name: principalName,
       email,
       collegeName,
-      resetLink,
+      password: accountPassword,
     });
 
     return {
@@ -411,23 +399,14 @@ export const createWarden = onCall(corsOptions, async (request) => {
 
     logger.info('✅ Warden Firestore document created:', userRecord.uid);
 
-    // Generate a secure password reset link — never send the throwaway password
-    let resetLink = null;
-    try {
-      resetLink = await auth.generatePasswordResetLink(email);
-      logger.info('✅ Password reset link generated for warden:', email);
-    } catch (linkError) {
-      logger.error('❌ Failed to generate reset link for warden:', linkError.message);
-    }
-
-    // Send welcome email with reset link (NO password)
+    // Send welcome email
     let emailSent = false;
     emailSent = await sendWardenWelcomeEmail({
       name: fullName,
       email,
       institution: collegeName || '',
       hostelBlock: hostelBlock || '',
-      resetLink,
+      password: accountPassword,
     });
 
     return {

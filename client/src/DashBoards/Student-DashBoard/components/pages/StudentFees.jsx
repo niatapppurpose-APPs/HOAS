@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../../../context/AuthContext';
-import { db, storage } from '../../../../firebase/firebaseConfig';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { storage } from '../../../../firebase/firebaseConfig';
+import { getStudentFee, uploadStudentFeeProof } from '../../../../firebase/cloudFunctions';
 import StudentHeader from '../layout/StudentHeader';
 import { useToast } from '../../../../components/Toast';
 import { Wallet, IndianRupee, Clock, AlertCircle, UploadCloud, FileText, CheckCircle2, ShieldCheck, UserCheck, Loader2, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
@@ -31,37 +31,32 @@ const StudentFees = () => {
     if (!user?.uid) return;
     setLoading(true);
     try {
-      const userRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userRef);
-      if (userDoc.exists()) {
-        const udata = userDoc.data();
-        let paymentStatus = 'unpaid';
-        if (udata.feeDetails?.totalFee > 0 && udata.feeDetails?.pendingFee === 0) paymentStatus = 'fully_paid';
-        else if (udata.feeDetails?.paidFee > 0) paymentStatus = 'partially_paid';
+      const { fee } = await getStudentFee();
+      let paymentStatus = 'unpaid';
+      if (fee?.amount > 0 && (fee?.status === 'verified' || fee?.status === 'paid')) paymentStatus = 'fully_paid';
+      else if (fee?.amount > 0) paymentStatus = 'partially_paid';
 
-        let reports = udata.feeReports || [];
-        if (udata.feeProofImage && reports.length === 0) {
-          // Backward compatibility for single proof
-          reports = [{
-            url: udata.feeProofImage,
-            type: udata.feeProofType || 'image',
-            name: udata.feeProofName || 'Payment_Proof',
-            uploadedAt: new Date().toISOString()
-          }];
-        }
-
-        setRecord({
-          studentName: udata.fullName,
-          studentId: udata.studentId,
-          totalAmount: udata.feeDetails?.totalFee || 0,
-          paidAmount: udata.feeDetails?.paidFee || 0,
-          remainingAmount: udata.feeDetails?.pendingFee || 0,
-          paymentStatus,
-          isVerifiedByManagement: udata.managementVerification === 'Verify',
-          isVerifiedByWarden: udata.wardenVerification === 'Verify',
-        });
-        setFeeReports(reports);
+      let reports = [];
+      if (fee?.proofImageUrl) {
+        reports = [{
+          url: fee.proofImageUrl,
+          type: /\.pdf($|\?)/i.test(fee.proofImageUrl) ? 'pdf' : 'image',
+          name: fee.month ? `${fee.month} ${fee.year} receipt` : 'Payment_Proof',
+          uploadedAt: fee.updatedAt || new Date().toISOString()
+        }];
       }
+
+      setRecord({
+        studentName: fee?.studentName || user?.displayName,
+        studentId: fee?.studentId || 'N/A',
+        totalAmount: fee?.amount || 0,
+        paidAmount: (fee?.status === 'verified' || fee?.status === 'paid') ? (fee?.amount || 0) : 0,
+        remainingAmount: (fee?.status === 'verified' || fee?.status === 'paid') ? 0 : (fee?.amount || 0),
+        paymentStatus,
+        isVerifiedByManagement: fee?.status === 'verified',
+        isVerifiedByWarden: fee?.wardenVerified === true,
+      });
+      setFeeReports(reports);
     } catch (error) {
       toast.error(error.message || 'Unable to load fee details');
     } finally {
@@ -103,24 +98,7 @@ const StudentFees = () => {
       const snap = await uploadBytes(storageRef, file, { contentType: file.type });
       const downloadUrl = await getDownloadURL(snap.ref);
 
-      const fileTypeLabel = isPDF ? 'pdf' : 'image';
-
-      const newReport = {
-        url: downloadUrl,
-        type: fileTypeLabel,
-        name: file.name,
-        uploadedAt: new Date().toISOString()
-      };
-
-      const updatedReports = [...feeReports, newReport];
-
-      await updateDoc(doc(db, 'users', user.uid), {
-        feeReports: updatedReports,
-        // Keep the latest proof updated for backward compatibility with management dashboards
-        feeProofImage: downloadUrl,
-        feeProofType: fileTypeLabel,
-        feeProofName: file.name
-      });
+      await uploadStudentFeeProof(downloadUrl);
       toast.success('Proof uploaded successfully');
       await loadRecord();
     } catch (error) {
@@ -132,46 +110,7 @@ const StudentFees = () => {
   };
 
   const handleDeleteReport = async (indexToDelete) => {
-    const isConfirmed = await toast.confirm('Move this document to the Trash? It will be permanently deleted after 15 days.');
-    if (!isConfirmed) return;
-
-    try {
-      const reportToTrash = feeReports[indexToDelete];
-      const updatedReports = feeReports.filter((_, index) => index !== indexToDelete);
-      
-      const updateData = { feeReports: updatedReports };
-      
-      // If we deleted the last uploaded report that was synced for backward compatibility
-      if (updatedReports.length > 0) {
-        const lastReport = updatedReports[updatedReports.length - 1];
-        updateData.feeProofImage = lastReport.url;
-        updateData.feeProofType = lastReport.type;
-        updateData.feeProofName = lastReport.name;
-      } else {
-        updateData.feeProofImage = null;
-        updateData.feeProofType = null;
-        updateData.feeProofName = null;
-      }
-
-      // Add to trashed array
-      const userRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userRef);
-      if (userDoc.exists()) {
-        const currentData = userDoc.data();
-        let trashedReports = currentData.trashedFeeReports || [];
-        trashedReports.push({
-          ...reportToTrash,
-          trashedAt: new Date().toISOString()
-        });
-        updateData.trashedFeeReports = trashedReports;
-      }
-
-      await updateDoc(userRef, updateData);
-      setFeeReports(updatedReports);
-      toast.success('Moved to Trash');
-    } catch (error) {
-      toast.error(error.message || 'Failed to move document to trash');
-    }
+    toast.info('Fee report deletion is not available in this build');
   };
 
   const statusMap = {

@@ -8,12 +8,24 @@ function sanitize(str) {
     .replace(/javascript:/gi, '') // Remove javascript: URIs
     .replace(/expression\(/gi, ''); // Remove CSS expressions
 }
-import { createContext, useContext, useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, orderBy, limit, updateDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import * as notificationService from '../firebase/notificationService';
 import { initializeNotificationPrefs } from '../utils/notificationPrefsManager';
+import {
+  getMyNotifications,
+  getMyComplaints,
+  getWardenComplaints,
+  getManagementComplaints,
+  getAnnouncements,
+  getMyLeaves,
+  getWardenLeaves,
+  getManagementLeaves,
+  listUsers,
+  listSupportTickets,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from '../firebase/cloudFunctions';
 
 const NotificationContext = createContext();
 let notificationAudio = null;
@@ -36,6 +48,66 @@ export const NotificationProvider = ({ children }) => {
       : false
   );
   const role = userData?.role || null;
+
+  const seenRef = useRef({});
+
+  const runPoll = async (feedKey, fetchItems, onNew, onChanged, sigOf) => {
+    const feed = seenRef.current[feedKey] || { seen: new Map(), seeded: false };
+    let items = [];
+    try {
+      items = await fetchItems();
+    } catch (err) {
+      console.debug('poll error:', err);
+      return;
+    }
+    const nextSeen = new Map();
+    for (const item of items) {
+      const sig = sigOf ? sigOf(item) : item.id;
+      nextSeen.set(item.id, sig);
+      if (!feed.seen.has(item.id)) {
+        if (feed.seeded && onNew) onNew(item);
+        continue;
+      }
+      if (onChanged && sig !== feed.seen.get(item.id)) onChanged(item);
+    }
+    seenRef.current[feedKey] = { seen: nextSeen, seeded: true };
+  };
+
+  const useFeedPoll = (feedKey, enabled, fetchItems, onNew, onChanged, sigOf, deps) => {
+    useEffect(() => {
+      if (!enabled) return;
+      let cancelled = false;
+      const tick = async () => {
+        const feed = seenRef.current[feedKey] || { seen: new Map(), seeded: false };
+        let items = [];
+        try {
+          items = await fetchItems();
+        } catch (err) {
+          console.debug('poll error:', err);
+          return;
+        }
+        if (cancelled) return;
+        const nextSeen = new Map();
+        for (const item of items) {
+          const sig = sigOf ? sigOf(item) : item.id;
+          nextSeen.set(item.id, sig);
+          if (!feed.seen.has(item.id)) {
+            if (feed.seeded && onNew) onNew(item);
+            continue;
+          }
+          if (onChanged && sig !== feed.seen.get(item.id)) onChanged(item);
+        }
+        seenRef.current[feedKey] = { seen: nextSeen, seeded: true };
+      };
+      tick();
+      const interval = setInterval(tick, 30000);
+      return () => {
+        cancelled = true;
+        clearInterval(interval);
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, deps);
+  };
 
   // Play custom WAV sound only for browser notifications.
   const playSound = () => {
@@ -129,7 +201,7 @@ export const NotificationProvider = ({ children }) => {
       // Always try to get FCM token - this will request permission if needed
       const token = await notificationService.getFCMToken();
       if (token) {
-        await notificationService.saveFCMToken(db, user.uid, token);
+        await notificationService.saveFCMToken(undefined, user.uid, token);
         setPermissionGranted(true);
       } else {
         // Permission may have been denied, but we'll still work with Firestore notifications
@@ -167,581 +239,486 @@ export const NotificationProvider = ({ children }) => {
     });
     return unsubscribe;
   }, [user, userData?.notifPrefs]);
- useEffect(() => {
-    if (!user) return;
-    const prefs = userData?.notifPrefs || {};
-    // Default to TRUE if system alerts preference is not set (opt-out model)
-    const systemAlertsEnabled = prefs.systemAlerts !== false;
-    const q = query(
-      collection(db, 'notifications'),
-      where('userId', '==', user.uid),
-      orderBy('timestamp', 'desc'),
-      limit(50)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          if (!systemAlertsEnabled) return; // ignore only if explicitly disabled
-          const d = change.doc.data();
-          triggerNotification(d.title, { body: d.body, tag: change.doc.id, data: d });
-          setNotifications(prev => [{
-            id: change.doc.id,
-            title: sanitize(d.title),
-            body: sanitize(d.body),
-            type: sanitize(d.type || 'general'),
-            createdAt: d.timestamp?.toDate?.() || new Date(),
-            read: d.read || false,
-            data: d.data || {},
-          }, ...prev]);
-          if (!d.read) setUnreadCount(prev => prev + 1);
-        }
-      });
-    }, (err) => console.debug('notifications listener error:', err));
-    return unsub;
-  }, [user, userData?.notifPrefs]);
-
-  useEffect(() => {
-    if (!user || role !== 'student') return;
-    const isInitial = { v: true };
-    const q = query(
-      collection(db, 'complaints'),
-      where('studentId', '==', user.uid),
-      orderBy('updatedAt', 'desc'),
-      limit(20)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) { isInitial.v = false; return; }
+ useFeedPoll(
+    'notifications',
+    !!user,
+    async () => {
+      const { notifications } = await getMyNotifications();
+      return (notifications || []).map(n => ({
+        id: n._id,
+        title: n.title,
+        body: n.body,
+        type: n.type || 'general',
+        createdAt: n.createdAt ? new Date(n.createdAt) : new Date(),
+        read: n.read || false,
+        data: n.data || {},
+      }));
+    },
+    (n) => {
       const prefs = userData?.notifPrefs || {};
-      if (!prefs.complaints) return; // student opted out of complaint updates
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'modified') {
-          const d = change.doc.data();
-          const statusLabel = d.status === 'in-progress' ? 'In Progress' : d.status === 'resolved' ? 'Resolved' : d.status;
-          const title = `Complaint Updated`;
-          const body = `"${d.title}" is now ${statusLabel}`;
-          triggerNotification(title, { body, tag: `complaint-${change.doc.id}` });
-          setNotifications(prev => [{
-            id: `complaint-${change.doc.id}-${Date.now()}`,
-            title: sanitize(title),
-            body: sanitize(body),
-            type: 'complaint',
-            createdAt: new Date(),
-            read: false,
-            data: { complaintId: change.doc.id },
-          }, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
+      if (prefs.systemAlerts === false) return;
+      triggerNotification(n.title, { body: n.body, tag: n.id, data: n.data });
+      setNotifications(prev => {
+        if (prev.some(existing => existing.id === n.id)) return prev;
+        return [n, ...prev];
       });
-    }, (err) => console.debug('student complaint listener error:', err));
-    return unsub;
-  }, [user, role, userData?.notifPrefs]);
+      if (!n.read) setUnreadCount(prev => prev + 1);
+    },
+    null,
+    (n) => `${n.title}|${n.body}`,
+    [user, userData?.notifPrefs],
+  );
 
-   useEffect(() => {
-    if (!user || role !== 'warden' || !userData?.managementId) return;
-    const isInitial = { v: true };
-    const prefs = userData?.notifPrefs || {};
-    const q = query(
-      collection(db, 'complaints'),
-      where('managementId', '==', userData.managementId),
-      where('status', '==', 'pending'),
-      limit(50)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) { isInitial.v = false; return; }
-      if (!prefs.newComplaints) return; // warden opted out of new complaint alerts
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          const d = change.doc.data();
-          const title = `New Complaint`;
-          const body = `${d.title} â€” Room ${d.roomNumber || 'N/A'}`;
-          triggerNotification(title, { body, tag: `warden-complaint-${change.doc.id}` });
-          setNotifications(prev => [{
-            id: `warden-complaint-${change.doc.id}`,
-            title,
-            body,
-            type: 'new-complaint',
-            createdAt: new Date(),
-            read: false,
-            data: { complaintId: change.doc.id },
-          }, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
-      });
-    }, (err) => console.debug('warden complaint listener error:', err));
-    return unsub;
-  }, [user, role, userData?.managementId, userData?.notifPrefs]);
+  useFeedPoll(
+    'student-complaints',
+    !!user && role === 'student',
+    async () => {
+      const { complaints } = await getMyComplaints();
+      return (complaints || []).map(c => ({ id: c._id, ...c }));
+    },
+    null,
+    (c) => {
+      const prefs = userData?.notifPrefs || {};
+      if (!prefs.complaints) return;
+      const statusLabel = c.status === 'in-progress' ? 'In Progress' : c.status === 'resolved' ? 'Resolved' : c.status;
+      const title = `Complaint Updated`;
+      const body = `"${c.title}" is now ${statusLabel}`;
+      triggerNotification(title, { body, tag: `complaint-${c.id}` });
+      setNotifications(prev => [{
+        id: `complaint-${c.id}-${Date.now()}`,
+        title: sanitize(title),
+        body: sanitize(body),
+        type: 'complaint',
+        createdAt: new Date(),
+        read: false,
+        data: { complaintId: c.id },
+      }, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    },
+    (c) => c.status,
+    [user, role, userData?.notifPrefs],
+  );
 
-  // ——— Student & Warden: new announcements browser notifications ————————————
-  useEffect(() => {
-    if (!user || !userData?.managementId) return;
-    if (role !== 'student' && role !== 'warden') return;
-    const isInitial = { v: true };
-    const prefs = userData?.notifPrefs || {};
-    // Default to TRUE if announcements preference is not set (opt-out model)
-    const announcementsEnabled = prefs.announcements !== false;
-    const q = query(
-      collection(db, 'announcements'),
-      where('managementId', '==', userData.managementId),
-      orderBy('createdAt', 'desc'),
-      limit(20)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) { isInitial.v = false; return; }
-      if (!announcementsEnabled) return; // skip announcements only if explicitly disabled
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          const d = change.doc.data();
-          const priorityEmoji = d.priority === 'urgent' ? '🔴' : d.priority === 'important' ? '🟡' : '📢';
-          const title = `${priorityEmoji} New Announcement`;
-          const body = d.title || 'A new notice has been posted';
-          triggerNotification(title, {
-            body,
-            tag: `announcement-${change.doc.id}`,
-          });
-          setNotifications(prev => [{
-            id: `announcement-${change.doc.id}`,
-            title,
-            body,
-            type: 'announcement',
-            createdAt: new Date(),
-            read: false,
-            data: { announcementId: change.doc.id, priority: d.priority },
-          }, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
-      });
-    }, (err) => console.debug('announcements listener error:', err));
-    return unsub;
-  }, [user, role, userData?.managementId, userData?.notifPrefs]);
+   useFeedPoll(
+    'warden-complaints',
+    !!user && role === 'warden',
+    async () => {
+      const { complaints } = await getWardenComplaints();
+      return (complaints || []).filter(c => c.status === 'pending').map(c => ({ id: c._id, ...c }));
+    },
+    (c) => {
+      const prefs = userData?.notifPrefs || {};
+      if (!prefs.newComplaints) return;
+      const title = `New Complaint`;
+      const body = `${c.title} — Room ${c.roomNumber || 'N/A'}`;
+      triggerNotification(title, { body, tag: `warden-complaint-${c.id}` });
+      setNotifications(prev => [{
+        id: `warden-complaint-${c.id}`,
+        title,
+        body,
+        type: 'new-complaint',
+        createdAt: new Date(),
+        read: false,
+        data: { complaintId: c.id },
+      }, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    },
+    null,
+    (c) => c.status,
+    [user, role, userData?.notifPrefs],
+  );
 
-  // ——— Student: leave request status updates ———————————————————————————————
-  useEffect(() => {
-    if (!user || role !== 'student') return;
-    const isInitial = { v: true };
-    const prefs = userData?.notifPrefs || {};
-    const q = query(
-      collection(db, 'leaveRequests'),
-      where('studentId', '==', user.uid),
-      orderBy('updatedAt', 'desc'),
-      limit(20)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) { isInitial.v = false; return; }
-      if (!prefs.leaveUpdates) return; // student disabled leave updates
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'modified') {
-          const d = change.doc.data();
-          const statusEmoji = d.status === 'approved' ? '✅' : d.status === 'denied' ? '❌' : '📋';
-          const title = `${statusEmoji} Leave Request Updated`;
-          const body = `Your ${d.leaveType?.replace('_', ' ') || 'leave'} request is now ${d.status}`;
-          triggerNotification(title, { body, tag: `leave-${change.doc.id}` });
-          setNotifications(prev => [{
-            id: `leave-${change.doc.id}-${Date.now()}`,
-            title,
-            body,
-            type: 'leave-update',
-            createdAt: new Date(),
-            read: false,
-            data: { leaveId: change.doc.id, status: d.status },
-          }, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
-      });
-    }, (err) => console.debug('leave request listener error:', err));
-    return unsub;
-  }, [user, role, userData?.notifPrefs]);
+  useFeedPoll(
+    'announcements',
+    !!user && (role === 'student' || role === 'warden'),
+    async () => {
+      const { announcements } = await getAnnouncements();
+      return (announcements || []).map(a => ({ id: a._id, title: a.title, priority: a.priority || 'normal' }));
+    },
+    (a) => {
+      const prefs = userData?.notifPrefs || {};
+      if (prefs.announcements === false) return;
+      const priorityEmoji = a.priority === 'urgent' ? '🔴' : a.priority === 'important' ? '🟡' : '📢';
+      const title = `${priorityEmoji} New Announcement`;
+      const body = a.title || 'A new notice has been posted';
+      triggerNotification(title, { body, tag: `announcement-${a.id}` });
+      setNotifications(prev => [{
+        id: `announcement-${a.id}`,
+        title,
+        body,
+        type: 'announcement',
+        createdAt: new Date(),
+        read: false,
+        data: { announcementId: a.id, priority: a.priority },
+      }, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    },
+    null,
+    (a) => a.id,
+    [user, role, userData?.notifPrefs],
+  );
 
-  // ——— Warden: new leave requests from students ————————————————————————————
-  useEffect(() => {
-    if (!user || role !== 'warden' || !userData?.managementId) return;
-    const isInitial = { v: true };
-    const prefs = userData?.notifPrefs || {};
-    const q = query(
-      collection(db, 'leaveRequests'),
-      where('managementId', '==', userData.managementId),
-      where('status', '==', 'pending'),
-      orderBy('createdAt', 'desc'),
-      limit(20)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) { isInitial.v = false; return; }
-      if (!prefs.leaveRequests) return; // warden disabled leave request alerts
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          const d = change.doc.data();
-          const title = '📋 New Leave Request';
-          const body = `${d.studentName || 'A student'} — ${d.leaveType?.replace('_', ' ') || 'Leave'} (Room ${d.roomNumber || 'N/A'})`;
-          triggerNotification(title, { body, tag: `warden-leave-${change.doc.id}` });
-          setNotifications(prev => [{
-            id: `warden-leave-${change.doc.id}`,
-            title,
-            body,
-            type: 'new-leave-request',
-            createdAt: new Date(),
-            read: false,
-            data: { leaveId: change.doc.id },
-          }, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
-      });
-    }, (err) => console.debug('warden leave request listener error:', err));
-    return unsub;
-  }, [user, role, userData?.managementId, userData?.notifPrefs]);
+  useFeedPoll(
+    'student-leaves',
+    !!user && role === 'student',
+    async () => {
+      const { leaves } = await getMyLeaves();
+      return (leaves || []).map(l => ({ id: l._id, status: l.status, leaveType: l.leaveType }));
+    },
+    null,
+    (l) => {
+      const prefs = userData?.notifPrefs || {};
+      if (!prefs.leaveUpdates) return;
+      const statusEmoji = l.status === 'approved' ? '✅' : l.status === 'denied' ? '❌' : '📋';
+      const title = `${statusEmoji} Leave Request Updated`;
+      const body = `Your ${(l.leaveType || 'leave').replace('_', ' ')} request is now ${l.status}`;
+      triggerNotification(title, { body, tag: `leave-${l.id}` });
+      setNotifications(prev => [{
+        id: `leave-${l.id}-${Date.now()}`,
+        title,
+        body,
+        type: 'leave-update',
+        createdAt: new Date(),
+        read: false,
+        data: { leaveId: l.id, status: l.status },
+      }, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    },
+    (l) => l.status,
+    [user, role, userData?.notifPrefs],
+  );
 
-  // â”€â”€â”€ Management: new warden added or student complaints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  useEffect(() => {
-    if (!user || role !== 'management' || !userData?.managementId) return;
-    const isInitial = { v: true };
-    const q = query(
-      collection(db, 'complaints'),
-      where('managementId', '==', userData.managementId),
-      limit(50)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) { isInitial.v = false; return; }
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          const d = change.doc.data();
-          const title = `New Complaint Filed`;
-          const body = `${d.title} â€” by ${d.studentName || 'Student'}`;
-          triggerNotification(title, { body, tag: `mgmt-complaint-${change.doc.id}` });
-          setNotifications(prev => [{
-            id: `mgmt-complaint-${change.doc.id}`,
-            title,
-            body,
-            type: 'new-complaint',
-            createdAt: new Date(),
-            read: false,
-            data: { complaintId: change.doc.id },
-          }, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
-      });
-    }, (err) => console.debug('management complaint listener error:', err));
-    return unsub;
-  }, [user, role, userData?.managementId]);
+  useFeedPoll(
+    'warden-leaves',
+    !!user && role === 'warden',
+    async () => {
+      const { leaves } = await getWardenLeaves();
+      return (leaves || []).filter(l => l.status === 'pending').map(l => ({
+        id: l._id,
+        status: l.status,
+        studentName: l.studentId?.name || 'A student',
+        leaveType: l.leaveType,
+      }));
+    },
+    (l) => {
+      const prefs = userData?.notifPrefs || {};
+      if (!prefs.leaveRequests) return;
+      const title = '📋 New Leave Request';
+      const body = `${l.studentName} — ${(l.leaveType || 'Leave').replace('_', ' ')}`;
+      triggerNotification(title, { body, tag: `warden-leave-${l.id}` });
+      setNotifications(prev => [{
+        id: `warden-leave-${l.id}`,
+        title,
+        body,
+        type: 'new-leave-request',
+        createdAt: new Date(),
+        read: false,
+        data: { leaveId: l.id },
+      }, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    },
+    null,
+    (l) => l.id,
+    [user, role, userData?.notifPrefs],
+  );
 
-  // ——— Management: escalated & disputed complaints ——————————————————————————
-  useEffect(() => {
-    if (!user || role !== 'management' || !userData?.managementId) return;
-    const isInitial = { v: true };
-    const q = query(
-      collection(db, 'complaints'),
-      where('managementId', '==', userData.managementId),
-      limit(50)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) { isInitial.v = false; return; }
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'modified') {
-          const d = change.doc.data();
-          if (d.status === 'escalated' || d.isEscalated) {
-            const title = '🚨 Complaint Escalated';
-            const body = `"${d.title}" by ${d.studentName || 'Student'} has been escalated`;
-            triggerNotification(title, { body, tag: `mgmt-escalated-${change.doc.id}` });
-            setNotifications(prev => [{
-              id: `mgmt-escalated-${change.doc.id}-${Date.now()}`,
-              title,
-              body,
-              type: 'escalated-complaint',
-              createdAt: new Date(),
-              read: false,
-              data: { complaintId: change.doc.id },
-            }, ...prev]);
-            setUnreadCount(prev => prev + 1);
-          } else if (d.status === 'disputed') {
-            const title = '🚩 Complaint Disputed';
-            const body = `"${d.title}" — student disputes the resolution`;
-            triggerNotification(title, { body, tag: `mgmt-disputed-${change.doc.id}` });
-            setNotifications(prev => [{
-              id: `mgmt-disputed-${change.doc.id}-${Date.now()}`,
-              title,
-              body,
-              type: 'disputed-complaint',
-              createdAt: new Date(),
-              read: false,
-              data: { complaintId: change.doc.id },
-            }, ...prev]);
-            setUnreadCount(prev => prev + 1);
-          }
-        }
-      });
-    }, (err) => console.debug('management escalation listener error:', err));
-    return unsub;
-  }, [user, role, userData?.managementId]);
-
-  // ——— Management: new student/warden registrations ————————————————————————
-  useEffect(() => {
-    if (!user || role !== 'management' || !userData?.uid) return;
-    const isInitial = { v: true };
-    const q = query(
-      collection(db, 'users'),
-      where('managementId', '==', userData.uid),
-      where('status', '==', 'pending'),
-      orderBy('createdAt', 'desc'),
-      limit(50)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) { isInitial.v = false; return; }
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          const d = change.doc.data();
-          const roleLabel = d.role === 'warden' ? 'Warden' : 'Student';
-          const title = `👤 New ${roleLabel} Registration`;
-          const body = `${d.fullName || d.displayName || 'Someone'} has registered and needs approval`;
-          triggerNotification(title, { body, tag: `mgmt-reg-${change.doc.id}` });
-          setNotifications(prev => [{
-            id: `mgmt-reg-${change.doc.id}`,
-            title,
-            body,
-            type: 'new-registration',
-            createdAt: new Date(),
-            read: false,
-            data: { userId: change.doc.id, role: d.role },
-          }, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
-      });
-    }, (err) => console.debug('management registration listener error:', err));
-    return unsub;
-  }, [user, role, userData?.uid]);
-
-  // ——— Management: new leave requests ——————————————————————————————————————
-  useEffect(() => {
-    if (!user || role !== 'management' || !userData?.managementId) return;
-    const isInitial = { v: true };
-    const q = query(
-      collection(db, 'leaveRequests'),
-      where('managementId', '==', userData.managementId),
-      where('status', '==', 'pending'),
-      orderBy('createdAt', 'desc'),
-      limit(30)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) { isInitial.v = false; return; }
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          const d = change.doc.data();
-          const title = '📋 New Leave Request';
-          const body = `${d.studentName || 'A student'} — ${d.leaveType?.replace('_', ' ') || 'Leave'}`;
-          triggerNotification(title, { body, tag: `mgmt-leave-${change.doc.id}` });
-          setNotifications(prev => [{
-            id: `mgmt-leave-${change.doc.id}`,
-            title,
-            body,
-            type: 'new-leave-request',
-            createdAt: new Date(),
-            read: false,
-            data: { leaveId: change.doc.id },
-          }, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
-      });
-    }, (err) => console.debug('management leave request listener error:', err));
-    return unsub;
-  }, [user, role, userData?.managementId]);
-
-  // ——— Warden: disputed complaints (student disputes resolution) ——————————
-  useEffect(() => {
-    if (!user || role !== 'warden' || !userData?.managementId) return;
-    const isInitial = { v: true };
-    const prefs = userData?.notifPrefs || {};
-    const q = query(
-      collection(db, 'complaints'),
-      where('managementId', '==', userData.managementId),
-      limit(30)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) { isInitial.v = false; return; }
-      if (!prefs.complaintUpdates) return;
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'modified') {
-          const d = change.doc.data();
-          if (d.status === 'disputed') {
-            const title = '🚩 Complaint Disputed by Student';
-            const body = `"${d.title}" — ${d.studentName || 'Student'} disputes your resolution`;
-            triggerNotification(title, { body, tag: `warden-disputed-${change.doc.id}` });
-            setNotifications(prev => [{
-              id: `warden-disputed-${change.doc.id}-${Date.now()}`,
-              title,
-              body,
-              type: 'disputed-complaint',
-              createdAt: new Date(),
-              read: false,
-              data: { complaintId: change.doc.id },
-            }, ...prev]);
-            setUnreadCount(prev => prev + 1);
-          }
-        }
-      });
-    }, (err) => console.debug('warden disputed complaint listener error:', err));
-    return unsub;
-  }, [user, role, userData?.managementId, userData?.notifPrefs]);
-
-  // ——— Warden: new student registrations ——————————————————————————————————
-  useEffect(() => {
-    if (!user || role !== 'warden' || !userData?.managementId) return;
-    const isInitial = { v: true };
-    const prefs = userData?.notifPrefs || {};
-    const q = query(
-      collection(db, 'users'),
-      where('managementId', '==', userData.managementId),
-      where('role', '==', 'student'),
-      where('status', '==', 'pending'),
-      orderBy('createdAt', 'desc'),
-      limit(30)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) { isInitial.v = false; return; }
-      if (!prefs.newStudents) return;
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          const d = change.doc.data();
-          const title = '🎓 New Student Registration';
-          const body = `${d.fullName || d.displayName || 'A student'} has registered for ${d.collegeName || 'your hostel'}`;
-          triggerNotification(title, { body, tag: `warden-student-${change.doc.id}` });
-          setNotifications(prev => [{
-            id: `warden-student-${change.doc.id}`,
-            title,
-            body,
-            type: 'new-student',
-            createdAt: new Date(),
-            read: false,
-            data: { studentId: change.doc.id },
-          }, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
-      });
-    }, (err) => console.debug('warden student registration listener error:', err));
-    return unsub;
-  }, [user, role, userData?.managementId, userData?.notifPrefs]);
-
-  // ——— Student: support ticket status updates ————————————————————————————
-  useEffect(() => {
-    if (!user || role !== 'student') return;
-    const isInitial = { v: true };
-    const q = query(
-      collection(db, 'supportTickets'),
-      where('userId', '==', user.uid),
-      orderBy('updatedAt', 'desc'),
-      limit(20)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) { isInitial.v = false; return; }
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'modified') {
-          const d = change.doc.data();
-          const statusEmoji = d.status === 'resolved' ? '✅' : d.status === 'in-progress' ? '🔄' : '📩';
-          const title = `${statusEmoji} Support Ticket Updated`;
-          const body = `Your ticket "${d.subject || 'Support Request'}" is now ${d.status}`;
-          triggerNotification(title, { body, tag: `ticket-${change.doc.id}` });
-          setNotifications(prev => [{
-            id: `ticket-${change.doc.id}-${Date.now()}`,
-            title,
-            body,
-            type: 'support-update',
-            createdAt: new Date(),
-            read: false,
-            data: { ticketId: change.doc.id, status: d.status },
-          }, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
-      });
-    }, (err) => console.debug('student support ticket listener error:', err.code));
-    return unsub;
-  }, [user, role]);
-  useEffect(() => {
-    if (!user || !isAdmin) return;
-    const q = query(
-      collection(db, 'users'),
-      where('role', '==', 'management'),
-      where('status', '==', 'pending'),
-      orderBy('createdAt', 'desc'),
-      limit(50)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          const d = change.doc.data();
-          triggerNotification('New Approval Request', {
-            body: `${d.displayName || 'A college'} is requesting approval`,
-            tag: `approval-${change.doc.id}`,
-          });
-          setNotifications(prev => [{
-            id: change.doc.id,
-            title: 'New Approval Request',
-            body: `${d.displayName || 'A college'} is requesting approval`,
-            type: 'approval',
-            createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : (d.createdAt ? new Date(d.createdAt) : new Date()),
-            read: false,
-            data: { userId: change.doc.id, userName: d.displayName },
-          }, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
-      });
-    });
-    return unsub;
-  }, [user, isAdmin]);
- useEffect(() => {
-    if (!user || !isAdmin) return;
-    const isInitial = { v: true };
-    const seenTicketIds = new Set();
-    const q = query(
-      collection(db, 'supportTickets'),
-      where('status', '==', 'open'),
-      orderBy('createdAt', 'desc'),
-      limit(50)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      if (isInitial.v) {
-        snapshot.docs.forEach((d) => seenTicketIds.add(d.id));
-        isInitial.v = false;
-        return;
+useFeedPoll(
+    'mgmt-complaints',
+    !!user && role === 'management',
+    async () => {
+      const { complaints } = await getManagementComplaints();
+      return (complaints || []).map(c => ({ id: c._id, title: c.title, studentName: c.studentId?.name || 'Student', status: c.status }));
+    },
+    (c) => {
+      const title = `New Complaint Filed`;
+      const body = `${c.title} \u2014 by ${c.studentName || 'Student'}`;
+      triggerNotification(title, { body, tag: `mgmt-complaint-${c.id}` });
+      setNotifications(prev => [{
+        id: `mgmt-complaint-${c.id}`,
+        title,
+        body,
+        type: 'new-complaint',
+        createdAt: new Date(),
+        read: false,
+        data: { complaintId: c.id },
+      }, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    },
+    (c) => {
+      if (c.status === 'escalated') {
+        const title = '🚨 Complaint Escalated';
+        const body = `"${c.title}" by ${c.studentName || 'Student'} has been escalated`;
+        triggerNotification(title, { body, tag: `mgmt-escalated-${c.id}` });
+        setNotifications(prev => [{
+          id: `mgmt-escalated-${c.id}-${Date.now()}`,
+          title,
+          body,
+          type: 'escalated-complaint',
+          createdAt: new Date(),
+          read: false,
+          data: { complaintId: c.id },
+        }, ...prev]);
+        setUnreadCount(prev => prev + 1);
+      } else if (c.status === 'disputed') {
+        const title = '🚩 Complaint Disputed';
+        const body = `"${c.title}" \u2014 student disputes the resolution`;
+        triggerNotification(title, { body, tag: `mgmt-disputed-${c.id}` });
+        setNotifications(prev => [{
+          id: `mgmt-disputed-${c.id}-${Date.now()}`,
+          title,
+          body,
+          type: 'disputed-complaint',
+          createdAt: new Date(),
+          read: false,
+          data: { complaintId: c.id },
+        }, ...prev]);
+        setUnreadCount(prev => prev + 1);
       }
+    },
+    (c) => c.status,
+    [user, role],
+  );
 
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          if (seenTicketIds.has(change.doc.id)) return;
-          seenTicketIds.add(change.doc.id);
 
-          const d = change.doc.data();
-          triggerNotification('New Support Ticket', {
-            body: d.subject || 'A new support ticket has been created',
-            tag: `ticket-${change.doc.id}`,
-          });
-          setNotifications(prev => {
-            const notificationId = `ticket-${change.doc.id}`;
-            if (prev.some((n) => n.id === notificationId)) return prev;
-            return [{
-              id: notificationId,
-              title: 'New Support Ticket',
-              body: d.subject || 'A new support ticket has been created',
-              type: 'support',
-              createdAt: d.createdAt?.toDate ? d.createdAt.toDate() : (d.createdAt ? new Date(d.createdAt) : new Date()),
-              read: false,
-              data: { ticketId: change.doc.id, subject: d.subject },
-            }, ...prev];
-          });
-          setUnreadCount(prev => prev + 1);
-        }
+useFeedPoll(
+    'mgmt-registrations',
+    !!user && role === 'management',
+    async () => {
+      const { users } = await listUsers({ status: 'pending' });
+      return (users || []).map(u => ({ id: u._id, role: u.role, name: u.name }));
+    },
+    (u) => {
+      const roleLabel = u.role === 'warden' ? 'Warden' : 'Student';
+      const title = `👤 New ${roleLabel} Registration`;
+      const body = `${u.name || 'Someone'} has registered and needs approval`;
+      triggerNotification(title, { body, tag: `mgmt-reg-${u.id}` });
+      setNotifications(prev => [{
+        id: `mgmt-reg-${u.id}`,
+        title,
+        body,
+        type: 'new-registration',
+        createdAt: new Date(),
+        read: false,
+        data: { userId: u.id, role: u.role },
+      }, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    },
+    null,
+    (u) => u.id,
+    [user, role],
+  );
+
+
+
+useFeedPoll(
+    'mgmt-leaves',
+    !!user && role === 'management',
+    async () => {
+      const { leaves } = await getManagementLeaves();
+      return (leaves || []).filter(l => l.status === 'pending').map(l => ({
+        id: l._id,
+        status: l.status,
+        studentName: l.studentId?.name || 'A student',
+        leaveType: l.leaveType,
+      }));
+    },
+    (l) => {
+      const title = '📋 New Leave Request';
+      const body = `${l.studentName} — ${(l.leaveType || 'Leave').replace('_', ' ')}`;
+      triggerNotification(title, { body, tag: `mgmt-leave-${l.id}` });
+      setNotifications(prev => [{
+        id: `mgmt-leave-${l.id}`,
+        title,
+        body,
+        type: 'new-leave-request',
+        createdAt: new Date(),
+        read: false,
+        data: { leaveId: l.id },
+      }, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    },
+    null,
+    (l) => l.id,
+    [user, role],
+  );
+
+
+
+useFeedPoll(
+    'warden-disputes',
+    !!user && role === 'warden',
+    async () => {
+      const { complaints } = await getWardenComplaints();
+      return (complaints || []).map(c => ({ id: c._id, title: c.title, studentName: c.studentId?.name || 'Student', status: c.status }));
+    },
+    null,
+    (c) => {
+      const prefs = userData?.notifPrefs || {};
+      if (!prefs.complaintUpdates) return;
+      if (c.status !== 'disputed') return;
+      const title = '🚩 Complaint Disputed by Student';
+      const body = `"${c.title}" — ${c.studentName} disputes your resolution`;
+      triggerNotification(title, { body, tag: `warden-disputed-${c.id}` });
+      setNotifications(prev => [{
+        id: `warden-disputed-${c.id}-${Date.now()}`,
+        title,
+        body,
+        type: 'disputed-complaint',
+        createdAt: new Date(),
+        read: false,
+        data: { complaintId: c.id },
+      }, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    },
+    (c) => c.status,
+    [user, role, userData?.notifPrefs],
+  );
+
+
+
+useFeedPoll(
+    'warden-students',
+    !!user && role === 'warden',
+    async () => {
+      const { users } = await listUsers({ role: 'student', status: 'pending' });
+      return (users || []).map(u => ({ id: u._id, name: u.name, collegeName: u.collegeId?.name || 'your hostel' }));
+    },
+    (u) => {
+      const prefs = userData?.notifPrefs || {};
+      if (!prefs.newStudents) return;
+      const title = '🎓 New Student Registration';
+      const body = `${u.name || 'A student'} has registered for ${u.collegeName || 'your hostel'}`;
+      triggerNotification(title, { body, tag: `warden-student-${u.id}` });
+      setNotifications(prev => [{
+        id: `warden-student-${u.id}`,
+        title,
+        body,
+        type: 'new-student',
+        createdAt: new Date(),
+        read: false,
+        data: { studentId: u.id },
+      }, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    },
+    null,
+    (u) => u.id,
+    [user, role, userData?.notifPrefs],
+  );
+
+
+
+useFeedPoll(
+    'student-tickets',
+    !!user && role === 'student',
+    async () => {
+      const { tickets } = await listSupportTickets();
+      return (tickets || []).map(t => ({ id: t._id, subject: t.subject, status: t.status }));
+    },
+    null,
+    (t) => {
+      const statusEmoji = t.status === 'resolved' ? '✅' : t.status === 'in-progress' ? '🔄' : '📩';
+      const title = `${statusEmoji} Support Ticket Updated`;
+      const body = `Your ticket "${t.subject || 'Support Request'}" is now ${t.status}`;
+      triggerNotification(title, { body, tag: `ticket-${t.id}` });
+      setNotifications(prev => [{
+        id: `ticket-${t.id}-${Date.now()}`,
+        title,
+        body,
+        type: 'support-update',
+        createdAt: new Date(),
+        read: false,
+        data: { ticketId: t.id, status: t.status },
+      }, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    },
+    (t) => t.status,
+    [user, role],
+  );
+
+
+useFeedPoll(
+    'admin-approvals',
+    !!user && !!isAdmin,
+    async () => {
+      const { users } = await listUsers({ role: 'management', status: 'pending' });
+      return (users || []).map(u => ({ id: u._id, name: u.name, createdAt: u.createdAt }));
+    },
+    (u) => {
+      triggerNotification('New Approval Request', {
+        body: `${u.name || 'A college'} is requesting approval`,
+        tag: `approval-${u.id}`,
       });
-    }, (err) => console.debug('Support tickets collection not available:', err.code));
-    return unsub;
-  }, [user, isAdmin]);
+      setNotifications(prev => [{
+        id: u.id,
+        title: 'New Approval Request',
+        body: `${u.name || 'A college'} is requesting approval`,
+        type: 'approval',
+        createdAt: u.createdAt ? new Date(u.createdAt) : new Date(),
+        read: false,
+        data: { userId: u.id, userName: u.name },
+      }, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    },
+    null,
+    (u) => u.id,
+    [user, isAdmin],
+  );
+
+
+ useFeedPoll(
+    'admin-tickets',
+    !!user && !!isAdmin,
+    async () => {
+      const { tickets } = await listSupportTickets();
+      return (tickets || []).filter(t => t.status === 'open').map(t => ({
+        id: t._id,
+        subject: t.subject,
+        status: t.status,
+        createdAt: t.createdAt,
+      }));
+    },
+    (t) => {
+      triggerNotification('New Support Ticket', {
+        body: t.subject || 'A new support ticket has been created',
+        tag: `ticket-${t.id}`,
+      });
+      setNotifications(prev => {
+        const notificationId = `ticket-${t.id}`;
+        if (prev.some((n) => n.id === notificationId)) return prev;
+        return [{
+          id: notificationId,
+          title: 'New Support Ticket',
+          body: t.subject || 'A new support ticket has been created',
+          type: 'support',
+          createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
+          read: false,
+          data: { ticketId: t.id, subject: t.subject },
+        }, ...prev];
+      });
+      setUnreadCount(prev => prev + 1);
+    },
+    null,
+    (t) => t.status,
+    [user, isAdmin],
+  );
+
+
 
   const markAsRead = async (notificationId) => {
     setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
-    try { await updateDoc(doc(db, 'notifications', notificationId), { read: true }); } catch { }
+    try {
+      if (/^[0-9a-f]{24}$/i.test(notificationId)) {
+        await markNotificationRead(notificationId);
+      }
+    } catch { }
   };
 
   const markAllAsRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
     try {
-      await Promise.all(
-        notifications.filter(n => !n.read).map(n => updateDoc(doc(db, 'notifications', n.id), { read: true }))
-      );
+      await markAllNotificationsRead();
     } catch { }
   };
 
@@ -755,7 +732,7 @@ export const NotificationProvider = ({ children }) => {
     const granted = await notificationService.requestNotificationPermission();
     if (granted && user) {
       const token = await notificationService.getFCMToken();
-      if (token) await notificationService.saveFCMToken(db, user.uid, token);
+      if (token) await notificationService.saveFCMToken(undefined, user.uid, token);
     }
     setPermissionGranted(granted);
     return granted;

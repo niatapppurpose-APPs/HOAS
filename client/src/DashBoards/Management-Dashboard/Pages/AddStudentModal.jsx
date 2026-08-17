@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { createStudent } from '../../../firebase/cloudFunctions';
+import { createStudent, listUsers } from '../../../firebase/cloudFunctions';
+import { getHostels } from '../../../firebase/hostelApi';
 import { useAuth } from '../../../context/AuthContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../components/Toast';
-import { db } from '../../../firebase/firebaseConfig';
-import { collection, query, where, getDocs } from 'firebase/firestore';
 import {
     X, User, Mail, Phone, BookOpen, Building2, CheckCircle2,
     GraduationCap, Briefcase, IndianRupee
@@ -41,19 +40,26 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
     // fetch hostels for suggestions
     useEffect(() => {
         if (!college) return;
+        let cancelled = false;
         const fetch = async () => {
             try {
-                const q = query(
-                    collection(db, 'hostels'),
-                    where('collegeName', '==', college)
+                const list = await getHostels();
+                if (cancelled) return;
+                const collegeId = userData?.collegeId?._id || userData?.collegeId;
+                const scoped = list.filter(h =>
+                    h.collegeName === college ||
+                    h.collegeId?.name === college ||
+                    h.collegeId === collegeId
                 );
-                const snap = await getDocs(q);
-                setHostels(snap.docs.map(d => d.data().block || d.data().name));
+                setHostels(scoped.map(h => h.block || h.name));
             } catch (err) {
                 console.error('error loading hostels', err);
             }
         };
         fetch();
+        return () => {
+            cancelled = true;
+        };
     }, [college]);
 
 
@@ -68,16 +74,17 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
             setSelectedWarden('');
             return;
         }
+        let cancelled = false;
         const fetchWardens = async () => {
             try {
-                const q = query(
-                    collection(db, 'users'),
-                    where('role', '==', 'warden'),
-                    where('collegeName', '==', college),
-                    where('hostelBlock', '==', formData.hostelBlock.trim())
-                );
-                const snap = await getDocs(q);
-                const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const { users } = await listUsers({ role: 'warden', search: formData.hostelBlock.trim() });
+                if (cancelled) return;
+                const list = (users || []).map(u => ({
+                    id: u._id,
+                    fullName: u.name || u.displayName,
+                    email: u.email,
+                    ...u,
+                }));
                 setAvailableWardens(list);
                 if (list.length === 1) {
                     setSelectedWarden(list[0].id);
@@ -87,6 +94,9 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
             }
         };
         fetchWardens();
+        return () => {
+            cancelled = true;
+        };
     }, [formData.hostelBlock, college]);
 
     const handleChange = (field, value) => {
@@ -126,6 +136,7 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
                 name: formData.fullName.trim(),
                 email: formData.email.trim().toLowerCase(),
                 studentId: formData.studentId.trim(),
+                rollNumber: formData.studentId.trim(),
                 phone: formData.phone.trim(),
                 course: formData.course.trim(),
                 branch: formData.branch.trim(),
@@ -134,8 +145,6 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
                 hostelRoom: formData.hostelRoom.trim(),
                 fatherName: formData.fatherName.trim(),
                 address: formData.address.trim(),
-                collegeName: college,
-                managementId: userData?.uid || user?.uid,
                 wardenId: selectedWarden || undefined,
                 totalFee: Number(formData.totalFee),
                 paidFee: Number(formData.paidFee),

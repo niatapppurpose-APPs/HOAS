@@ -8,9 +8,8 @@ import { useAuth } from "../../../context/AuthContext";
 import { useTheme } from "../../../context/ThemeContext";
 import Avatar from "../../../components/OwnerServices/Avatar";
 import ProfileBanner from "../../../components/ProfileBanner";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../../../firebase/firebaseConfig";
 import AppLogo4k from "../../../assets/AppLogo4k.png";
+import * as cloudFunctions from "../../../firebase/cloudFunctions";
 import { ThemeToggle  } from "../../../components/ThemeToggle";
 
 const ManagementProfile = () => {
@@ -25,24 +24,23 @@ const ManagementProfile = () => {
 
     // Fetch team members
     useEffect(() => {
+        let cancelled = false;
         const fetchTeam = async () => {
             if (!userData?.managementId && !userData?.uid) return;
             try {
-                const managementId = userData?.managementId || userData?.uid;
-                const q = query(
-                    collection(db, "users"),
-                    where("managementId", "==", managementId),
-                    where("status", "==", "approved")
-                );
-                const snap = await getDocs(q);
-                setTeamMembers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                const { users } = await cloudFunctions.listUsers({ status: 'approved' });
+                if (cancelled) return;
+                setTeamMembers((users || []).map(d => ({ id: d._id, ...d })));
             } catch (e) {
                 console.error("Error fetching team:", e);
             } finally {
-                setLoadingTeam(false);
+                if (!cancelled) setLoadingTeam(false);
             }
         };
         fetchTeam();
+        return () => {
+            cancelled = true;
+        };
     }, [userData]);
 
     // Theme tokens

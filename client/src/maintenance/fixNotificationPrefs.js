@@ -15,7 +15,7 @@
 
 import { getFirestore, collection, query, getDocs, updateDoc, doc, writeBatch } from 'firebase/firestore';
 import { DEFAULT_NOTIF_PREFS } from './notificationPrefsManager';
-
+ 
 const DEFAULT_PREFS = {
   soundAlerts: true,
   systemAlerts: true,

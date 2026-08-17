@@ -2,10 +2,9 @@ import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import ManagementHeader from "../components/layout/ManagementHeader";
 import { Home, Search, Filter, Plus, Home as HomeIcon } from "lucide-react";
-import { db } from "../../../firebase/firebaseConfig";
-import { collection, query, where, onSnapshot, doc, deleteDoc } from "firebase/firestore";
 import { useAuth } from "../../../context/AuthContext";
 import { useToast } from "../../../components/Toast";
+import { getHostels, deleteHostel } from "../../../firebase/hostelApi";
 import "../ManagementDashboard.css";
 
 import AddHostelModal from "../components/hostels/AddHostelModal";
@@ -48,39 +47,55 @@ const Hostels = () => {
       return;
     }
 
-    const q = query(
-      collection(db, 'hostels'),
-      where('collegeName', '==', userData.collegeName)
-    );
+    let cancelled = false;
 
-    const unsub = onSnapshot(q, snap => {
-      const list = snap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter(h => !h.managementId || h.managementId === userData?.uid)
-        .reduce((map, hostel) => {
-          const key = getHostelKey(hostel);
-          const existing = map.get(key);
+    const fetchHostels = async () => {
+      setLoading(true);
+      try {
+        const list = await getHostels();
+        if (cancelled) return;
 
-          if (!existing || getHostelScore(hostel) > getHostelScore(existing)) {
-            map.set(key, hostel);
-          }
+        const collegeId = userData?.collegeId?._id || userData?.collegeId;
+        const collegeName = userData?.collegeName;
 
-          return map;
-        }, new Map());
-      setHostels(Array.from(list.values()));
-      setLoading(false);
-    }, (err) => {
-      console.error("Error fetching hostels", err);
-      toast.error("Failed to load hostels");
-      setLoading(false);
-    });
+        const scoped = list
+          .filter(h => {
+            if (collegeId) {
+              return h.collegeId === collegeId || h.collegeId?._id === collegeId || h.collegeName === collegeName;
+            }
+            return !collegeName || h.collegeName === collegeName;
+          })
+          .map(h => ({ ...h, id: h._id }))
+          .reduce((map, hostel) => {
+            const key = getHostelKey(hostel);
+            const existing = map.get(key);
 
-    return () => unsub();
+            if (!existing || getHostelScore(hostel) > getHostelScore(existing)) {
+              map.set(key, hostel);
+            }
+
+            return map;
+          }, new Map());
+        setHostels(Array.from(scoped.values()));
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching hostels", err);
+        toast.error("Failed to load hostels");
+        setLoading(false);
+      }
+    };
+
+    fetchHostels();
+
+    return () => {
+      cancelled = true;
+    };
   }, [userData?.collegeName]);
 
   const handleDeleteHostel = async (id) => {
     try {
-      await deleteDoc(doc(db, 'hostels', id));
+      await deleteHostel(id);
+      setHostels(prev => prev.filter(h => h.id !== id));
       toast.success("Hostel deleted successfully");
     } catch (err) {
       console.error('Delete hostel failed', err);
@@ -229,6 +244,7 @@ const Hostels = () => {
         isOpen={showAddModal}
         onClose={handleCloseHostelModal}
         collegeName={userData?.collegeName}
+        collegeId={userData?.collegeId?._id || userData?.collegeId}
         managementId={userData?.uid}
         initialHostel={editingHostel}
       />

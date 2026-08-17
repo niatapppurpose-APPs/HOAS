@@ -1,6 +1,6 @@
 import { useAuth } from '../../context/AuthContext';
 // ProtectedRoute component for role-based route protection
-const ProtectedRoute = ({ roles, children }) => {
+const ProtectedRoute = ({ roles = [], children }) => {
     const { user, loading, userData, userDataLoading, isAdmin, claims } = useAuth();
     const claimsRole = claims?.role;
     // While authentication state is initializing, don't render anything (avoids premature redirects)
@@ -10,7 +10,7 @@ const ProtectedRoute = ({ roles, children }) => {
     // After initialization, if there's no authenticated user, send to login
     if (!user) return <Navigate to="/login" replace />;
     // Allow admin/owner access for any route that includes admin or owner in roles
-    if ((roles.includes('admin') || roles.includes('owner')) && (isAdmin || claimsRole === 'admin' || claimsRole === 'owner')) {
+    if ((roles.includes('admin') || roles.includes('owner')) && (isAdmin || userData?.role === 'admin' || userData?.role === 'owner')) {
         return children;
     }
     // If we still don't have userData or role doesn't match, redirect to login
@@ -63,7 +63,6 @@ const WardenFeeVerification = lazy(() => import("../../DashBoards/Warden-Dashboa
 const WardenSettings = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenSettings"));
 const WardenHelpSupport = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenHelpSupport"));
 const WardenProfile = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenProfile"));
-const WardenAnalytics = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/Analytics/AnalyticsDashboard"));
 
 // Management Dashboard - lazy loaded
 const ManagementDashboard = lazy(() => import("../../DashBoards/Management-Dashboard/ManagementDashboard"));
@@ -79,10 +78,7 @@ const ManagementHelp = lazy(() => import("../../DashBoards/Management-Dashboard/
 const ManagementSettings_Page = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementSettings"));
 const ManagementProfile = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementProfile"));
 
-// Firebase Mode Page - public, lazy loaded
-const FirebaseModePage = lazy(() => import("../../Pages/FirebaseModePage/FirebaseModePage"));
-
-// Owner Dashboard - lazy loaded
+// Management Dashboard - lazy loaded
 const OwnersDashboard = lazy(() => import("../../Pages/OwnersDashboard/ownersdashbord"));
 const OwnersLayout = lazy(() => import("../../Pages/OwnersDashboard/OwnersLayout"));
 const Wardens = lazy(() => import("../../Pages/OwnersDashboard/Pages/Wardens"));
@@ -103,7 +99,7 @@ const Routes_path = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/waiting-approval" element={<ProtectedRoute><WaitingApproval /></ProtectedRoute>} />
-                <Route path="/firebase-mode" element={<FirebaseModePage />} />
+                <Route path="/firebase-mode" element={<Navigate to="/" replace />} />
 
                 {/* ------------------------------ Profile Pages ----------------------------------------- */}
                 <Route path="/profile/student-profile" element={<ProtectedRoute roles={["student"]}><StudentProfile /></ProtectedRoute>} />
@@ -145,11 +141,6 @@ const Routes_path = () => {
                     <Route path="settings" element={<WardenSettings />} />
                     <Route path="help" element={<WardenHelpSupport />} />
                     <Route path="profile" element={<WardenProfile />} />
-                    <Route path="analytics" element={
-                        <FeatureGate feature="analytics" fallback={<FeatureDisabled feature="analytics" />}>
-                            <WardenAnalytics role="warden" />
-                        </FeatureGate>
-                    } />
                 </Route>
 
                 {/* Management Dashboard with Layout */}
@@ -185,11 +176,6 @@ const Routes_path = () => {
                     <Route index element={<OwnersDashboard />} />
                     <Route path="wardens" element={<Wardens />} />
                     <Route path="students" element={<Students />} />
-                    <Route path="analytics" element={
-                        <FeatureGate feature="analytics" fallback={<FeatureDisabled feature="analytics" />}>
-                            <Analytics />
-                        </FeatureGate>
-                    } />
                     <Route path="analytics" element={
                         <FeatureGate feature="analytics" fallback={<FeatureDisabled feature="analytics" />}>
                             <Analytics />

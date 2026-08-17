@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../../../firebase/firebaseConfig";
+import { listSupportTickets, resolveSupportTicket, deleteSupportTicket } from "../../../firebase/cloudFunctions";
 import Header from "../../../components/OwnerServices/header";
 import {
     Ticket,
@@ -37,34 +36,41 @@ const SupportTickets = () => {
     const [processingAction, setProcessingAction] = useState(null);
     const [showStatusSuccess, setShowStatusSuccess] = useState(false);
 
-    // Fetch tickets from Firestore
+    // Fetch tickets from backend
     useEffect(() => {
-        const q = query(collection(db, "supportTickets"), orderBy("createdAt", "desc"));
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const ticketList = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate?.() || new Date()
-            }));
-            setTickets(ticketList);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching tickets:", error);
-            setLoading(false);
-        });
+        listSupportTickets()
+            .then(({ tickets }) => {
+                if (cancelled) return;
+                const ticketList = (tickets || []).map(t => ({
+                    id: t._id,
+                    ...t,
+                    type: t.category === 'bug' ? 'bug_report' : 'general',
+                    userName: t.reporterId?.name || t.reporterName || 'Anonymous',
+                    userEmail: t.reporterId?.email || t.reporterEmail || '',
+                    errorMessage: t.description,
+                    fileName: t.category,
+                    createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
+                }));
+                setTickets(ticketList);
+                setLoading(false);
+            })
+            .catch((error) => {
+                console.error("Error fetching tickets:", error);
+                if (!cancelled) setLoading(false);
+            });
 
-        return () => unsubscribe();
+        return () => { cancelled = true; };
     }, []);
 
     // Update ticket status
     const updateTicketStatus = async (ticketId, newStatus) => {
         setProcessingAction('status-' + newStatus);
         try {
-            await updateDoc(doc(db, "supportTickets", ticketId), {
-                status: newStatus,
-                updatedAt: serverTimestamp()
-            });
+            await resolveSupportTicket(ticketId, { status: newStatus });
+            const updated = tickets.map(t => t.id === ticketId ? { ...t, status: newStatus } : t);
+            setTickets(updated);
             setShowStatusSuccess(true);
             setTimeout(() => {
                 setShowStatusSuccess(false);
@@ -82,7 +88,8 @@ const SupportTickets = () => {
         if (window.confirm("Are you sure you want to delete this ticket?")) {
             setProcessingAction('delete');
             try {
-                await deleteDoc(doc(db, "supportTickets", ticketId));
+                await deleteSupportTicket(ticketId);
+                setTickets(prev => prev.filter(t => t.id !== ticketId));
                 setTimeout(() => {
                     setProcessingAction(null);
                     setSelectedTicket(null);

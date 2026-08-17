@@ -3,8 +3,7 @@ import { useAuth } from '../../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import WardenHeader from '../layout/WardenHeader';
-import { db } from '../../../../firebase/firebaseConfig';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { createSupportTicket } from '../../../../firebase/cloudFunctions';
 import {
     HelpCircle, LifeBuoy, MessageCircle, ChevronDown,
     ChevronUp, Send, Loader2, BookOpen, Phone,
@@ -78,17 +77,9 @@ const WardenHelpSupport = () => {
 
         setSubmitting(true);
         try {
-            await addDoc(collection(db, 'supportTickets'), {
-                userId: user.uid,
-                userName: userData?.fullName || user?.displayName || '',
-                userEmail: user.email,
-                userRole: 'warden',
-                college: userData?.collegeName || '',
-                managementId: userData?.managementId || '',
+            await createSupportTicket({
                 ...ticketData,
-                status: 'open',
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
+                priority: 'medium',
             });
             toast.success('Support ticket submitted!');
             setTicketData({ subject: '', description: '', category: 'general' });

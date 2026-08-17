@@ -1,7 +1,6 @@
 import express from 'express';
 import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import rateLimit from 'express-rate-limit';
 import { db, corsHandler } from './config.js';
 import { authenticateRequest } from './reportHelpers.js';
 
@@ -12,17 +11,6 @@ const RETENTION_MINUTES = 120;
 const SHARE_COOLDOWN_MS = 60 * 1000;
 
 const app = express();
-
-// Rate limiting to prevent abuse
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per window
-  message: { error: 'Too many requests from this IP, please try again after 15 minutes' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-app.use(limiter);
 app.use(express.json({ limit: '32kb' }));
 
 function runCors(req, res) {

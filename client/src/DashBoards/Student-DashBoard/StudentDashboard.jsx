@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useOutletContext, Link } from 'react-router-dom';
-import { db } from '../../firebase/firebaseConfig';
-import { collection, query, where, onSnapshot, limit } from 'firebase/firestore';
+import { getMyComplaints } from '../../firebase/cloudFunctions';
 import StudentHeader from './components/layout/StudentHeader';
 import StatsCard from '../../components/OwnerServices/StatsCard';
 import { useToast } from '../../components/Toast';
@@ -71,34 +70,39 @@ const StudentDashboard = () => {
     useEffect(() => {
         if (!user?.uid) return;
 
-        setComplaintsLoading(true);
-        const q = query(
-            collection(db, 'complaints'),
-            where('studentId', '==', user.uid),
-            limit(10)
-        );
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const list = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })).sort((a, b) => {
-                const tA = a.createdAt?.toMillis?.() ?? 0;
-                const tB = b.createdAt?.toMillis?.() ?? 0;
-                return tB - tA;
-            }).slice(0, 5);
-            setComplaints(list);
+        const load = async () => {
+            try {
+                const { complaints } = await getMyComplaints();
+                if (cancelled) return;
+                const list = (complaints || []).map(c => ({
+                    id: c._id,
+                    ...c,
+                })).sort((a, b) => {
+                    const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    return tB - tA;
+                }).slice(0, 5);
+                setComplaints(list);
 
-            // Re-fetch all to get total pending count if needed, or filter current list if limit is enough
-            const pending = list.filter(c => c.status === 'pending').length;
-            setPendingCount(pending);
-            setComplaintsLoading(false);
-        }, (error) => {
-            console.error('Complaints fetch error:', error);
-            setComplaintsLoading(false);
-        });
+                const pending = list.filter(c => c.status === 'pending').length;
+                setPendingCount(pending);
+                setComplaintsLoading(false);
+            } catch (error) {
+                console.error('Complaints fetch error:', error);
+                setComplaintsLoading(false);
+            }
+        };
 
-        return () => unsubscribe();
+        load();
+
+        const interval = setInterval(load, 30000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
     }, [user?.uid]);
 
     const handleChange = (e) => {

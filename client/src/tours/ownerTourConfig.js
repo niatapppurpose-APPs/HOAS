@@ -93,8 +93,8 @@ export const ownerTourSteps = () => [
   {
     element: '#tour-stats',
     popover: {
-      title: '📈 Quick Stats Overview',
-      description: 'These cards show you real-time statistics: Total Colleges registered, Pending Requests awaiting approval, and Active Principals with approved access.',
+      title: '👋 Welcome Panel',
+      description: 'Your command center: quick access to wardens, pending approvals, and today\'s date at a glance.',
       side: 'bottom',
       align: 'center',
     },

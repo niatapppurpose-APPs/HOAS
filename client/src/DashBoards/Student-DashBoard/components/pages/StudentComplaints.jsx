@@ -4,17 +4,7 @@ import { useTheme } from '../../../../context/ThemeContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import StudentHeader from '../layout/StudentHeader';
-import {
-    collection,
-    query,
-    where,
-    onSnapshot,
-    doc,
-    updateDoc,
-    serverTimestamp,
-} from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
-import { db, functions } from '../../../../firebase/firebaseConfig';
+import { fileComplaint, getMyComplaints, reviewComplaint } from '../../../../firebase/cloudFunctions';
 import {
     FileText,
     Send,
@@ -75,32 +65,34 @@ const StudentComplaints = () => {
     useEffect(() => {
         if (!user?.uid) return;
 
-        // Only filter by studentId — no orderBy to avoid needing a composite index
-        const q = query(
-            collection(db, 'complaints'),
-            where('studentId', '==', user.uid)
-        );
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(
-            q,
-            (snapshot) => {
-                const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-                // Sort client-side: newest first
+        const load = async () => {
+            try {
+                const { complaints } = await getMyComplaints();
+                if (cancelled) return;
+                const data = (complaints || []).map((c) => ({ id: c._id, ...c }));
                 data.sort((a, b) => {
-                    const timeA = a.createdAt?.toMillis?.() || 0;
-                    const timeB = b.createdAt?.toMillis?.() || 0;
+                    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
                     return timeB - timeA;
                 });
                 setComplaints(data);
                 setHistoryLoading(false);
-            },
-            (err) => {
+            } catch (err) {
                 console.error('Error fetching complaints:', err);
                 setHistoryLoading(false);
             }
-        );
+        };
 
-        return () => unsubscribe();
+        load();
+
+        const interval = setInterval(load, 30000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
     }, [user?.uid]);
 
     // ── Filtered complaints (memoized) ───────────────────────────────
@@ -193,8 +185,7 @@ const StudentComplaints = () => {
                 }
             }
 
-            const fileComplaintFn = httpsCallable(functions, 'fileComplaint');
-            await fileComplaintFn({
+            await fileComplaint({
                 category,
                 title: title.trim(),
                 description: description.trim(),
@@ -232,19 +223,7 @@ const StudentComplaints = () => {
     const handleAcceptResolution = async (complaint) => {
         setIsReviewing(true);
         try {
-            const history = complaint.complaintHistory || [];
-            history.push({
-                action: 'student_accepted',
-                timestamp: new Date().toISOString(),
-                by: 'student',
-            });
-
-            await updateDoc(doc(db, 'complaints', complaint.id), {
-                status: 'resolved',
-                studentReviewStatus: 'accepted',
-                complaintHistory: history,
-                updatedAt: serverTimestamp(),
-            });
+            await reviewComplaint(complaint.id, 'accept');
 
             toast.success('Resolution accepted! Complaint is now resolved.');
             if (selectedComplaint?.id === complaint.id) {
@@ -267,24 +246,7 @@ const StudentComplaints = () => {
 
         setIsReviewing(true);
         try {
-            const history = complaint.complaintHistory || [];
-            history.push({
-                action: 'student_disputed',
-                reason: disputeReason.trim(),
-                timestamp: new Date().toISOString(),
-                by: 'student',
-                disputeCount: (complaint.disputeCount || 0) + 1,
-            });
-
-            await updateDoc(doc(db, 'complaints', complaint.id), {
-                status: 'disputed',
-                studentReviewStatus: 'disputed',
-                disputeReason: disputeReason.trim(),
-                disputedAt: serverTimestamp(),
-                disputeCount: (complaint.disputeCount || 0) + 1,
-                complaintHistory: history,
-                updatedAt: serverTimestamp(),
-            });
+            await reviewComplaint(complaint.id, 'dispute', disputeReason.trim());
 
             toast.success('Dispute submitted! The warden will be alerted.');
             setShowDisputeModal(false);

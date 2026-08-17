@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
-import { collection, query, where, onSnapshot, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { db } from "../../../firebase/firebaseConfig";
 import ManagementHeader from "../components/layout/ManagementHeader";
 import { Users, Mail, Search, Filter, Plus, GraduationCap, CheckCircle, Building2, RefreshCw, CircleX, FileSpreadsheet } from "lucide-react";
 import "../ManagementDashboard.css";
@@ -15,6 +13,26 @@ import AddStudentModal from './AddStudentModal';
 import NoDataLight from '../../../assets/No-Data.avif';
 import NoDataDark from '../../../assets/NoDataDark.png';
 import { useToast } from "../../../components/Toast";
+import * as cloudFunctions from "../../../firebase/cloudFunctions";
+
+const mapUser = (u) => ({
+  id: u._id,
+  uid: u.uid,
+  fullName: u.name || u.displayName,
+  displayName: u.name || u.displayName,
+  email: u.email,
+  role: u.role,
+  status: u.status,
+  isOnline: u.isOnline,
+  photoURL: u.avatarUrl || u.photoURL,
+  hostelBlock: u.hostelBlock,
+  collegeName: u.collegeName,
+  studentId: u.studentId,
+  rollNumber: u.rollNumber,
+  roomNumber: u.roomNumber,
+  createdAt: u.createdAt,
+});
+
 const Students = () => {
   const { isCollapsed, setIsCollapsed } = useOutletContext();
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,33 +67,35 @@ const Students = () => {
 
   useEffect(() => {
     if (!managementUid) return; // wait until auth resolves
+
+    let cancelled = false;
     let timer;
 
-    const constraints = [
-      where('role', '==', 'student'),
-      where('managementId', '==', managementUid)
-    ];
-    if (blockFilter) {
-      constraints.push(where('hostelBlock', '==', blockFilter));
-    }
-
-    const q = query(collection(db, 'users'), ...constraints);
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const fetchStudents = async () => {
+      setLoading(true);
+      try {
+        const { users } = await cloudFunctions.listUsers({ role: 'student' });
+        if (cancelled) return;
+        let list = (users || []).map(mapUser);
+        if (blockFilter) {
+          list = list.filter(s => s.hostelBlock === blockFilter);
+        }
         setStudents(list);
-        timer = setTimeout(() => setLoading(false), 1000);
-      },
-      (error) => {
+        setError(null);
+        timer = setTimeout(() => setLoading(false), 500);
+      } catch (error) {
         console.error('Failed to fetch students:', error);
-        setLoading(false);
+        if (!cancelled) {
+          setError(error.message || 'Failed to fetch students');
+          setLoading(false);
+        }
       }
-    );
+    };
+
+    fetchStudents();
 
     return () => {
-      unsubscribe();
+      cancelled = true;
       if (timer) clearTimeout(timer);
     };
   }, [managementUid, blockFilter]);
@@ -111,14 +131,12 @@ const Students = () => {
     if (!managementUid) return;
     setLoading(true);
     try {
-      const q = query(
-        collection(db, 'users'),
-        where('role', '==', 'student'),
-        where('managementId', '==', managementUid)
-      );
-      const snapshot = await getDocs(q);
-      const studentList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      setStudents(studentList);
+      const { users } = await cloudFunctions.listUsers({ role: 'student' });
+      let list = (users || []).map(mapUser);
+      if (blockFilter) {
+        list = list.filter(s => s.hostelBlock === blockFilter);
+      }
+      setStudents(list);
       setError(null);
     } catch (err) {
       console.error('Failed to refresh students:', err);
@@ -141,17 +159,8 @@ const Students = () => {
       return;
     }
 
-    try {
-      const studentRef = doc(db, 'users', studentId);
-      await updateDoc(studentRef, {
-        [field]: value,
-        unverifyReason: null // horizontal clear
-      });
-      toast.success(`${field === 'managementVerification' ? 'Management' : 'Warden'} verification updated to ${value}`);
-    } catch (err) {
-      console.error("Error updating verification:", err);
-      toast.error("Failed to update status");
-    }
+    console.warn('Verification update not available in this build', { studentId, field, value });
+    toast.info('Verification updates are not available in this build');
   };
 
   const confirmUnverify = async () => {
@@ -160,19 +169,9 @@ const Students = () => {
       return;
     }
 
-    try {
-      const studentRef = doc(db, 'users', unverifyModal.studentId);
-      await updateDoc(studentRef, {
-        managementVerification: 'Unverified',
-        unverifyReason: unverifyModal.reason,
-        unverifiedAt: new Date().toISOString()
-      });
-      toast.success("Student unverified with reason.");
-      setUnverifyModal({ show: false, studentId: null, reason: "" });
-    } catch (err) {
-      console.error("Error un-verifying:", err);
-      toast.error("Failed to un-verify");
-    }
+    console.warn('Un-verify action not available in this build', unverifyModal.studentId);
+    toast.info("Un-verify action is not available in this build");
+    setUnverifyModal({ show: false, studentId: null, reason: "" });
   };
 
   const contextInfo = {

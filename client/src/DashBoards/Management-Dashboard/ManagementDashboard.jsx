@@ -2,9 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useOutletContext, Link } from "react-router-dom";
 import { Users, Bell, MessageSquare, User, ShieldCheck, Building } from "lucide-react";
 
-import { collection, query, where, onSnapshot, doc, limit } from "firebase/firestore";
-
-import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 import * as cloudFunctions from "../../firebase/cloudFunctions";
 import { useToast } from "../../components/Toast";
@@ -15,6 +12,21 @@ import ManagementHeader from "./components/layout/ManagementHeader";
 import StatusTable from "./components/dashboard/StatusTable";
 // Import styles
 import "./ManagementDashboard.css";
+
+const mapUser = (u) => ({
+  id: u._id,
+  uid: u.uid,
+  displayName: u.name || u.displayName,
+  fullName: u.name || u.displayName,
+  email: u.email,
+  isOnline: u.isOnline,
+  photoURL: u.avatarUrl || u.photoURL,
+  role: u.role,
+  status: u.status,
+  createdAt: u.createdAt,
+  hostelBlock: u.hostelBlock,
+  collegeName: u.collegeName,
+});
 
 const ManagementDashboard = () => {
   const { user, userData, logout } = useAuth();
@@ -39,70 +51,34 @@ const ManagementDashboard = () => {
   useEffect(() => {
     if (!userData?.uid) return; // wait until we know who the current management is
 
-    const baseConstraints = [where("managementId", "==", userData.uid)];
-    const wardensQuery = query(
-      collection(db, "users"),
-      where("role", "==", "warden"),
-      ...baseConstraints,
-      limit(50)
-    );
-    const studentsQuery = query(
-      collection(db, "users"),
-      where("role", "==", "student"),
-      ...baseConstraints,
-      limit(100)
-    );
+    let cancelled = false;
 
-    const unsubscribeWardens = onSnapshot(wardensQuery, (snapshot) => {
-      const wardensData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setWardens(wardensData);
-    });
+    const fetchUsers = async () => {
+      try {
+        const [wardensRes, studentsRes] = await Promise.all([
+          cloudFunctions.listUsers({ role: 'warden' }),
+          cloudFunctions.listUsers({ role: 'student' }),
+        ]);
+        if (cancelled) return;
+        setWardens((wardensRes.users || []).map(mapUser));
+        setStudents((studentsRes.users || []).map(mapUser));
+      } catch (error) {
+        console.error('Failed to fetch wardens/students:', error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
 
-    const unsubscribeStudents = onSnapshot(studentsQuery, (snapshot) => {
-      const studentsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setStudents(studentsData);
-      setLoading(false);
-    });
+    fetchUsers();
 
     return () => {
-      unsubscribeWardens();
-      unsubscribeStudents();
+      cancelled = true;
     };
   }, [userData?.uid]);
 
-  // Subscribe to college doc to get logo (if user has a collegeName)
-  // First check userData.collegeLogo (from profile registration), then colleges collection
+  // College logo (from user profile, already loaded)
   useEffect(() => {
-    // First priority: collegeLogo stored directly in userData (from profile registration)
-    if (userData?.collegeLogo) {
-      setCollegeLogo(userData.collegeLogo);
-      return;
-    }
-
-    // Second priority: fetch from colleges collection
-    if (!userData?.collegeName) {
-      setCollegeLogo(null);
-      return;
-    }
-
-    const collegeRef = doc(db, "colleges", userData.collegeName);
-    const unsubscribe = onSnapshot(collegeRef, (snap) => {
-      if (snap.exists()) {
-        setCollegeLogo(snap.data().logo || null);
-      } else {
-        setCollegeLogo(null);
-      }
-    }, (err) => {
-      setCollegeLogo(null);
-    });
-
-    return () => unsubscribe();
+    setCollegeLogo(userData?.collegeLogo || null);
   }, [userData]);
 
   // search state for status table

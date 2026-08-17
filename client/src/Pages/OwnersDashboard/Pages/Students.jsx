@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
-import { deleteUserAccount } from '../../../firebase/cloudFunctions';
-import { db } from '../../../firebase/firebaseConfig';
+import { listStudents, deleteUserAccount } from '../../../firebase/cloudFunctions';
 import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
 import Avatar from '../../../components/OwnerServices/Avatar';
@@ -60,16 +58,32 @@ const Students = () => {
 
     useEffect(() => {
         let timer;
-        const q = query(collection(db, 'users'), where('role', '==', 'student'));
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setStudents(list);
-            timer = setTimeout(() => setLoading(false), 2000);
-        });
+        listStudents()
+            .then(({ students }) => {
+                if (cancelled) return;
+                const list = (students || []).map(s => ({
+                    id: s._id,
+                    uid: s.uid,
+                    fullName: s.name,
+                    displayName: s.name,
+                    email: s.email,
+                    isOnline: s.isOnline,
+                    photoURL: s.avatarUrl,
+                    hostelBlock: s.hostelBlock,
+                    hostelName: s.hostelId?.name,
+                    collegeName: s.collegeId?.name,
+                }));
+                setStudents(list);
+                timer = setTimeout(() => setLoading(false), 500);
+            })
+            .catch(() => {
+                if (!cancelled) setLoading(false);
+            });
 
         return () => {
-            unsubscribe();
+            cancelled = true;
             if (timer) clearTimeout(timer);
         };
     }, []);
@@ -88,9 +102,19 @@ const Students = () => {
     const handleRefresh = async () => {
         setLoading(true);
         try {
-            const q = query(collection(db, 'users'), where('role', '==', 'student'));
-            const snapshot = await getDocs(q);
-            const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            const { students } = await listStudents();
+            const list = (students || []).map(s => ({
+                id: s._id,
+                uid: s.uid,
+                fullName: s.name,
+                displayName: s.name,
+                email: s.email,
+                isOnline: s.isOnline,
+                photoURL: s.avatarUrl,
+                hostelBlock: s.hostelBlock,
+                hostelName: s.hostelId?.name,
+                collegeName: s.collegeId?.name,
+            }));
             setStudents(list);
             setError(null);
         } catch (err) {

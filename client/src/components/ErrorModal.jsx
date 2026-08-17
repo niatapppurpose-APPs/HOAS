@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, Send, CheckCircle } from 'lucide-react';
 import { useError } from '../context/ErrorContext';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../firebase/firebaseConfig';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { createSupportTicket } from '../firebase/cloudFunctions';
 
 const ErrorModal = () => {
   const { error, clearError } = useError();
@@ -76,23 +75,20 @@ ${error.stack || 'No stack trace available'}
   const handleSubmitReport = async () => {
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, 'supportTickets'), {
-        type: 'bug_report',
-        status: 'open',
+      await createSupportTicket({
+        subject: 'Bug Report: ' + (error.message || 'Unknown error'),
+        description: [
+          'Type: bug_report',
+          'Error: ' + (error.message || 'Unknown error'),
+          'File: ' + (fileName || 'Unknown'),
+          'Line: ' + (lineNumber || 'Unknown'),
+          'Stack: ' + (error.stack || 'No stack trace'),
+          'Page: ' + window.location.href,
+          'Browser: ' + browserName,
+          'Info: ' + (additionalInfo || 'none'),
+        ].join('\n'),
+        category: 'technical',
         priority: 'high',
-        errorMessage: error.message || 'Unknown error',
-        fileName: fileName || 'Unknown',
-        lineNumber: lineNumber || 'Unknown',
-        stackTrace: error.stack || 'No stack trace',
-        pageUrl: window.location.href,
-        browser: browserName,
-        additionalInfo: additionalInfo || '',
-        userId: user?.uid || 'anonymous',
-        userEmail: user?.email || userData?.email || 'anonymous',
-        userName: user?.displayName || userData?.fullName || 'Anonymous User',
-        userRole: userData?.role || 'unknown',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
       setSubmitted(true);
       setTimeout(() => {

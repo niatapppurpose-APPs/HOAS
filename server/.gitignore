@@ -20,6 +20,3 @@ npm-debug.log*
 
 # Cache
 .cache
-
-firestore.*
-storage.rules

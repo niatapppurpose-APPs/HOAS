@@ -1,18 +1,14 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useNavigate, useOutletContext, useLocation } from "react-router-dom";
-import { collection, query, where, onSnapshot, getDocs, doc, getDoc } from "firebase/firestore";
-import { db } from "../../firebase/firebaseConfig";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { Navigate, useNavigate, useOutletContext } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useModal } from "../../context/ModalContext";
 import { useSystemSettings } from "../../hooks/useSystemSettings";
 import * as cloudFunctions from "../../firebase/cloudFunctions";
 import { useToast } from "../../components/Toast";
-import { useDashboardTour, ownerTourSteps } from "../../tours";
 
 // Import components
 import Header from '../../components/OwnerServices/header';
-import StatsCard from "../../components/OwnerServices/StatsCard";
 
 // Import page components
 import BulkActionsBar from "./components/BulkActionsBar";
@@ -30,7 +26,7 @@ import AddManagementModal from "./modals/AddManagementModal";
 // Import constants (hoisted outside component)
 import { roleColors } from "./constants";
 
-import { Building2, CheckCircle, Clock, Plus } from "lucide-react";
+import { Building2, BarChart3, Users, Ticket, ShieldCheck, User, Plus } from "lucide-react";
 
 // Main Dashboard Component
 const OwnersDashboard = () => {
@@ -38,7 +34,6 @@ const OwnersDashboard = () => {
   const { user, isAdmin, loading, adminChecked, logout } = useAuth();
   const { isApprovalsEnabled } = useSystemSettings();
   const navigate = useNavigate();
-  const location = useLocation();
   const scrollContainerRef = useRef(null);
   const toast = useToast();
   const { openDeleteModal } = useModal();
@@ -62,12 +57,20 @@ const OwnersDashboard = () => {
   // Add Management Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  // ── Stable auth check — runs once after initial mount, prevents navigation loops ──────────
+  const authReady = !loading && user && isAdmin && adminChecked;
+  if (!authReady) {
+    if (!user) return <Navigate to="/login" replace />;
+    if (!isAdmin || !adminChecked) return <Navigate to="/login" replace />;
+  }
+
 
 
   // Auto-start tour on first visit (waits for both auth and dashboard data to load)
-  useDashboardTour('owner', ownerTourSteps, { 
-    ready: !loading && adminChecked && !dataLoading && !!user && isAdmin
-  });
+// Removed to prevent re-render loops when MongoDB is empty
+// useDashboardTour('owner', ownerTourSteps, { 
+//   ready: !loading && adminChecked && !dataLoading && !!user && isAdmin
+// });
 
   // Reset to page 1 when changing tabs
   useEffect(() => {
@@ -82,16 +85,7 @@ const OwnersDashboard = () => {
     }
   }, [currentPage]);
 
-  useEffect(() => {
-
-    if (!loading) {
-      if (!user) {
-        navigate("/login", { replace: true });
-      } else if (adminChecked && !isAdmin) {
-        navigate("/login", { replace: true });
-      }
-    }
-  }, [user, isAdmin, loading, adminChecked, navigate]);
+  
 
   // 🧪 TESTING MODE - Generate dummy data
   const ENABLE_TEST_DATA = false; // Set to false to use real Firestore data
@@ -121,32 +115,66 @@ const OwnersDashboard = () => {
       return;
     }
 
-    // Real Firestore data fetching
+    // Real backend data fetching
     if (!adminChecked || !user || !isAdmin) {
       return;
     }
 
+    let cancelled = false;
     setDataLoading(true);
 
-    // Real-time listener for management users only
-    const usersQuery = query(collection(db, "users"), where("role", "==", "management"));
+    cloudFunctions.getAllManagementUsers()
+      .then(({ users }) => {
+        if (cancelled) return;
+        
+        // If we have MongoDB data, use it
+        if (users && users.length > 0) {
+          const mapped = users.map(u => ({
+            id: u._id,
+            uid: u.uid,
+            displayName: u.name,
+            name: u.name,
+            email: u.email,
+            role: u.role,
+            status: u.status,
+            isOnline: u.isOnline,
+            photoURL: u.photoURL,
+            collegeName: u.collegeId?.name,
+            collegeLocation: u.collegeId?.location,
+            createdAt: u.createdAt,
+          }));
+          setAllUsers(mapped);
+          setDataLoading(false);
+          setFetchError(null);
+          return;
+        }
+        
+// If no MongoDB data but user is logged in, stabilise state
+        // User may be in Firebase Auth but not yet synced to MongoDB
+        if (!user) {
+          setDataLoading(false);
+          return;
+        }
+        
+        // User logged in but MongoDB empty - stabilise without flipping
+        // The UI will show appropriate pending/approved state based on tab selection
+        setDataLoading(false);
+        setFetchError(null);
+        // Keep allUsers empty - UI rendering handles the pending/approved display
+        // based on the active tab and existing counts
+        return;
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setFetchError(error.message);
+        setDataLoading(false);
+        setAllUsers([]);
+      });
 
-    const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
-      const usersData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      setAllUsers(usersData);
-      setDataLoading(false);
-      setFetchError(null);
-    }, (error) => {
-      setFetchError(error.message);
-      setDataLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, isAdmin, adminChecked]);
+    return () => {
+      cancelled = true;
+    };
+  }, [adminChecked, user, isAdmin]);
 
 
 
@@ -368,31 +396,83 @@ const OwnersDashboard = () => {
       <Header pendingCount={pendingCount} handleLogout={handleLogout} user={user} title="Dashboard · Admin Overview" isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
       {/* Main Content */}
-      <div className="pt-24 px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Section */}
-        <section id="tour-stats" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-10">
-          <StatsCard
-            icon={Building2}
-            title="Total Colleges"
-            value={allUsers.length}
-            subtitle="Registered Institutions"
-            gradient="bg-gradient-to-br from-indigo-600 to-purple-700"
-          />
-          <StatsCard
-            icon={Clock}
-            title="Pending Requests"
-            value={pendingCount}
-            subtitle="Awaiting Approval"
-            gradient="bg-gradient-to-br from-orange-600 to-amber-700"
-          />
-          <StatsCard
-            icon={CheckCircle}
-            title="Active Principals"
-            value={approvedCount}
-            subtitle="Approved Access"
-            gradient="bg-gradient-to-br from-emerald-600 to-teal-700"
-          />
-        </section>
+      <div className="pt-20 sm:pt-24 px-3 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-x-hidden">
+        {/* Welcome section */}
+        <div id="tour-stats" className="relative mb-6 md:mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-10 border shadow-2xl transition-all"
+            style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border-primary)',
+                background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%)'
+            }}>
+            <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 rounded-full bg-indigo-500/10 blur-[80px]" />
+            <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-48 h-48 rounded-full bg-violet-500/5 blur-[60px]" />
+
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
+                <div className="text-center md:text-left">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-mono tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                        Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">{user?.displayName || 'Admin'} 👋</span>
+                    </h1>
+                    <p className="mt-2 text-sm md:text-base opacity-70" style={{ color: 'var(--text-secondary)' }}>Your owner command center</p>
+                    <div className="mt-6 flex flex-wrap gap-3 justify-center md:justify-start">
+                        <button onClick={() => navigate("/OwnersDashboard/wardens")} className="px-4 md:px-5 py-2 md:py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs md:text-sm shadow-lg shadow-indigo-500/30 hover:scale-105 transition-transform flex items-center gap-2">
+                            <ShieldCheck size={14} className="md:w-4 md:h-4" /> Manage Wardens
+                        </button>
+                        <button onClick={() => setIsAddModalOpen(true)} className="px-4 md:px-5 py-2 md:py-2.5 rounded-xl border font-bold text-xs md:text-sm hover:bg-indigo-500/5 transition-all flex items-center gap-2" style={{ borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}>
+                            <User size={14} className="md:w-4 md:h-4" /> Add Management
+                        </button>
+                    </div>
+                </div>
+                <div className="flex flex-wrap items-center justify-center md:justify-end gap-4 md:gap-8">
+                    <div className="flex flex-col items-center md:items-start p-3 md:p-5 rounded-2xl border backdrop-blur-md transition-all hover:scale-105"
+                        style={{
+                            backgroundColor: 'var(--bg-tertiary)',
+                            borderColor: 'var(--border-primary)',
+                            boxShadow: '0 4px 20px -5px rgba(0,0,0,0.1)'
+                        }}>
+                        <p className="text-2xl md:text-3xl font-black tracking-tighter leading-none" style={{ color: 'var(--text-primary)' }}>
+                            {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                        </p>
+                        <p className="mt-1 text-[9px] md:text-xs font-bold uppercase tracking-widest opacity-60" style={{ color: 'var(--text-primary)' }}>
+                            {new Date().toLocaleDateString('en-IN', { weekday: 'long' })}
+                        </p>
+                    </div>
+
+                    <div className="flex gap-4 md:gap-8">
+                        <div className="text-center">
+                            <div className="p-3 md:p-5 rounded-xl md:rounded-2xl bg-indigo-500/10 border border-indigo-500/20 shadow-inner">
+                                <p className="text-xl md:text-2xl font-black text-indigo-600 leading-none">{pendingCount}</p>
+                                <p className="mt-1 md:mt-1.5 text-[10px] md:text-xs font-bold text-indigo-600 uppercase tracking-widest">Pending</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Quick Actions Grid */}
+        <div id="tour-actions" className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 md:mb-8">
+            {[
+                { title: 'Wardens', icon: Building2, path: '/OwnersDashboard/wardens', cls: 'bg-indigo-500/10 text-indigo-600 group-hover:bg-indigo-600' },
+                { title: 'Students', icon: Users, path: '/OwnersDashboard/students', cls: 'bg-blue-500/10 text-blue-600 group-hover:bg-blue-600' },
+                { title: 'Analytics', icon: BarChart3, path: '/OwnersDashboard/analytics', cls: 'bg-violet-500/10 text-violet-600 group-hover:bg-violet-600' },
+                { title: 'Support Tickets', icon: Ticket, path: '/OwnersDashboard/support-tickets', cls: 'bg-orange-500/10 text-orange-600 group-hover:bg-orange-600' },
+            ].map((action, idx) => (
+                <button
+                    key={idx}
+                    onClick={() => navigate(action.path)}
+                    className="group relative flex flex-col items-center justify-center rounded-[1.25rem] md:rounded-[1.5rem] border p-4 md:p-6 transition-all hover:scale-[1.05] hover:shadow-2xl"
+                    style={{
+                        backgroundColor: 'var(--bg-card)',
+                        borderColor: 'var(--border-primary)'
+                    }}
+                >
+                    <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl ${action.cls} group-hover:text-white transition-all duration-300`}>
+                        <action.icon className="w-5 h-5 md:w-6 md:h-6" />
+                    </div>
+                    <h3 className="mt-3 md:mt-4 text-[11px] md:text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-primary)' }}>{action.title}</h3>
+                </button>
+            ))}
+        </div>
 
         {/* User Management */}
         <section id="tour-approval-board">

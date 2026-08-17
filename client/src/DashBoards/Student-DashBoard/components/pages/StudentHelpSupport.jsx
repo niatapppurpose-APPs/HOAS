@@ -3,8 +3,7 @@ import { useAuth } from '../../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import StudentHeader from '../layout/StudentHeader';
-import { db } from '../../../../firebase/firebaseConfig';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from 'firebase/firestore';
+import { createSupportTicket, listUsers } from '../../../../firebase/cloudFunctions';
 import {
     HelpCircle, LifeBuoy, MessageCircle, ChevronDown,
     ChevronUp, Send, Loader2, BookOpen, Phone,
@@ -74,17 +73,9 @@ const StudentHelpSupport = () => {
 
         setSubmitting(true);
         try {
-            await addDoc(collection(db, 'supportTickets'), {
-                userId: user.uid,
-                userName: userData?.fullName || user?.displayName || '',
-                userEmail: user.email,
-                userRole: 'student',
-                college: userData?.collegeName || '',
-                managementId: userData?.managementId || '',
+            await createSupportTicket({
                 ...ticketData,
-                status: 'open',
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
+                priority: 'medium',
             });
             toast.success('Support ticket submitted successfully!');
             setTicketData({ subject: '', description: '', category: 'general' });
@@ -109,23 +100,32 @@ const StudentHelpSupport = () => {
 
     // fetch wardens for contact list
     useEffect(() => {
-        if (!userData?.collegeName) return;
+        if (!userData?.collegeId) return;
         setWardensLoading(true);
-        const q = query(
-            collection(db, 'users'),
-            where('role', '==', 'warden'),
-            where('collegeName', '==', userData.collegeName)
-        );
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            setWardens(list);
-            setWardensLoading(false);
-        }, (err) => {
-            console.error('Failed to fetch wardens:', err);
-            setWardensLoading(false);
-        });
-        return () => unsubscribe();
-    }, [userData?.collegeName]);
+
+        let cancelled = false;
+
+        const load = async () => {
+            try {
+                const { users } = await listUsers({ role: 'warden' });
+                if (cancelled) return;
+                const list = (users || []).map(u => ({
+                    id: u._id,
+                    ...u,
+                    fullName: u.name,
+                }));
+                setWardens(list);
+                setWardensLoading(false);
+            } catch (err) {
+                console.error('Failed to fetch wardens:', err);
+                setWardensLoading(false);
+            }
+        };
+
+        load();
+
+        return () => { cancelled = true; };
+    }, [userData?.collegeId]);
 
     return (
         <>

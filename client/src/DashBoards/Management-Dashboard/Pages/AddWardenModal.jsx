@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createWarden } from '../../../firebase/cloudFunctions';
+import { getHostels } from '../../../firebase/hostelApi';
 import { useAuth } from '../../../context/AuthContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../components/Toast';
-import { db } from '../../../firebase/firebaseConfig';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import {
     X, User, Mail, Lock, Phone, Building2, Eye, EyeOff,
     ShieldCheck, Loader2, CheckCircle2, AlertTriangle
@@ -36,19 +35,26 @@ const AddWardenModal = ({ isOpen, onClose, collegeName }) => {
     // fetch existing hostels for dropdown suggestions
     useEffect(() => {
         if (!college) return;
+        let cancelled = false;
         const fetch = async () => {
             try {
-                const q = query(
-                    collection(db, 'hostels'),
-                    where('collegeName', '==', college)
+                const list = await getHostels();
+                if (cancelled) return;
+                const collegeId = userData?.collegeId?._id || userData?.collegeId;
+                const scoped = list.filter(h =>
+                    h.collegeName === college ||
+                    h.collegeId?.name === college ||
+                    h.collegeId === collegeId
                 );
-                const snap = await getDocs(q);
-                setHostels(snap.docs.map(d => d.data().block || d.data().name));
+                setHostels(scoped.map(h => h.block || h.name));
             } catch (err) {
                 console.error('error loading hostels', err);
             }
         };
         fetch();
+        return () => {
+            cancelled = true;
+        };
     }, [college]);
 
     const handleChange = (field, value) => {
@@ -82,30 +88,24 @@ const AddWardenModal = ({ isOpen, onClose, collegeName }) => {
             let hostelNameVal = '';
             if (formData.hostelBlock.trim()) {
                 try {
-                    const q2 = query(
-                        collection(db, 'hostels'),
-                        where('block', '==', formData.hostelBlock.trim()),
-                        where('collegeName', '==', college),
-                        limit(1)
+                    const list = await getHostels();
+                    const match = list.find(h =>
+                        h.block === formData.hostelBlock.trim() &&
+                        (h.collegeName === college || h.collegeId?.name === college || h.collegeId === (userData?.collegeId?._id || userData?.collegeId))
                     );
-                    const snap2 = await getDocs(q2);
-                    if (!snap2.empty) {
-                        hostelNameVal = snap2.docs[0].data().name;
-                    }
+                    if (match) hostelNameVal = match.name;
                 } catch (e) {
                     console.warn('failed to lookup hostel name', e);
                 }
             }
 
         await createWarden({
-                fullName: formData.fullName.trim(),
+                name: formData.fullName.trim(),
                 email: formData.email.trim().toLowerCase(),
                 phone: formData.phone.trim(),
                 password: formData.password,
                 hostelBlock: formData.hostelBlock.trim(),
                 hostelName: hostelNameVal,
-                collegeName: college,
-                managementId: userData?.uid || user?.uid,
             });
 
             setSuccess(true);
@@ -229,7 +229,7 @@ const AddWardenModal = ({ isOpen, onClose, collegeName }) => {
                                 </button>
                                 <button
                                     onClick={handleClose}
-                                    className="flex-1 py-3 rounded-xl font-semibold text-white text-sm flex items-center justify-center gap-2 transition-all"
+                                    className="flex-1 py-3 rounded-xl font-semibold  text-white text-sm flex items-Star justify-center gap-2 transition-all"
                                     style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}
                                 >
                                     <CheckCircle2 className="w-4 h-4" />

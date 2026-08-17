@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { auth, db } from "../../firebase/firebaseConfig";
+import { auth } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../components/Toast";
 import * as cloudFunctions from "../../firebase/cloudFunctions";
@@ -63,54 +62,51 @@ const ManagementDashboard = () => {
 
     setDataLoading(true);
 
-    // Set up real-time listeners
-    const wardensQuery = query(
-      collection(db, "users"),
-      where("role", "==", "warden"),
-      where("managementId", "==", user.uid)
-    );
+    let cancelled = false;
 
-    const studentsQuery = query(
-      collection(db, "users"),
-      where("role", "==", "student"),
-      where("managementId", "==", user.uid)
-    );
+    const loadWardens = async () => {
+      try {
+        const { users } = await cloudFunctions.listUsers({ role: "warden", status: "all", limit: 500 });
+        if (cancelled) return;
+        const wardensData = (users || []).map(u => ({ ...u, uid: u._id, displayName: u.name }));
+        wardensData.sort((a, b) => {
+          const statusA = (a.status || "pending").toLowerCase();
+          const statusB = (b.status || "pending").toLowerCase();
+          if (statusA === "pending" && statusB !== "pending") return -1;
+          if (statusA !== "pending" && statusB === "pending") return 1;
+          return (a.displayName || "").localeCompare(b.displayName || "");
+        });
+        setWardens(wardensData);
+      } catch (error) {
+        console.error("Error fetching wardens:", error);
+      }
+    };
 
-    const unsubWardens = onSnapshot(wardensQuery, (snapshot) => {
-      const wardensData = snapshot.docs.map(doc => ({ ...doc.data(), uid: doc.id }));
-      // Sort: Pending first, then by name
-      wardensData.sort((a, b) => {
-        const statusA = (a.status || "pending").toLowerCase();
-        const statusB = (b.status || "pending").toLowerCase();
-        if (statusA === "pending" && statusB !== "pending") return -1;
-        if (statusA !== "pending" && statusB === "pending") return 1;
-        return (a.displayName || "").localeCompare(b.displayName || "");
-      });
-      setWardens(wardensData);
-    }, (error) => {
-      console.error("Error fetching wardens:", error);
-    });
+    const loadStudents = async () => {
+      try {
+        const { users } = await cloudFunctions.listUsers({ role: "student", status: "all", limit: 500 });
+        if (cancelled) return;
+        const studentsData = (users || []).map(u => ({ ...u, uid: u._id, displayName: u.name }));
+        studentsData.sort((a, b) => {
+          const statusA = (a.status || "pending").toLowerCase();
+          const statusB = (b.status || "pending").toLowerCase();
+          if (statusA === "pending" && statusB !== "pending") return -1;
+          if (statusA !== "pending" && statusB === "pending") return 1;
+          return (a.displayName || "").localeCompare(b.displayName || "");
+        });
+        setStudents(studentsData);
+        setDataLoading(false);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        setDataLoading(false);
+      }
+    };
 
-    const unsubStudents = onSnapshot(studentsQuery, (snapshot) => {
-      const studentsData = snapshot.docs.map(doc => ({ ...doc.data(), uid: doc.id }));
-      // Sort: Pending first, then by name
-      studentsData.sort((a, b) => {
-        const statusA = (a.status || "pending").toLowerCase();
-        const statusB = (b.status || "pending").toLowerCase();
-        if (statusA === "pending" && statusB !== "pending") return -1;
-        if (statusA !== "pending" && statusB === "pending") return 1;
-        return (a.displayName || "").localeCompare(b.displayName || "");
-      });
-      setStudents(studentsData);
-      setDataLoading(false); // Set loading to false after initial data
-    }, (error) => {
-      console.error("Error fetching students:", error);
-      setDataLoading(false);
-    });
+    loadWardens();
+    loadStudents();
 
     return () => {
-      unsubWardens();
-      unsubStudents();
+      cancelled = true;
     };
     // Only re-run if user ID changes. userData content changes shouldn't trigger re-subscription
   }, [user?.uid, userData?.role, userData?.status]);

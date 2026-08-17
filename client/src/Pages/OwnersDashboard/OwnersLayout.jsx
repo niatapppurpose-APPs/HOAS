@@ -39,7 +39,7 @@ const OwnersLayout = () => {
       >
         <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
         
-        <main className={`transition-all duration-300 ease-in-out ml-0 ${
+        <main className={`transition-all duration-300 ease-in-out ml-0 pb-24 lg:pb-0 ${
           isCollapsed ? 'lg:ml-20' : 'lg:ml-72'
         }`}>
           <Outlet context={{ isCollapsed, setIsCollapsed }} />

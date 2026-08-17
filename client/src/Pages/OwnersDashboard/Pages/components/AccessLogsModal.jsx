@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { collection, getDocs, query, orderBy, limit as fsLimit } from 'firebase/firestore';
-import { db } from '../../../../firebase/firebaseConfig';
+import * as cloudFunctions from '../../../../firebase/cloudFunctions';
 import { useToast } from '../../../../components/Toast';
 import {
   RefreshCw,
@@ -18,9 +17,16 @@ const AccessLogsModal = React.memo(({ onClose }) => {
   const fetchLogs = useCallback(async () => {
     setLogsLoading(true);
     try {
-      const q = query(collection(db, 'systemSettingsAudit'), orderBy('performedAt', 'desc'), fsLimit(50));
-      const snap = await getDocs(q);
-      setLogs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const { logs } = await cloudFunctions.getSettingsAuditLogs();
+      setLogs((logs || []).map(l => ({
+        id: l._id,
+        action: l.action,
+        performedAt: l.timestamp,
+        performedBy: l.actorId?.name || l.actorId?.email || '',
+        changes: l.metadata || {},
+        previousVersion: l.metadata?.previousVersion,
+        newVersion: l.metadata?.newVersion,
+      })));
     } catch (err) {
       console.error('Failed to fetch access logs:', err);
       toast.error('Failed to load access logs');

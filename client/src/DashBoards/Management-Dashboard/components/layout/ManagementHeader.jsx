@@ -31,7 +31,7 @@ const ManagementHeader = ({ pendingCount = 0, title = "Dashboard · Management",
             {setIsCollapsed && (
               <button
                 onClick={() => setIsCollapsed(false)}
-                className="lg:hidden p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0"
+                className="hidden p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0"
                 style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
               >
                 <Menu className="w-5 h-5" />

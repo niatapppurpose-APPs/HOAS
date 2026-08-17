@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, MapPin, Building, Info, UserPlus, Save } from "lucide-react";
-import { db } from "../../../../firebase/firebaseConfig";
-import { collection, addDoc, doc, updateDoc, serverTimestamp, getDocs, query, where } from "firebase/firestore";
+import { createHostel, updateHostel } from "../../../../firebase/hostelApi";
 import { useToast } from "../../../../components/Toast";
 
 const getInitialFormState = (hostel) => ({
@@ -11,7 +10,7 @@ const getInitialFormState = (hostel) => ({
     capacity: hostel?.capacity || "",
 });
 
-const AddHostelModal = ({ isOpen, onClose, collegeName, managementId, initialHostel = null }) => {
+const AddHostelModal = ({ isOpen, onClose, collegeName, collegeId, managementId, initialHostel = null }) => {
     const toast = useToast();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState(getInitialFormState(initialHostel));
@@ -38,7 +37,7 @@ const AddHostelModal = ({ isOpen, onClose, collegeName, managementId, initialHos
             return;
         }
 
-        setLoading(true);
+setLoading(true);
         try {
             const payload = {
                 name: formData.name.trim(),
@@ -47,53 +46,27 @@ const AddHostelModal = ({ isOpen, onClose, collegeName, managementId, initialHos
                 location: {
                     address: formData.address.trim(),
                 },
-                collegeName,
-                managementId: managementId || null,
             };
+
+            if (collegeId) {
+                payload.collegeId = collegeId;
+            }
 
             if (isEditMode) {
                 const previousBlock = initialHostel?.block || "";
 
-                await updateDoc(doc(db, "hostels", initialHostel.id), {
-                    ...payload,
-                    updatedAt: serverTimestamp(),
-                });
+                await updateHostel(initialHostel.id, payload);
 
-                const linkedUsersSnap = await getDocs(
-                    query(collection(db, "users"), where("collegeName", "==", collegeName))
-                );
-
-                const linkedUsers = linkedUsersSnap.docs.filter((userDoc) => {
-                    const userData = userDoc.data() || {};
-                    return userData.hostelId === initialHostel.id || userData.hostelBlock === previousBlock;
-                });
-
-                const userUpdatePromises = linkedUsers.map((userDoc) => {
-                    const userData = userDoc.data() || {};
-                    const nextUserData = {
-                        hostelId: initialHostel.id,
-                        hostelBlock: payload.block,
-                        updatedAt: serverTimestamp(),
-                    };
-
-                    if (userData.role === "warden") {
-                        nextUserData.hostelName = payload.name;
-                    }
-
-                    return updateDoc(doc(db, "users", userDoc.id), nextUserData);
-                });
-
-                if (userUpdatePromises.length > 0) {
-                    await Promise.all(userUpdatePromises);
+                if (previousBlock !== payload.block) {
+                    console.warn('Hostel block change for linked users not available in this build');
                 }
 
                 toast.success("Hostel updated successfully!");
             } else {
-                await addDoc(collection(db, "hostels"), {
+                await createHostel({
                     ...payload,
                     wardens: [],
                     students: [],
-                    createdAt: serverTimestamp(),
                 });
                 toast.success("Hostel added successfully!");
             }

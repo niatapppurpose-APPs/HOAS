@@ -7,10 +7,9 @@ import {
   X, CheckSquare, Square, BarChart3, GraduationCap,
   Shield, Building2, CheckCircle2, ArrowDownToLine
 } from 'lucide-react';
-import { db } from '../../../firebase/firebaseConfig';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../components/Toast';
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import * as cloudFunctions from '../../../firebase/cloudFunctions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -175,7 +174,7 @@ function buildJsonReport({ title, collegeName, stats, studentsList, wardensList 
 export default function Reports() {
   const { isCollapsed, setIsCollapsed } = useOutletContext();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const toast = useToast();
   const [downloadingId, setDownloadingId] = useState(null);
   const [downloadingFormat, setDownloadingFormat] = useState(null);
@@ -209,50 +208,30 @@ export default function Reports() {
   // Fetch all data
   useEffect(() => {
     if (!user) return;
-    const fetchUserData = async () => {
-      try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-
-        if (!userDoc.exists()) {
-          const tokenResult = await user.getIdTokenResult();
-          const isAdmin = tokenResult.claims.admin === true || tokenResult.claims.role === 'admin';
-          if (isAdmin) {
-            await setDoc(doc(db, 'users', user.uid), {
-              uid: user.uid, email: user.email, displayName: user.displayName,
-              photoURL: user.photoURL, role: 'admin', status: 'approved',
-              createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-            });
-            await fetchAdminData();
-          } else {
-            toast.warning('User profile not found.');
-          }
-          setLoading(false);
-          return;
-        }
-
-        const userData = userDoc.data();
-        if (userData.role === 'admin') {
-          await fetchAdminData();
-        } else if (userData.role === 'management') {
-          await fetchManagementData(userData);
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
     const fetchAdminData = async () => {
-      const [studentsSnap, wardensSnap, collegesSnap] = await Promise.all([
-        getDocs(query(collection(db, 'users'), where('role', '==', 'student'))),
-        getDocs(query(collection(db, 'users'), where('role', '==', 'warden'))),
-        getDocs(query(collection(db, 'users'), where('role', '==', 'management'))),
+      const [studentsRes, wardensRes, collegesRes] = await Promise.all([
+        cloudFunctions.listUsers({ role: 'student' }),
+        cloudFunctions.listUsers({ role: 'warden' }),
+        cloudFunctions.listUsers({ role: 'management' }),
       ]);
 
-      const students = studentsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const wardens = wardensSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const colleges = collegesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const students = (studentsRes.users || []).map(s => ({
+        id: s._id,
+        ...s,
+        managementId: s.collegeId?._id || null,
+      }));
+      const wardens = (wardensRes.users || []).map(w => ({
+        id: w._id,
+        ...w,
+        managementId: w.collegeId?._id || null,
+      }));
+      const colleges = (collegesRes.users || []).map(c => ({
+        id: c.collegeId?._id || c._id,
+        ...c,
+        collegeName: c.collegeId?.name || c.name,
+        collegeLogo: c.collegeId?.logoUrl || null,
+      }));
 
       setAllStudents(students);
       setAllWardens(wardens);
@@ -272,36 +251,54 @@ export default function Reports() {
       setCollegesList(list);
     };
 
-    const fetchManagementData = async (userData) => {
-      const [studentsSnap, wardensSnap] = await Promise.all([
-        getDocs(query(collection(db, 'users'), where('role', '==', 'student'), where('managementId', '==', user.uid))),
-        getDocs(query(collection(db, 'users'), where('role', '==', 'warden'), where('managementId', '==', user.uid))),
+    const fetchManagementData = async () => {
+      // Backend scopes these lists to the management user's own college
+      const [studentsRes, wardensRes] = await Promise.all([
+        cloudFunctions.listUsers({ role: 'student' }),
+        cloudFunctions.listUsers({ role: 'warden' }),
       ]);
 
-      const students = studentsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const wardens = wardensSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const students = (studentsRes.users || []).map(s => ({ id: s._id, ...s }));
+      const wardens = (wardensRes.users || []).map(w => ({ id: w._id, ...w }));
 
       setAllStudents(students);
       setAllWardens(wardens);
       setStats({ students: students.length, wardens: wardens.length, colleges: 0 });
       setCollegeInfo({
-        name: userData.collegeName || userData.name || userData.email,
-        location: userData.location || 'Not specified',
-        id: userData.uid || user.uid
+        name: userData?.collegeId?.name || userData?.name || userData?.email,
+        location: userData?.location || 'Not specified',
+        id: userData?.uid || user.uid
       });
       setCollegesList([{
         id: user.uid,
-        name: userData.collegeName || userData.name || userData.email,
-        location: userData.location || 'Not specified',
-        email: userData.email,
-        collegeLogo: userData.collegeLogo || null,
+        name: userData?.collegeId?.name || userData?.name || userData?.email,
+        location: userData?.location || 'Not specified',
+        email: userData?.email,
+        collegeLogo: userData?.collegeId?.logoUrl || null,
         studentsCount: students.length,
         wardensCount: wardens.length,
       }]);
     };
 
+    const fetchUserData = async () => {
+      try {
+        const role = userData?.role;
+        if (role === 'admin' || role === 'owner') {
+          await fetchAdminData();
+        } else if (role === 'management') {
+          await fetchManagementData();
+        } else {
+          toast.warning('User profile not found.');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchUserData();
-  }, [user]);
+  }, [user, userData]);
 
   // ── Build reports list ──
   const reportsData = useMemo(() => {

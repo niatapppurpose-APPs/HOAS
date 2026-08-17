@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
 import { X, Search, UserCheck } from "lucide-react";
-import { db } from "../../../../firebase/firebaseConfig";
-import { collection, query, where, getDocs, updateDoc, doc, arrayUnion } from "firebase/firestore";
+import { listUsers } from "../../../../firebase/cloudFunctions";
+import { getHostels, updateHostel } from "../../../../firebase/hostelApi";
 import { useToast } from "../../../../components/Toast";
+
+const mapUser = (u) => ({
+    id: u._id,
+    uid: u.uid,
+    displayName: u.name || u.displayName,
+    email: u.email,
+});
 
 const AssignWardenModal = ({ isOpen, onClose, hostel, collegeName }) => {
     const toast = useToast();
@@ -11,33 +18,36 @@ const AssignWardenModal = ({ isOpen, onClose, hostel, collegeName }) => {
     const [selectedWardens, setSelectedWardens] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
 
-    useEffect(() => {
+useEffect(() => {
         if (!isOpen || !collegeName) return;
+
+        let cancelled = false;
 
         const fetchWardens = async () => {
             setLoading(true);
             try {
-                const q = query(
-                    collection(db, "users"),
-                    where("role", "==", "warden"),
-                    where("collegeName", "==", collegeName)
-                );
-                const snapshot = await getDocs(q);
-                const allWardens = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const { users } = await listUsers({ role: "warden" });
+                if (cancelled) return;
+                const allWardens = (users || []).map(mapUser);
 
                 // Filter out wardens already in the hostel
-                const availableWardens = allWardens.filter(w => !hostel.wardens?.includes(w.id));
+                const hostelWardenIds = (hostel.wardens || []).map(w => (typeof w === 'string' ? w : w?._id || w?.id));
+                const availableWardens = allWardens.filter(w => !hostelWardenIds.includes(w.id));
                 setWardens(availableWardens);
             } catch (error) {
                 console.error("Error fetching wardens:", error);
                 toast.error("Failed to fetch available wardens");
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
 
         setSelectedWardens([]);
         fetchWardens();
+
+        return () => {
+            cancelled = true;
+        };
     }, [isOpen, collegeName, hostel.wardens]);
 
     const handleSubmit = async () => {
@@ -48,22 +58,13 @@ const AssignWardenModal = ({ isOpen, onClose, hostel, collegeName }) => {
 
         setLoading(true);
         try {
-            // 1. Update Hostel doc
-            const hostelRef = doc(db, "hostels", hostel.id);
-            await updateDoc(hostelRef, {
-                wardens: arrayUnion(...selectedWardens)
-            });
+            const fresh = (await getHostels()).find(h => h._id === hostel.id || h.id === hostel.id);
+            const currentWardens = (fresh?.wardens || hostel.wardens || [])
+                .map(w => (typeof w === 'string' ? w : w?._id || w?.id))
+                .filter(Boolean);
+            const merged = Array.from(new Set([...currentWardens, ...selectedWardens]));
 
-            // 2. Update Warden docs
-            const updatePromises = selectedWardens.map(wardenId => {
-                const wardenRef = doc(db, "users", wardenId);
-                return updateDoc(wardenRef, {
-                    hostelId: hostel.id,
-                    hostelBlock: hostel.block || '',
-                    hostelName: hostel.name || ''
-                });
-            });
-            await Promise.all(updatePromises);
+            await updateHostel(hostel.id, { wardens: merged });
 
             toast.success("Wardens assigned successfully");
             onClose();

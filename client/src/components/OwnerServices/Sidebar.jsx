@@ -19,8 +19,7 @@ import Avatar from './Avatar'
 import Applogo from '../../assets/Applogo.png'
 import NewBadge from "../NewBadge";
 import { isNavItemNew, dismissNavItemFeatures } from "../../data/newFeatures";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "../../firebase/firebaseConfig";
+import MobileBottomNav from "../MobileBottomNav";
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { user, userData } = useAuth();
   const { isDark } = useTheme();
@@ -32,25 +31,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
-    if (!user?.uid) {
-      setOwnerProfile(null);
-      return;
-    }
-
-    const adminRef = doc(db, "admins", user.uid);
-    const unsubscribe = onSnapshot(
-      adminRef,
-      (snapshot) => {
-        setOwnerProfile(snapshot.exists() ? snapshot.data() : null);
-      },
-      (error) => {
-        console.error("Owner sidebar admin profile sync error:", error);
-        setOwnerProfile(null);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user?.uid]);
+    setOwnerProfile(userData || null);
+  }, [userData]);
 
   // Get active item from current path
   const getActiveItem = () => {
@@ -143,8 +125,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     return Year
   }
 
+  const bottomNavItems = [
+    ...menuItems,
+    ...bottomMenuItems,
+    { id: "profile", label: "Profile", path: "/OwnersDashboard/profile", isProfile: true },
+  ];
+
   return (
     <>
+      <div className="hidden lg:block">
       {/* Mobile Overlay */}
       <div
         className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300 ${!isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -513,6 +502,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           </div>
         </div>
       )}
+      </div>
+
+      <MobileBottomNav
+        items={bottomNavItems}
+        activeId={activeItem}
+        accentVar="var(--owner-accent)"
+        accentVar2="var(--owner-accent-2)"
+        avatar={ownerProfile?.photoURL || userData?.photoURL || user?.photoURL}
+        user={user}
+      />
     </>
   );
 };

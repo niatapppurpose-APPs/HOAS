@@ -1,306 +1,297 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Building2, X, Plus, UploadIcon } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Building2, KeyRound, Mail, Phone, Plus, UploadIcon, User, X } from 'lucide-react';
 import { HashLoader } from 'react-spinners';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
 import { useToast } from '../../../components/Toast';
 import { compressLogoForModal } from '../utils/compressLogo';
 import CollegeSelect from '../components/CollegeSelect';
 
+const initialForm = {
+  collegeName: '',
+  principalName: '',
+  email: '',
+  phone: '',
+  password: '',
+};
+
 const AddManagementModal = React.memo(({ isOpen, onClose, isDark }) => {
-    const toast = useToast();
-    const [newManagement, setNewManagement] = useState({
-        collegeName: '',
-        principalName: '',
-        email: '',
-        phone: '',
-        password: '',
-    });
-    const [formError, setFormError] = useState('');
-    const [isAddingManagement, setIsAddingManagement] = useState(false);
-    const [modalLogoFile, setModalLogoFile] = useState(null);
-    const [modalLogoPreview, setModalLogoPreview] = useState(null);
+  const toast = useToast();
+  const [form, setForm] = useState(initialForm);
+  const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
 
-    // Cleanup object URL on unmount or when preview changes
-    useEffect(() => {
-        return () => {
-            if (modalLogoPreview) URL.revokeObjectURL(modalLogoPreview);
-        };
-    }, [modalLogoPreview]);
+  const panelStyle = useMemo(() => ({
+    backgroundColor: isDark ? '#111827' : '#ffffff',
+    borderColor: isDark ? '#374151' : '#e5e7eb',
+    color: isDark ? '#ffffff' : '#111827',
+  }), [isDark]);
 
-    const generatePassword = useCallback((collegeName) => {
-        const cleanName = collegeName.replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase();
-        const randomPart = Math.random().toString(36).slice(-6);
-        const specialChars = '!@#$%';
-        const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)];
-        const randomNum = Math.floor(Math.random() * 100);
-        return `${cleanName}${randomSpecial}${randomPart}${randomNum}`;
-    }, []);
+  const inputStyle = useMemo(() => ({
+    backgroundColor: isDark ? '#1f2937' : '#f9fafb',
+    borderColor: isDark ? '#4b5563' : '#d1d5db',
+    color: isDark ? '#ffffff' : '#111827',
+  }), [isDark]);
 
-    const handleCollegeNameChange = useCallback((value) => {
-        const password = value ? generatePassword(value) : '';
-        setNewManagement(prev => ({ ...prev, collegeName: value, password }));
-    }, [generatePassword]);
-
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        setFormError('');
-
-        if (!newManagement.collegeName || !newManagement.principalName || !newManagement.email) {
-            toast.warning('Please fill all required fields');
-            return;
-        }
-
-        const emailPattern = /\.(edu|ac\.in|co\.in|edu\.in|org|com)$/i;
-        if (!emailPattern.test(newManagement.email)) {
-            setFormError('Please enter the college official E-mail Address (e.g., .edu, .ac.in)');
-            return;
-        }
-
-        setIsAddingManagement(true);
-
-        try {
-            let logoUrl = null;
-            if (modalLogoFile) {
-                logoUrl = await compressLogoForModal(modalLogoFile);
-            }
-
-            await cloudFunctions.createManagement({
-                collegeName: newManagement.collegeName,
-                principalName: newManagement.principalName,
-                email: newManagement.email,
-                phone: newManagement.phone || '',
-                password: newManagement.password,
-                collegeLogo: logoUrl || null,
-            });
-            toast.success('Management added Successfully 🎉');
-
-            setNewManagement({ collegeName: '', principalName: '', email: '', phone: '', password: '' });
-            setModalLogoFile(null);
-            setModalLogoPreview(null);
-            onClose();
-        } catch (error) {
-            toast.error(`Failed to add management: ${error.message}`);
-        } finally {
-            setIsAddingManagement(false);
-        }
+  useEffect(() => {
+    return () => {
+      if (logoPreview) URL.revokeObjectURL(logoPreview);
     };
+  }, [logoPreview]);
 
-    const handleRemoveLogo = useCallback(() => {
-        if (modalLogoPreview) URL.revokeObjectURL(modalLogoPreview);
-        setModalLogoFile(null);
-        setModalLogoPreview(null);
-    }, [modalLogoPreview]);
+  useEffect(() => {
+    if (!isOpen) {
+      setForm(initialForm);
+      setFormError('');
+      setLogoFile(null);
+      setLogoPreview(null);
+    }
+  }, [isOpen]);
 
-    if (!isOpen) return null;
+  const generatePassword = useCallback((collegeName) => {
+    const prefix = collegeName.replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase() || 'HOAS';
+    const randomText = Math.random().toString(36).slice(-6);
+    const randomNumber = Math.floor(10 + Math.random() * 90);
+    return `${prefix}@${randomText}${randomNumber}`;
+  }, []);
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                onClick={onClose}
-            />
-            <div
-                className="relative w-full max-w-md mx-4 rounded-xl shadow-2xl p-6"
-                style={{
-                    backgroundColor: isDark ? '#1f2937' : '#ffffff',
-                    border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
-                }}
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
-                            <Building2 size={20} className="text-white" />
-                        </div>
-                        <h3 className="text-xl font-bold" style={{ color: isDark ? '#fff' : '#000' }}>
-                            Add Management
-                        </h3>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                    >
-                        <X size={20} style={{ color: isDark ? '#9ca3af' : '#6b7280' }} />
-                    </button>
-                </div>
+  const updateField = useCallback((field, value) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    if (formError) setFormError('');
+  }, [formError]);
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
-                            College Name *
-                        </label>
-                        <CollegeSelect
-                            value={newManagement.collegeName}
-                            onChange={handleCollegeNameChange}
-                            isDark={isDark}
-                            placeholder="Query or enter college name..."
-                        />
-                    </div>
+  const handleCollegeNameChange = useCallback((collegeName) => {
+    setForm((current) => ({
+      ...current,
+      collegeName,
+      password: collegeName ? generatePassword(collegeName) : '',
+    }));
+    if (formError) setFormError('');
+  }, [formError, generatePassword]);
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
-                            Principal Name *
-                        </label>
-                        <input
-                            type="text"
-                            value={newManagement.principalName}
-                            onChange={(e) => setNewManagement(prev => ({ ...prev, principalName: e.target.value }))}
-                            placeholder="Enter principal name"
-                            className="w-full px-4 py-2.5 rounded-lg border outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
-                            style={{
-                                backgroundColor: isDark ? '#374151' : '#f9fafb',
-                                borderColor: isDark ? '#4b5563' : '#d1d5db',
-                                color: isDark ? '#fff' : '#000',
-                            }}
-                        />
-                    </div>
+  const validateForm = () => {
+    if (!form.collegeName.trim()) return 'College name is required.';
+    if (!form.principalName.trim()) return 'Principal name is required.';
+    if (!form.email.trim()) return 'Principal email is required.';
+    if (!form.password.trim()) return 'Temporary password is required.';
+    if (form.password.length < 6) return 'Temporary password must be at least 6 characters.';
+    return '';
+  };
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
-                            Email Address *
-                        </label>
-                        <input
-                            type="email"
-                            value={newManagement.email}
-                            onChange={(e) => {
-                                setNewManagement(prev => ({ ...prev, email: e.target.value }));
-                                if (formError) setFormError('');
-                            }}
-                            placeholder="principal@college.edu"
-                            className="w-full px-4 py-2.5 rounded-lg border outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
-                            style={{
-                                backgroundColor: isDark ? '#374151' : '#f9fafb',
-                                borderColor: formError ? '#ef4444' : (isDark ? '#4b5563' : '#d1d5db'),
-                                color: isDark ? '#fff' : '#000',
-                            }}
-                        />
-                        {formError && <p className="text-red-500 text-sm mt-1">{formError}</p>}
-                    </div>
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const error = validateForm();
+    if (error) {
+      setFormError(error);
+      toast.warning(error);
+      return;
+    }
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
-                            Phone Number
-                        </label>
-                        <input
-                            type="tel"
-                            value={newManagement.phone}
-                            onChange={(e) => setNewManagement(prev => ({ ...prev, phone: e.target.value }))}
-                            placeholder="+91 9876543210"
-                            className="w-full px-4 py-2.5 rounded-lg border outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
-                            style={{
-                                backgroundColor: isDark ? '#374151' : '#f9fafb',
-                                borderColor: isDark ? '#4b5563' : '#d1d5db',
-                                color: isDark ? '#fff' : '#000',
-                            }}
-                        />
-                    </div>
+    setIsSubmitting(true);
+    try {
+      const collegeLogo = logoFile ? await compressLogoForModal(logoFile) : null;
+      await cloudFunctions.createManagement({
+        collegeName: form.collegeName.trim(),
+        principalName: form.principalName.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        password: form.password,
+        collegeLogo,
+      });
 
-                    {/* College Logo Upload */}
-                    <div>
-                        <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
-                            College Logo (Optional)
-                        </label>
-                        <p className="text-xs mb-2" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
-                            Recommended: <span style={{ color: '#10b981', fontWeight: 500 }}>400×400 pixels</span> for best results
-                        </p>
+      toast.success('Management account created successfully');
+      onClose();
+    } catch (error) {
+      toast.error(`Failed to add management: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-                        {!modalLogoPreview ? (
-                            <label
-                                className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed cursor-pointer transition-all hover:border-emerald-500/50"
-                                style={{
-                                    borderColor: isDark ? '#4b5563' : '#d1d5db',
-                                    backgroundColor: isDark ? 'rgba(55, 65, 81, 0.3)' : 'rgba(249, 250, 251, 0.5)',
-                                    color: isDark ? '#9ca3af' : '#6b7280',
-                                }}
-                            >
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                            if (file.size > 5 * 1024 * 1024) {
-                                                toast.warning('Logo must be smaller than 5 MB');
-                                                return;
-                                            }
-                                            setModalLogoFile(file);
-                                            setModalLogoPreview(URL.createObjectURL(file));
-                                        }
-                                    }}
-                                />
-                                <UploadIcon size={18} />
-                                <span className="text-sm font-medium">Upload College Logo</span>
-                            </label>
-                        ) : (
-                            <div
-                                className="flex items-center gap-3 p-3 rounded-lg border"
-                                style={{
-                                    backgroundColor: isDark ? 'rgba(55, 65, 81, 0.3)' : '#f9fafb',
-                                    borderColor: isDark ? '#4b5563' : '#d1d5db',
-                                }}
-                            >
-                                <img
-                                    src={modalLogoPreview}
-                                    alt="Logo preview"
-                                    className="w-12 h-12 rounded-lg object-cover"
-                                    style={{ border: '2px solid rgba(16, 185, 129, 0.3)' }}
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium truncate" style={{ color: isDark ? '#fff' : '#000' }}>
-                                        {modalLogoFile?.name}
-                                    </p>
-                                    <p className="text-xs" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>Ready to upload</p>
-                                </div>
-                                <button
-                                    type="button"
-                                    className="px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors"
-                                    style={{
-                                        color: '#ef4444',
-                                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                        border: '1px solid rgba(239, 68, 68, 0.3)',
-                                    }}
-                                    onClick={handleRemoveLogo}
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        )}
-                    </div>
+  const handleLogoChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.warning('Logo must be smaller than 5 MB');
+      return;
+    }
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
 
-                    {/* Buttons */}
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2.5 rounded-lg border font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                            style={{
-                                borderColor: isDark ? '#4b5563' : '#d1d5db',
-                                color: isDark ? '#d1d5db' : '#374151',
-                            }}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isAddingManagement}
-                            className="flex-1 px-4 py-2.5 rounded-lg font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                            {isAddingManagement ? (
-                                <div className="flex items-center justify-center gap-2 whitespace-nowrap">
-                                    <HashLoader color="#ffffff" size={16} />
-                                    <span className="text-sm">Adding Management...</span>
-                                </div>
-                            ) : (
-                                'Add Management'
-                            )}
-                        </button>
-                    </div>
-                </form>
+  const handleRemoveLogo = () => {
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoFile(null);
+    setLogoPreview(null);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <button type="button" aria-label="Close modal" className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={onClose} />
+
+      <div className="relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border shadow-2xl" style={panelStyle}>
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b px-5 py-4" style={panelStyle}>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
+              <Building2 size={20} />
             </div>
+            <div>
+              <h3 className="text-lg font-bold">Add Management</h3>
+              <p className="text-xs" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+                Create a college and assign its principal account.
+              </p>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-2 transition hover:bg-black/10">
+            <X size={20} />
+          </button>
         </div>
-    );
+
+        <form onSubmit={handleSubmit} className="space-y-5 p-5">
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold">College Name *</label>
+            <CollegeSelect
+              value={form.collegeName}
+              onChange={handleCollegeNameChange}
+              isDark={isDark}
+              placeholder="Search or enter college name"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold">Principal Name *</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500" />
+              <input
+                type="text"
+                value={form.principalName}
+                onChange={(event) => updateField('principalName', event.target.value)}
+                placeholder="Enter principal full name"
+                className="w-full rounded-xl border py-3 pl-10 pr-4 outline-none transition focus:ring-2 focus:ring-emerald-500"
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold">Principal Email *</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500" />
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => updateField('email', event.target.value)}
+                  placeholder="principal@college.edu"
+                  className="w-full rounded-xl border py-3 pl-10 pr-4 outline-none transition focus:ring-2 focus:ring-emerald-500"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold">Phone Number</label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500" />
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(event) => updateField('phone', event.target.value)}
+                  placeholder="+91 9876543210"
+                  className="w-full rounded-xl border py-3 pl-10 pr-4 outline-none transition focus:ring-2 focus:ring-emerald-500"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold">Temporary Password *</label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500" />
+                <input
+                  type="text"
+                  value={form.password}
+                  onChange={(event) => updateField('password', event.target.value)}
+                  placeholder="Generated after college name"
+                  className="w-full rounded-xl border py-3 pl-10 pr-4 outline-none transition focus:ring-2 focus:ring-emerald-500"
+                  style={inputStyle}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => updateField('password', generatePassword(form.collegeName))}
+                className="rounded-xl border px-4 text-sm font-semibold transition hover:bg-emerald-500/10"
+                style={{ borderColor: inputStyle.borderColor }}
+              >
+                Generate
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold">College Logo</label>
+            {!logoPreview ? (
+              <label
+                className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-4 transition hover:border-emerald-500"
+                style={{ borderColor: inputStyle.borderColor, backgroundColor: isDark ? '#1f2937' : '#f9fafb' }}
+              >
+                <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                <UploadIcon size={18} />
+                <span className="text-sm font-medium">Upload optional logo</span>
+              </label>
+            ) : (
+              <div className="flex items-center gap-3 rounded-xl border p-3" style={{ borderColor: inputStyle.borderColor }}>
+                <img src={logoPreview} alt="College logo preview" className="h-14 w-14 rounded-xl object-cover" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{logoFile?.name}</p>
+                  <p className="text-xs" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>Ready to upload</p>
+                </div>
+                <button type="button" onClick={handleRemoveLogo} className="rounded-lg px-3 py-2 text-sm font-semibold text-red-500 hover:bg-red-500/10">
+                  Remove
+                </button>
+              </div>
+            )}
+          </div>
+
+          {formError && <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-500">{formError}</p>}
+
+          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl border px-4 py-3 font-semibold transition hover:bg-black/10"
+              style={{ borderColor: inputStyle.borderColor }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSubmitting ? (
+                <>
+                  <HashLoader color="#ffffff" size={16} />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus size={18} />
+                  Add Management
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 });
 
 AddManagementModal.displayName = 'AddManagementModal';

@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db, auth } from "../../firebase/firebaseConfig";
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { auth } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../Toast";
 import Avatar from "./Avatar";
 import AnimatedLogoutButton from "../AnimatedLogoutButton";
+import { updateProfile as apiUpdateProfile } from "../../firebase/cloudFunctions";
 import {
   Eye,
   EyeOff,
@@ -19,7 +19,7 @@ import { HashLoader } from "react-spinners";
 import Header from "./header";
 
 const OwnerProfile = () => {
-  const { user, isAdmin, loading, adminChecked, logout } = useAuth();
+  const { user, userData, isAdmin, loading, adminChecked, logout } = useAuth();
   const navigate = useNavigate();
   const context = useOutletContext();
   const [localIsCollapsed, setLocalIsCollapsed] = useState(false);
@@ -115,26 +115,14 @@ const OwnerProfile = () => {
     const fetchProfile = async () => {
       if (!user) return;
       try {
-        const snap = await getDoc(doc(db, "admins", user.uid));
-        if (snap.exists()) {
-          const data = snap.data();
-          setProfileData({
-            displayName: data.displayName || user.displayName || "",
-            email: data.email || user.email || "",
-            phone: data.phone || "",
-            organization: data.organization || "",
-            photoURL: data.photoURL || user.photoURL || "",
-          });
-          // Note: Banner is now handled by local state only
-        } else {
-          setProfileData({
-            displayName: user.displayName || "",
-            email: user.email || "",
-            phone: "",
-            organization: "",
-            photoURL: user.photoURL || "",
-          });
-        }
+        const data = userData || {};
+        setProfileData({
+          displayName: data.name || user.displayName || "",
+          email: data.email || user.email || "",
+          phone: data.phone || "",
+          organization: data.address || "",
+          photoURL: data.avatarUrl || user.photoURL || "",
+        });
       } catch (err) {
         console.error(err);
       } finally {
@@ -142,7 +130,7 @@ const OwnerProfile = () => {
       }
     };
     if (user && adminChecked) fetchProfile();
-  }, [user, adminChecked]);
+  }, [user, userData, adminChecked]);
 
   /* ── Logout ── */
   const handleLogout = async () => {
@@ -160,17 +148,11 @@ const OwnerProfile = () => {
     setIsSaving(true);
     setSaveMessage("");
     try {
-      await setDoc(doc(db, "admins", user.uid), {
-        ...profileData,
-        updatedAt: new Date().toISOString(),
-      }, { merge: true });
-      // Also update users collection
-      await setDoc(doc(db, "users", user.uid), {
-        displayName: profileData.displayName,
+      await apiUpdateProfile({
+        name: profileData.displayName,
         phone: profileData.phone,
-        photoURL: profileData.photoURL,
-        updatedAt: new Date().toISOString(),
-      }, { merge: true });
+        avatarUrl: profileData.photoURL || undefined,
+      });
       setSaveMessage("Profile updated successfully");
       toast.success("Profile updated");
     } catch (error) {

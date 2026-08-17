@@ -67,7 +67,8 @@ const WaitingApproval = () => {
   }
 
   const isDenied = userData?.status?.toLowerCase() === "denied";
-  const needsPayment = !userData?.feeDetails?.paidFee || userData?.feeDetails?.paidFee === 0;
+  const isUnknownRole = !userData?.role || userData.role === "unknown";
+  const needsPayment = userData?.role === "student" && (!userData?.feeDetails?.paidFee || userData?.feeDetails?.paidFee === 0);
   const unverifyReason = userData?.unverifyReason;
 
   return (
@@ -118,7 +119,7 @@ const WaitingApproval = () => {
                   ? 'bg-indigo-500/20 text-indigo-400'
                   : 'bg-indigo-100 text-indigo-700'
               }`}>
-                {userData?.role || "User"}
+                {isUnknownRole ? "Unknown" : userData?.role || "User"}
               </span>
             </div>
           </div>
@@ -140,6 +141,22 @@ const WaitingApproval = () => {
                 <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   Your request has been reviewed and denied by the administration.
                   Please contact support if you believe this is an error.
+                </p>
+              </>
+            ) : isUnknownRole ? (
+              <>
+                <div className={`inline-flex p-4 rounded-full mb-4 animate-pulse ${
+                  isDark ? 'bg-yellow-500/20' : 'bg-yellow-50'
+                }`}>
+                  <Clock className={`w-12 h-12 ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`} />
+                </div>
+                <h2 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  Waiting for access
+                </h2>
+                <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  Your login is valid, but no HOAS role has been assigned yet.
+                  <br />
+                  Please wait until an admin gives access.
                 </p>
               </>
             ) : needsPayment ? (

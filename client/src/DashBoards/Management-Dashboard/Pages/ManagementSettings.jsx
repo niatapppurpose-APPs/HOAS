@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../../../firebase/firebaseConfig';
 import { useAuth } from '../../../context/AuthContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../components/Toast';
@@ -10,6 +8,7 @@ import ManagementHeader from '../components/layout/ManagementHeader';
 import PWAUpdateSettings from '../../../components/PWAUpdateSettings';
 import { MapPin, Save, Building2, Loader2, CheckCircle, ImagePlus, Upload, X, Camera, Layout, RefreshCw } from 'lucide-react';
 import AppLogo4k from '../../../assets/AppLogo4k.png';
+import * as cloudFunctions from '../../../firebase/cloudFunctions';
 
 /** Compress an image File to a base64 string ≤ maxKB. */
 function compressImage(file, maxKB = 200) {
@@ -105,11 +104,7 @@ const ManagementSettings = () => {
         if (!user || !logoPreview) return;
         setIsLogoSaving(true);
         try {
-            await setDoc(
-                doc(db, 'users', user.uid),
-                { collegeLogo: logoPreview, updatedAt: new Date().toISOString() },
-                { merge: true }
-            );
+            await cloudFunctions.updateProfile({ collegeLogo: logoPreview });
             toast.success('College logo updated! 🎉');
             setLogoSaved(true);
         } catch (err) {
@@ -136,15 +131,7 @@ const ManagementSettings = () => {
 
         setIsSaving(true);
         try {
-            const userDocRef = doc(db, 'users', user.uid);
-            await setDoc(
-                userDocRef,
-                {
-                    collegeLocation: collegeLocation.trim(),
-                    updatedAt: new Date().toISOString(),
-                },
-                { merge: true }
-            );
+            await cloudFunctions.updateProfile({ collegeLocation: collegeLocation.trim() });
 
             toast.success('Location updated successfully! 📍');
             setSaved(true);

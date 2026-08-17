@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import StudentHeader from '../layout/StudentHeader';
-import { db } from '../../../../firebase/firebaseConfig';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { getAnnouncements } from '../../../../firebase/cloudFunctions';
 import {
     Bell, Megaphone, Calendar, Pin, Search,
     Loader2, ChevronDown, ChevronUp, User,
@@ -30,39 +29,50 @@ const StudentAnnouncements = () => {
 
     // Fetch announcements for student's college/hostel
     useEffect(() => {
-        if (!userData?.managementId) {
+        if (!userData?.collegeId) {
             setLoading(false);
             return;
         }
 
-        const q = query(
-            collection(db, 'announcements'),
-            where('managementId', '==', userData.managementId)
-        );
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
-            if (snapshot.metadata.fromCache && snapshot.empty) return;
+        const load = async () => {
+            try {
+                const { announcements } = await getAnnouncements();
+                if (cancelled) return;
 
-            const list = snapshot.docs.map(d => ({
-                id: d.id,
-                ...d.data()
-            })).sort((a, b) => {
-                // Pinned first, then by date
-                if (a.pinned && !b.pinned) return -1;
-                if (!a.pinned && b.pinned) return 1;
-                const tA = a.createdAt?.toMillis?.() ?? 0;
-                const tB = b.createdAt?.toMillis?.() ?? 0;
-                return tB - tA;
-            });
-            setAnnouncements(list);
-            setLoading(false);
-        }, (error) => {
-            console.error('Announcements fetch error:', error);
-            setLoading(false);
-        });
+                const list = (announcements || []).map(a => ({
+                    id: a._id,
+                    ...a,
+                    pinned: a.isPinned,
+                    content: a.body,
+                    postedBy: a.creatorRole === 'warden' ? 'Warden' : 'Management',
+                    createdAt: a.createdAt,
+                })).sort((a, b) => {
+                    // Pinned first, then by date
+                    if (a.pinned && !b.pinned) return -1;
+                    if (!a.pinned && b.pinned) return 1;
+                    const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    return tB - tA;
+                });
+                setAnnouncements(list);
+                setLoading(false);
+            } catch (error) {
+                console.error('Announcements fetch error:', error);
+                setLoading(false);
+            }
+        };
 
-        return () => unsubscribe();
-    }, [userData?.managementId]);
+        load();
+
+        const interval = setInterval(load, 30000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
+    }, [userData?.collegeId]);
 
     const formatDate = (timestamp) => {
         if (!timestamp) return '—';

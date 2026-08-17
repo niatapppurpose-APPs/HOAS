@@ -1,13 +1,11 @@
 // UploadLogo.jsx (simplified)
 import { useState } from 'react';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from "../../../firebase/firebaseConfig";
-
 
 export default function UploadLogo({ onDone }) {
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [done, setDone] = useState(false);
 
   const handleFile = (e) => setFile(e.target.files[0]);
 
@@ -23,7 +21,7 @@ export default function UploadLogo({ onDone }) {
       (err) => console.error(err),
       async () => {
         const url = await getDownloadURL(task.snapshot.ref);
-        await setDoc(doc(db, 'settings', 'branding'), { logoUrl: url, updatedAt: serverTimestamp() }, { merge: true });
+        setDone(true);
         onDone && onDone(url);
       }
     );
@@ -35,6 +33,7 @@ export default function UploadLogo({ onDone }) {
       {file && <img src={URL.createObjectURL(file)} alt="preview" style={{ width: 120 }} />}
       <button onClick={upload}>Upload</button>
       {progress > 0 && <div>Progress: {progress}%</div>}
+      {done && <div>Uploaded!</div>}
     </div>
   );
 }

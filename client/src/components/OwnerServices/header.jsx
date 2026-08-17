@@ -5,11 +5,12 @@ import { useToast } from "../Toast";
 import { ThemeToggle } from "../ThemeToggle";
 import NotificationBell from "./NotificationBell";
 import AnimatedLogoutButton from "../AnimatedLogoutButton";
+import Avatar from "./Avatar";
 
 
-const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = true, setIsCollapsed, headerExtra }) => {
+const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = true, setIsCollapsed, headerExtra, onProfileClick }) => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, userData } = useAuth();
   const toast = useToast();
 
   // Use the provided handleLogout, or fall back to a default logout handler
@@ -23,6 +24,11 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
       console.error("Logout error:", error);
     }
   });
+
+  const goToProfile = () => {
+    const state = onProfileClick?.() || {};
+    navigate("/OwnersDashboard/profile", { state });
+  };
 
   return (
     <header
@@ -40,7 +46,7 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
             {setIsCollapsed && (
               <button
                 onClick={() => setIsCollapsed(false)}
-                className="lg:hidden p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0"
+                className="hidden p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0"
                 style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
               >
                 <Menu className="w-5 h-5" />
@@ -65,6 +71,27 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
                 <span className="hidden sm:inline">{pendingCount} Pending</span>
                 <span className="sm:hidden">{pendingCount}</span>
               </span>
+            )}
+
+            {/* Profile Quick Access (saves page state before navigating) */}
+            {onProfileClick && (
+              <button
+                onClick={goToProfile}
+                className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl border transition-all duration-200 cursor-pointer hover:scale-105 flex-shrink-0"
+                style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)' }}
+                title="Open profile"
+              >
+                <Avatar
+                  image={userData?.photoURL || user?.photoURL}
+                  email={userData?.email || user?.email}
+                  name={userData?.displayName || userData?.fullName || user?.displayName}
+                  size="sm"
+                  objectFit="fill"
+                />
+                <span className="hidden xl:block text-xs font-medium max-w-[90px] truncate" style={{ color: 'var(--text-primary)' }}>
+                  {userData?.displayName || userData?.fullName || 'Profile'}
+                </span>
+              </button>
             )}
 
             {/* Theme Toggle Button */}

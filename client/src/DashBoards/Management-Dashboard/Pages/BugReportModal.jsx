@@ -1,6 +1,5 @@
 import { memo, useState } from 'react';
-import { db } from '../../../firebase/firebaseConfig';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { createSupportTicket } from '../../../firebase/cloudFunctions';
 import {
   Bug,
   X,
@@ -19,19 +18,11 @@ const BugReportModal = memo(({ userData, onClose }) => {
     if (!description.trim()) return;
     setSubmitting(true);
     try {
-      await addDoc(collection(db, 'supportTickets'), {
-        userId: userData?._id || userData?.uid || 'management',
-        userName: userData?.fullName || userData?.displayName || 'Management',
-        userEmail: userData?.email || 'Unknown',
-        userRole: 'management',
-        college: userData?.collegeName || '',
-        managementId: userData?.managementId || '',
+      await createSupportTicket({
         subject: 'Bug Report',
         description: description.trim(),
         category: 'technical',
-        status: 'open',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        priority: 'medium',
       });
       setSubmitting(false);
       setSubmitted(true);

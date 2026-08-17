@@ -27,7 +27,6 @@ export function createTransporter() {
 /**
  * Send a welcome email to a newly created student.
  * Contains account details and a secure password reset link.
- * NO password is ever included in the email.
  *
  * @param {Object} data
  * @param {string} data.name - Student full name
@@ -37,7 +36,7 @@ export function createTransporter() {
  * @param {string} data.resetLink - Firebase password reset link
  * @returns {Promise<boolean>} true if sent successfully, false otherwise
  */
-export async function sendStudentWelcomeEmail({ name, studentId, email, institution, resetLink }) {
+export async function sendStudentWelcomeEmail({ name, studentId, email, institution, password, resetLink }) {
     try {
         const transporter = createTransporter();
         const appUrl = getAppUrl();
@@ -46,7 +45,7 @@ export async function sendStudentWelcomeEmail({ name, studentId, email, institut
             from: getFromAddress(),
             to: email,
             subject: `Your HOAS Student Account Has Been Created`,
-            html: studentWelcomeTemplate({ name, studentId, email, institution, resetLink, appUrl }),
+            html: studentWelcomeTemplate({ name, studentId, email, institution, password, resetLink, appUrl }),
         };
 
         await transporter.sendMail(mailOptions);
@@ -60,18 +59,16 @@ export async function sendStudentWelcomeEmail({ name, studentId, email, institut
 
 /**
  * Send a welcome email to a newly created warden.
- * Contains account details and a secure password reset link.
- * NO password is ever included in the email.
  *
  * @param {Object} data
  * @param {string} data.name - Warden full name
  * @param {string} data.email - Warden email
  * @param {string} data.institution - Institution / college name
  * @param {string} data.hostelBlock - Assigned hostel block
- * @param {string} data.resetLink - Firebase password reset link
+ * @param {string} data.password - Account password set by management
  * @returns {Promise<boolean>} true if sent successfully, false otherwise
  */
-export async function sendWardenWelcomeEmail({ name, email, institution, hostelBlock, resetLink }) {
+export async function sendWardenWelcomeEmail({ name, email, institution, hostelBlock, password }) {
     try {
         const transporter = createTransporter();
         const appUrl = getAppUrl();
@@ -80,7 +77,7 @@ export async function sendWardenWelcomeEmail({ name, email, institution, hostelB
             from: getFromAddress(),
             to: email,
             subject: `Your HOAS Warden Account Has Been Created`,
-            html: wardenWelcomeTemplate({ name, email, institution, hostelBlock, resetLink, appUrl }),
+            html: wardenWelcomeTemplate({ name, email, institution, hostelBlock, password, appUrl }),
         };
 
         await transporter.sendMail(mailOptions);
@@ -93,18 +90,16 @@ export async function sendWardenWelcomeEmail({ name, email, institution, hostelB
 }
 
 /**
- * Send a welcome email to a newly created management user.
- * Contains account details and a secure password reset link.
- * NO password is ever included in the email.
+ * Send a welcome email to a newly created management user with their temporary password.
  *
  * @param {Object} data
  * @param {string} data.name - Principal / management user name
  * @param {string} data.email - Management email
  * @param {string} data.collegeName - College name
- * @param {string} data.resetLink - Firebase password reset link
+ * @param {string} data.password - Temporary account password
  * @returns {Promise<boolean>} true if sent successfully, false otherwise
  */
-export async function sendManagementWelcomeEmail({ name, email, collegeName, resetLink }) {
+export async function sendManagementWelcomeEmail({ name, email, collegeName, password }) {
     try {
         const transporter = createTransporter();
         const appUrl = getAppUrl();
@@ -113,7 +108,7 @@ export async function sendManagementWelcomeEmail({ name, email, collegeName, res
             from: getFromAddress(),
             to: email,
             subject: `Your HOAS Management Account Has Been Created`,
-            html: managementWelcomeTemplate({ name, email, collegeName, resetLink, appUrl }),
+            html: managementWelcomeTemplate({ name, email, collegeName, password, appUrl }),
         };
 
         await transporter.sendMail(mailOptions);

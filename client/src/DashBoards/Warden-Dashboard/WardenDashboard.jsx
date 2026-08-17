@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useOutletContext, Link } from 'react-router-dom';
-import { db } from '../../firebase/firebaseConfig';
-import { collection, query, where, onSnapshot, limit } from 'firebase/firestore';
+import { getWardenComplaints } from '../../firebase/cloudFunctions';
 import { useToast } from '../../components/Toast';
 import WardenHeader from './components/layout/WardenHeader';
 import { useDashboardTour, wardenTourSteps } from '../../tours';
@@ -49,56 +48,45 @@ const WardenDashboard = () => {
 
     // Fetch recent complaints
     useEffect(() => {
-        if (!userData?.managementId) return;
+        if (!userData?.collegeId) return;
 
-        setLoading(true);
-        const q = query(
-            collection(db, 'complaints'),
-            where('managementId', '==', userData.managementId),
-            limit(20)
-        );
+        let cancelled = false;
 
-        let isInitialLoad = true;
+        const load = async () => {
+            try {
+                const { complaints } = await getWardenComplaints();
+                if (cancelled) return;
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const list = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })).sort((a, b) => {
-                const tA = a.createdAt?.toMillis?.() ?? 0;
-                const tB = b.createdAt?.toMillis?.() ?? 0;
-                return tB - tA;
-            });
-
-            // Notification Logic for Warden
-            if (!isInitialLoad) {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added" && change.doc.data().status === 'pending') {
-                        const newComplaint = change.doc.data();
-                        // Show visual notification
-                        toast.info(`🔔 New Complaint: ${newComplaint.title}`, {
-                            description: `From Room ${newComplaint.roomNumber || 'N/A'}`,
-                            duration: 10000
-                        });
-                    }
+                const list = (complaints || []).slice(0, 20).map(c => ({
+                    id: c._id,
+                    ...c,
+                    createdAt: c.createdAt,
+                })).sort((a, b) => {
+                    const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    return tB - tA;
                 });
+
+                setComplaints(list);
+                setLoading(false);
+
+                const pending = list.filter(c => c.status === 'pending').length;
+                setPendingCount(pending);
+            } catch (error) {
+                console.error('Complaints fetch error:', error);
+                setLoading(false);
             }
+        };
 
-            setComplaints(list);
-            setLoading(false);
-            isInitialLoad = false;
+        load();
 
-            // Count pending
-            const pending = list.filter(c => c.status === 'pending').length;
-            setPendingCount(pending);
-        }, (error) => {
-            console.error('Complaints fetch error:', error);
-            setLoading(false);
-        });
+        const interval = setInterval(load, 30000);
 
-        return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userData?.managementId]);
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
+    }, [userData?.collegeId]);
 
     const handleLogout = async () => {
         await logout();

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../../firebase/firebaseConfig';
-import { collection, query, where, getDocs, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { listUsers, updateProfile } from '../../firebase/cloudFunctions';
 import { GraduationCap, Building2, User, Phone, Hash, Loader2, ChevronDown } from 'lucide-react';
 
 const StudentProfile = () => {
@@ -24,16 +23,11 @@ const StudentProfile = () => {
     useEffect(() => {
         const fetchColleges = async () => {
             try {
-                const q = query(
-                    collection(db, 'users'),
-                    where('role', '==', 'management'),
-                    where('status', '==', 'approved')
-                );
-                const snapshot = await getDocs(q);
-                const collegeList = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    collegeName: doc.data().collegeName,
-                    location: doc.data().location
+                const { users } = await listUsers({ role: 'management', status: 'approved' });
+                const collegeList = (users || []).map(u => ({
+                    id: u.collegeId?._id || u._id,
+                    collegeName: u.collegeId?.name || u.name,
+                    location: u.location
                 }));
                 setColleges(collegeList);
             } catch (err) {
@@ -77,22 +71,10 @@ const StudentProfile = () => {
 
         setLoading(true);
         try {
-            await setDoc(doc(db, 'users', user.uid), {
-                uid: user.uid,
-                email: user.email,
-                photoURL: user.photoURL,
-                role: 'student',
-                status: 'pending',
-                fullName: formData.fullName,
+            await updateProfile({
+                name: formData.fullName,
                 phone: formData.phone,
-                rollNumber: formData.rollNumber,
-                roomNumber: formData.roomNumber,
-                managementId: formData.collegeName,
-                collegeName: selectedCollege?.collegeName || '',
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
             });
-
             navigate('/waiting-approval');
         } catch (err) {
             console.error('Error creating profile:', err);

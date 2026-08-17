@@ -6,8 +6,7 @@ import {
 } from 'recharts';
 import { Loader2, TrendingUp, AlertCircle, Users, CheckCircle2, Clock } from 'lucide-react';
 import { useAuth } from '../../../../context/AuthContext';
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { db } from '../../../../firebase/firebaseConfig';
+import * as cloudFunctions from '../../../../firebase/cloudFunctions';
 import { useOutletContext } from 'react-router-dom';
 
 import ManagementHeader from '../../components/layout/ManagementHeader';
@@ -64,27 +63,21 @@ const AnalyticsDashboard = ({ role }) => {
         
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - days);
-        const startTimestamp = Timestamp.fromDate(startDate);
-        
-        const constraints = [
-          where("createdAt", ">=", startTimestamp)
-        ];
-        
-        const mId = userData?.managementId || user?.uid;
-        if (mId) {
-          constraints.push(where("managementId", "==", mId));
-        }
 
-        const complaintsQuery = query(collection(db, "complaints"), ...constraints);
-        const snapshot = await getDocs(complaintsQuery);
+        const complaints = role === 'management'
+          ? (await cloudFunctions.getManagementComplaints()).complaints || []
+          : (await cloudFunctions.getWardenComplaints()).complaints || [];
 
         const categoryCounts = {};
         const dailyTrends = {};
         let resolvedCount = 0;
         let pendingCount = 0;
+        let totalCount = 0;
 
-        snapshot.forEach((doc) => {
-          const docData = doc.data();
+        complaints.forEach((docData) => {
+          const createdAt = docData.createdAt ? new Date(docData.createdAt) : null;
+          if (createdAt && createdAt < startDate) return;
+          totalCount++;
           
           // Categorization
           const category = docData.category || 'others';
@@ -99,9 +92,8 @@ const AnalyticsDashboard = ({ role }) => {
           }
 
           // Trend tracking (grouping by date)
-          if (docData.createdAt) {
-            const dateObj = docData.createdAt.toDate ? docData.createdAt.toDate() : new Date(docData.createdAt);
-            const dateKey = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          if (createdAt) {
+            const dateKey = createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             if (!dailyTrends[dateKey]) dailyTrends[dateKey] = { name: dateKey, total: 0, resolved: 0 };
             dailyTrends[dateKey].total++;
             if (docData.status === 'resolved' || docData.status === 'warden-resolved') {
@@ -120,7 +112,7 @@ const AnalyticsDashboard = ({ role }) => {
         const trendData = Object.values(dailyTrends);
 
         setData({
-          totalComplaints: snapshot.size,
+          totalComplaints: totalCount,
           resolved: resolvedCount,
           pending: pendingCount,
           categoryBreakdown,

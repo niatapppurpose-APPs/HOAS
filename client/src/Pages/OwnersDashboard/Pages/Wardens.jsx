@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
-import { deleteUserAccount } from '../../../firebase/cloudFunctions';
-import { db } from '../../../firebase/firebaseConfig';
+import { listUsers, deleteUserAccount } from '../../../firebase/cloudFunctions';
 import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../../components/OwnerServices/header';
 import Avatar from '../../../components/OwnerServices/Avatar';
@@ -31,9 +29,18 @@ const Wardens = () => {
     const handleRefresh = async () => {
         setLoading(true);
         try {
-            const q = query(collection(db, 'users'), where('role', '==', 'warden'));
-            const snapshot = await getDocs(q);
-            const wardenList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            const { users } = await listUsers({ role: 'warden' });
+            const wardenList = (users || []).map(w => ({
+                id: w._id,
+                uid: w.uid,
+                fullName: w.name,
+                displayName: w.name,
+                email: w.email,
+                isOnline: w.isOnline,
+                photoURL: w.avatarUrl,
+                hostelBlock: w.hostelBlock,
+                collegeName: w.collegeId?.name,
+            }));
             setWardens(wardenList);
             setError(null);
         } catch (err) {
@@ -70,16 +77,31 @@ const Wardens = () => {
 
     useEffect(() => {
         let timer;
-        const q = query(collection(db, 'users'), where('role', '==', 'warden'));
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const wardenList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setWardens(wardenList);
-            timer = setTimeout(() => setLoading(false), 2000);
-        });
+        listUsers({ role: 'warden' })
+            .then(({ users }) => {
+                if (cancelled) return;
+                const wardenList = (users || []).map(w => ({
+                    id: w._id,
+                    uid: w.uid,
+                    fullName: w.name,
+                    displayName: w.name,
+                    email: w.email,
+                    isOnline: w.isOnline,
+                    photoURL: w.avatarUrl,
+                    hostelBlock: w.hostelBlock,
+                    collegeName: w.collegeId?.name,
+                }));
+                setWardens(wardenList);
+                timer = setTimeout(() => setLoading(false), 500);
+            })
+            .catch(() => {
+                if (!cancelled) setLoading(false);
+            });
 
         return () => {
-            unsubscribe();
+            cancelled = true;
             if (timer) clearTimeout(timer);
         };
     }, []);

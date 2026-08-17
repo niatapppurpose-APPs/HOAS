@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { collection, query, where, getDocs, limit } from "firebase/firestore";
-import { auth, provider, db } from "../../firebase/firebaseConfig";
+import { auth, provider } from "../../firebase/firebaseConfig";
+import { listUsers } from "../../firebase/cloudFunctions";
 import { useToast } from "../../components/Toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, IdCard } from "lucide-react";
@@ -17,25 +17,18 @@ const resolveStudentEmailByIdentifier = async (identifier) => {
 
   if (!rawInput) return null;
 
-  const usersRef = collection(db, "users");
-
   // Fast path: exact match on common identifier fields
   const exactMatchFields = ["studentId", "rollNumber", "idNumber", "registrationNumber", "regNo", "admissionNumber"];
   for (const field of exactMatchFields) {
-    const exactQuery = query(usersRef, where(field, "==", rawInput), limit(1));
-    const exactSnapshot = await getDocs(exactQuery);
-    if (!exactSnapshot.empty) {
-      const docData = exactSnapshot.docs[0].data();
-      if (docData?.email) return docData.email;
-    }
+    const { users } = await listUsers({ search: rawInput, limit: 1 });
+    const student = users?.[0];
+    if (student && student[field] === rawInput && student.email) return student.email;
   }
 
   // Fallback: normalize and match in-memory against a bounded student set
-  const studentsQuery = query(usersRef, where("role", "==", "student"), limit(300));
-  const studentsSnapshot = await getDocs(studentsQuery);
+  const { users } = await listUsers({ role: "student", limit: 300 });
 
-  for (const studentDoc of studentsSnapshot.docs) {
-    const student = studentDoc.data();
+  for (const student of users || []) {
     const candidateIdentifiers = [
       student?.studentId,
       student?.rollNumber,

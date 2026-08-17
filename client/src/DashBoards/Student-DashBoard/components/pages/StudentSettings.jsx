@@ -4,9 +4,9 @@ import { useOutletContext, useNavigate } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import { useTheme } from '../../../../context/ThemeContext';
 import StudentHeader from '../layout/StudentHeader';
-import { auth, db } from '../../../../firebase/firebaseConfig';
+import { auth } from '../../../../firebase/firebaseConfig';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { updateProfile } from '../../../../firebase/cloudFunctions';
 import PWAUpdateSettings from '../../../../components/PWAUpdateSettings';
 // import { useNotifications } from '../../../../context/NotificationContext';
 import {
@@ -48,29 +48,15 @@ const StudentSettings = () => {
     // load / save notification preferences when userData.uid changes
     useEffect(() => {
         if (!userData?.uid) return;
-        const loadPrefs = async () => {
-            try {
-                const userRef = doc(db, 'users', userData.uid);
-                const snap = await getDoc(userRef);
-                if (snap.exists()) {
-                    const data = snap.data();
-                    if (data.notifPrefs) {
-                        setNotifPrefs(data.notifPrefs);
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to load notification preferences', err);
-            } finally {
-                setPrefsLoaded(true);
-            }
-        };
-        loadPrefs();
+        if (userData?.notificationPrefs) {
+            setNotifPrefs(userData.notificationPrefs);
+        }
+        setPrefsLoaded(true);
     }, [userData?.uid]);
 
     useEffect(() => {
         if (!prefsLoaded || !userData?.uid) return;
-        const userRef = doc(db, 'users', userData.uid);
-        updateDoc(userRef, { notifPrefs }).catch(err => console.error('Failed to save notification prefs', err));
+        updateProfile({ notificationPrefs: notifPrefs }).catch(err => console.error('Failed to save notification prefs', err));
     }, [notifPrefs, prefsLoaded, userData?.uid]);
 
     const handlePasswordChange = async () => {
@@ -114,8 +100,7 @@ const StudentSettings = () => {
         setNotifPrefs(p => {
             const updated = { ...p, [key]: !p[key] };
             if (userData?.uid) {
-                const userRef = doc(db, 'users', userData.uid);
-                updateDoc(userRef, { notifPrefs: updated })
+                updateProfile({ notificationPrefs: updated })
                     .then(() => toast.success('Notification preferences saved'))
                     .catch(err => {
                         console.error('Failed to save notification prefs', err);
@@ -133,28 +118,24 @@ const StudentSettings = () => {
         const fetchTrash = async () => {
             if (!userData?.uid) return;
             try {
-                const userRef = doc(db, 'users', userData.uid);
-                const userSnap = await getDoc(userRef);
-                if (userSnap.exists()) {
-                    const data = userSnap.data();
-                    let currentTrash = data.trashedFeeReports || [];
-                    const now = new Date();
-                    
-                    // Auto-delete items older than 15 days
-                    const filteredTrash = currentTrash.filter(item => {
-                        const trashedDate = new Date(item.trashedAt);
-                        const diffTime = Math.abs(now - trashedDate);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        return diffDays <= 15;
-                    });
+                const stored = localStorage.getItem(`trashedFeeReports_${userData.uid}`);
+                let currentTrash = stored ? JSON.parse(stored) : [];
+                const now = new Date();
+                
+                // Auto-delete items older than 15 days
+                const filteredTrash = currentTrash.filter(item => {
+                    const trashedDate = new Date(item.trashedAt);
+                    const diffTime = Math.abs(now - trashedDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return diffDays <= 15;
+                });
 
-                    // If items were auto-deleted, update Firestore
-                    if (filteredTrash.length !== currentTrash.length) {
-                        await updateDoc(userRef, { trashedFeeReports: filteredTrash });
-                    }
-
-                    setTrashedItems(filteredTrash);
+                // If items were auto-deleted, persist the filtered list
+                if (filteredTrash.length !== currentTrash.length) {
+                    localStorage.setItem(`trashedFeeReports_${userData.uid}`, JSON.stringify(filteredTrash));
                 }
+
+                setTrashedItems(filteredTrash);
             } catch (error) {
                 console.error("Error fetching trash:", error);
             } finally {
@@ -171,18 +152,10 @@ const StudentSettings = () => {
             const itemToRestore = trashedItems[index];
             const updatedTrash = trashedItems.filter((_, i) => i !== index);
             
-            const userRef = doc(db, 'users', userData.uid);
-            const userSnap = await getDoc(userRef);
-            let currentReports = userSnap.exists() ? (userSnap.data().feeReports || []) : [];
-            
             // Remove 'trashedAt' for restoration
             const { trashedAt, ...restoredItem } = itemToRestore;
-            currentReports.push({ ...restoredItem, uploadedAt: new Date().toISOString() });
 
-            await updateDoc(userRef, {
-                trashedFeeReports: updatedTrash,
-                feeReports: currentReports
-            });
+            localStorage.setItem(`trashedFeeReports_${userData.uid}`, JSON.stringify(updatedTrash));
             
             setTrashedItems(updatedTrash);
             toast.success("Document restored from trash");
@@ -197,8 +170,7 @@ const StudentSettings = () => {
 
         try {
             const updatedTrash = trashedItems.filter((_, i) => i !== index);
-            const userRef = doc(db, 'users', userData.uid);
-            await updateDoc(userRef, { trashedFeeReports: updatedTrash });
+            localStorage.setItem(`trashedFeeReports_${userData.uid}`, JSON.stringify(updatedTrash));
             
             setTrashedItems(updatedTrash);
             toast.success("Document permanently deleted");

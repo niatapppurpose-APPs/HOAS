@@ -3,16 +3,7 @@ import { useAuth } from '../../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import WardenHeader from '../layout/WardenHeader';
-import { db } from '../../../../firebase/firebaseConfig';
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-  doc,
-  updateDoc,
-  serverTimestamp,
-} from 'firebase/firestore';
+import { getWardenLeaves, decideLeave } from '../../../../firebase/cloudFunctions';
 import {
   CalendarDays,
   Clock,
@@ -54,41 +45,44 @@ const WardenLeaveRequests = () => {
   const [updatingId, setUpdatingId] = useState(null);
 
   useEffect(() => {
-    const managementId = userData?.managementId;
-    if (!managementId) {
+    if (!userData?.collegeId) {
       setLeaveRequests([]);
       setLoading(false);
       return;
     }
 
-    const q = query(
-      collection(db, 'leaveRequests'),
-      where('managementId', '==', managementId)
-    );
+    let cancelled = false;
 
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
-        const rows = snapshot.docs
-          .map((entry) => ({ id: entry.id, ...entry.data() }))
+    const load = async () => {
+      try {
+        const { leaves } = await getWardenLeaves();
+        if (cancelled) return;
+        const rows = (leaves || [])
+          .map((entry) => ({ id: entry._id, ...entry }))
           .sort((a, b) => {
-            const timeA = a.createdAt?.toMillis?.() || 0;
-            const timeB = b.createdAt?.toMillis?.() || 0;
+            const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
             return timeB - timeA;
           });
 
         setLeaveRequests(rows);
         setLoading(false);
-      },
-      (error) => {
+      } catch (error) {
         console.error('Failed to load leave requests:', error);
         toast.error('Unable to load leave requests');
         setLoading(false);
       }
-    );
+    };
 
-    return () => unsub();
-  }, [userData?.managementId]);
+    load();
+
+    const interval = setInterval(load, 30000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [userData?.collegeId]);
 
   const stats = useMemo(() => ({
     total: leaveRequests.length,
@@ -100,13 +94,7 @@ const WardenLeaveRequests = () => {
   const updateLeaveStatus = async (requestId, status) => {
     setUpdatingId(requestId);
     try {
-      await updateDoc(doc(db, 'leaveRequests', requestId), {
-        status,
-        reviewedBy: userData?.uid || '',
-        reviewedByName: userData?.fullName || userData?.displayName || 'Warden',
-        reviewedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
+      await decideLeave(requestId, status === 'approved' ? 'approve' : 'deny', '');
       toast.success(`Leave request ${status}`);
     } catch (error) {
       console.error('Failed to update leave request:', error);

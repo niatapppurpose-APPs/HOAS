@@ -5,10 +5,10 @@ import {
     Calendar, Award, Users, Home, Pencil, Save, X, Phone, ArrowLeft
 } from "lucide-react";
 import { updateProfile } from "firebase/auth";
-import { collection, query, where, getDocs, limit, doc, updateDoc } from "firebase/firestore";
+import { updateProfile as apiUpdateProfile } from "../../../../firebase/cloudFunctions";
+import { getHostels } from "../../../../firebase/hostelApi";
 import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
-import { db } from "../../../../firebase/firebaseConfig";
 import { ThemeToggle } from "../../../../components/ThemeToggle";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 import ProfileBanner from "../../../../components/ProfileBanner";
@@ -48,45 +48,28 @@ const WardenProfile = () => {
 
     useEffect(() => {
         const block = userData?.hostelBlock;
-        if (!block || !collegeName) {
+        if (!block) {
             setHostelName("");
             return;
         }
 
+        let cancelled = false;
+
         const fetchHostel = async () => {
             try {
-                const byBlockQuery = query(
-                    collection(db, "hostels"),
-                    where("block", "==", block),
-                    where("collegeName", "==", collegeName),
-                    limit(1)
-                );
-                const byBlockSnap = await getDocs(byBlockQuery);
-                if (!byBlockSnap.empty) {
-                    setHostelName(byBlockSnap.docs[0].data().name || "");
-                    return;
-                }
-
-                const fallbackQuery = query(
-                    collection(db, "hostels"),
-                    where("name", "==", block),
-                    where("collegeName", "==", collegeName),
-                    limit(1)
-                );
-                const fallbackSnap = await getDocs(fallbackQuery);
-                if (!fallbackSnap.empty) {
-                    setHostelName(fallbackSnap.docs[0].data().name || "");
-                    return;
-                }
-
-                setHostelName("");
+                const { hostels } = await getHostels();
+                if (cancelled) return;
+                const match = (hostels || []).find(h => h.block === block || h.name === block);
+                setHostelName(match?.name || "");
             } catch (err) {
                 console.error("Failed to fetch hostel name for warden profile", err);
             }
         };
 
         fetchHostel();
-    }, [userData?.hostelBlock, collegeName]);
+
+        return () => { cancelled = true; };
+    }, [userData?.hostelBlock]);
 
     const handleProfileSave = async () => {
         const trimmedName = formData.fullName.trim();
@@ -106,14 +89,9 @@ const WardenProfile = () => {
 
         setSaving(true);
         try {
-            await updateDoc(doc(db, "users", user.uid), {
-                fullName: trimmedName,
-                displayName: trimmedName,
+            await apiUpdateProfile({
+                name: trimmedName,
                 phone: trimmedPhone,
-                employeeId: trimmedEmployeeId,
-                designation: trimmedDesignation,
-                department: trimmedDesignation,
-                updatedAt: new Date().toISOString(),
             });
 
             if (user.displayName !== trimmedName) {

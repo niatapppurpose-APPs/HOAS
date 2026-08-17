@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../../firebase/firebaseConfig';
+import { auth } from '../../firebase/firebaseConfig';
+import { updateProfile } from '../../firebase/cloudFunctions';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/Toast';
 import { KeyRound, Mail, Loader2, CheckCircle, LogOut } from 'lucide-react';
@@ -27,9 +27,8 @@ const ForcePasswordReset = () => {
     setSending(true);
     try {
       await sendPasswordResetEmail(auth, user.email);
-      // Mark in the user's Firestore document that they acknowledged the reset
       try {
-        await setDoc(doc(db, 'users', user.uid), { lastPasswordResetAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, { merge: true });
+        await updateProfile({ lastPasswordResetAt: new Date().toISOString() });
       } catch (e) {
         console.error('[ForcePasswordReset] Failed to update user doc:', e);
       }

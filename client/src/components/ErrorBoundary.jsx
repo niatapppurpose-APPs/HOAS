@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import ErrorContext, { useError } from '../context/ErrorContext';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../firebase/firebaseConfig';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { createSupportTicket } from '../firebase/cloudFunctions';
 import { AlertCircle, RefreshCw, Send, CheckCircle } from 'lucide-react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,18 +15,17 @@ const ApplicationErrorView = ({ error, clearError }) => {
   const handleSubmitReport = async () => {
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, 'supportTickets'), {
-        type: 'bug_report',
-        status: 'open',
+      await createSupportTicket({
+        subject: 'Bug Report: ' + (error?.message || 'Unknown error'),
+        description: [
+          'Type: bug_report',
+          'Error: ' + (error?.message || 'Unknown error'),
+          'Stack: ' + (error?.stack || 'No stack trace'),
+          'Page: ' + window.location.href,
+          'Info: ' + (additionalInfo || 'none'),
+        ].join('\n'),
+        category: 'technical',
         priority: 'high',
-        errorMessage: error?.message || 'Unknown error',
-        stackTrace: error?.stack || 'No stack trace',
-        pageUrl: window.location.href,
-        additionalInfo: additionalInfo || '',
-        userId: user?.uid || 'anonymous',
-        userEmail: user?.email || userData?.email || 'anonymous',
-        userName: user?.displayName || userData?.fullName || 'Anonymous User',
-        createdAt: serverTimestamp(),
       });
       setSubmitted(true);
     } catch (err) {

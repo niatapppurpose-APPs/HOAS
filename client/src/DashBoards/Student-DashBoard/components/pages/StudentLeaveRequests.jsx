@@ -3,12 +3,7 @@ import { useAuth } from '../../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import StudentHeader from '../layout/StudentHeader';
-import { db } from '../../../../firebase/firebaseConfig';
-import {
-    collection, query, where, onSnapshot,
-    doc, updateDoc, serverTimestamp
-} from 'firebase/firestore';
-import { requestLeave } from '../../../../firebase/cloudFunctions';
+import { requestLeave, getMyLeaves } from '../../../../firebase/cloudFunctions';
 import {
     Calendar, Clock, Plus, X, MapPin, FileText,
     CheckCircle, XCircle, Loader2, AlertCircle,
@@ -60,30 +55,37 @@ const StudentLeaveRequests = () => {
     useEffect(() => {
         if (!user?.uid) return;
 
-        const q = query(
-            collection(db, 'leaveRequests'),
-            where('studentId', '==', user.uid)
-        );
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
-            if (snapshot.metadata.fromCache && snapshot.empty) return;
+        const load = async () => {
+            try {
+                const { leaves } = await getMyLeaves();
+                if (cancelled) return;
 
-            const list = snapshot.docs.map(d => ({
-                id: d.id,
-                ...d.data()
-            })).sort((a, b) => {
-                const tA = a.createdAt?.toMillis?.() ?? 0;
-                const tB = b.createdAt?.toMillis?.() ?? 0;
-                return tB - tA;
-            });
-            setLeaves(list);
-            setLoading(false);
-        }, (error) => {
-            console.error('Leave fetch error:', error);
-            setLoading(false);
-        });
+                const list = (leaves || []).map(l => ({
+                    id: l._id,
+                    ...l,
+                })).sort((a, b) => {
+                    const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    return tB - tA;
+                });
+                setLeaves(list);
+                setLoading(false);
+            } catch (error) {
+                console.error('Leave fetch error:', error);
+                setLoading(false);
+            }
+        };
 
-        return () => unsubscribe();
+        load();
+
+        const interval = setInterval(load, 30000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
     }, [user?.uid]);
 
     const handleChange = (e) => {
@@ -123,16 +125,8 @@ const StudentLeaveRequests = () => {
     };
 
     const handleCancel = async (leaveId) => {
-        try {
-            await updateDoc(doc(db, 'leaveRequests', leaveId), {
-                status: 'cancelled',
-                updatedAt: serverTimestamp(),
-            });
-            toast.success('Leave request cancelled');
-        } catch (error) {
-            console.error('Cancel error:', error);
-            toast.error('Failed to cancel leave request');
-        }
+        console.warn('Leave cancellation is not available in this build', leaveId);
+        toast.info('Cancelling leaves is not available in this build');
     };
 
     const formatDate = (timestamp) => {

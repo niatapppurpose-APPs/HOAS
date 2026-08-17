@@ -1,8 +1,17 @@
 import { useState, useEffect } from "react";
 import { X, Search, UserCheck } from "lucide-react";
-import { db } from "../../../../firebase/firebaseConfig";
-import { collection, query, where, getDocs, updateDoc, doc, arrayUnion } from "firebase/firestore";
+import { listUsers } from "../../../../firebase/cloudFunctions";
+import { getHostels, updateHostel } from "../../../../firebase/hostelApi";
 import { useToast } from "../../../../components/Toast";
+
+const mapUser = (u) => ({
+    id: u._id,
+    uid: u.uid,
+    displayName: u.name || u.displayName,
+    email: u.email,
+    studentId: u.studentId,
+    rollNumber: u.rollNumber,
+});
 
 const AssignStudentModal = ({ isOpen, onClose, hostel, collegeName, assignedWardens }) => {
     const toast = useToast();
@@ -16,30 +25,33 @@ const AssignStudentModal = ({ isOpen, onClose, hostel, collegeName, assignedWard
     useEffect(() => {
         if (!isOpen || !collegeName) return;
 
+        let cancelled = false;
+
         const fetchStudents = async () => {
             setLoading(true);
             try {
-                const q = query(
-                    collection(db, "users"),
-                    where("role", "==", "student"),
-                    where("collegeName", "==", collegeName)
-                );
-                const snapshot = await getDocs(q);
-                const allStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const { users } = await listUsers({ role: "student" });
+                if (cancelled) return;
+                const allStudents = (users || []).map(mapUser);
 
                 // Filter out students already in the hostel
-                const availableStudents = allStudents.filter(s => !hostel.students?.includes(s.id));
+                const hostelStudentIds = (hostel.students || []).map(s => (typeof s === 'string' ? s : s?._id || s?.id));
+                const availableStudents = allStudents.filter(s => !hostelStudentIds.includes(s.id));
                 setStudents(availableStudents);
             } catch (error) {
                 console.error("Error fetching students:", error);
                 toast.error("Failed to fetch abstract students");
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
 
         setSelectedStudents([]);
         fetchStudents();
+
+        return () => {
+            cancelled = true;
+        };
     }, [isOpen, collegeName, hostel.students]);
 
     const handleSubmit = async () => {
@@ -50,32 +62,17 @@ const AssignStudentModal = ({ isOpen, onClose, hostel, collegeName, assignedWard
 
         setLoading(true);
         try {
-            // 1. Update Hostel doc
-            const hostelRef = doc(db, "hostels", hostel.id);
-            await updateDoc(hostelRef, {
-                students: arrayUnion(...selectedStudents)
-            });
+            const fresh = (await getHostels()).find(h => h._id === hostel.id || h.id === hostel.id);
+            const currentStudents = (fresh?.students || hostel.students || [])
+                .map(s => (typeof s === 'string' ? s : s?._id || s?.id))
+                .filter(Boolean);
+            const merged = Array.from(new Set([...currentStudents, ...selectedStudents]));
 
-            // 2. Update Student docs
-            const updatePromises = selectedStudents.map(studentId => {
-                const studentRef = doc(db, "users", studentId);
-                const updateData = {
-                    hostelId: hostel.id,
-                    hostelBlock: hostel.block || ''
-                };
+            await updateHostel(hostel.id, { students: merged });
 
-                if (roomNumber.trim()) {
-                    updateData.roomNumber = roomNumber.trim();
-                }
-
-                if (selectedWarden) {
-                    updateData.assignedWarden = selectedWarden;
-                }
-
-                return updateDoc(studentRef, updateData);
-            });
-
-            await Promise.all(updatePromises);
+            if (roomNumber.trim() || selectedWarden) {
+                console.warn('Per-student room/warden assignment not available in this build');
+            }
 
             toast.success("Students assigned successfully");
             onClose();
