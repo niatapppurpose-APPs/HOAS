@@ -2,6 +2,8 @@ import {useState,  useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { io } from 'socket.io-client';
 
+const SOCKET_URL = (import.meta.env.VITE_API_URL || window.location.origin).replace(/\/+$/, '');
+
 // Initialize Socket.IO connection using the Firebase ID token.
 // The backend authenticates connections via firebaseAuth.verifyIdToken(token)
 // (see hoas-backend/src/services/socket-auth.js). The io() call connects with
@@ -35,7 +37,11 @@ export default function useSocket() {
     fetchToken().then((token) => {
       if (!token) return;
 
-      const socket = io({ auth: { token }, transports: ['websocket'] });
+      const socket = io(SOCKET_URL, {
+        auth: { token },
+        transports: ['websocket'],
+        path: '/socket.io',
+      });
       socketRef.current = socket;
 
       socket.on('connect', () => {

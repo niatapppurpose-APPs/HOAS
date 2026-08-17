@@ -13,10 +13,13 @@ export async function authenticateSocket(socket, next) {
       const decoded = await firebaseAuth.verifyIdToken(token);
       uid = decoded.uid;
     } catch {
-      if (env.firebaseDevMode && !token.startsWith('dev.')) return next(new Error('INVALID_TOKEN'));
-      if (env.firebaseDevMode && token.startsWith('dev.')) {
-        try { uid = jwt.verify(token.slice(4), env.devTokenSecret).uid; }
-        catch { return next(new Error('INVALID_TOKEN')); }
+      if (!env.firebaseDevMode || !token.startsWith('dev.')) {
+        return next(new Error('INVALID_TOKEN'));
+      }
+      try {
+        uid = jwt.verify(token.slice(4), env.devTokenSecret).uid;
+      } catch {
+        return next(new Error('INVALID_TOKEN'));
       }
     }
 

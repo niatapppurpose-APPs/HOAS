@@ -13,8 +13,10 @@ export async function authenticate(req, res, next) {
     try {
       const decoded = await firebaseAuth.verifyIdToken(token);
       uid = decoded.uid;
-    } catch (error) {
-      if (!env.firebaseDevMode || !token.startsWith('dev.')) throw new AppError(401, 'INVALID_TOKEN');
+    } catch {
+      if (!env.firebaseDevMode || !token.startsWith('dev.')) {
+        throw new AppError(401, 'INVALID_TOKEN');
+      }
       try {
         const payload = jwt.verify(token.slice(4), env.devTokenSecret);
         uid = payload.uid;
@@ -44,8 +46,10 @@ export function verifyTokenOnly(req, res, next) {
         const decoded = await firebaseAuth.verifyIdToken(token);
         uid = decoded.uid;
         email = decoded.email || null;
-      } catch (error) {
-        if (!env.firebaseDevMode || !token.startsWith('dev.')) throw new AppError(401, 'INVALID_TOKEN');
+      } catch {
+        if (!env.firebaseDevMode || !token.startsWith('dev.')) {
+          throw new AppError(401, 'INVALID_TOKEN');
+        }
         try {
           const payload = jwt.verify(token.slice(4), env.devTokenSecret);
           uid = payload.uid;

@@ -8,7 +8,10 @@ export const env = {
   nodeEnv: required('NODE_ENV', 'development'),
   mongoUri: required('MONGODB_URI', ''),
   firebaseProjectId: required('FIREBASE_PROJECT_ID', ''),
-  firebaseServiceAccountPath: resolve(process.cwd(), required('FIREBASE_SERVICE_ACCOUNT_PATH', '')),
+  firebaseServiceAccountPath: required('FIREBASE_SERVICE_ACCOUNT_PATH', '/etc/secrets/serviceAccountKey.json').startsWith('/')
+    ? required('FIREBASE_SERVICE_ACCOUNT_PATH', '/etc/secrets/serviceAccountKey.json')
+    : resolve(process.cwd(), required('FIREBASE_SERVICE_ACCOUNT_PATH', '')),
+  firebaseServiceAccountJson: required('FIREBASE_SERVICE_ACCOUNT_JSON', ''),
   firebaseDevMode: required('FIREBASE_DEV_MODE', 'false') === 'true',
   devTokenSecret: required('DEV_TOKEN_SECRET', ''),
   allowedOrigins: required('ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:3000,https://hoas-client-4n13.vercel.app,https://hoas.onrender.com')
