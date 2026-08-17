@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_URL 
+  ? import.meta.env.VITE_API_URL.replace(/\/?$/, '') + '/api' 
+  : '/api';
 
 export const useServerStatus = (checkInterval = 5000) => {
   const [isServerOnline, setIsServerOnline] = useState(true);

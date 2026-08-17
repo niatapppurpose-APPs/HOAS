@@ -47,6 +47,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'hoas-backend',
+    time: new Date().toISOString(),
+  });
+});
+
 app.post('/api/dev/token', (req, res) => {
   if (!env.firebaseDevMode) return res.status(404).json({ error: 'NOT_FOUND' });
   const { uid } = req.body || {};
