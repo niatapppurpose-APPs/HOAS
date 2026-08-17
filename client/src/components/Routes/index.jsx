@@ -9,6 +9,13 @@ const ProtectedRoute = ({ roles = [], children }) => {
     }
     // After initialization, if there's no authenticated user, send to login
     if (!user) return <Navigate to="/login" replace />;
+
+    // Pending and denied accounts must remain on the approval status page.
+    const accountStatus = String(userData?.status || '').toLowerCase();
+    if ((accountStatus === 'pending' || accountStatus === 'denied') && window.location.pathname !== '/waiting-approval') {
+        return <Navigate to="/waiting-approval" replace />;
+    }
+
     // Allow admin/owner access for any route that includes admin or owner in roles
     if ((roles.includes('admin') || roles.includes('owner')) && (isAdmin || userData?.role === 'admin' || userData?.role === 'owner')) {
         return children;

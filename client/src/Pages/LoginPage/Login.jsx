@@ -72,8 +72,7 @@ if (user && (!userDataLoading || minDelayPassed)) {
           } else if (status === 'pending') {
             navigate("/waiting-approval", { replace: true });
           } else if (status === 'denied') {
-            // Show denied state
-            navigate("/login", { replace: true });
+            navigate("/waiting-approval", { replace: true });
           } else {
             // Unknown status - default to pending
             navigate("/waiting-approval", { replace: true });
