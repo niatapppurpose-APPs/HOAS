@@ -7,8 +7,24 @@ import { recordAudit } from '../services/audit.service.js';
 import { sendWelcomeEmail } from '../services/email.service.js';
 import { notifyUser, notifyAdmins } from '../services/notification.service.js';
 import { firebaseAuth } from '../config/firebase.js';
+import { emitToUser, broadcastUserUpdate } from '../services/socket.service.js';
 
 const STUDENT_FIELDS = ['studentId', 'rollNumber', 'idNumber', 'feeDetails', 'hostelBlock'];
+
+// A user counts as online only if their last activity is recent (socket
+// heartbeats / connects). If lastActiveAt is missing or stale the presence
+// dot decays to offline even if isOnline was never flipped off (tab closed,
+// network dropped without a disconnect event).
+const PRESENCE_TTL_MS = 90 * 1000;
+
+function withPresence(users) {
+  const now = Date.now();
+  return users.map((u) => {
+    const doc = typeof u.toObject === 'function' ? u.toObject() : u;
+    doc.isOnline = !!(u.isOnline && u.lastActiveAt && now - new Date(u.lastActiveAt).getTime() < PRESENCE_TTL_MS);
+    return doc;
+  });
+}
 
 export async function listUsers(req, res, next) {
   try {
@@ -17,22 +33,31 @@ export async function listUsers(req, res, next) {
     if (req.user.role === 'management') {
       filter.collegeId = req.user.collegeId;
     }
+    if (req.user.role === 'warden') {
+      filter.collegeId = req.user.collegeId;
+    }
     if (role) filter.role = role;
     if (status) filter.status = status;
     if (collegeId) filter.collegeId = collegeId;
     if (search) {
-      filter.$or = [
+      const searchOr = [
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
         { studentId: { $regex: search, $options: 'i' } },
       ];
+      if (filter.$or) {
+        filter.$and = [{ $or: filter.$or }, { $or: searchOr }];
+        delete filter.$or;
+      } else {
+        filter.$or = searchOr;
+      }
     }
     const users = await User.find(filter)
       .populate('collegeId', 'name')
       .populate('hostelId', 'name')
       .sort({ createdAt: -1 })
       .limit(200);
-    res.json({ users });
+    res.json({ users: withPresence(users) });
   } catch (error) {
     next(error);
   }
@@ -43,7 +68,7 @@ export async function listManagementUsers(req, res, next) {
     const users = await User.find({ role: { $in: ['management', 'unknown'] } })
       .populate('collegeId', 'name')
       .sort({ createdAt: -1 });
-    res.json({ users });
+    res.json({ users: withPresence(users) });
   } catch (error) {
     next(error);
   }
@@ -222,6 +247,68 @@ export async function setUserStatus(req, res, next) {
       targetId: user._id,
     });
     res.json({ user });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function setUserRole(req, res, next) {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) throw new AppError(404, 'USER_NOT_FOUND');
+    if (req.body.role === 'admin' && req.user.role !== 'owner') {
+      throw new AppError(403, 'ONLY_OWNER_CAN_ASSIGN_ADMIN');
+    }
+
+    user.role = req.body.role;
+    if (req.body.collegeId !== undefined) {
+      user.collegeId = req.body.collegeId || undefined;
+      if (!req.body.collegeId) user.collegeName = undefined;
+    }
+    await user.save();
+    await recordAudit({
+      actor: req.user,
+      action: 'USER_ROLE_CHANGED',
+      targetType: 'User',
+      targetId: user._id,
+      metadata: { role: user.role, collegeId: req.body.collegeId || null },
+    });
+    res.json({ user });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateStudentVerification(req, res, next) {
+  try {
+    const student = await User.findOne({ _id: req.params.id, role: 'student' });
+    if (!student) throw new AppError(404, 'STUDENT_NOT_FOUND');
+
+    if (req.user.role === 'management' && !canManageCollege(req.user, student.collegeId)) {
+      throw new AppError(403, 'FORBIDDEN');
+    }
+    if (req.user.role === 'warden' && !(student.collegeId && String(req.user.collegeId) === String(student.collegeId))) {
+      throw new AppError(403, 'FORBIDDEN');
+    }
+
+    const field = req.user.role === 'warden' ? 'wardenVerification' : 'managementVerification';
+    const value = req.body.value === 'Verify' ? 'Verified' : 'Not Verified';
+    student[field] = value;
+    if (value === 'Not Verified') student.unverifyReason = req.body.reason || '';
+    else if (field === 'managementVerification') student.unverifyReason = '';
+    await student.save();
+
+    await recordAudit({
+      actor: req.user,
+      action: value === 'Verified' ? 'STUDENT_VERIFIED' : 'STUDENT_UNVERIFIED',
+      targetType: 'User',
+      targetId: student._id,
+      metadata: { field, reason: req.body.reason || '' },
+    });
+    const realtimeUser = student.toObject();
+    emitToUser(student._id, 'user:updated', { user: realtimeUser });
+    broadcastUserUpdate(student);
+    res.json({ user: student });
   } catch (error) {
     next(error);
   }

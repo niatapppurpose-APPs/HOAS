@@ -106,6 +106,29 @@ const Wardens = () => {
         };
     }, []);
 
+    // Realtime presence updates pushed over Socket.IO
+    useEffect(() => {
+        const handleRealtimeWardenUpdate = (event) => {
+            const updatedUser = event.detail?.user;
+            if (!updatedUser?.uid || updatedUser.role !== 'warden') return;
+            setWardens((current) =>
+                current.map((w) =>
+                    w.uid === updatedUser.uid
+                        ? {
+                              ...w,
+                              isOnline: updatedUser.isOnline,
+                              fullName: updatedUser.name || w.fullName,
+                              displayName: updatedUser.name || w.displayName,
+                          }
+                        : w
+                )
+            );
+        };
+
+        window.addEventListener('hoas:user-updated', handleRealtimeWardenUpdate);
+        return () => window.removeEventListener('hoas:user-updated', handleRealtimeWardenUpdate);
+    }, []);
+
 
 
     const onSearchEventWarden = (event) => {

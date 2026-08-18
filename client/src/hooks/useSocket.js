@@ -53,11 +53,15 @@ export default function useSocket() {
         }
       });
 
-      socket.on('disconnect', () => {
+       socket.on('disconnect', () => {
         setConnected(false);
         console.log('Socket.IO disconnected');
-      });
-    });
+       });
+
+       socket.on('user:updated', (payload) => {
+         window.dispatchEvent(new CustomEvent('hoas:user-updated', { detail: payload }));
+       });
+     });
   }, [user]);
 
   useEffect(() => {

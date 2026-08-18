@@ -87,6 +87,29 @@ const Students = () => {
             if (timer) clearTimeout(timer);
         };
     }, []);
+
+    // Realtime presence updates pushed over Socket.IO
+    useEffect(() => {
+        const handleRealtimeStudentUpdate = (event) => {
+            const updatedUser = event.detail?.user;
+            if (!updatedUser?.uid || updatedUser.role !== 'student') return;
+            setStudents((current) =>
+                current.map((s) =>
+                    s.uid === updatedUser.uid
+                        ? {
+                              ...s,
+                              isOnline: updatedUser.isOnline,
+                              fullName: updatedUser.name || s.fullName,
+                              displayName: updatedUser.name || s.displayName,
+                          }
+                        : s
+                )
+            );
+        };
+
+        window.addEventListener('hoas:user-updated', handleRealtimeStudentUpdate);
+        return () => window.removeEventListener('hoas:user-updated', handleRealtimeStudentUpdate);
+    }, []);
     const onSearchEventStudent = (event) => {
         setSearchListStudent(event.target.value)
     }

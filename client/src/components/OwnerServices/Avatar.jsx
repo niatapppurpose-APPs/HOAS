@@ -1,5 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 import { updateProfile } from "firebase/auth";
 import { auth } from "../../firebase/firebaseConfig";
 import { useToast } from "../Toast";
@@ -11,7 +16,7 @@ const Avatar = ({
   image,
   name,
   size = "md",
-  rounded = "xl",
+  rounded = "full",
   user,
   objectFit = "cover",
   className,
@@ -23,18 +28,59 @@ const Avatar = ({
 }) => {
   // If user prop is provided, extract image and name from it
   const directImage = image || user?.photoURL || user?.image;
-  const providedName  = name || user?.displayName || user?.name;
+  const providedName = name || user?.displayName || user?.name;
   const resolvedEmail = email || user?.email;
   const resolvedUid = uid || user?.uid || auth.currentUser?.uid;
 
   const randomName = useMemo(() => {
-    const firstNames = ["Alex","Jordan","Taylor","Morgan","Casey","Riley","Avery","Skylar","Quinn","Reese","Sage","Rowan","Phoenix","River","Dakota","Harper","Emerson","Finley","Kai","Eden","Charlie","Drew","Blair","Cameron"];
-    const lastNames  = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez","Hernandez","Lopez","Wilson","Anderson","Thomas"];
-    return `${firstNames[Math.floor(Math.random()*firstNames.length)]} ${lastNames[Math.floor(Math.random()*lastNames.length)]}`;
+    const firstNames = [
+      "Alex",
+      "Jordan",
+      "Taylor",
+      "Morgan",
+      "Casey",
+      "Riley",
+      "Avery",
+      "Skylar",
+      "Quinn",
+      "Reese",
+      "Sage",
+      "Rowan",
+      "Phoenix",
+      "River",
+      "Dakota",
+      "Harper",
+      "Emerson",
+      "Finley",
+      "Kai",
+      "Eden",
+      "Charlie",
+      "Drew",
+      "Blair",
+      "Cameron",
+    ];
+    const lastNames = [
+      "Smith",
+      "Johnson",
+      "Williams",
+      "Brown",
+      "Jones",
+      "Garcia",
+      "Miller",
+      "Davis",
+      "Rodriguez",
+      "Martinez",
+      "Hernandez",
+      "Lopez",
+      "Wilson",
+      "Anderson",
+      "Thomas",
+    ];
+    return `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
   }, []);
   const avatarName = providedName || randomName;
 
-  const [imageError, setImageError]   = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoURL, setPhotoURL] = useState(directImage || null);
   const fileRef = useRef(null);
@@ -53,7 +99,6 @@ const Avatar = ({
     if (directImage === uploadedUrlRef.current) return;
     setPhotoURL(directImage || null);
   }, [directImage]);
-
 
   const sizeClasses = {
     xs: "w-6 h-6 text-[10px]",
@@ -131,7 +176,10 @@ const Avatar = ({
     try {
       const storage = getStorage();
       const ext = file.name.split(".").pop();
-      const storageRef = ref(storage, `profiles/${resolvedUid}/avatar-${Date.now()}.${ext}`);
+      const storageRef = ref(
+        storage,
+        `profiles/${resolvedUid}/avatar-${Date.now()}.${ext}`,
+      );
       const task = uploadBytesResumable(storageRef, file);
 
       task.on(
@@ -155,7 +203,7 @@ const Avatar = ({
           onUpload?.(url);
           toast.success("Photo updated");
           setUploading(false);
-        }
+        },
       );
     } catch {
       toast.error("Upload failed");
@@ -216,7 +264,7 @@ const Avatar = ({
         onChange={handleUpload}
       />
     </div>
-  )
+  );
 };
 
 export default Avatar;

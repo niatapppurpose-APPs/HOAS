@@ -12,6 +12,11 @@ export default defineConfig({
         target: process.env.VITE_API_PROXY || 'http://localhost:4000',
         changeOrigin: true,
       },
+      '/socket.io': {
+        target: process.env.VITE_API_PROXY || 'http://localhost:4000',
+        changeOrigin: true,
+        ws: true,
+      },
     },
     allowedHosts: [
       'hoas-demo-2026.loca.lt',

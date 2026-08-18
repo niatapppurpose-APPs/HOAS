@@ -15,6 +15,8 @@ export const detectColumns = (headerRow) => {
             snoCol = idx;
         } else if (nameCol === -1 && /name/.test(h)) {
             nameCol = idx;
+        } else if (studentIdCol === -1 && /(student\s*id|student\s*number|roll\s*(no|number)|registration\s*(no|number))/.test(h)) {
+            studentIdCol = idx;
         } else if (emailCol === -1 && /(e[-\s]?mail|g[-\s]?mail|gmail)/.test(h)) {
             emailCol = idx;
         } else if (pendingFeeCol === -1 && /pending/.test(h)) {

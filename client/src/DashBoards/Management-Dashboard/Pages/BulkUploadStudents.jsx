@@ -1,6 +1,4 @@
 import { useState, useRef, useCallback } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../../firebase/firebaseConfig';
 import { bulkCreateStudents } from '../../../firebase/cloudFunctions';
 import { useAuth } from '../../../context/AuthContext';
 import { useTheme } from '../../../context/ThemeContext';
@@ -118,16 +116,8 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
         startTimer(parsedData.length);
 
         try {
-            // Step 1: Upload Excel to Firebase Storage for download link
-            let downloadUrl = '';
-            try {
-                const storageRef = ref(storage, `bulk-uploads/${college}/${Date.now()}_${file.name}`);
-                const snapshot = await uploadBytes(storageRef, file);
-                downloadUrl = await getDownloadURL(snapshot.ref);
-            } catch (storageErr) {
-                console.warn('Could not upload to storage:', storageErr);
-                // Continue without download URL
-            }
+            // Storage is optional; student account creation must not depend on bucket quota.
+            const downloadUrl = '';
 
             // Step 2: Call cloud function to create all students
             const result = await bulkCreateStudents({

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, provider } from "../../firebase/firebaseConfig";
-import { listUsers } from "../../firebase/cloudFunctions";
 import { useToast } from "../../components/Toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, IdCard } from "lucide-react";
@@ -9,39 +8,16 @@ import { HashLoader } from 'react-spinners';
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 
-const normalizeStudentIdentifier = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '');
-
 const resolveStudentEmailByIdentifier = async (identifier) => {
   const rawInput = String(identifier || '').trim();
-  const normalizedInput = normalizeStudentIdentifier(rawInput);
 
   if (!rawInput) return null;
 
-  // Fast path: exact match on common identifier fields
-  const exactMatchFields = ["studentId", "rollNumber", "idNumber", "registrationNumber", "regNo", "admissionNumber"];
-  for (const field of exactMatchFields) {
-    const { users } = await listUsers({ search: rawInput, limit: 1 });
-    const student = users?.[0];
-    if (student && student[field] === rawInput && student.email) return student.email;
-  }
-
-  // Fallback: normalize and match in-memory against a bounded student set
-  const { users } = await listUsers({ role: "student", limit: 300 });
-
-  for (const student of users || []) {
-    const candidateIdentifiers = [
-      student?.studentId,
-      student?.rollNumber,
-      student?.idNumber,
-      student?.registrationNumber,
-      student?.regNo,
-      student?.admissionNumber,
-    ];
-
-    const matched = candidateIdentifiers.some((candidate) => normalizeStudentIdentifier(candidate) === normalizedInput);
-    if (matched && student?.email) {
-      return student.email;
-    }
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+  const response = await fetch(`${apiBase}/api/auth/resolve-student?studentId=${encodeURIComponent(rawInput)}`);
+  if (response.ok) {
+    const data = await response.json();
+    return data.email || null;
   }
 
   return null;

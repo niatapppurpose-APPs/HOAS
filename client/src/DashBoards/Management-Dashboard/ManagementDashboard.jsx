@@ -76,6 +76,25 @@ const ManagementDashboard = () => {
     };
   }, [userData?.uid]);
 
+  // Realtime presence/profile updates pushed over Socket.IO
+  useEffect(() => {
+    const handleRealtimeUserUpdate = (event) => {
+      const updatedUser = event.detail?.user;
+      if (!updatedUser?.uid) return;
+      const merge = (list) =>
+        list.map((u) =>
+          u.uid === updatedUser.uid
+            ? { ...u, isOnline: updatedUser.isOnline, fullName: updatedUser.name || u.fullName, displayName: updatedUser.name || u.displayName }
+            : u
+        );
+      setWardens((current) => merge(current));
+      setStudents((current) => merge(current));
+    };
+
+    window.addEventListener('hoas:user-updated', handleRealtimeUserUpdate);
+    return () => window.removeEventListener('hoas:user-updated', handleRealtimeUserUpdate);
+  }, []);
+
   // College logo (from user profile, already loaded)
   useEffect(() => {
     setCollegeLogo(userData?.collegeLogo || null);

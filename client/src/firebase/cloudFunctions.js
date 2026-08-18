@@ -2,13 +2,13 @@ import { auth } from './firebaseConfig';
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
-const request = async (method, path, payload = null) => {
+const request = async (method, path, payload = null, timeoutMs = 15000) => {
   if (!auth.currentUser) {
     throw new Error('You must be signed in');
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const token = await auth.currentUser.getIdToken();
@@ -36,7 +36,7 @@ const request = async (method, path, payload = null) => {
 };
 
 const get = (path) => request('GET', path);
-const post = (path, payload) => request('POST', path, payload);
+const post = (path, payload, timeoutMs) => request('POST', path, payload, timeoutMs);
 const patch = (path, payload) => request('PATCH', path, payload);
 const del = (path) => request('DELETE', path);
 
@@ -113,6 +113,11 @@ export const setUserStatus = async (userId, status) => {
   return { user };
 };
 
+export const setUserRole = async (userId, role, collegeId = null) => {
+  const { user } = await patch(`/api/users/${userId}/role`, { role, collegeId });
+  return { user };
+};
+
 export const getAllManagementUsers = async () => {
   return get('/api/users/management');
 };
@@ -160,8 +165,13 @@ export const bulkCreateStudents = async (studentsData) => {
   const collegeId = await requireCollegeId(studentsData?.collegeId);
   const results = await post('/api/students/bulk', {
     collegeId,
-    students: studentsData.students || [],
-  });
+    students: (studentsData.students || []).map((student) => ({
+      ...student,
+      collegeId,
+      totalFee: student.totalFee ?? student.feeDetails?.totalFee ?? 0,
+      paidFee: student.paidFee ?? student.feeDetails?.paidFee ?? 0,
+    })),
+  }, 5 * 60 * 1000);
   return results;
 };
 
@@ -402,6 +412,9 @@ export const verifyFeeByWarden = async (studentUid, approved = true, note = '') 
   const { fee: updated } = await post(`/api/fees/${fee._id}/verify-warden`, { approved, note });
   return { fee: flattenFee(updated) };
 };
+
+export const updateStudentVerification = (studentId, value, reason = '') =>
+  patch(`/api/users/${studentId}/verification`, { value, reason });
 
 export const uploadStudentFeeProof = async (proofImage) => {
   const { fee } = await post('/api/fees/proof', { proofImageUrl: proofImage });

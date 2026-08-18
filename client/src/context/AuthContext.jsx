@@ -93,7 +93,9 @@ export const AuthProvider = ({ children }) => {
               const userClaims = tokenResult.claims;
               setClaims(userClaims);
               setAdminChecked(true);
-              await fetchProfile(currentUser);
+               await fetchProfile(currentUser);
+               const onlineProfile = await updateProfile({ isOnline: true });
+               if (onlineProfile) setUserData(onlineProfile);
             } catch (error) {
               console.error("Error loading profile:", error);
               setIsAdmin(false);
@@ -119,6 +121,18 @@ export const AuthProvider = ({ children }) => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const handleRealtimeUserUpdate = (event) => {
+      const updatedUser = event.detail?.user;
+      if (!updatedUser || !user?.uid || updatedUser.uid !== user.uid) return;
+      setUserData(updatedUser);
+      setIsAdmin(getRole(updatedUser.role));
+    };
+
+    window.addEventListener('hoas:user-updated', handleRealtimeUserUpdate);
+    return () => window.removeEventListener('hoas:user-updated', handleRealtimeUserUpdate);
+  }, [user?.uid]);
 
   // Function to refresh role & profile from backend
   const refreshAdminStatus = async () => {

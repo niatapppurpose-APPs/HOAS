@@ -175,6 +175,9 @@ export async function bulkCreateStudents(req, res, next) {
       created: results.created,
       failed: results.failed,
       skipped: results.skipped,
+    }).catch((emailError) => {
+      // Email delivery must not turn a completed bulk upload into a 500 response.
+      console.warn('Bulk upload summary email failed:', emailError.message);
     });
 
     await recordAudit({
@@ -219,7 +222,14 @@ export async function listStudents(req, res, next) {
       .populate('wardenId', 'name')
       .sort({ createdAt: -1 })
       .limit(300);
-    res.json({ students });
+    const now = Date.now();
+    res.json({
+      students: students.map((s) => {
+        const doc = s.toObject();
+        doc.isOnline = !!(s.isOnline && s.lastActiveAt && now - new Date(s.lastActiveAt).getTime() < 90 * 1000);
+        return doc;
+      }),
+    });
   } catch (error) {
     next(error);
   }

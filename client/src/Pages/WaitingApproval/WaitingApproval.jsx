@@ -33,7 +33,7 @@ const WaitingApproval = () => {
           navigate("/dashboard/warden", { replace: true });
         } else if (userData.role === "student") {
           const needsPayment = !userData?.feeDetails?.paidFee || userData?.feeDetails?.paidFee === 0;
-          const unverified = !userData?.managementVerification || userData?.managementVerification === 'Unverified' || !userData?.wardenVerification || userData?.wardenVerification === 'Unverified';
+          const unverified = userData?.managementVerification !== 'Verified' || userData?.wardenVerification !== 'Verified';
           if (!needsPayment && !unverified) {
             navigate("/dashboard/student", { replace: true });
           }

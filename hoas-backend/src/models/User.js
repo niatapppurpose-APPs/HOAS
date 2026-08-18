@@ -47,6 +47,8 @@ const userSchema = new Schema(
     pwaUpdateMode: String,
     tourCompleted: Boolean,
     isActive: { type: Boolean, default: true },
+    isOnline: { type: Boolean, default: false },
+    lastActiveAt: Date,
   },
   { timestamps: true }
 );

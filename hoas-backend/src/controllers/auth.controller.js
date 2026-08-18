@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from '../services/audit.service.js';
+import { emitToUser, broadcastUserUpdate } from '../services/socket.service.js';
 
 export async function getMe(req, res, next) {
   try {
@@ -28,6 +29,8 @@ export async function updateMe(req, res, next) {
       if (req.body[field] !== undefined) req.user[field] = req.body[field];
     }
     await req.user.save();
+    emitToUser(req.user._id, 'user:updated', { user: req.user.toObject() });
+    broadcastUserUpdate(req.user);
     res.json({ user: req.user });
   } catch (error) {
     next(error);
@@ -110,6 +113,28 @@ export async function registerRequest(req, res, next) {
     });
 
     res.status(201).json({ user });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function resolveStudentLogin(req, res, next) {
+  try {
+    const studentId = String(req.query.studentId || '').trim();
+    if (!studentId) throw new AppError(400, 'STUDENT_ID_REQUIRED');
+    const escapedStudentId = studentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    const user = await User.findOne({
+      role: 'student',
+      $or: [
+        { studentId: { $regex: `^${escapedStudentId}$`, $options: 'i' } },
+        { rollNumber: { $regex: `^${escapedStudentId}$`, $options: 'i' } },
+        { idNumber: { $regex: `^${escapedStudentId}$`, $options: 'i' } },
+      ],
+    }).select('email');
+
+    if (!user) throw new AppError(404, 'STUDENT_NOT_FOUND');
+    res.json({ email: user.email });
   } catch (error) {
     next(error);
   }

@@ -26,7 +26,10 @@ const mapUser = (u) => ({
   isOnline: u.isOnline,
   photoURL: u.avatarUrl || u.photoURL,
   hostelBlock: u.hostelBlock,
-  collegeName: u.collegeName,
+  collegeName: u.collegeName || u.collegeId?.name,
+  feeDetails: u.feeDetails || { totalFee: 0, paidFee: 0, pendingFee: 0 },
+  managementVerification: u.managementVerification === 'Verified' ? 'Verify' : 'Unverified',
+  wardenVerification: u.wardenVerification === 'Verified' ? 'Verify' : 'Unverified',
   studentId: u.studentId,
   rollNumber: u.rollNumber,
   roomNumber: u.roomNumber,
@@ -64,6 +67,19 @@ const Students = () => {
     const block = params.get('block');
     if (block) setBlockFilter(block);
   }, [location.search]);
+
+  useEffect(() => {
+    const handleRealtimeStudentUpdate = (event) => {
+      const updatedUser = event.detail?.user;
+      if (!updatedUser || updatedUser.role !== 'student') return;
+      setStudents((current) => current.map((student) => (
+        student.id === updatedUser._id ? mapUser(updatedUser) : student
+      )));
+    };
+
+    window.addEventListener('hoas:user-updated', handleRealtimeStudentUpdate);
+    return () => window.removeEventListener('hoas:user-updated', handleRealtimeStudentUpdate);
+  }, []);
 
   useEffect(() => {
     if (!managementUid) return; // wait until auth resolves
@@ -159,8 +175,16 @@ const Students = () => {
       return;
     }
 
-    console.warn('Verification update not available in this build', { studentId, field, value });
-    toast.info('Verification updates are not available in this build');
+    try {
+      await cloudFunctions.updateStudentVerification(studentId, value);
+      setStudents((current) => current.map((student) => (
+        student.id === studentId ? { ...student, [field]: value } : student
+      )));
+      toast.success('Student verification updated');
+    } catch (error) {
+      console.error('Verification update failed:', error);
+      toast.error(error.message || 'Could not update verification');
+    }
   };
 
   const confirmUnverify = async () => {
@@ -169,9 +193,19 @@ const Students = () => {
       return;
     }
 
-    console.warn('Un-verify action not available in this build', unverifyModal.studentId);
-    toast.info("Un-verify action is not available in this build");
-    setUnverifyModal({ show: false, studentId: null, reason: "" });
+    try {
+      await cloudFunctions.updateStudentVerification(unverifyModal.studentId, 'Unverified', unverifyModal.reason.trim());
+      setStudents((current) => current.map((student) => (
+        student.id === unverifyModal.studentId
+          ? { ...student, managementVerification: 'Unverified' }
+          : student
+      )));
+      toast.success('Student marked as unverified');
+      setUnverifyModal({ show: false, studentId: null, reason: "" });
+    } catch (error) {
+      console.error('Unverify update failed:', error);
+      toast.error(error.message || 'Could not update verification');
+    }
   };
 
   const contextInfo = {
@@ -347,7 +381,7 @@ const Students = () => {
                         </span>
                       )}
                       {student.collegeName && (
-                        <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800/50">
+                        <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase text-purple-800 dark:text-purple-200 bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800/50">
                           {student.collegeName || contextInfo.collegeName}
                         </span>
                       )}

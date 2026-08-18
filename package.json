@@ -6,8 +6,9 @@
   "description": "HOAS - Hostel Operations Accountability System (Full-Stack Workspace)",
   "scripts": {
     "client": "cd client && npm run dev",
-    "server": "cd server && firebase emulators:start",
-    "dev": "concurrently \"npm run client\" \"npm run server\"",
+    "backend": "cd hoas-backend && npm run dev",
+    "server": "npm run backend",
+    "dev": "node scripts/dev.mjs",
     "build": "cd client && npm run build",
     "install:client": "cd client && npm install",
     "install:server": "cd server/functions && npm install",
@@ -26,6 +27,7 @@
     "driver.js": "^1.4.0",
     "firebase-functions": "^7.2.5",
     "lottie-react": "^2.4.1",
+    "motion": "^13.1.0",
     "recharts": "^3.6.0",
     "resend": "^6.9.3"
   }

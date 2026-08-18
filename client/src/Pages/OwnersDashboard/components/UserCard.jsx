@@ -27,6 +27,7 @@ const UserCard = ({
   isFirst,
   onToggleSelection,
   onStatusChange,
+  onRoleChange,
   onDelete
 }) => {
   const { isDark } = useTheme();
@@ -64,7 +65,7 @@ const UserCard = ({
             <Avatar image={userData.photoURL} name={userData.displayName} size="xl" rounded="full" />
             <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center" style={{ zIndex: 20 }}>
               <span
-                className="absolute inline-flex h-full w-full rounded-full animate-ping"
+                className="absolute inline-flex h-full w-full rounded-full owner-status-ping"
                 style={{ backgroundColor: userData.isOnline ? '#22c55e' : '#ef4444', opacity: 1 }}
               />
               <span
@@ -82,9 +83,24 @@ const UserCard = ({
               <h3 className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
                 {userData.displayName || "Unknown User"}
               </h3>
-              <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r ${colorClass} text-white`}>
-                {userData.role}
-              </span>
+              {userData.role === 'unknown' ? (
+                <select
+                  value={userData.role}
+                  onChange={(event) => onRoleChange(userData.id, event.target.value)}
+                  className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
+                  aria-label={`Assign role to ${userData.displayName || userData.email}`}
+                >
+                  <option value="unknown">Assign role</option>
+                  <option value="student">Student</option>
+                  <option value="warden">Warden</option>
+                  <option value="management">Management</option>
+                  <option value="admin">Admin</option>
+                </select>
+              ) : (
+                <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r ${colorClass} text-white`}>
+                  {userData.role}
+                </span>
+              )}
             </div>
             <p className="text-sm truncate" style={{ color: 'var(--text-muted)' }}>{userData.email}</p>
             {/* College Name & Location - Real-time from Firestore */}

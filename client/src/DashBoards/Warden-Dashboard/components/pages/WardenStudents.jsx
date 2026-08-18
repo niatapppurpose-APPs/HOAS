@@ -4,13 +4,25 @@ import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import WardenHeader from '../layout/WardenHeader';
 import Avatar from '../../../../components/OwnerServices/Avatar';
-import { listUsers } from '../../../../firebase/cloudFunctions';
+import { listUsers, updateStudentVerification } from '../../../../firebase/cloudFunctions';
 import {
     Users, Search, Filter, Loader2, GraduationCap,
     Phone, Mail, Home, Hash, Building2, ChevronDown,
     ChevronUp, User, X, SortAsc, SortDesc,
     Eye, Calendar, CheckCircle, Clock, CircleX 
 } from 'lucide-react';
+
+const mapUser = (u) => ({
+    id: u._id,
+    uid: u.uid,
+    ...u,
+    fullName: u.name || u.displayName,
+    roomNumber: u.roomNumber || '',
+    photoURL: u.avatarUrl || u.photoURL,
+    managementVerification: u.managementVerification === 'Verified' ? 'Verify' : 'Unverified',
+    wardenVerification: u.wardenVerification === 'Verified' ? 'Verify' : 'Unverified',
+    feeDetails: u.feeDetails || { totalFee: 0, paidFee: 0, pendingFee: 0 },
+});
 
 const WardenStudents = () => {
     const { userData } = useAuth();
@@ -24,6 +36,7 @@ const WardenStudents = () => {
     const [sortField, setSortField] = useState('fullName');
     const [sortDir, setSortDir] = useState('asc');
     const [selectedStudent, setSelectedStudent] = useState(null);
+    const [unverifyModal, setUnverifyModal] = useState({ show: false, studentId: null, reason: "" });
 
     // Fetch students under this warden
     useEffect(() => {
@@ -38,14 +51,7 @@ const WardenStudents = () => {
             try {
                 const { users } = await listUsers({ role: 'student' });
                 if (cancelled) return;
-                const list = (users || []).map(u => ({
-                    id: u._id,
-                    uid: u.uid,
-                    ...u,
-                    fullName: u.name,
-                    roomNumber: u.roomNumber || '',
-                    photoURL: u.avatarUrl,
-                }));
+                const list = (users || []).map(mapUser);
                 setStudents(list);
                 setLoading(false);
             } catch (error) {
@@ -65,9 +71,56 @@ const WardenStudents = () => {
         };
     }, [userData?.collegeId]);
 
+    useEffect(() => {
+        const handleRealtimeStudentUpdate = (event) => {
+            const updatedUser = event.detail?.user;
+            if (!updatedUser || updatedUser.role !== 'student') return;
+            setStudents((current) => current.map((student) => (
+                student.id === updatedUser._id ? mapUser(updatedUser) : student
+            )));
+        };
+
+        window.addEventListener('hoas:user-updated', handleRealtimeStudentUpdate);
+        return () => window.removeEventListener('hoas:user-updated', handleRealtimeStudentUpdate);
+    }, []);
+
     const handleVerificationChange = async (studentId, value) => {
-        console.warn('Warden verification updates are not available in this build', { studentId, value });
-        toast.info('Verification updates are managed centrally in this build');
+        if (value === 'Unverified') {
+            setUnverifyModal({ show: true, studentId, reason: "" });
+            return;
+        }
+
+        try {
+            await updateStudentVerification(studentId, value);
+            setStudents((current) => current.map((student) => (
+                student.id === studentId ? { ...student, wardenVerification: value } : student
+            )));
+            toast.success('Student verification updated');
+        } catch (error) {
+            console.error('Verification update failed:', error);
+            toast.error(error.message || 'Could not update verification');
+        }
+    };
+
+    const confirmUnverify = async () => {
+        if (unverifyModal.reason.trim().split('\n').filter(l => l.trim()).length < 2) {
+            toast.error("Reason must be at least 2 lines long.");
+            return;
+        }
+
+        try {
+            await updateStudentVerification(unverifyModal.studentId, 'Unverified', unverifyModal.reason.trim());
+            setStudents((current) => current.map((student) => (
+                student.id === unverifyModal.studentId
+                    ? { ...student, wardenVerification: 'Unverified' }
+                    : student
+            )));
+            toast.success('Student marked as unverified');
+            setUnverifyModal({ show: false, studentId: null, reason: "" });
+        } catch (error) {
+            console.error('Unverify update failed:', error);
+            toast.error(error.message || 'Could not update verification');
+        }
     };
 
     const filteredStudents = useMemo(() => {
@@ -391,6 +444,41 @@ const WardenStudents = () => {
                                     </div>
                                 );
                             })}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Unverify Reason Modal */}
+            {unverifyModal.show && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+                    <div className="w-full max-w-md rounded-2xl border shadow-2xl p-6"
+                        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
+                        <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Reason for Un-verifying</h3>
+                        <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
+                            Please provide a detailed reason (at least 2 lines) for marking this student as unverified. This will be sent as a notification.
+                        </p>
+                        <textarea
+                            value={unverifyModal.reason}
+                            onChange={(e) => setUnverifyModal(prev => ({ ...prev, reason: e.target.value }))}
+                            placeholder="Enter reason here...&#10;Line 2 starts here..."
+                            className="w-full h-32 p-3 rounded-xl border text-sm mb-6 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                            style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                        />
+                        <div className="flex gap-3">
+                            <button
+                                className="flex-1 px-4 py-2 rounded-xl text-sm font-bold border"
+                                style={{ borderColor: 'var(--border-disabled)', color: 'var(--text-secondary)' }}
+                                onClick={() => setUnverifyModal({ show: false, studentId: null, reason: "" })}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="flex-1 px-4 py-2 rounded-xl text-sm font-bold bg-rose-600 text-white hover:bg-rose-700 transition-colors"
+                                onClick={confirmUnverify}
+                            >
+                                Un-verify Student
+                            </button>
                         </div>
                     </div>
                 </div>

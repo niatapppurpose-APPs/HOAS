@@ -8,6 +8,7 @@ import {
   markAllNotificationsRead,
   changePassword,
   registerRequest,
+  resolveStudentLogin,
 } from '../controllers/auth.controller.js';
 import { validateBody, validateParams } from '../middleware/validate.middleware.js';
 import { z } from 'zod';
@@ -36,6 +37,7 @@ const changePasswordSchema = z.object({
 });
 
 router.post('/register', verifyTokenOnly, validateBody(registerSchema), registerRequest);
+router.get('/resolve-student', resolveStudentLogin);
 
 router.use(authenticate);
 

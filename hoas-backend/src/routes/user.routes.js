@@ -11,6 +11,8 @@ import {
   approveUser,
   denyUser,
   setUserStatus,
+  setUserRole,
+  updateStudentVerification,
   deleteUser,
 } from '../controllers/user.controller.js';
 
@@ -62,6 +64,23 @@ router.patch(
   validateParams(z.object({ id: objectId })),
   validateBody(z.object({ status: z.enum(['approved', 'suspended']) })),
   setUserStatus
+);
+router.patch(
+  '/:id/role',
+  requireRole('owner', 'admin'),
+  validateParams(z.object({ id: objectId })),
+  validateBody(z.object({
+    role: z.enum(['admin', 'management', 'warden', 'student', 'unknown']),
+    collegeId: objectId.optional().nullable(),
+  })),
+  setUserRole
+);
+router.patch(
+  '/:id/verification',
+  requireRole('management', 'warden'),
+  validateParams(z.object({ id: objectId })),
+  validateBody(z.object({ value: z.enum(['Verify', 'Unverified']), reason: z.string().max(500).optional() })),
+  updateStudentVerification
 );
 router.delete('/:id', validateParams(z.object({ id: objectId })), deleteUser);
 
