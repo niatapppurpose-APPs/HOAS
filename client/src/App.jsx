@@ -72,7 +72,7 @@ const App = () => {
     return <NotFound />;
   }
 
-  const PUBLIC_ROUTES = ['/', '/login', '/admin-login', '/firebase-mode'];
+  const PUBLIC_ROUTES = ['/', '/login', '/admin-login'];
 
 const content = (
     <>

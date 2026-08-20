@@ -1,8 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence, connectAuthEmulator } from "firebase/auth";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
-import { getStorage, connectStorageEmulator } from "firebase/storage";
-import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
+import { getAuth } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 import { getMessaging, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
@@ -17,37 +15,17 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const provider = new GoogleAuthProvider();
-export const db = getFirestore(app);
-export const functions = getFunctions(app, 'asia-south1');
 export const storage = getStorage(app);
 
 // Initialize Cloud Messaging (only if supported by browser)
 let messaging = null;
-const messagingReady = (async () => {
+(async () => {
   try {
     if (await isSupported()) {
       messaging = getMessaging(app);
     }
   } catch (err) {
-    console.warn('⚠️ Firebase Messaging not supported in this browser:', err);
+    console.warn('Firebase Messaging not supported in this browser:', err);
   }
 })();
-export { messaging, messagingReady };
-
-// Track emulator status for other modules
-// Default to false to avoid accidentally using emulators in production
-export let isEmulatorConnected = false;
-
-// Always use production Firebase - emulator mode disabled for production stability
-const useEmulator = false;
-
-// In production, silently correct any stale localStorage emulator flag
-localStorage.setItem('HOAS_LAST_FIREBASE_MODE', 'production');
-
-// Import debug utilities in development
-if (import.meta.env.DEV) {
-  import('./debugUtils.js').then((module) => {
-    module.logFirebaseMode();
-  });
-}
+export { messaging };

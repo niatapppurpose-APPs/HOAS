@@ -125,7 +125,19 @@ const EmergencyLocationMonitor = ({ title = 'Emergency Live Locations', tone = '
       if (!silent) setLoading(true);
 
       const response = await getActiveEmergencyLocations();
-      const data = Array.isArray(response?.data) ? response.data : [];
+      const raw = Array.isArray(response?.sessions) ? response.sessions : [];
+      const data = raw.map((item) => {
+        const studentId = item.studentId?._id ? String(item.studentId._id) : item.studentId;
+        return {
+          ...item,
+          studentId,
+          latitude: item.latitude ?? item.lat,
+          longitude: item.longitude ?? item.lng,
+          studentName: item.studentName ?? item.student?.name ?? 'Student',
+          sharedAt: item.sharedAt ?? item.startedAt ?? item.createdAt,
+          lastUpdatedAt: item.lastUpdatedAt ?? item.lastUpdateAt ?? item.updatedAt,
+        };
+      });
       const now = Date.now();
 
       data.forEach((item) => {

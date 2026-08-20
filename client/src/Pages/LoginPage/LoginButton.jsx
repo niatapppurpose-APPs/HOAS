@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, provider } from "../../firebase/firebaseConfig";
+import { auth } from "../../firebase/firebaseConfig";
 import { useToast } from "../../components/Toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, IdCard } from "lucide-react";

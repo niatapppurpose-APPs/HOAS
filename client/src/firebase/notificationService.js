@@ -151,12 +151,12 @@ export const showNotification = (title, options = {}) => {
 };
 
 /**
- * Save FCM token to user's Firestore document
- * @param {Object} db - Firestore instance
+ * Save FCM token to the user's profile via the backend API
+ * @param {string} _db - Unused (kept for backwards compatibility)
  * @param {string} userId - User ID
  * @param {string} token - FCM token
  */
-export const saveFCMToken = async (db, userId, token) => {
+export const saveFCMToken = async (_db, userId, token) => {
   try {
     const { updateProfile } = await import('./cloudFunctions');
     await updateProfile({

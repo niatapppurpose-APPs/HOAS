@@ -35,7 +35,7 @@ const request = async (method, path, payload = null, timeoutMs = 15000) => {
   }
 };
 
-const get = (path) => request('GET', path);
+const get = (path, timeoutMs) => request('GET', path, null, timeoutMs);
 const post = (path, payload, timeoutMs) => request('POST', path, payload, timeoutMs);
 const patch = (path, payload) => request('PATCH', path, payload);
 const del = (path) => request('DELETE', path);
@@ -325,23 +325,23 @@ export const shareEmergencyLocation = async ({ latitude, longitude, accuracy, ex
   return post('/api/emergency/share', {
     ...toLocationPayload({ latitude, longitude, accuracy }),
     durationMinutes: expiryMinutes,
-  });
+  }, 30000);
 };
 
 export const updateEmergencyLocation = async ({ latitude, longitude, accuracy }) => {
-  return post('/api/emergency/update', toLocationPayload({ latitude, longitude, accuracy }));
+  return post('/api/emergency/update', toLocationPayload({ latitude, longitude, accuracy }), 30000);
 };
 
 export const stopEmergencyLocation = async () => {
-  return post('/api/emergency/stop');
+  return post('/api/emergency/stop', null, 30000);
 };
 
 export const getEmergencyLocationSession = async () => {
-  return get('/api/emergency/session');
+  return get('/api/emergency/session', 30000);
 };
 
 export const getActiveEmergencyLocations = async () => {
-  return get('/api/emergency/active');
+  return get('/api/emergency/active', 30000);
 };
 
 export const getLocationHistory = async (studentId) => {

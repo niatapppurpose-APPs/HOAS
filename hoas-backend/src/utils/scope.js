@@ -8,6 +8,9 @@ export function canManageCollege(user, collegeId) {
     const byUid = user.uid === String(collegeId);
     return sameDocId || byUid;
   }
+  if (user.role === 'warden') {
+    return user.collegeId && String(user.collegeId) === String(collegeId);
+  }
   return false;
 }
 

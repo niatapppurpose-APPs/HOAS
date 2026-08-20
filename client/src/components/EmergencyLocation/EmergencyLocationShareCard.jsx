@@ -13,18 +13,26 @@ import 'leaflet/dist/leaflet.css';
 import './EmergencyLocation.css';
 
 const UPDATE_THROTTLE_MS = 6000;
-const POSITION_TIMEOUT_MS = 10000;
+const POSITION_TIMEOUT_MS = 20000;
 const SLIDE_KNOB_WIDTH = 56;
 
-const getErrorMessage = (error, fallback) => error?.message || fallback;
+const getErrorMessage = (error, fallback) => {
+  if (error?.code === 1) return 'Location permission denied. Please allow location access to share your emergency location.';
+  if (error?.code === 2) return 'Your location is unavailable right now. Please try again from an open area.';
+  if (error?.code === 3) return 'Could not get your location in time. Check your browser/GPS location settings and try again.';
+  return error?.message || fallback;
+};
 
-const toSessionState = (session) => ({
-  latitude: session.latitude,
-  longitude: session.longitude,
-  accuracy: session.accuracy ?? null,
-  expiresAt: session.expiresAt ?? null,
-  sharedAt: session.sharedAt ?? session.startedAt ?? session.createdAt ?? null
-});
+const toSessionState = (session) => {
+  if (!session) return { latitude: null, longitude: null, accuracy: null, expiresAt: null, sharedAt: null };
+  return {
+    latitude: session.latitude ?? session.lat,
+    longitude: session.longitude ?? session.lng,
+    accuracy: session.accuracy ?? null,
+    expiresAt: session.expiresAt ?? null,
+    sharedAt: session.sharedAt ?? session.startedAt ?? session.createdAt ?? null,
+  };
+};
 
 const EmergencyLocationShareCard = ({ tone = 'student' }) => {
   const toast = useToast();
@@ -144,13 +152,13 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
     try {
       if (forceStart) {
         const response = await shareEmergencyLocation(payload);
-        applySessionState(response?.data);
+        applySessionState(response?.session);
         lastUpdateMsRef.current = Date.now();
         toast.success(response?.alreadyActive ? 'Emergency location sharing resumed.' : 'Emergency location sharing is now active.');
       } else if (isSharingRef.current) {
         // Suppress visual errors for background syncing unless hard failure
         const response = await updateEmergencyLocation(payload);
-        if (response?.data) applySessionState(response.data);
+        if (response?.session) applySessionState(response.session);
         lastUpdateMsRef.current = Date.now();
       }
     } catch (error) {
@@ -174,7 +182,7 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
   const hydrateSession = async () => {
     try {
       const response = await getEmergencyLocationSession();
-      const session = response?.data;
+      const session = response?.session;
       if (session?.isActive) {
         applySessionState(session);
         ensureTrackingWatch();
