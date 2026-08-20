@@ -15,24 +15,6 @@ const Reports = () => {
   const [uploads, setUploads] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Helper: Extract storage path from a Firebase download URL
-  const getStoragePathFromUrl = (url) => {
-    try {
-      if (!url) return null;
-      // URL format: https://firebasestorage.googleapis.com/v0/b/[bucket]/o/[path]?alt=media&token=...
-      const baseUrl = "https://firebasestorage.googleapis.com/v0/b/";
-      if (!url.startsWith(baseUrl)) return null;
-
-      const pathStartIndex = url.indexOf("/o/") + 3;
-      const pathEndIndex = url.indexOf("?");
-      let encodedPath = url.substring(pathStartIndex, pathEndIndex !== -1 ? pathEndIndex : undefined);
-      return decodeURIComponent(encodedPath);
-    } catch (e) {
-      console.error("Error parsing URL:", e);
-      return null;
-    }
-  };
-
   // Fetch bulk upload history
   useEffect(() => {
     if (!user?.uid) return;

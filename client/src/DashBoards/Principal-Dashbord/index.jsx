@@ -5,6 +5,7 @@ import { Building2, Loader2, CheckCircle, UploadIcon } from "lucide-react";
 import LocationAutocomplete from "../../components/LocationAutocomplete";
 import { HashLoader } from 'react-spinners'
 import { compressLogoForModal } from '../../Pages/OwnersDashboard/utils/compressLogo';
+import { uploadLogo } from '../../utils/cloudinaryUpload';
 import ProfileSuccessScreen from './ProfileSuccessScreen';
 
 
@@ -127,10 +128,12 @@ const ManagementProfile = () => {
     }
 
     try {
-      // Compress logo to base64 data URL
+      // Compress logo then proxy-upload it to Cloudinary
       let logoUrl = null;
       if (logoFile) {
-        logoUrl = await compressLogoForModal(logoFile);
+        const dataUri = await compressLogoForModal(logoFile);
+        const uploaded = await uploadLogo(dataUri);
+        logoUrl = uploaded.url;
         setUploadedLogoUrl(logoUrl);
       }
 

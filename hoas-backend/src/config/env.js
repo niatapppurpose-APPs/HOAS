@@ -27,4 +27,10 @@ export const env = {
   },
   appUrl: required('HOAS_APP_URL', 'http://localhost:5173'),
   renderUrl: required('RENDER_URL', 'https://hoas.onrender.com'),
+  cloudinary: {
+    cloudName: required('CLOUDINARY_CLOUD_NAME', ''),
+    apiKey: required('CLOUDINARY_API_KEY', ''),
+    apiSecret: required('CLOUDINARY_API_SECRET', ''),
+    url: required('CLOUDINARY_URL', ''),
+  },
 };

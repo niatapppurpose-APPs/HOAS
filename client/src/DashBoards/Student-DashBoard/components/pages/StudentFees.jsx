@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../../../context/AuthContext';
-import { storage } from '../../../../firebase/firebaseConfig';
 import { getStudentFee, uploadStudentFeeProof } from '../../../../firebase/cloudFunctions';
+import { uploadFeeProof } from '../../../../utils/cloudinaryUpload';
 import StudentHeader from '../layout/StudentHeader';
 import { useToast } from '../../../../components/Toast';
 import { Wallet, IndianRupee, Clock, AlertCircle, UploadCloud, FileText, CheckCircle2, ShieldCheck, UserCheck, Loader2, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
@@ -93,12 +92,9 @@ const StudentFees = () => {
 
     setUploading(true);
     try {
-      const path = `fee-proofs/${user.uid}/${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, path);
-      const snap = await uploadBytes(storageRef, file, { contentType: file.type });
-      const downloadUrl = await getDownloadURL(snap.ref);
+      const { url } = await uploadFeeProof(file);
 
-      await uploadStudentFeeProof(downloadUrl);
+      await uploadStudentFeeProof(url);
       toast.success('Proof uploaded successfully');
       await loadRecord();
     } catch (error) {

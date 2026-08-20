@@ -6,6 +6,7 @@ import { z } from 'zod';
 import {
   listColleges,
   createCollege,
+  updateCollege,
   getCollegeStats,
   deleteCollege,
 } from '../controllers/college.controller.js';
@@ -25,6 +26,12 @@ router.use(authenticate);
 
 router.get('/', listColleges);
 router.post('/', requireRole('owner'), validateBody(createCollegeSchema), createCollege);
+router.patch(
+  '/:id',
+  requireRole('owner', 'management'),
+  validateParams(z.object({ id: objectId })),
+  updateCollege
+);
 router.get('/:id/stats', validateParams(z.object({ id: objectId })), getCollegeStats);
 router.delete('/:id', requireRole('owner'), validateParams(z.object({ id: objectId })), deleteCollege);
 

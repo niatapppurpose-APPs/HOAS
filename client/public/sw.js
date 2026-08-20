@@ -62,6 +62,11 @@ self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
   const sameOrigin = requestUrl.origin === self.location.origin;
 
+  // Never intercept cross-origin requests (API, FCM, fonts, etc.) — let the
+  // browser handle them directly. Intercepting API calls caused
+  // "Failed to convert value to 'Response'" when a cross-origin fetch failed.
+  if (!sameOrigin) return;
+
   // Always prefer network for page navigations so new deploys are picked up quickly.
   if (isNavigationRequest(event.request)) {
     event.respondWith(

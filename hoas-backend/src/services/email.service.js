@@ -11,6 +11,9 @@ function getTransporter() {
       port: env.smtp.port,
       secure: env.smtp.port === 465,
       auth: { user: env.smtp.user, pass: env.smtp.password },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     });
   }
   return transporter;
@@ -28,6 +31,16 @@ export function sendMail({ to, subject, html, text = '' }) {
     subject,
     html,
     text,
+  });
+}
+
+/**
+ * Send an email without blocking the request that triggered it. Errors are
+ * logged so delivery problems remain diagnosable without delaying responses.
+ */
+export function sendMailAsync({ to, subject, html, text = '' }) {
+  sendMail({ to, subject, html, text }).catch((error) => {
+    console.error(`[email-failed] to=${to} subject=${subject}`, error.message || error);
   });
 }
 
@@ -56,7 +69,7 @@ export function sendWelcomeEmail({ to, name, role, extra = [], resetLink = '' })
   const resetBlock = resetLink
     ? `<p style="margin-top:12px"><a href="${resetLink}" style="background:#6366f1;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none">Set your password</a></p>`
     : '';
-  return sendMail({
+  return sendMailAsync({
     to,
     subject: `Welcome to HOAS — your ${role} account is ready`,
     html: layout(`

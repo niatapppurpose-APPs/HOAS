@@ -4,6 +4,7 @@ import { HashLoader } from 'react-spinners';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
 import { useToast } from '../../../components/Toast';
 import { compressLogoForModal } from '../utils/compressLogo';
+import { uploadLogo } from '../../../utils/cloudinaryUpload';
 import CollegeSelect from '../components/CollegeSelect';
 
 const initialForm = {
@@ -90,7 +91,12 @@ const AddManagementModal = React.memo(({ isOpen, onClose, isDark }) => {
 
     setIsSubmitting(true);
     try {
-      const collegeLogo = logoFile ? await compressLogoForModal(logoFile) : null;
+      let collegeLogo = null;
+      if (logoFile) {
+        const dataUri = await compressLogoForModal(logoFile);
+        const uploaded = await uploadLogo(dataUri);
+        collegeLogo = uploaded.url;
+      }
       await cloudFunctions.createManagement({
         collegeName: form.collegeName.trim(),
         principalName: form.principalName.trim(),

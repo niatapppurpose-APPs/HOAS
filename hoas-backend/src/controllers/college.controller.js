@@ -39,6 +39,29 @@ export async function createCollege(req, res, next) {
   }
 }
 
+export async function updateCollege(req, res, next) {
+  try {
+    const college = await College.findById(req.params.id);
+    if (!college) throw new AppError(404, 'COLLEGE_NOT_FOUND');
+
+    const canUpdate =
+      req.user.role === 'owner' ||
+      req.user.role === 'admin' ||
+      (req.user.role === 'management' && String(req.user.collegeId) === String(college._id));
+    if (!canUpdate) throw new AppError(403, 'FORBIDDEN');
+
+    if (req.body.logoUrl !== undefined) college.logoUrl = req.body.logoUrl;
+    if (req.body.address !== undefined) college.address = req.body.address;
+    if (req.body.location !== undefined) college.location = req.body.location;
+    await college.save();
+
+    await recordAudit({ actor: req.user, action: 'COLLEGE_UPDATED', targetType: 'College', targetId: college._id });
+    res.json({ college });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function getCollegeStats(req, res, next) {
   try {
     const college = await College.findById(req.params.id);

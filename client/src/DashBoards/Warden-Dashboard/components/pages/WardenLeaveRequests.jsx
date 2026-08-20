@@ -58,7 +58,13 @@ const WardenLeaveRequests = () => {
         const { leaves } = await getWardenLeaves();
         if (cancelled) return;
         const rows = (leaves || [])
-          .map((entry) => ({ id: entry._id, ...entry }))
+          .map((entry) => ({
+            id: entry._id,
+            ...entry,
+            studentName: entry.studentName || entry.studentId?.name,
+            startDate: entry.startDate || entry.fromDate,
+            endDate: entry.endDate || entry.toDate,
+          }))
           .sort((a, b) => {
             const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;

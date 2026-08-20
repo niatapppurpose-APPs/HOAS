@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { CATEGORIES, STATUS_CONFIG, FILTER_OPTIONS, formatDate, getCategoryLabel } from './complaintConstants';
 import compressImage from './utils/compressImage';
+import { uploadComplaintImage } from '../../../../utils/cloudinaryUpload';
 import CountdownTimer from './CountdownTimer';
 import ComplaintDetailModal from './ComplaintDetailModal';
 import './StudentComplaints.css';
@@ -172,14 +173,17 @@ const StudentComplaints = () => {
         try {
             let imageUrl = null;
 
-            // Compress & encode image as base64 data URL (stored in Firestore directly)
+            // Compress image to a small data URI, then proxy-upload it to Cloudinary
             if (imageFile) {
                 try {
                     setUploadProgress(30);
-                    imageUrl = await compressImage(imageFile);
+                    const dataUri = await compressImage(imageFile);
+                    setUploadProgress(60);
+                    const uploaded = await uploadComplaintImage(dataUri);
+                    imageUrl = uploaded.url;
                     setUploadProgress(100);
                 } catch (compressErr) {
-                    console.warn('Image compression failed:', compressErr);
+                    console.warn('Image processing failed:', compressErr);
                     toast.warning('Image processing failed — complaint will be submitted without the attachment.');
                     imageUrl = null;
                 }

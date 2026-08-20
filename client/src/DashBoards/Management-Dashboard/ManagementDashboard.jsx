@@ -97,7 +97,7 @@ const ManagementDashboard = () => {
 
   // College logo (from user profile, already loaded)
   useEffect(() => {
-    setCollegeLogo(userData?.collegeLogo || null);
+    setCollegeLogo(userData?.collegeId?.logoUrl || userData?.logoUrl || null);
   }, [userData]);
 
   // search state for status table

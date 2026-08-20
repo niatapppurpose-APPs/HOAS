@@ -9,6 +9,7 @@ import PWAUpdateSettings from '../../../components/PWAUpdateSettings';
 import { MapPin, Save, Building2, Loader2, CheckCircle, ImagePlus, Upload, X, Camera, Layout, RefreshCw } from 'lucide-react';
 import AppLogo4k from '../../../assets/AppLogo4k.png';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
+import { uploadLogo } from '../../../utils/cloudinaryUpload';
 
 /** Compress an image File to a base64 string ≤ maxKB. */
 function compressImage(file, maxKB = 200) {
@@ -64,18 +65,22 @@ const ManagementSettings = () => {
     const [logoSaved, setLogoSaved] = useState(false);
     const fileInputRef = useRef(null);
 
-    // Load location + logo from userData
+    // Load location + logo from userData (collegeId populated by /auth/me)
+    const currentLocation = userData?.collegeId?.location || userData?.location || '';
+    const currentLogo = userData?.collegeId?.logoUrl || userData?.logoUrl || null;
+    const collegeId = userData?.collegeId?._id || userData?.collegeId;
+
     useEffect(() => {
-        if (userData?.collegeLocation) setCollegeLocation(userData.collegeLocation);
-        if (userData?.collegeLogo) setLogoPreview(userData.collegeLogo);
+        if (currentLocation) setCollegeLocation(currentLocation);
+        if (currentLogo) setLogoPreview(currentLogo);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userData]);
 
     // Track location changes
     useEffect(() => {
-        const currentLocation = userData?.collegeLocation || '';
         setHasChanges(collegeLocation !== currentLocation);
         setSaved(false);
-    }, [collegeLocation, userData]);
+    }, [collegeLocation, currentLocation]);
 
     // ── Logo handlers ──
     const processLogoFile = async (file) => {
@@ -101,10 +106,16 @@ const ManagementSettings = () => {
     };
 
     const handleSaveLogo = async () => {
-        if (!user || !logoPreview) return;
+        if (!user || !logoPreview || !collegeId) return;
         setIsLogoSaving(true);
         try {
-            await cloudFunctions.updateProfile({ collegeLogo: logoPreview });
+            let logoUrl = logoPreview;
+            // Proxy-upload to Cloudinary when it's still a local data URI
+            if (logoPreview.startsWith('data:')) {
+                const uploaded = await uploadLogo(logoPreview);
+                logoUrl = uploaded.url;
+            }
+            await cloudFunctions.updateCollege(collegeId, { logoUrl });
             toast.success('College logo updated! 🎉');
             setLogoSaved(true);
         } catch (err) {
@@ -121,17 +132,17 @@ const ManagementSettings = () => {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const hasLogoChanged = logoPreview !== (userData?.collegeLogo || null);
+    const hasLogoChanged = logoPreview !== currentLogo;
 
     const handleSave = async () => {
-        if (!user) {
+        if (!user || !collegeId) {
             toast.error('You must be signed in');
             return;
         }
 
         setIsSaving(true);
         try {
-            await cloudFunctions.updateProfile({ collegeLocation: collegeLocation.trim() });
+            await cloudFunctions.updateCollege(collegeId, { location: collegeLocation.trim() });
 
             toast.success('Location updated successfully! 📍');
             setSaved(true);
@@ -227,7 +238,7 @@ const ManagementSettings = () => {
                             </div>
 
                             {/* Current Location Display */}
-                            {userData?.collegeLocation && !hasChanges && (
+                            {currentLocation && !hasChanges && (
                                 <div
                                     className="flex items-center gap-2 px-4 py-3 rounded-xl"
                                     style={{
@@ -237,7 +248,7 @@ const ManagementSettings = () => {
                                 >
                                     <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                        Current location: <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{userData.collegeLocation}</span>
+                                        Current location: <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{currentLocation}</span>
                                     </p>
                                 </div>
                             )}
@@ -278,7 +289,7 @@ const ManagementSettings = () => {
 
                                 {hasChanges && (
                                     <button
-                                        onClick={() => setCollegeLocation(userData?.collegeLocation || '')}
+                                        onClick={() => setCollegeLocation(currentLocation)}
                                         className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors"
                                         style={{
                                             color: 'var(--text-muted)',
@@ -365,7 +376,7 @@ const ManagementSettings = () => {
                                 </div>
 
                                 {/* Current logo indicator */}
-                                {userData?.collegeLogo && !hasLogoChanged && (
+                                {currentLogo && !hasLogoChanged && (
                                     <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ backgroundColor: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
                                         <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                                         <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Logo already uploaded</p>

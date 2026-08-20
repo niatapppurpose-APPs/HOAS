@@ -193,7 +193,7 @@ const WardenAnnouncements = () => {
             } else {
                 await createAnnouncement({
                     ...dataToSave,
-                    collegeId: userData?.collegeId?._id,
+                    collegeId: userData?.collegeId?._id || userData?.collegeId,
                 });
 
                 // Show appropriate success message

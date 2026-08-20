@@ -30,6 +30,11 @@ const request = async (method, path, payload = null, timeoutMs = 15000) => {
       throw new Error(message);
     }
     return data;
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    throw error;
   } finally {
     clearTimeout(timeoutId);
   }
@@ -69,7 +74,7 @@ export const updateProfile = async (profileData) => {
 };
 
 export const registerRequest = async ({ name, role, email }) => {
-  const { user } = await post('/api/auth/register', { name, role, email });
+  const { user } = await post('/api/auth/register', { name, role, email }, 60000);
   return user;
 };
 
@@ -123,13 +128,18 @@ export const getAllManagementUsers = async () => {
 };
 
 export const createManagement = async (managementData) => {
-  const { user } = await post('/api/users/management', managementData);
+  const { user } = await post('/api/users/management', managementData, 60000);
   return { user };
 };
 
 // =============================================================================
 // COLLEGE MANAGEMENT
 // =============================================================================
+
+export const updateCollege = async (collegeId, collegeData) => {
+  const { college } = await patch(`/api/colleges/${collegeId}`, collegeData);
+  return { college };
+};
 
 export const deleteCollege = async (collegeId) => {
   await del(`/api/colleges/${collegeId}`);
@@ -177,13 +187,13 @@ export const bulkCreateStudents = async (studentsData) => {
 
 export const createWarden = async (wardenData) => {
   const collegeId = await requireCollegeId(wardenData?.collegeId);
-  const { user } = await post('/api/users/warden', { ...wardenData, collegeId });
+  const { user } = await post('/api/users/warden', { ...wardenData, collegeId }, 60000);
   return { user };
 };
 
 export const createStudent = async (studentData) => {
   const collegeId = await requireCollegeId(studentData?.collegeId);
-  const { student } = await post('/api/students', { ...studentData, collegeId });
+  const { student } = await post('/api/students', { ...studentData, collegeId }, 60000);
   return { student };
 };
 
@@ -251,8 +261,8 @@ export const requestLeave = async (leaveData) => {
   const { leave } = await post('/api/leaves', {
     leaveType: leaveData.leaveType || leaveData.type,
     reason: leaveData.reason,
-    fromDate: leaveData.fromDate,
-    toDate: leaveData.toDate,
+    fromDate: leaveData.fromDate || leaveData.startDate,
+    toDate: leaveData.toDate || leaveData.endDate,
   });
   return { leave };
 };
@@ -505,6 +515,50 @@ export const deleteSupportTicket = async (ticketId) => {
   return { ok: true };
 };
 
+// =============================================================================
+// UPLOADS (CLOUDINARY PROXY)
+// =============================================================================
+
+/**
+ * Upload a raw file (image/PDF) through the backend proxy to Cloudinary.
+ * @param {string} purpose 'avatar' | 'fee-proof' | 'logo' | 'complaint'
+ * @param {File} file
+ * @returns {Promise<{url: string, publicId: string}>}
+ */
+export const uploadImageFile = async (purpose, file) => {
+  if (!auth.currentUser) throw new Error('You must be signed in');
+  const token = await auth.currentUser.getIdToken();
+  const formData = new FormData();
+  formData.append('purpose', purpose);
+  formData.append('file', file);
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
+  try {
+    const response = await fetch(`${API_BASE}/api/uploads/file`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+      signal: controller.signal,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || data.error || 'Upload failed');
+    return data;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
+/**
+ * Upload a base64 data URI through the backend proxy to Cloudinary.
+ * @param {string} purpose 'avatar' | 'fee-proof' | 'logo' | 'complaint'
+ * @param {string} dataUri
+ * @returns {Promise<{url: string, publicId: string}>}
+ */
+export const uploadImageDataUri = async (purpose, dataUri) => {
+  return post('/api/uploads', { purpose, dataUri }, 60000);
+};
+
 export default {
   getMe,
   updateProfile,
@@ -519,6 +573,7 @@ export default {
   getAllManagementUsers,
   createManagement,
   deleteCollege,
+  updateCollege,
   getSystemSettings,
   updateSystemSettings,
   checkCollegeCapacity,
@@ -572,4 +627,6 @@ export default {
   createSupportTicket,
   listSupportTickets,
   resolveSupportTicket,
+  uploadImageFile,
+  uploadImageDataUri,
 };

@@ -404,10 +404,10 @@ const StudentLeaveRequests = () => {
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <CalendarDays className="w-3 h-3 text-blue-500" />
                                                     <p className="text-[10px] md:text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                                                        {leave.startDate} → {leave.endDate}
-                                                        {leave.startDate && leave.endDate && (
+                                                        {formatDate(leave.fromDate)} → {formatDate(leave.toDate)}
+                                                        {leave.fromDate && leave.toDate && (
                                                             <span className="ml-2 opacity-60">
-                                                                ({getDaysDiff(leave.startDate, leave.endDate)} days)
+                                                                ({getDaysDiff(leave.fromDate, leave.toDate)} days)
                                                             </span>
                                                         )}
                                                     </p>

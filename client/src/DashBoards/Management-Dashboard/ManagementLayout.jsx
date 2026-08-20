@@ -10,7 +10,10 @@ const ManagementLayout = () => {
   const { isDark } = useTheme();
 
   // Compute college logo from userData using useMemo to avoid state in effect
-  const collegeLogo = useMemo(() => userData?.collegeLogo || null, [userData?.collegeLogo]);
+  const collegeLogo = useMemo(
+    () => userData?.collegeId?.logoUrl || userData?.logoUrl || null,
+    [userData?.collegeId?.logoUrl, userData?.logoUrl]
+  );
 
   const theme = userData?.theme || {
     primary: '#6366F1',

@@ -20,7 +20,8 @@ const ManagementProfile = () => {
     const [loadingTeam, setLoadingTeam] = useState(true);
     const [promptDismissed, setPromptDismissed] = useState(false);
 
-    const collegeLogo = userData?.collegeLogo || null;
+    const collegeLogo = userData?.collegeId?.logoUrl || userData?.logoUrl || null;
+    const collegeLocation = userData?.collegeId?.location || userData?.location || "";
 
     // Fetch team members
     useEffect(() => {
@@ -176,7 +177,7 @@ const ManagementProfile = () => {
                                     {userData?.collegeName || "Your College"}
                                 </h1>
                                 <p className="text-xs sm:text-sm mt-0.5 truncate" style={{ color: mutedColor }}>
-                                    {userData?.collegeLocation || "Location not set"}
+                                    {collegeLocation || "Location not set"}
                                 </p>
                                 <div className="flex flex-wrap gap-1.5 mt-2">
                                     <span
@@ -199,7 +200,7 @@ const ManagementProfile = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-6 gap-2 sm:gap-3">
                             {[
                                 { icon: Building2, label: "Institution", value: userData?.collegeName || "—" },
-                                { icon: MapPin, label: "Location", value: userData?.collegeLocation || "—" },
+                                { icon: MapPin, label: "Location", value: collegeLocation || "—" },
                                 { icon: Mail, label: "Email", value: userData?.email || user?.email || "—" },
                                 { icon: Calendar, label: "Member Since", value: userData?.createdAt ? new Date(userData.createdAt).getFullYear() : "—" },
                                 { icon: Award, label: "Status", value: userData?.status === "approved" ? "Approved ✓" : userData?.status || "—" },

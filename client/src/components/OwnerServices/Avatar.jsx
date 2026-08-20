@@ -1,15 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
 import { updateProfile } from "firebase/auth";
 import { auth } from "../../firebase/firebaseConfig";
 import { useToast } from "../Toast";
 import { Camera, Loader2 } from "lucide-react";
 import { updateProfile as apiUpdateProfile } from "../../firebase/cloudFunctions";
+import { uploadAvatarFile } from "../../utils/cloudinaryUpload";
 
 // Reusable Avatar Component with fallback chain: image → initials
 const Avatar = ({
@@ -174,39 +169,21 @@ const Avatar = ({
 
     setUploading(true);
     try {
-      const storage = getStorage();
-      const ext = file.name.split(".").pop();
-      const storageRef = ref(
-        storage,
-        `profiles/${resolvedUid}/avatar-${Date.now()}.${ext}`,
-      );
-      const task = uploadBytesResumable(storageRef, file);
+      const { url } = await uploadAvatarFile(file);
 
-      task.on(
-        "state_changed",
-        null,
-        () => {
-          toast.error("Upload failed");
-          setUploading(false);
-        },
-        async () => {
-          const url = await getDownloadURL(task.snapshot.ref);
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { photoURL: url });
+      }
 
-          if (auth.currentUser) {
-            await updateProfile(auth.currentUser, { photoURL: url });
-          }
+      await apiUpdateProfile({ avatarUrl: url }).catch(() => {});
 
-          await apiUpdateProfile({ avatarUrl: url }).catch(() => {});
-
-          uploadedUrlRef.current = url;
-          setPhotoURL(url);
-          onUpload?.(url);
-          toast.success("Photo updated");
-          setUploading(false);
-        },
-      );
-    } catch {
-      toast.error("Upload failed");
+      uploadedUrlRef.current = url;
+      setPhotoURL(url);
+      onUpload?.(url);
+      toast.success("Photo updated");
+    } catch (error) {
+      toast.error(error?.message || "Upload failed");
+    } finally {
       setUploading(false);
     }
   };
