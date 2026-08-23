@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Outlet } from "react-router-dom";
 import StudentSidebar from './StudentSidebar';
 import { useAuth } from '../../../../context/AuthContext';
@@ -9,8 +9,14 @@ const StudentLayout = () => {
   const { userData } = useAuth();
   const { isDark } = useTheme();
 
-  const collegeLogo = userData?.collegeId?.logoUrl || userData?.collegeLogo || null;
-
+  const collegeLogo = useMemo(() => {
+    // collegeId can be: (a) a populated mongoose doc with .logoUrl, (b) a plain string ObjectId, or (c) undefined
+    if (userData?.collegeId && typeof userData?.collegeId === 'object' && userData?.collegeId?.logoUrl) {
+      return userData?.collegeId?.logoUrl; // populated ref case
+    }
+    // fallback: student's own logoUrl, or null
+    return userData?.logoUrl || null;
+  }, [userData?.collegeId, userData?.logoUrl]);
   const themeInfo = userData?.theme || {
     primary: '#3b82f6', // Blue theme for student
     secondary: '#6366f1',

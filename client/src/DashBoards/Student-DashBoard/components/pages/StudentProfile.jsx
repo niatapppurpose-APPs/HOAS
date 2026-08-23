@@ -21,7 +21,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 import ProfileBanner from "../../../../components/ProfileBanner";
-import AppLogo4k from "../../../../assets/AppLogo4k.png";
+import AppLogo4k from "../../../../assets/AppLogo4k.webp";
 import { useToast } from "../../../../components/Toast";
 import { ThemeToggle } from "../../../../components/ThemeToggle";
 const StudentProfile = () => {

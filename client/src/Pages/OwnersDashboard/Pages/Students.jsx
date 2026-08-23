@@ -11,7 +11,7 @@ import { Mail, GraduationCap, UserMinus, Building2, Search, X, RefreshCw, Shield
 import { useTheme } from '../../../context/ThemeContext';
 import EmptyState from '../../../components/OwnerServices/EmptyState';
 import NoDataLight from '../../../assets/No-Data.avif';
-import NoDataDark from '../../../assets/NoDataDark.png';
+import NoDataDark from '../../../assets/NoDataDark.webp';
 
 const Students = () => {
     const { isCollapsed, setIsCollapsed } = useOutletContext();

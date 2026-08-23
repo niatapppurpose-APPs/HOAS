@@ -11,7 +11,7 @@ import EmptyState from "../../../components/OwnerServices/EmptyState";
 import BulkUploadStudents from './BulkUploadStudents';
 import AddStudentModal from './AddStudentModal';
 import NoDataLight from '../../../assets/No-Data.avif';
-import NoDataDark from '../../../assets/NoDataDark.png';
+import NoDataDark from '../../../assets/NoDataDark.webp';
 import { useToast } from "../../../components/Toast";
 import * as cloudFunctions from "../../../firebase/cloudFunctions";
 

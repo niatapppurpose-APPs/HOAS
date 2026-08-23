@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import mongoose from 'mongoose';
 import { env } from './config/env.js';
 import { globalRateLimit } from './middleware/rateLimit.middleware.js';
@@ -35,6 +36,9 @@ app.use(
     credentials: true,
   })
 );
+// Gzip all API responses — JSON payloads compress ~70-90%, dramatically
+// speeding up data-heavy endpoints on slow mobile connections.
+app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(globalRateLimit);

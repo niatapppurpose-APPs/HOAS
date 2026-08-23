@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Outlet } from "react-router-dom";
 import ManagementSidebar from './components/layout/ManagementSidebar';
 import { useAuth } from '../../context/AuthContext';

@@ -9,7 +9,7 @@ import { useToast } from '../../../components/Toast';
 import EmptyState from '../../../components/OwnerServices/EmptyState';
 import { useTheme } from '../../../context/ThemeContext';
 import NoDataLight from '../../../assets/No-Data.avif';
-import NoDataDark from '../../../assets/NoDataDark.png';
+import NoDataDark from '../../../assets/NoDataDark.webp';
 const Wardens = () => {
     const { isDark } = useTheme();
     const { isCollapsed, setIsCollapsed } = useOutletContext();

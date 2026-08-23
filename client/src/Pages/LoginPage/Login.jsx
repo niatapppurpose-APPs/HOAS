@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import LoginButton from "./LoginButton";
 import RedirectingPage from "./RedirectingPage";
 import { Loader2, ArrowLeft, Shield, Zap, Eye } from 'lucide-react';
-import Applogo from '../../assets/Applogo.png'
+import Applogo from '../../assets/Applogo.webp'
 import { useTheme } from "../../context/ThemeContext";
 import { useRegistrationCheck } from "../../hooks/useSystemSettings";
 import { ThemeToggle } from "../../components/ThemeToggle";

@@ -1,19 +1,38 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import { socialLinks } from '../constants';
 import PreviewModal from './PreviewModal';
+import AppLogo from '../../../assets/Applogo.webp';
 
-const Footer = React.memo(({ isDark }) => {
+const EASE = [0.22, 1, 0.36, 1];
+
+const fadeUp = {
+    hidden: { opacity: 0, y: 15 },
+    visible: (delay = 0) => ({
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.55, ease: EASE, delay },
+    }),
+};
+
+const Footer = React.memo(({ isDark, onNavigate }) => {
     const navigate = useNavigate();
     const [previewRole, setPreviewRole] = useState(null);
+    const [ctaHover, setCtaHover] = useState(false);
 
     const handleLinkClick = (path, role = null) => {
         if (role) {
             setPreviewRole(role);
             return;
         }
-
+        if (path === null) return;
+        if (path.startsWith('scroll:')) {
+            const el = document.getElementById(path.replace('scroll:', ''));
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
         if (path.startsWith('http')) {
             window.open(path, '_blank');
         } else if (path.startsWith('alert:')) {
@@ -24,97 +43,222 @@ const Footer = React.memo(({ isDark }) => {
         }
     };
 
-    // Use CSS :hover instead of direct DOM manipulation
+    const goDashboard = () => {
+        if (onNavigate) onNavigate();
+        else navigate('/login');
+    };
+
+    const heading = 'text-[11px] font-extrabold uppercase tracking-[0.18em] mb-5 text-violet-300/80';
+    const link =
+        'text-sm font-medium text-slate-300/90 hover:text-white hover:translate-x-[3px] inline-block transition-all duration-200 cursor-pointer';
+
     return (
-        <footer className="pt-12 md:pt-16 pb-8 border-t"
+        <footer
+            id="contact"
+            className="relative overflow-hidden"
             style={{
-                backgroundColor: isDark ? '#020617' : '#f1f5f9',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)',
-            }}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex flex-col lg:flex-row justify-between items-start gap-12 lg:gap-20 mb-12">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.1 }}
-                        className="flex-shrink-0 w-full lg:w-1/3"
-                    >
-                        <div className="flex items-center gap-4 mb-6">
-                            <span className="text-[80px] md:text-[100px] leading-none font-bold tracking-tighter uppercase" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</span>
+                background: isDark
+                    ? 'linear-gradient(175deg, #070511 0%, #0B0820 45%, #100B2E 100%)'
+                    : 'linear-gradient(175deg, #080613 0%, #0D0922 50%, #130C33 100%)',
+            }}
+        >
+            {/* Ambient glows — extremely subtle */}
+            <div
+                className="absolute -top-32 right-[10%] w-[28rem] h-[28rem] rounded-full blur-[140px] pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.14), transparent 65%)' }}
+            />
+            <div
+                className="absolute top-[35%] right-[2%] w-80 h-80 rounded-full blur-[120px] pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.08), transparent 65%)' }}
+            />
+            <div
+                className="absolute -bottom-24 left-[5%] w-96 h-96 rounded-full blur-[130px] pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.07), transparent 70%)' }}
+            />
+
+            {/* Faint blueprint grid */}
+            <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                    backgroundImage:
+                        'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)',
+                    backgroundSize: '44px 44px',
+                    maskImage: 'linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)',
+                }}
+            />
+
+            {/* Top hairline accent */}
+            <div
+                className="absolute top-0 inset-x-0 h-px pointer-events-none"
+                style={{
+                    background: 'linear-gradient(90deg, transparent 5%, rgba(139,92,246,0.5) 35%, rgba(59,130,246,0.35) 60%, transparent 95%)',
+                }}
+            />
+
+            <div className="relative max-w-[1240px] mx-auto px-6 sm:px-8 lg:px-10 pt-20 md:pt-24 pb-8">
+                {/* ── Top grid ── */}
+                <div className="grid gap-12 md:gap-10 sm:grid-cols-2 lg:grid-cols-[1.25fr_0.75fr_0.75fr_0.75fr_1.5fr] mb-16">
+                    {/* Brand */}
+                    <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}>
+                        <div className="flex items-center gap-3 mb-5">
+                            <span className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shrink-0 bg-white shadow-lg shadow-violet-950/40">
+                                <img src={AppLogo} alt="HOAS logo" className="w-full h-full object-contain p-1" />
+                            </span>
+                            <span className="text-[26px] font-extrabold tracking-tight text-white">HOAS</span>
                         </div>
-                        <p className="text-sm leading-relaxed mb-6" style={{ color: '#64748b' }}>
-                            The standard for modern hostel administration. Built for security, designed for usability.
+                        <p className="text-sm leading-[1.7] text-slate-400 max-w-[300px] mb-5">
+                            Empowering hostels with transparency, automation, and accountability.
                         </p>
-                        <div className="p-4 rounded-xl border text-xs leading-relaxed transition-colors duration-300"
-                            style={{
-                                backgroundColor: isDark ? 'rgba(245, 158, 11, 0.05)' : '#fffbeb',
-                                borderColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#fde68a',
-                                color: isDark ? '#fcd34d' : '#92400e'
-                            }}>
-                            <div className="font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: isDark ? '#fbbf24' : '#b45309' }}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                                Access Notice
-                            </div>
-                            This platform is specifically developed for college hostel management. Only registered students, Wardens, and administrators can access the system.
-                        </div>
+                        <span className="inline-flex items-center gap-2 text-xs font-medium text-slate-500">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/90 animate-pulse" />
+                            Built for modern hostel operations
+                        </span>
                     </motion.div>
 
-                    <div className="w-full lg:w-3/5 grid grid-cols-2 sm:grid-cols-3 gap-8 md:gap-12 lg:gap-16 pt-4 lg:pt-8">
-                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
-                            <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Platform</h4>
-                            <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
-                                <li onClick={() => handleLinkClick('/OwnersDashboard', 'Owner Dashboard')} className="hover:text-violet-500 cursor-pointer transition-colors">Owner Dashboard</li>
-                                <li onClick={() => handleLinkClick('/dashboard', 'Management Portal')} className="hover:text-violet-500 cursor-pointer transition-colors">Management Portal</li>
-                                <li onClick={() => handleLinkClick('/login', 'Warden Dashboard')} className="hover:text-violet-500 cursor-pointer transition-colors">Warden Dashboard</li>
-                                <li onClick={() => handleLinkClick('/login', 'Student App')} className="hover:text-violet-500 cursor-pointer transition-colors">Student App</li>
-                            </ul>
-                        </motion.div>
+                    {/* Product */}
+                    <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0.06}>
+                        <h4 className={heading}>Product</h4>
+                        <ul className="space-y-3">
+                            <li><a onClick={() => handleLinkClick('scroll:features')} className={link}>Features</a></li>
+                            <li><a onClick={() => handleLinkClick('scroll:roles')} className={link}>Roles</a></li>
+                            <li><a onClick={() => handleLinkClick('scroll:workflow')} className={link}>Workflow</a></li>
+                            <li><a onClick={() => handleLinkClick('scroll:faq')} className={link}>FAQ</a></li>
+                        </ul>
+                    </motion.div>
 
-                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }}>
-                            <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Resources</h4>
-                            <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
-                                <li onClick={() => handleLinkClick('https://github.com/niatapppurpose-APPs/HOAS#readme')} className="hover:text-violet-500 cursor-pointer transition-colors">Documentation</li>
-                                <li onClick={() => handleLinkClick(null, 'Support')} className="hover:text-violet-500 cursor-pointer transition-colors">Support</li>
-                            </ul>
-                        </motion.div>
+                    {/* Resources */}
+                    <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0.12}>
+                        <h4 className={heading}>Resources</h4>
+                        <ul className="space-y-3">
+                            <li><a onClick={() => handleLinkClick('https://github.com/niatapppurpose-APPs/HOAS#readme')} className={link}>Documentation</a></li>
+                            <li><a onClick={() => handleLinkClick(null, 'Support')} className={link}>Help Center</a></li>
+                            <li><a onClick={() => handleLinkClick(null, 'Support')} className={link}>Contact</a></li>
+                        </ul>
+                    </motion.div>
 
-                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.4 }}>
-                            <h4 className="font-semibold mb-4" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Legal</h4>
-                            <ul className="space-y-2 text-sm" style={{ color: '#64748b' }}>
-                                <li onClick={() => handleLinkClick(null, 'Privacy Policy')} className="hover:text-violet-500 cursor-pointer transition-colors">Privacy Policy</li>
-                                <li onClick={() => handleLinkClick(null, 'Terms of Service')} className="hover:text-violet-500 cursor-pointer transition-colors">Terms of Service</li>
-                                <li onClick={() => handleLinkClick(null, 'Compliance')} className="hover:text-violet-500 cursor-pointer transition-colors">Compliance</li>
-                            </ul>
-                        </motion.div>
-                    </div>
+                    {/* Company */}
+                    <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0.18}>
+                        <h4 className={heading}>Company</h4>
+                        <ul className="space-y-3">
+                            <li><a onClick={() => handleLinkClick(null, 'About Us')} className={link}>About Us</a></li>
+                            <li><a onClick={() => handleLinkClick('alert:Privacy Policy — coming soon.')} className={link}>Privacy Policy</a></li>
+                            <li><a onClick={() => handleLinkClick('alert:Terms of Service — coming soon.')} className={link}>Terms of Service</a></li>
+                        </ul>
+                    </motion.div>
+
+                    {/* CTA glass card — visual focal point */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.97 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.55, ease: EASE, delay: 0.22 }}
+                        onMouseEnter={() => setCtaHover(true)}
+                        onMouseLeave={() => setCtaHover(false)}
+                        whileHover={{ y: -3 }}
+                        className="relative overflow-hidden rounded-[24px] p-7 self-start w-full transition-colors duration-300"
+                        style={{
+                            background: ctaHover
+                                ? 'linear-gradient(135deg, rgba(139,92,246,0.26), rgba(59,130,246,0.17))'
+                                : 'linear-gradient(135deg, rgba(139,92,246,0.20), rgba(59,130,246,0.12))',
+                            border: `1px solid ${ctaHover ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.10)'}`,
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)',
+                        }}
+                    >
+                        {/* Subtle decorative orb + light sweep */}
+                        <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full blur-3xl pointer-events-none" style={{ backgroundColor: 'rgba(139,92,246,0.15)' }} />
+                        <div
+                            className="absolute inset-y-0 w-1/2 pointer-events-none transition-transform duration-700 ease-out"
+                            style={{
+                                background: 'linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.05) 50%, transparent 70%)',
+                                transform: ctaHover ? 'translateX(220%) skewX(-12deg)' : 'translateX(-160%) skewX(-12deg)',
+                            }}
+                        />
+
+                        <div className="relative">
+                            <h4 className="text-[23px] font-extrabold text-white leading-tight tracking-tight mb-2.5">
+                                Ready to Transform Your Hostel Management?
+                            </h4>
+                            <p className="text-sm text-slate-400 leading-relaxed mb-6">
+                                Join modern institutions using HOAS to simplify hostel operations.
+                            </p>
+                            <motion.button
+                                whileHover={{ y: -2 }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={goDashboard}
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-bold transition-shadow duration-300"
+                                style={{
+                                    background: ctaHover
+                                        ? 'linear-gradient(135deg, #9F67FF, #7C3AED)'
+                                        : 'linear-gradient(135deg, #8B5CF6, #6D28D9)',
+                                    boxShadow: ctaHover
+                                        ? '0 14px 34px -8px rgba(139,92,246,0.55)'
+                                        : '0 8px 22px -8px rgba(109,40,217,0.5)',
+                                }}
+                            >
+                                Get Started Free <ArrowRight size={15} />
+                            </motion.button>
+                            <div className="flex items-center gap-4 mt-5 text-[11px] font-semibold text-slate-500">
+                                <span>16 modules</span>
+                                <span className="w-1 h-1 rounded-full bg-slate-600" />
+                                <span>4 roles</span>
+                                <span className="w-1 h-1 rounded-full bg-slate-600" />
+                                <span>Realtime</span>
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
-                <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left"
-                    style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)' }}>
-                    <p className="text-sm" style={{ color: isDark ? '#475569' : '#94a3b8' }}>© 2026 HOAS. All rights reserved.</p>
-                    <div className="flex gap-3">
-                        {socialLinks.map(({ icon: Icon, href, label, hoverColor }) => (
+
+                {/* ── Divider ── */}
+                <div className="border-t border-white/[0.07]" />
+
+                {/* ── Bottom bar ── */}
+                <div className="pt-6 flex flex-col md:flex-row justify-between items-center gap-5">
+                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 order-2 md:order-1">
+                        <p className="text-xs text-slate-500">© 2026 HOAS. All rights reserved.</p>
+                        <span className="hidden sm:block w-1 h-1 rounded-full bg-slate-600" />
+                        <button type="button" onClick={() => handleLinkClick('alert:Privacy Policy — coming soon.')} className="text-xs text-slate-500 hover:text-violet-300 transition-colors">
+                            Privacy
+                        </button>
+                        <span className="w-1 h-1 rounded-full bg-slate-600" />
+                        <button type="button" onClick={() => handleLinkClick('alert:Terms of Service — coming soon.')} className="text-xs text-slate-500 hover:text-violet-300 transition-colors">
+                            Terms
+                        </button>
+                    </div>
+
+                    <motion.div
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true }}
+                        variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
+                        className="flex gap-3 order-1 md:order-2"
+                    >
+                        {socialLinks.map(({ icon: Icon, href, label }) => (
                             <motion.a
                                 key={label}
                                 href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 aria-label={label}
-                                whileHover={{ scale: 1.15, y: -2 }}
+                                title={label}
+                                variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } } }}
+                                whileHover={{ y: -2 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="social-icon-link w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 group"
+                                className="w-10 h-10 rounded-[13px] flex items-center justify-center text-slate-400 hover:text-white hover:bg-violet-600 hover:border-violet-500 transition-all duration-200"
                                 style={{
-                                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)',
-                                    border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)',
-                                    '--hover-color': hoverColor,
+                                    backgroundColor: 'rgba(255,255,255,0.04)',
+                                    border: '1px solid rgba(255,255,255,0.08)',
                                 }}
+                                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 20px -6px rgba(139,92,246,0.5)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
                             >
-                                <Icon className="w-4 h-4 transition-colors duration-300" style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
+                                <Icon size={18} />
                             </motion.a>
                         ))}
-                    </div>
+                    </motion.div>
                 </div>
             </div>
+
             <PreviewModal
                 isOpen={!!previewRole}
                 onClose={() => setPreviewRole(null)}

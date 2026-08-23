@@ -1,6 +1,5 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getStorage } from "firebase/storage";
 import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
@@ -15,7 +14,6 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const storage = getStorage(app);
 
 // Initialize Cloud Messaging synchronously so the FCM token can be requested
 // immediately (the old async init raced with getFCMToken and could leave

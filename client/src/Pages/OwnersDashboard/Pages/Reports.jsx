@@ -10,8 +10,6 @@ import {
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../components/Toast';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 // ════════════════════════════════════════════════════════════
 //  CLIENT-SIDE REPORT GENERATION (PDF & JSON)
@@ -42,7 +40,11 @@ function generateTimestamp() {
  * @param {Array} params.wardensList - array of warden objects
  * @param {string} params.collegeName
  */
-function generatePdfReport({ title, subtitle, stats, studentsList, wardensList, collegeName }) {
+async function generatePdfReport({ title, subtitle, stats, studentsList, wardensList, collegeName }) {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pageWidth = pdf.internal.pageSize.getWidth();
   const primaryColor = [79, 70, 229]; // Indigo
@@ -459,7 +461,7 @@ export default function Reports() {
       const safeName = report.collegeName.replace(/[^a-zA-Z0-9]/g, '-');
 
       if (format === 'pdf') {
-        const pdf = generatePdfReport(payload);
+        const pdf = await generatePdfReport(payload);
         const blob = pdf.output('blob');
         saveBlob(blob, `HOAS-${safeName}-${ts}.pdf`);
       } else {
@@ -491,7 +493,7 @@ export default function Reports() {
         const safeName = report.collegeName.replace(/[^a-zA-Z0-9]/g, '-');
 
         if (format === 'pdf') {
-          const pdf = generatePdfReport(payload);
+          const pdf = await generatePdfReport(payload);
           saveBlob(pdf.output('blob'), `HOAS-${safeName}-${ts}.pdf`);
         } else {
           const json = buildJsonReport(payload);

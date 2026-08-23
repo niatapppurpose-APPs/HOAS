@@ -26,7 +26,7 @@ import { useToast } from '../../../components/Toast';
 import { useTheme } from '../../../context/ThemeContext';
 import EmptyState from '../../../components/OwnerServices/EmptyState';
 import NoDataLight from '../../../assets/No-Data.avif';
-import NoDataDark from '../../../assets/NoDataDark.png';
+import NoDataDark from '../../../assets/NoDataDark.webp';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
 
 const mapComplaint = (c) => {

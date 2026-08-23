@@ -16,7 +16,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import Avatar from "./Avatar";
-import Applogo from "../../assets/Applogo.png";
+import Applogo from "../../assets/Applogo.webp";
 import NewBadge from "../NewBadge";
 import { isNavItemNew, dismissNavItemFeatures } from "../../data/newFeatures";
 import MobileBottomNav from "../MobileBottomNav";

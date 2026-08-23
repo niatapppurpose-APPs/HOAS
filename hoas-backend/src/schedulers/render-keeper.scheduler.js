@@ -24,7 +24,7 @@ export async function keepRenderAwake() {
 }
 
 export function startRenderKeeperScheduler() {
-  schedule(10 * 60 * 60 * 1000, async () => {
+  schedule(5 * 60 * 1000, async () => {
     const result = await keepRenderAwake();
     if (result.error) console.error('Render keeper failed:', result.error);
     else console.log('Render keeper: kept awake');

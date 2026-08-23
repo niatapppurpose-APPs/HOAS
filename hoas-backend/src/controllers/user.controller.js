@@ -205,6 +205,7 @@ export async function approveUser(req, res, next) {
     user.approverRole = req.user.role;
     await user.save();
     await recordAudit({ actor: req.user, action: 'USER_APPROVED', targetType: 'User', targetId: user._id });
+    broadcastUserUpdate(user);
     res.json({ user });
   } catch (error) {
     next(error);
@@ -227,6 +228,7 @@ export async function denyUser(req, res, next) {
       targetId: user._id,
       metadata: { reason: user.denialReason },
     });
+    broadcastUserUpdate(user);
     res.json({ user });
   } catch (error) {
     next(error);

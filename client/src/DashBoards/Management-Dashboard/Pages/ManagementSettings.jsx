@@ -7,7 +7,7 @@ import LocationAutocomplete from '../../../components/LocationAutocomplete';
 import ManagementHeader from '../components/layout/ManagementHeader';
 import PWAUpdateSettings from '../../../components/PWAUpdateSettings';
 import { MapPin, Save, Building2, Loader2, CheckCircle, ImagePlus, Upload, X, Camera, Layout, RefreshCw } from 'lucide-react';
-import AppLogo4k from '../../../assets/AppLogo4k.png';
+import AppLogo4k from '../../../assets/AppLogo4k.webp';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
 import { uploadLogo } from '../../../utils/cloudinaryUpload';
 

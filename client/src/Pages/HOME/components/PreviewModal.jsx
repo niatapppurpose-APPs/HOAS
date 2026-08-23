@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, Eye, Info, Maximize2 } from 'lucide-react';
 
-import WardenImg from '../../../assets/Warden-Dashbord.png';
-import StudentImg from '../../../assets/Student-Dashbord.png';
-import OwnerImg from '../../../assets/Owner-dashbord.png';
-import ManagementImg from '../../../assets/Management-Dashbord.png'
+import WardenImg from '../../../assets/Warden-Dashbord.webp';
+import StudentImg from '../../../assets/Student-Dashbord.webp';
+import OwnerImg from '../../../assets/Owner-dashbord.webp';
+import ManagementImg from '../../../assets/Management-Dashbord.webp'
 const PreviewModal = ({ isOpen, onClose, role, isDark }) => {
     const [isZoomed, setIsZoomed] = useState(false);
 

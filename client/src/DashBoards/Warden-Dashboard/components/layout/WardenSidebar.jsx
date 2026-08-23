@@ -19,7 +19,7 @@ import {
 import { useAuth } from "../../../../context/AuthContext";
 import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from '../../../../components/OwnerServices/Avatar';
-import AppLogo4k from '../../../../assets/AppLogo4k.png';
+import AppLogo4k from '../../../../assets/AppLogo4k.webp';
 import NewBadge from "../../../../components/NewBadge";
 import { isNavItemNew, dismissNavItemFeatures } from "../../../../data/newFeatures";
 import MobileBottomNav from "../../../../components/MobileBottomNav";

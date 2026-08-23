@@ -1,250 +1,860 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShieldCheck, LayoutDashboard, Info } from 'lucide-react';
-import { teamData } from '../constants';
-import AppLogo from '../../../assets/AppLogo4k.png';
+import {
+    X,
+    ArrowLeft,
+    ShieldCheck,
+    Zap,
+    BadgeCheck,
+    Layers,
+    MapPin,
+    Building2,
+    BriefcaseBusiness,
+    GraduationCap,
+} from 'lucide-react';
+import { teamData, APP_INFO } from '../constants';
+import AppLogo from '../../../assets/AppLogo4k.webp';
 
-const AboutModal = React.memo(({ isAboutOpen, setIsAboutOpen, isDark }) => {
-    const [activeTeamMember, setActiveTeamMember] = useState(null);
+const EASE = [0.22, 1, 0.36, 1];
 
-    const handleClose = () => {
-        setIsAboutOpen(false);
-        setActiveTeamMember(null);
-    };
+const useIsMobile = () => {
+    const [isMobile, setIsMobile] = useState(
+        () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+    );
+    useEffect(() => {
+        const mq = window.matchMedia('(max-width: 767px)');
+        const onChange = (e) => setIsMobile(e.matches);
+        mq.addEventListener('change', onChange);
+        return () => mq.removeEventListener('change', onChange);
+    }, []);
+    return isMobile;
+};
 
-    const handleTopClose = () => {
-        if (activeTeamMember) {
-            setActiveTeamMember(null);
-            return;
-        }
-        handleClose();
+const sectionVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: (delay) => ({
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.5, ease: EASE, delay },
+    }),
+};
+
+const Section = ({ delay, children, className = '' }) => (
+    <motion.div
+        custom={delay}
+        variants={sectionVariants}
+        initial="hidden"
+        animate="visible"
+        className={className}
+    >
+        {children}
+    </motion.div>
+);
+
+const PRODUCT_METRICS = [
+    {
+        icon: ShieldCheck,
+        num: '01',
+        title: 'Role-Based',
+        desc: 'Scoped access for every user role.',
+    },
+    {
+        icon: Zap,
+        num: '02',
+        title: 'Real-Time',
+        desc: 'Live updates across every workflow.',
+    },
+    {
+        icon: BadgeCheck,
+        num: '03',
+        title: 'Accountable',
+        desc: 'Auditable actions end to end.',
+    },
+    {
+        icon: Layers,
+        num: '04',
+        title: 'Centralized',
+        desc: 'One platform for all operations.',
+    },
+];
+
+const ROLE_SUMMARIES = [
+    {
+        icon: Building2,
+        role: 'Owner',
+        desc: 'Complete operational visibility and accountability.',
+    },
+    {
+        icon: BriefcaseBusiness,
+        role: 'Management',
+        desc: 'Manage operations, users, finances, and reports.',
+    },
+    {
+        icon: ShieldCheck,
+        role: 'Warden',
+        desc: 'Handle daily activities, complaints, leaves, and emergencies.',
+    },
+    {
+        icon: GraduationCap,
+        role: 'Student',
+        desc: 'Access rooms, complaints, fees, leave, notices, and SOS.',
+    },
+];
+
+const TEAM_LINKS = {
+    faziya: 'https://www.linkedin.com/in/faziya-tasneem-shaik/',
+    hemanth: 'https://www.linkedin.com/in/hemanth-atthuluri/',
+};
+
+const MEMBER_MAIL = {
+    faziya: 'Contact - Frontend Developer (Shaik Faziya Tasneem)',
+    hemanth: 'Contact - Backend Developer (Hemanth Atthuluri)',
+};
+
+const MAIL_TO = 'niatapppurpose@gmail.com';
+
+const AboutDrawer = React.memo(({ isAboutOpen, setIsAboutOpen, isDark }) => {
+    const [activeMember, setActiveMember] = React.useState(null);
+    const isMobile = useIsMobile();
+
+    const handleClose = () => setIsAboutOpen(false);
+    const closeMember = () => setActiveMember(null);
+
+    useEffect(() => {
+        if (!isAboutOpen) return undefined;
+
+        const onKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                if (activeMember) closeMember();
+                else handleClose();
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            window.removeEventListener('keydown', onKeyDown);
+            document.body.style.overflow = prevOverflow;
+        };
+    }, [isAboutOpen, activeMember]);
+
+    useEffect(() => {
+        if (!isAboutOpen) setActiveMember(null);
+    }, [isAboutOpen]);
+
+    const palette = {
+        bg: isDark ? '#070B17' : '#ffffff',
+        bgPanel: isDark ? '#0B1020' : '#f8fafc',
+        surface: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.03)',
+        border: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)',
+        borderStrong: isDark ? 'rgba(139,92,246,0.35)' : 'rgba(124,58,237,0.3)',
+        text: isDark ? '#F8FAFC' : '#0f172a',
+        textMuted: isDark ? '#94a3b8' : '#475569',
+        accent: isDark ? '#8B5CF6' : '#7C3AED',
+        accentSoft: isDark ? 'rgba(139,92,246,0.12)' : 'rgba(124,58,237,0.08)',
     };
 
     return (
         <AnimatePresence>
             {isAboutOpen && (
                 <>
+                    {/* ── Backdrop ── */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
+                        transition={{ duration: 0.35, ease: EASE }}
                         onClick={handleClose}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
-                    />
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.96 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.96 }}
-                        transition={{ type: 'spring', bounce: 0.15, duration: 0.35 }}
-                        className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] border rounded-3xl shadow-2xl flex flex-col md:flex-row max-h-[90vh] w-[calc(100vw-24px)] sm:w-[92%] overflow-hidden ${activeTeamMember ? 'max-w-[560px] md:max-w-[900px]' : 'max-w-[448px]'}`}
+                        aria-hidden="true"
+                        className="fixed inset-0 z-[80]"
                         style={{
-                            backgroundColor: isDark ? '#0f172a' : '#ffffff',
-                            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                            backgroundColor: 'rgba(2, 6, 23, 0.55)',
+                            backdropFilter: 'blur(8px)',
+                            WebkitBackdropFilter: 'blur(8px)',
+                        }}
+                    />
+
+                    {/* ── Main drawer — right side on desktop, bottom sheet on mobile ── */}
+                    <motion.aside
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="About HOAS"
+                        initial={isMobile ? { y: '100%' } : { x: '100%' }}
+                        animate={isMobile ? { y: 0 } : { x: 0 }}
+                        exit={isMobile ? { y: '100%' } : { x: '100%' }}
+                        transition={{ duration: 0.45, ease: EASE }}
+                        className={`fixed z-[90] flex flex-col overflow-hidden ${
+                            isMobile ? 'bottom-0 left-0 right-0 h-[92dvh]' : 'top-0 right-0 h-[100dvh]'
+                        }`}
+                        style={{
+                            width: isMobile ? '100%' : 'min(560px, 94vw)',
+                            backgroundColor: palette.bg,
+                            borderLeft: isMobile ? 'none' : `1px solid ${palette.border}`,
+                            borderTop: isMobile ? `1px solid ${palette.border}` : 'none',
+                            borderRadius: isMobile ? '28px 28px 0 0' : '28px 0 0 28px',
+                            boxShadow: isDark
+                                ? '0 -32px 80px -20px rgba(0,0,0,0.7)'
+                                : '0 -32px 80px -24px rgba(15,23,42,0.25)',
                         }}
                     >
-                        <button
-                            onClick={handleTopClose}
-                            className="absolute top-4 right-4 p-2 rounded-full transition-all z-50"
-                            style={{
-                                color: isDark ? '#94a3b8' : '#64748b',
-                                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.8)',
-                            }}
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-
-                        <div className={`relative p-6 md:p-8 flex-shrink-0 overflow-y-auto custom-scrollbar max-h-[85vh] ${activeTeamMember ? 'hidden md:block md:w-1/2 md:border-r md:border-white/10' : 'w-full'}`}>
-                            <div className="flex flex-col items-center text-center">
-                                <motion.div layoutId="app-logo" className="w-20 h-20 bg-violet-600 rounded-2xl p-2 flex items-center justify-center shadow-lg shadow-violet-500/20 mb-5">
-                                    <div className="w-full h-full bg-white rounded-xl overflow-hidden flex items-center justify-center">
-                                        <img src={AppLogo} alt="HOAS Logo" className="w-full h-full object-contain" />
-                                    </div>
-                                </motion.div>
-
-                                <h3 className="text-3xl font-bold mb-2 tracking-tight" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>HOAS</h3>
-                                <p className="text-xs font-bold tracking-[0.2em] uppercase mb-8" style={{ color: isDark ? '#a78bfa' : '#7c3aed' }}>
-                                    Hostel Operations Accountability System
-                                </p>
-
-                                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
-                                    {/* Description Card */}
-                                    <div className="col-span-1 sm:col-span-2 rounded-2xl p-5 border hover:bg-opacity-80 transition-colors group"
+                        {/* ── Header ── */}
+                        <Section delay={0.05}>
+                            <div
+                                className="flex items-center justify-between px-6 md:px-8 pt-3 md:pt-6 pb-4"
+                                style={{ borderBottom: `1px solid ${palette.border}` }}
+                            >
+                                {isMobile && (
+                                    <span
+                                        className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full pointer-events-none"
+                                        style={{ backgroundColor: palette.textMuted, opacity: 0.35 }}
+                                    />
+                                )}
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div
+                                        className="w-11 h-11 rounded-xl p-1.5 flex items-center justify-center flex-shrink-0"
                                         style={{
-                                            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                            borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)',
-                                        }}>
-                                        <h4 className="text-xs font-bold uppercase tracking-wider mb-2 group-hover:text-violet-400 transition-colors" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>System Overview</h4>
-                                        <p className="text-sm leading-relaxed" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>
-                                            A comprehensive enterprise platform designed to streamline hostel management, ensuring transparency, automating approvals, and driving efficiency in accommodation processes.
+                                            background: `linear-gradient(135deg, ${palette.accent}, #6D28D9)`,
+                                            boxShadow: `0 8px 24px -8px ${palette.accent}`,
+                                        }}
+                                    >
+                                        <div className="w-full h-full bg-white rounded-lg overflow-hidden flex items-center justify-center">
+                                            <img src={AppLogo} alt="HOAS logo" className="w-full h-full object-contain" />
+                                        </div>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p
+                                            className="text-sm font-bold tracking-tight leading-tight truncate"
+                                            style={{ color: palette.text }}
+                                        >
+                                            About HOAS
+                                        </p>
+                                        <p className="text-xs truncate" style={{ color: palette.textMuted }}>
+                                            Product information &amp; team
                                         </p>
                                     </div>
-
-                                    {/* Version Card */}
-                                    <div className="rounded-2xl p-5 border hover:bg-opacity-80 transition-colors"
-                                        style={{
-                                            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                            borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)',
-                                        }}>
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Version</h4>
-                                            <div className="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                                                style={{
-                                                    backgroundColor: isDark ? 'rgba(124, 58, 237, 0.2)' : 'rgba(124, 58, 237, 0.15)',
-                                                    color: isDark ? '#c4b5fd' : '#7c3aed',
-                                                    border: isDark ? '1px solid rgba(124, 58, 237, 0.2)' : '1px solid rgba(124, 58, 237, 0.3)',
-                                                }}>STABLE</div>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-xl font-mono font-bold" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>v1.2.0</span>
-                                            <span className="text-xs mt-1" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Build 2026.01.30</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Year Created Card */}
-                                    <div className="rounded-2xl p-5 border hover:bg-opacity-80 transition-colors"
-                                        style={{
-                                            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                            borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)',
-                                        }}>
-                                        <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Established</h4>
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-lg" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9', color: isDark ? '#cbd5e1' : '#475569' }}>
-                                                <LayoutDashboard className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <span className="block text-lg font-bold" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>2026</span>
-                                                <span className="text-xs" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Since Jan</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Creator / Team Card */}
-                                    <div className="col-span-1 sm:col-span-2 rounded-2xl p-5 border transition-all"
-                                        style={{
-                                            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                            borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)',
-                                        }}>
-                                        <h4 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Developed By</h4>
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-medium text-sm" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Admin Team</span>
-                                            <div className="flex gap-3">
-                                                {['faziya', 'hemanth'].map((key) => (
-                                                    <motion.button
-                                                        key={key}
-                                                        whileHover={{ scale: 1.1, y: -2 }}
-                                                        whileTap={{ scale: 0.95 }}
-                                                        onClick={() => setActiveTeamMember(activeTeamMember === key ? null : key)}
-                                                        className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg border-2 transition-all overflow-hidden ${activeTeamMember === key
-                                                            ? isDark
-                                                                ? 'border-white ring-2 ring-violet-500 ring-offset-2 ring-offset-slate-900 scale-110'
-                                                                : 'border-violet-500 ring-2 ring-violet-500 ring-offset-2 ring-offset-white scale-110'
-                                                            : isDark
-                                                                ? 'border-slate-800 opacity-80 hover:opacity-100'
-                                                                : 'border-slate-300 opacity-80 hover:opacity-100'
-                                                            }`}
-                                                    >
-                                                        {teamData[key].image ? (
-                                                            <img src={teamData[key].image} alt={teamData[key].name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <span className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${teamData[key].gradient}`}>{teamData[key].initials}</span>
-                                                        )}
-                                                    </motion.button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
-
-                                <div className="mt-8 flex flex-col items-center gap-2">
-                                    <div className="flex items-center gap-2 text-xs font-medium" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
-                                        <span>© 2026 HOAS</span>
-                                        <span className="w-1 h-1 rounded-full" style={{ backgroundColor: isDark ? '#475569' : '#cbd5e1' }}></span>
-                                        <span className="hover:text-violet-400 cursor-pointer transition-colors">Privacy</span>
-                                        <span className="w-1 h-1 rounded-full" style={{ backgroundColor: isDark ? '#475569' : '#cbd5e1' }}></span>
-                                        <span className="hover:text-violet-400 cursor-pointer transition-colors">Terms</span>
-                                    </div>
-                                </div>
+                                <motion.button
+                                    onClick={handleClose}
+                                    whileHover={{ scale: 1.08, rotate: 90 }}
+                                    whileTap={{ scale: 0.92 }}
+                                    transition={{ duration: 0.2 }}
+                                    aria-label="Close about"
+                                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 backdrop-blur-md"
+                                    style={{
+                                        backgroundColor: palette.surface,
+                                        border: `1px solid ${palette.border}`,
+                                        color: palette.textMuted,
+                                    }}
+                                >
+                                    <X size={17} />
+                                </motion.button>
                             </div>
-                        </div>
+                        </Section>
 
-                        {activeTeamMember && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 12 }}
-                            transition={{ duration: 0.35, ease: 'easeOut' }}
-                            className="w-full md:w-1/2 p-6 md:p-8 pt-14 md:pt-16 overflow-y-auto custom-scrollbar max-h-[85vh]"
-                            style={{
-                                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.55)' : 'rgba(248, 250, 252, 0.98)'
-                            }}
-                        >
-                            <div className="flex flex-col">
-                                <div className="flex items-center gap-4 mb-5 md:mb-6">
-                                    <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br ${teamData[activeTeamMember].gradient} overflow-hidden flex items-center justify-center shadow-lg`}>
-                                        {teamData[activeTeamMember].image ? (
-                                            <img src={teamData[activeTeamMember].image} alt={teamData[activeTeamMember].name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <span className="text-xl md:text-2xl font-bold text-white">{teamData[activeTeamMember].initials}</span>
-                                        )}
+                        {/* ── Scrollable content ── */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar px-6 md:px-8 py-6 space-y-8">
+                            {/* ── Hero product section ── */}
+                            <Section delay={0.1}>
+                                <h2
+                                    className="text-3xl font-black tracking-tight leading-tight mb-1"
+                                    style={{ color: palette.text }}
+                                >
+                                    {APP_INFO.name}
+                                </h2>
+                                <p
+                                    className="text-base font-semibold mb-3"
+                                    style={{ color: palette.accent }}
+                                >
+                                    Hostel Operations
+                                    <br />
+                                    Accountability System
+                                </p>
+                                <span
+                                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold mb-4"
+                                    style={{
+                                        backgroundColor: palette.accentSoft,
+                                        color: palette.accent,
+                                        border: `1px solid ${palette.borderStrong}`,
+                                    }}
+                                >
+                                    <span
+                                        className="w-1.5 h-1.5 rounded-full animate-pulse"
+                                        style={{ backgroundColor: palette.accent }}
+                                    />
+                                    Enterprise Hostel Management Platform
+                                </span>
+                                <p
+                                    className="text-sm leading-relaxed max-w-md"
+                                    style={{ color: palette.textMuted }}
+                                >
+                                    HOAS is a role-based hostel operations platform designed to
+                                    centralize accommodation, complaints, fees, leave management,
+                                    emergency response, and communication into one accountable
+                                    digital workflow.
+                                </p>
+                            </Section>
+
+                            {/* ── Product metrics ── */}
+                            <Section delay={0.15}>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {PRODUCT_METRICS.map(({ icon: Icon, num, title, desc }) => (
+                                        <motion.div
+                                            key={num}
+                                            whileHover={{ y: -3 }}
+                                            transition={{ duration: 0.25, ease: EASE }}
+                                            className="rounded-2xl p-4 backdrop-blur-md group"
+                                            style={{
+                                                backgroundColor: palette.surface,
+                                                border: `1px solid ${palette.border}`,
+                                            }}
+                                        >
+                                            <div className="flex items-center justify-between mb-2.5">
+                                                <div
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-violet-500"
+                                                    style={{
+                                                        backgroundColor: palette.accentSoft,
+                                                        color: palette.accent,
+                                                    }}
+                                                >
+                                                    <Icon size={15} />
+                                                </div>
+                                                <span
+                                                    className="text-[10px] font-mono font-bold"
+                                                    style={{ color: palette.textMuted, opacity: 0.6 }}
+                                                >
+                                                    {num}
+                                                </span>
+                                            </div>
+                                            <p
+                                                className="text-sm font-bold mb-0.5"
+                                                style={{ color: palette.text }}
+                                            >
+                                                {title}
+                                            </p>
+                                            <p
+                                                className="text-xs leading-snug"
+                                                style={{ color: palette.textMuted }}
+                                            >
+                                                {desc}
+                                            </p>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </Section>
+
+                            {/* ── Built for every role ── */}
+                            <Section delay={0.2}>
+                                <h4
+                                    className="text-[11px] font-bold uppercase tracking-[0.18em] mb-3"
+                                    style={{ color: isDark ? '#94a3b8' : '#64748b' }}
+                                >
+                                    Built for Every Role
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {ROLE_SUMMARIES.map(({ icon: Icon, role, desc }) => (
+                                        <motion.div
+                                            key={role}
+                                            whileHover={{ y: -3 }}
+                                            transition={{ duration: 0.25, ease: EASE }}
+                                            className="rounded-2xl p-4 backdrop-blur-md flex items-start gap-3"
+                                            style={{
+                                                backgroundColor: palette.surface,
+                                                border: `1px solid ${palette.border}`,
+                                            }}
+                                        >
+                                            <div
+                                                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-300 hover:bg-violet-500 hover:text-white"
+                                                style={{
+                                                    backgroundColor: palette.accentSoft,
+                                                    color: palette.accent,
+                                                }}
+                                            >
+                                                <Icon size={16} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p
+                                                    className="text-[11px] font-black uppercase tracking-wider mb-0.5"
+                                                    style={{ color: palette.text }}
+                                                >
+                                                    {role}
+                                                </p>
+                                                <p
+                                                    className="text-xs leading-snug"
+                                                    style={{ color: palette.textMuted }}
+                                                >
+                                                    {desc}
+                                                </p>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </Section>
+
+                            {/* ── Development team ── */}
+                            <Section delay={0.25}>
+                                <h4
+                                    className="text-[11px] font-bold uppercase tracking-[0.18em] mb-3"
+                                    style={{ color: isDark ? '#94a3b8' : '#64748b' }}
+                                >
+                                    The Team Behind HOAS
+                                </h4>
+                                <div className="space-y-3">
+                                    {Object.entries(teamData).map(([key, member]) => (
+                                        <motion.button
+                                            key={key}
+                                            onClick={() => setActiveMember(key)}
+                                            whileHover={{ y: -3 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            transition={{ duration: 0.25, ease: EASE }}
+                                            aria-label={`View ${member.name} profile`}
+                                            className="w-full text-left flex items-center gap-4 rounded-2xl p-3.5 backdrop-blur-md group transition-colors duration-300 cursor-pointer"
+                                            style={{
+                                                backgroundColor:
+                                                    activeMember === key
+                                                        ? palette.accentSoft
+                                                        : palette.surface,
+                                                border: `1px solid ${
+                                                    activeMember === key
+                                                        ? palette.borderStrong
+                                                        : palette.border
+                                                }`,
+                                            }}
+                                        >
+                                            <div
+                                                className={`w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 bg-gradient-to-br ring-1 ring-violet-500/40 ${member.gradient}`}
+                                            >
+                                                {member.image ? (
+                                                    <img
+                                                        src={member.image}
+                                                        alt={member.name}
+                                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                                    />
+                                                ) : (
+                                                    <span className="text-sm font-bold text-white">
+                                                        {member.initials}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p
+                                                    className="text-sm font-bold truncate"
+                                                    style={{ color: palette.text }}
+                                                >
+                                                    {member.name}
+                                                </p>
+                                                <p
+                                                    className="text-[11px] font-semibold uppercase tracking-wider mt-0.5"
+                                                    style={{ color: palette.accent }}
+                                                >
+                                                    {member.role.charAt(0) + member.role.slice(1).toLowerCase()}
+                                                </p>
+                                            </div>
+                                            <span
+                                                className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full flex-shrink-0"
+                                                style={{
+                                                    backgroundColor: palette.accentSoft,
+                                                    color: palette.accent,
+                                                }}
+                                            >
+                                                View
+                                            </span>
+                                        </motion.button>
+                                    ))}
+                                </div>
+                            </Section>
+
+                            {/* ── Release info ── */}
+                            <Section delay={0.3}>
+                                <h4
+                                    className="text-[11px] font-bold uppercase tracking-[0.18em] mb-3"
+                                    style={{ color: isDark ? '#94a3b8' : '#64748b' }}
+                                >
+                                    Release
+                                </h4>
+                                <div
+                                    className="rounded-2xl p-4 grid grid-cols-2 gap-x-4 gap-y-3 backdrop-blur-md"
+                                    style={{
+                                        backgroundColor: palette.surface,
+                                        border: `1px solid ${palette.border}`,
+                                    }}
+                                >
+                                    <div>
+                                        <p
+                                            className="text-[10px] font-bold uppercase tracking-wider mb-0.5"
+                                            style={{ color: palette.textMuted }}
+                                        >
+                                            Current Version
+                                        </p>
+                                        <p
+                                            className="text-sm font-mono font-bold"
+                                            style={{ color: palette.text }}
+                                        >
+                                            {APP_INFO.version}
+                                        </p>
                                     </div>
                                     <div>
-                                        <h2 className="text-xl md:text-2xl font-bold" style={{ color: isDark ? '#ffffff' : '#0f172a' }}>
-                                            {teamData[activeTeamMember].name}
-                                        </h2>
-                                        <p className="text-[11px] md:text-xs uppercase tracking-wider font-semibold mt-1" style={{ color: isDark ? '#c4b5fd' : '#7c3aed' }}>
-                                            {teamData[activeTeamMember].role}
+                                        <p
+                                            className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                                            style={{ color: palette.textMuted }}
+                                        >
+                                            Status
                                         </p>
-                                        <p className="text-xs mt-1" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
-                                            {teamData[activeTeamMember].location}
+                                        <span
+                                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                            style={{
+                                                backgroundColor: isDark
+                                                    ? 'rgba(16,185,129,0.15)'
+                                                    : 'rgba(16,185,129,0.12)',
+                                                color: isDark ? '#34D399' : '#059669',
+                                            }}
+                                        >
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                            Stable
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p
+                                            className="text-[10px] font-bold uppercase tracking-wider mb-0.5"
+                                            style={{ color: palette.textMuted }}
+                                        >
+                                            Build
+                                        </p>
+                                        <p
+                                            className="text-sm font-mono font-bold"
+                                            style={{ color: palette.text }}
+                                        >
+                                            {APP_INFO.build.replace('Build ', '')}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p
+                                            className="text-[10px] font-bold uppercase tracking-wider mb-0.5"
+                                            style={{ color: palette.textMuted }}
+                                        >
+                                            Established
+                                        </p>
+                                        <p
+                                            className="text-sm font-bold"
+                                            style={{ color: palette.text }}
+                                        >
+                                            {APP_INFO.established}
                                         </p>
                                     </div>
                                 </div>
+                            </Section>
 
-                                <p className="text-sm md:text-base leading-relaxed mb-6" style={{ color: isDark ? '#cbd5e1' : '#475569' }}>
-                                    {teamData[activeTeamMember].desc}
-                                </p>
-
-                                <div className="flex flex-col sm:flex-row gap-3 mt-auto">
-                                    <button
-                                        className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-sm"
-                                        style={{
-                                            backgroundColor: isDark ? '#ffffff' : '#7c3aed',
-                                            color: isDark ? '#0f172a' : '#ffffff',
-                                        }}
-                                        onClick={() => {
-                                            if (activeTeamMember === 'faziya') {
-                                                window.open('https://www.linkedin.com/in/faziya-tasneem-shaik/', '_blank');
-                                            } else if (activeTeamMember === 'hemanth') {
-                                                window.open('https://www.linkedin.com/in/hemanth-atthuluri/', '_blank');
-                                            }
-                                        }}
+                            {/* ── Footer ── */}
+                            <Section delay={0.35}>
+                                <div
+                                    className="pt-5 pb-2 text-center"
+                                    style={{ borderTop: `1px solid ${palette.border}` }}
+                                >
+                                    <p
+                                        className="text-sm font-bold tracking-tight"
+                                        style={{ color: palette.text }}
                                     >
-                                        View Profile
-                                    </button>
-                                    <a
-                                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=niatapppurpose@gmail.com&su=${encodeURIComponent(activeTeamMember === 'faziya' ? 'Contact - Frontend Developer (Shaik Faziya Tasneem)' : 'Contact - Backend Developer (Hemanth Atthuluri)')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-full sm:w-auto px-6 py-2.5 border rounded-xl font-medium text-sm text-center"
-                                        style={{
-                                            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(124,58,237,0.08)',
-                                            color: isDark ? '#ffffff' : '#7c3aed',
-                                            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(124,58,237,0.25)',
-                                        }}
+                                        {APP_INFO.name}
+                                    </p>
+                                    <p
+                                        className="text-[11px] mt-0.5"
+                                        style={{ color: palette.textMuted }}
                                     >
-                                        Contact
-                                    </a>
+                                        {APP_INFO.fullName}
+                                    </p>
+                                    <div
+                                        className="flex items-center justify-center gap-2 mt-3 text-[11px]"
+                                        style={{ color: palette.textMuted }}
+                                    >
+                                        <span>© {APP_INFO.established} {APP_INFO.name}</span>
+                                        <span
+                                            className="w-1 h-1 rounded-full"
+                                            style={{ backgroundColor: palette.textMuted, opacity: 0.5 }}
+                                        />
+                                        <button type="button" className="hover:text-violet-400 transition-colors">
+                                            Privacy
+                                        </button>
+                                        <span
+                                            className="w-1 h-1 rounded-full"
+                                            style={{ backgroundColor: palette.textMuted, opacity: 0.5 }}
+                                        />
+                                        <button type="button" className="hover:text-violet-400 transition-colors">
+                                            Terms
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        </motion.div>
+                            </Section>
+                        </div>
+                    </motion.aside>
+
+                    {/* ── Member profile drawer (separate right bar) ── */}
+                    <AnimatePresence>
+                        {activeMember && teamData[activeMember] && (
+                            <>
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.3, ease: EASE }}
+                                    onClick={closeMember}
+                                    aria-hidden="true"
+                                    className="fixed inset-0 z-[95]"
+                                    style={{ backgroundColor: 'rgba(2, 6, 23, 0.45)' }}
+                                />
+                                <motion.aside
+                                    role="dialog"
+                                    aria-modal="true"
+                                    aria-label={`${teamData[activeMember].name} profile`}
+                                    initial={isMobile ? { y: '100%' } : { x: '100%' }}
+                                    animate={isMobile ? { y: 0 } : { x: 0 }}
+                                    exit={isMobile ? { y: '100%' } : { x: '100%' }}
+                                    transition={{ duration: 0.4, ease: EASE }}
+                                    className={`fixed z-[96] flex flex-col overflow-hidden ${
+                                        isMobile
+                                            ? 'bottom-0 left-0 right-0 h-[88dvh]'
+                                            : 'top-0 right-0 h-[100dvh]'
+                                    }`}
+                                    style={{
+                                        width: isMobile ? '100%' : 'min(420px, 92vw)',
+                                        backgroundColor: palette.bgPanel,
+                                        borderLeft: isMobile ? 'none' : `1px solid ${palette.border}`,
+                                        borderTop: isMobile ? `1px solid ${palette.border}` : 'none',
+                                        borderRadius: isMobile ? '28px 28px 0 0' : '28px 0 0 28px',
+                                        boxShadow: isDark
+                                            ? '0 -32px 80px -20px rgba(0,0,0,0.8)'
+                                            : '0 -32px 80px -24px rgba(15,23,42,0.3)',
+                                    }}
+                                >
+                                    {/* Profile header */}
+                                    <div
+                                        className="relative px-6 pt-8 md:pt-6 pb-6"
+                                        style={{
+                                            background: `linear-gradient(160deg, ${palette.accentSoft}, transparent 70%)`,
+                                            borderBottom: `1px solid ${palette.border}`,
+                                        }}
+                                    >
+                                        {isMobile && (
+                                            <span
+                                                className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full pointer-events-none"
+                                                style={{ backgroundColor: palette.textMuted, opacity: 0.35 }}
+                                            />
+                                        )}
+                                        <motion.button
+                                            onClick={closeMember}
+                                            whileHover={{ scale: 1.08, x: -2 }}
+                                            whileTap={{ scale: 0.92 }}
+                                            transition={{ duration: 0.2 }}
+                                            aria-label="Back to about"
+                                            className="absolute top-5 left-6 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md"
+                                            style={{
+                                                backgroundColor: palette.surface,
+                                                border: `1px solid ${palette.border}`,
+                                                color: palette.textMuted,
+                                            }}
+                                        >
+                                            <ArrowLeft size={17} />
+                                        </motion.button>
+                                        <motion.button
+                                            onClick={closeMember}
+                                            whileHover={{ scale: 1.08, rotate: 90 }}
+                                            whileTap={{ scale: 0.92 }}
+                                            transition={{ duration: 0.2 }}
+                                            aria-label={`Close ${teamData[activeMember].name} profile`}
+                                            className="absolute top-5 right-6 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md"
+                                            style={{
+                                                backgroundColor: palette.surface,
+                                                border: `1px solid ${palette.border}`,
+                                                color: palette.textMuted,
+                                            }}
+                                        >
+                                            <X size={17} />
+                                        </motion.button>
+
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.92 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ duration: 0.4, ease: EASE, delay: 0.1 }}
+                                            className="flex flex-col items-center text-center mt-8"
+                                        >
+                                            <div
+                                                className={`w-24 h-24 rounded-3xl overflow-hidden flex items-center justify-center bg-gradient-to-br shadow-xl mb-4 ring-2 ring-violet-500/60 ${teamData[activeMember].gradient}`}
+                                                style={{
+                                                    boxShadow: `0 16px 40px -12px ${palette.accent}`,
+                                                }}
+                                            >
+                                                {teamData[activeMember].image ? (
+                                                    <img
+                                                        src={teamData[activeMember].image}
+                                                        alt={teamData[activeMember].name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <span className="text-2xl font-bold text-white">
+                                                        {teamData[activeMember].initials}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h3
+                                                className="text-xl font-black tracking-tight"
+                                                style={{ color: palette.text }}
+                                            >
+                                                {teamData[activeMember].name}
+                                            </h3>
+                                            <span
+                                                className="mt-2 inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.15em]"
+                                                style={{
+                                                    backgroundColor: palette.accentSoft,
+                                                    color: palette.accent,
+                                                    border: `1px solid ${palette.borderStrong}`,
+                                                }}
+                                            >
+                                                {teamData[activeMember].role}
+                                            </span>
+                                            <span
+                                                className="mt-3 inline-flex items-center gap-1.5 text-xs"
+                                                style={{ color: palette.textMuted }}
+                                            >
+                                                <MapPin size={13} />
+                                                {teamData[activeMember].location}
+                                            </span>
+                                        </motion.div>
+                                    </div>
+
+                                    {/* Profile body */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.4, ease: EASE, delay: 0.15 }}
+                                        className="flex-1 overflow-y-auto custom-scrollbar px-6 py-6 space-y-6"
+                                    >
+                                        <div>
+                                            <h4
+                                                className="text-[11px] font-bold uppercase tracking-[0.18em] mb-2"
+                                                style={{ color: palette.textMuted }}
+                                            >
+                                                About
+                                            </h4>
+                                            <p
+                                                className="text-sm leading-relaxed"
+                                                style={{ color: palette.text }}
+                                            >
+                                                {teamData[activeMember].desc}
+                                            </p>
+                                        </div>
+
+                                        {/* Highlighted social accounts */}
+                                        <div>
+                                            <h4
+                                                className="text-[11px] font-bold uppercase tracking-[0.18em] mb-3"
+                                                style={{ color: palette.textMuted }}
+                                            >
+                                                Connect
+                                            </h4>
+                                            <div className="space-y-2.5">
+                                                {(teamData[activeMember].socials || [])
+                                                    .filter((s) => s.href)
+                                                    .map(({ icon: Icon, href, label }) => (
+                                                        <motion.a
+                                                            key={label}
+                                                            href={href}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            whileHover={{ x: 4 }}
+                                                            transition={{ duration: 0.2, ease: EASE }}
+                                                            className="flex items-center gap-3 px-4 py-3 rounded-xl backdrop-blur-md group transition-colors duration-300"
+                                                            style={{
+                                                                backgroundColor: palette.surface,
+                                                                border: `1px solid ${palette.border}`,
+                                                                color: palette.text,
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.borderColor =
+                                                                    palette.borderStrong;
+                                                                e.currentTarget.style.backgroundColor =
+                                                                    palette.accentSoft;
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.borderColor =
+                                                                    palette.border;
+                                                                e.currentTarget.style.backgroundColor =
+                                                                    palette.surface;
+                                                            }}
+                                                        >
+                                                            <span
+                                                                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-violet-500 group-hover:text-white"
+                                                                style={{
+                                                                    backgroundColor: palette.accentSoft,
+                                                                    color: palette.accent,
+                                                                }}
+                                                            >
+                                                                <Icon size={15} />
+                                                            </span>
+                                                            <span className="text-sm font-semibold flex-1">
+                                                                {label}
+                                                            </span>
+                                                            <ChevronRightSmall />
+                                                        </motion.a>
+                                                    ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Contact actions */}
+                                        <div className="flex gap-3 pt-1">
+                                            <a
+                                                href={TEAM_LINKS[activeMember] || '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-sm text-white shadow-lg"
+                                                style={{
+                                                    background: `linear-gradient(135deg, ${palette.accent}, #6D28D9)`,
+                                                    boxShadow: `0 10px 28px -10px ${palette.accent}`,
+                                                }}
+                                            >
+                                                View Profile
+                                            </a>
+                                            <a
+                                                href={`https://mail.google.com/mail/?view=cm&fs=1&to=${MAIL_TO}&su=${encodeURIComponent(MEMBER_MAIL[activeMember] || 'Contact')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-bold text-sm text-center transition-colors hover:text-violet-400"
+                                                style={{
+                                                    backgroundColor: palette.surface,
+                                                    border: `1px solid ${palette.border}`,
+                                                    color: palette.text,
+                                                }}
+                                            >
+                                                Contact
+                                            </a>
+                                        </div>
+                                    </motion.div>
+                                </motion.aside>
+                            </>
                         )}
-                    </motion.div>
+                    </AnimatePresence>
                 </>
             )}
         </AnimatePresence>
     );
 });
 
-AboutModal.displayName = 'AboutModal';
+const ChevronRightSmall = () => (
+    <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{ opacity: 0.35 }}
+        aria-hidden="true"
+    >
+        <path d="m9 18 6-6-6-6" />
+    </svg>
+);
 
-export default AboutModal;
+AboutDrawer.displayName = 'AboutDrawer';
+
+export default AboutDrawer;

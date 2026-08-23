@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { AlertTriangle, Volume2, X } from 'lucide-react';
-import emergencyWarning from '../../assets/sounds/emergency-warning.mp3';
+import emergencyWarning from '../../assets/sounds/emergency-warning-opt.m4a';
 
 const playAlert = (audioRef, repeatCount = 3) => {
   try {
@@ -95,7 +95,7 @@ const HighAlertNotification = ({ studentName, isActive = true, onDismiss }) => {
   return (
     <>
       {/* Hidden audio element for emergency warning sound */}
-      <audio ref={audioRef} src={emergencyWarning} preload="auto" />
+      <audio ref={audioRef} src={emergencyWarning} preload="none" />
 
       <div className="relative bottom-0 inset-0 z-50 flex items-start justify-center pt-4">
         <div className="bg-gradient-to-b from-red-600 to-red-700 text-white rounded-2xl shadow-2xl p-6 max-w-md w-11/12">

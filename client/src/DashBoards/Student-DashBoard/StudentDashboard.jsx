@@ -508,7 +508,6 @@ const StudentDashboard = () => {
                 >
                   {user.displayName}
                 </h3>
-                
               </div>
 
               <div className="flex items-center justify-between mb-4">

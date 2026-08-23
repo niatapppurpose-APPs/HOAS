@@ -2,6 +2,37 @@ import { auth } from './firebaseConfig';
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
+// ── Instant cache (Firebase-snapshot feel) ─────────────────────────────────
+// GET responses are cached in-memory for CACHE_TTL_MS. A repeated visit to the
+// same endpoint resolves INSTANTLY from cache while a background revalidation
+// refreshes it, so pages render without spinners. Any mutation clears the
+// cache so data is never stale after an action.
+const CACHE_TTL_MS = 30 * 1000;
+const responseCache = new Map(); // path -> { ts, data }
+const inflightRefreshes = new Map(); // path -> Promise
+
+// Realtime data that must never be served from cache
+const NO_CACHE_PATTERNS = ['/emergency', '/notifications', '/chat'];
+
+const isCacheable = (path) => !NO_CACHE_PATTERNS.some((p) => path.includes(p));
+
+export const clearRequestCache = () => {
+  responseCache.clear();
+};
+
+const revalidate = (path, timeoutMs) => {
+  if (inflightRefreshes.has(path)) return inflightRefreshes.get(path);
+  const promise = request('GET', path, null, timeoutMs)
+    .then((data) => {
+      responseCache.set(path, { ts: Date.now(), data });
+      window.dispatchEvent(new CustomEvent('hoas:data-refreshed', { detail: { path, data } }));
+    })
+    .catch(() => {})
+    .finally(() => inflightRefreshes.delete(path));
+  inflightRefreshes.set(path, promise);
+  return promise;
+};
+
 const request = async (method, path, payload = null, timeoutMs = 15000) => {
   if (!auth.currentUser) {
     throw new Error('You must be signed in');
@@ -40,10 +71,41 @@ const request = async (method, path, payload = null, timeoutMs = 15000) => {
   }
 };
 
-const get = (path, timeoutMs) => request('GET', path, null, timeoutMs);
-const post = (path, payload, timeoutMs) => request('POST', path, payload, timeoutMs);
-const patch = (path, payload) => request('PATCH', path, payload);
-const del = (path) => request('DELETE', path);
+const get = (path, timeoutMs) => {
+  if (isCacheable(path)) {
+    const hit = responseCache.get(path);
+    if (hit && Date.now() - hit.ts < CACHE_TTL_MS) {
+      // Instant render from cache; refresh silently in the background
+      revalidate(path, timeoutMs);
+      return Promise.resolve(hit.data);
+    }
+  }
+  return request('GET', path, null, timeoutMs).then((data) => {
+    if (isCacheable(path)) responseCache.set(path, { ts: Date.now(), data });
+    return data;
+  });
+};
+const post = async (path, payload, timeoutMs) => {
+  try {
+    return await request('POST', path, payload, timeoutMs);
+  } finally {
+    clearRequestCache();
+  }
+};
+const patch = async (path, payload) => {
+  try {
+    return await request('PATCH', path, payload);
+  } finally {
+    clearRequestCache();
+  }
+};
+const del = async (path) => {
+  try {
+    return await request('DELETE', path);
+  } finally {
+    clearRequestCache();
+  }
+};
 
 const getMyProfile = async () => {
   const { user } = await get('/api/auth/me');

@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.example
 serviceAccountKey.json
+
+# Legacy/unused files parked for review before deletion (never push — contains old secrets)
+_unwanted/

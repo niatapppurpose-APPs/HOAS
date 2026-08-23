@@ -11,7 +11,7 @@ import { useTheme } from "../../../context/ThemeContext";
 import { useAuth } from "../../../context/AuthContext";
 import AddWardenModal from './AddWardenModal';
 import NoDataLight from '../../../assets/No-Data.avif';
-import NoDataDark from '../../../assets/NoDataDark.png';
+import NoDataDark from '../../../assets/NoDataDark.webp';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
 
 const mapUser = (u) => ({

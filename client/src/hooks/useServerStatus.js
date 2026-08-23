@@ -12,7 +12,8 @@ export const useServerStatus = (checkInterval = 5000) => {
     const checkServer = async () => {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3000);
+        // Render free-tier cold starts can take ~50s; allow a generous window
+        const timeout = setTimeout(() => controller.abort(), 10000);
         const response = await fetch(`${API_BASE}/health`, {
           method: 'GET',
           cache: 'no-cache',

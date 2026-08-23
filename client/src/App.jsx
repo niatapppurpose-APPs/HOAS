@@ -6,6 +6,7 @@ import GlobalDeleteModal from "./components/OwnerServices/GlobalDeleteModal";
 import { useServerStatus } from "./hooks/useServerStatus";
 import { MaintenanceGate, useSystemSettings } from "./hooks/useSystemSettings.jsx";
 import NotFound from "./Pages/NotFound"; // 404 page
+import WakeUpScreen from "./components/WakeUpScreen";
 import ForcePasswordReset from "./Pages/ForcePasswordReset/ForcePasswordReset";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -62,14 +63,15 @@ const App = () => {
     }
   }, []);
 
-  // Show 404 (Yeti) if browser is offline (network disconnected) have added
+  // Show wake-up screen if browser is offline (network disconnected)
   if (!isOnline) {
-    return <NotFound />;
+    return <WakeUpScreen offline />;
   }
 
-  // Show 404 page if server is down (but browser is online)
+  // Show premium wake-up loader while the server cold-starts (Render free tier
+  // sleeps after inactivity). NotFound is only for genuine route misses.
   if (!isServerOnline) {
-    return <NotFound />;
+    return <WakeUpScreen />;
   }
 
   const PUBLIC_ROUTES = ['/', '/login', '/admin-login'];
