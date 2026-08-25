@@ -1,5 +1,11 @@
 import nodemailer from 'nodemailer';
+import dns from 'dns';
 import { env } from '../config/env.js';
+
+// Render instances have no IPv6 egress. Node >=17 prefers AAAA records when
+// resolving smtp.gmail.com, so connects hang until ETIMEDOUT on every SMTP
+// port. Force IPv4 resolution process-wide.
+dns.setDefaultResultOrder('ipv4first');
 
 const transporterCache = new Map();
 
@@ -9,6 +15,8 @@ function buildTransporter(port) {
     port,
     secure: port === 465,
     auth: { user: env.smtp.user, pass: env.smtp.password },
+    // IPv4 only — see dns note above (Render has no IPv6 route to Gmail).
+    family: 4,
     // Keep these tight: on Render, a hanging SMTP socket used to block
     // responses for 20-30s+ per attempt. Fail fast and fall back instead.
     connectionTimeout: 8000,
@@ -41,37 +49,115 @@ function isConnectionError(error) {
   );
 }
 
-async function deliver({ to, subject, html, text }) {
-  const primaryPort = env.smtp.port || 587;
-  const fallbackPort = primaryPort === 465 ? 587 : 465;
-
+// ── HTTP email APIs (port 443 — never blocked by hosting providers) ────────
+async function fetchWithTimeout(url, options, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await getTransporter(primaryPort).sendMail({
-      from: `"${env.smtp.fromName}" <${env.smtp.fromEmail || env.smtp.user}>`,
-      to,
-      subject,
-      html,
-      text,
-    });
-  } catch (primaryError) {
-    if (!isConnectionError(primaryError)) throw primaryError;
-
-    console.warn(
-      `[email-retry] to=${to} port=${primaryPort} failed (${primaryError.code || primaryError.message}); retrying on port ${fallbackPort}`
-    );
-
-    return getTransporter(fallbackPort).sendMail({
-      from: `"${env.smtp.fromName}" <${env.smtp.fromEmail || env.smtp.user}>`,
-      to,
-      subject,
-      html,
-      text,
-    });
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
   }
 }
 
+async function sendViaResend({ from, to, subject, html, text }) {
+  const response = await fetchWithTimeout('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from,
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      html,
+      text: text || undefined,
+    }),
+  });
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Resend API ${response.status}: ${body.slice(0, 200)}`);
+  }
+  return { via: 'resend' };
+}
+
+async function sendViaBrevo({ from, to, subject, html, text }) {
+  // Brevo needs a bare address in "from" (name goes separately).
+  const emailMatch = String(from).match(/<([^>]+)>/);
+  const senderEmail = emailMatch ? emailMatch[1] : from;
+  const response = await fetchWithTimeout('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': env.brevoApiKey,
+      'Content-Type': 'application/json',
+      accept: 'application/json',
+    },
+    body: JSON.stringify({
+      sender: { name: env.smtp.fromName, email: senderEmail },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+      textContent: text || undefined,
+    }),
+  });
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Brevo API ${response.status}: ${body.slice(0, 200)}`);
+  }
+  return { via: 'brevo' };
+}
+
+async function deliverViaHttpApi(payload) {
+  if (env.resendApiKey) return sendViaResend(payload);
+  if (env.brevoApiKey) return sendViaBrevo(payload);
+  return null;
+}
+
+const hasHttpApi = () => Boolean(env.resendApiKey || env.brevoApiKey);
+
+async function deliver({ to, subject, html, text }) {
+  const payload = {
+    from: `"${env.smtp.fromName}" <${env.smtp.fromEmail || env.smtp.user}>`,
+    to,
+    subject,
+    html,
+    text,
+  };
+
+  // Preferred path: HTTP API (works everywhere, no SMTP port issues).
+  if (hasHttpApi()) {
+    try {
+      const result = await deliverViaHttpApi(payload);
+      if (result) return result;
+    } catch (httpError) {
+      console.warn(`[email-http] failed (${httpError.message}); falling back to SMTP`);
+      if (!env.smtp.user || !env.smtp.password) throw httpError;
+    }
+  }
+
+  const primaryPort = env.smtp.port || 587;
+  const fallbackPort = primaryPort === 465 ? 587 : 465;
+  const attempts = [primaryPort, fallbackPort, primaryPort];
+
+  let lastError;
+  for (let i = 0; i < attempts.length; i += 1) {
+    try {
+      return await getTransporter(attempts[i]).sendMail(payload);
+    } catch (error) {
+      lastError = error;
+      if (!isConnectionError(error)) throw error;
+      console.warn(
+        `[email-retry] to=${to} attempt=${i + 1} port=${attempts[i]} failed (${error.code || error.message})`
+      );
+    }
+  }
+  throw lastError;
+}
+
 export async function sendMail({ to, subject, html, text = '' }) {
-  if (!env.smtp.user || !env.smtp.password) {
+  const smtpConfigured = Boolean(env.smtp.user && env.smtp.password);
+  if (!smtpConfigured && !hasHttpApi()) {
     console.log(`[email-disabled] to=${to} subject=${subject}`);
     return null;
   }

@@ -25,6 +25,10 @@ export const env = {
     fromName: required('SMTP_FROM_NAME', 'HOAS System'),
     fromEmail: required('SMTP_FROM_EMAIL', ''),
   },
+  // HTTP email APIs — preferred on hosts where outbound SMTP is blocked
+  // (e.g. Render). Set RESEND_API_KEY or BREVO_API_KEY to enable.
+  resendApiKey: required('RESEND_API_KEY', ''),
+  brevoApiKey: required('BREVO_API_KEY', ''),
   appUrl: required('HOAS_APP_URL', 'http://localhost:5173'),
   renderUrl: required('RENDER_URL', 'https://hoas.onrender.com'),
   cloudinary: {

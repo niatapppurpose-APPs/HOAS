@@ -44,6 +44,15 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(globalRateLimit);
 
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'hoas-backend',
+    time: new Date().toISOString(),
+    database: mongooseConnectionState(),
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
