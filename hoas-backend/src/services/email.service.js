@@ -1,37 +1,81 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env.js';
 
-let transporter = null;
+const transporterCache = new Map();
 
-function getTransporter() {
-  if (!env.smtp.user || !env.smtp.password) return null;
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: env.smtp.host,
-      port: env.smtp.port,
-      secure: env.smtp.port === 465,
-      auth: { user: env.smtp.user, pass: env.smtp.password },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-    });
-  }
-  return transporter;
+function buildTransporter(port) {
+  return nodemailer.createTransport({
+    host: env.smtp.host,
+    port,
+    secure: port === 465,
+    auth: { user: env.smtp.user, pass: env.smtp.password },
+    // Keep these tight: on Render, a hanging SMTP socket used to block
+    // responses for 20-30s+ per attempt. Fail fast and fall back instead.
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 12000,
+    pool: true,
+    maxConnections: 3,
+    maxMessages: 50,
+  });
 }
 
-export function sendMail({ to, subject, html, text = '' }) {
-  const transport = getTransporter();
-  if (!transport) {
-    console.log(`[email-disabled] to=${to} subject=${subject}`);
-    return Promise.resolve(null);
+function getTransporter(preferredPort) {
+  if (!env.smtp.user || !env.smtp.password) return null;
+  const port = preferredPort || env.smtp.port || 587;
+  if (!transporterCache.has(port)) {
+    transporterCache.set(port, buildTransporter(port));
   }
-  return transport.sendMail({
-    from: `"${env.smtp.fromName}" <${env.smtp.fromEmail || env.smtp.user}>`,
-    to,
-    subject,
-    html,
-    text,
-  });
+  return transporterCache.get(port);
+}
+
+function isConnectionError(error) {
+  const code = error?.code || '';
+  return (
+    code === 'ECONNECTION' ||
+    code === 'ETIMEDOUT' ||
+    code === 'ESOCKET' ||
+    code === 'ECONNRESET' ||
+    code === 'ECONNREFUSED' ||
+    /timeout/i.test(error?.message || '')
+  );
+}
+
+async function deliver({ to, subject, html, text }) {
+  const primaryPort = env.smtp.port || 587;
+  const fallbackPort = primaryPort === 465 ? 587 : 465;
+
+  try {
+    return await getTransporter(primaryPort).sendMail({
+      from: `"${env.smtp.fromName}" <${env.smtp.fromEmail || env.smtp.user}>`,
+      to,
+      subject,
+      html,
+      text,
+    });
+  } catch (primaryError) {
+    if (!isConnectionError(primaryError)) throw primaryError;
+
+    console.warn(
+      `[email-retry] to=${to} port=${primaryPort} failed (${primaryError.code || primaryError.message}); retrying on port ${fallbackPort}`
+    );
+
+    return getTransporter(fallbackPort).sendMail({
+      from: `"${env.smtp.fromName}" <${env.smtp.fromEmail || env.smtp.user}>`,
+      to,
+      subject,
+      html,
+      text,
+    });
+  }
+}
+
+export async function sendMail({ to, subject, html, text = '' }) {
+  if (!env.smtp.user || !env.smtp.password) {
+    console.log(`[email-disabled] to=${to} subject=${subject}`);
+    return null;
+  }
+  return deliver({ to, subject, html, text });
 }
 
 /**
@@ -83,7 +127,9 @@ export function sendWelcomeEmail({ to, name, role, extra = [], resetLink = '' })
 }
 
 export function sendBulkUploadSummaryEmail({ to, collegeName, created, failed, skipped }) {
-  return sendMail({
+  // Non-blocking: this is called on a request path and previously awaited the
+  // full SMTP round-trip, which caused client/Render timeouts on slow SMTP.
+  return sendMailAsync({
     to,
     subject: `Bulk upload complete — ${created} students created`,
     html: layout(`
@@ -92,6 +138,49 @@ export function sendBulkUploadSummaryEmail({ to, collegeName, created, failed, s
       ${credentialBox('Created', created)}
       ${credentialBox('Failed', failed)}
       ${credentialBox('Skipped', skipped)}
+    `),
+  });
+}
+
+export function sendAccessRequestReceivedEmail({ to, contactPerson, orgName }) {
+  return sendMailAsync({
+    to,
+    subject: 'We received your HOAS access request',
+    html: layout(`
+      <h2>Thank you, ${contactPerson}!</h2>
+      <p>We have received the access request for <strong>${orgName}</strong>.</p>
+      <p>Our team is reviewing your organization details. Once verified, you will
+      receive a follow-up email with your account credentials.</p>
+      <div style="background:#f3f4f6;border-radius:6px;padding:12px;margin:8px 0">
+        <div style="font-size:12px;color:#6b7280">What happens next?</div>
+        <ol style="margin:8px 0 0 18px;padding:0;color:#374151;font-size:14px">
+          <li>The HOAS owner team verifies your organization details.</li>
+          <li>Your management account is created.</li>
+          <li>You receive your login credentials by email.</li>
+        </ol>
+      </div>
+      <p style="color:#6b7280;font-size:13px">App: <a href="${env.appUrl}">${env.appUrl}</a></p>
+    `),
+  });
+}
+
+export function sendAccessRequestDecisionEmail({ to, contactPerson, orgName, approved, reason = '' }) {
+  return sendMailAsync({
+    to,
+    subject: approved
+      ? `Your HOAS access for ${orgName} has been verified`
+      : `Update on your HOAS access request`,
+    html: layout(`
+      <h2>Hello, ${contactPerson}</h2>
+      ${
+        approved
+          ? `<p>Good news! Your organization <strong>${orgName}</strong> has been verified by the HOAS team.
+             You will receive your account credentials in a separate email shortly.</p>`
+          : `<p>Unfortunately, we could not verify the access request for <strong>${orgName}</strong> at this time.</p>
+             ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+             <p>If you believe this is a mistake, feel free to submit a new request with updated details.</p>`
+      }
+      <p style="color:#6b7280;font-size:13px">App: <a href="${env.appUrl}">${env.appUrl}</a></p>
     `),
   });
 }

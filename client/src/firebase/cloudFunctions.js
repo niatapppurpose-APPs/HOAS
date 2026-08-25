@@ -578,6 +578,28 @@ export const deleteSupportTicket = async (ticketId) => {
 };
 
 // =============================================================================
+// ORGANIZATION ACCESS REQUESTS
+// =============================================================================
+
+export const listAccessRequests = async ({ status, search } = {}) => {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (search) params.set('search', search);
+  const qs = params.toString();
+  return get(`/api/access-requests${qs ? `?${qs}` : ''}`);
+};
+
+export const reviewAccessRequest = async (requestId, { status, notes } = {}) => {
+  const { request } = await patch(`/api/access-requests/${requestId}/review`, { status, notes });
+  return request;
+};
+
+export const createAccountFromAccessRequest = async (requestId) => {
+  // Account creation + Firebase auth can take a while — use a long timeout.
+  return post(`/api/access-requests/${requestId}/create-account`, {}, 60000);
+};
+
+// =============================================================================
 // UPLOADS (CLOUDINARY PROXY)
 // =============================================================================
 

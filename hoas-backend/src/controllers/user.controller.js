@@ -106,19 +106,25 @@ export async function createManagement(req, res, next) {
     college.managementId = user._id;
     await college.save();
 
-    const resetLink = await firebaseAuth.generatePasswordResetLink(email);
-    await sendWelcomeEmail({
-      to: normalizedEmail,
-      name: principalName,
-      role: 'management',
-      extra: [
-        { name: 'College', value: collegeName },
-        { name: 'Principal', value: principalName },
-        { name: 'Email', value: normalizedEmail },
-        { name: 'Temporary password', value: password },
-      ],
-      resetLink,
-    });
+    // Non-blocking: reset link fetch + SMTP delivery must never delay the
+    // HTTP response (Render times out slow requests).
+    firebaseAuth
+      .generatePasswordResetLink(email)
+      .catch(() => '')
+      .then((resetLink) =>
+        sendWelcomeEmail({
+          to: normalizedEmail,
+          name: principalName,
+          role: 'management',
+          extra: [
+            { name: 'College', value: collegeName },
+            { name: 'Principal', value: principalName },
+            { name: 'Email', value: normalizedEmail },
+            { name: 'Temporary password', value: password },
+          ],
+          resetLink,
+        })
+      );
 
     await notifyAdmins({
       type: 'management_created',
@@ -173,19 +179,23 @@ export async function createWarden(req, res, next) {
     hostel.wardenId = user._id;
     await hostel.save();
 
-    const resetLink = await firebaseAuth.generatePasswordResetLink(email);
-    await sendWelcomeEmail({
-      to: email,
-      name,
-      role: 'warden',
-      extra: [
-        { name: 'College', value: college.name },
-        { name: 'Hostel block', value: hostelBlock || hostelName },
-        { name: 'Email', value: email },
-        { name: 'Temporary password', value: password },
-      ],
-      resetLink,
-    });
+    firebaseAuth
+      .generatePasswordResetLink(email)
+      .catch(() => '')
+      .then((resetLink) =>
+        sendWelcomeEmail({
+          to: email,
+          name,
+          role: 'warden',
+          extra: [
+            { name: 'College', value: college.name },
+            { name: 'Hostel block', value: hostelBlock || hostelName },
+            { name: 'Email', value: email },
+            { name: 'Temporary password', value: password },
+          ],
+          resetLink,
+        })
+      );
 
     await recordAudit({ actor: req.user, action: 'WARDEN_CREATED', targetType: 'User', targetId: user._id });
     res.status(201).json({ user });

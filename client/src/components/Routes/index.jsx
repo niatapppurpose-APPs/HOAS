@@ -95,6 +95,7 @@ const Reports = lazy(() => import("../../Pages/OwnersDashboard/Pages/Reports"));
 const Notifications = lazy(() => import("../../Pages/OwnersDashboard/Pages/Notifications"));
 const Settings = lazy(() => import("../../Pages/OwnersDashboard/Pages/GlobalSystemSettings"));
 const SupportTickets = lazy(() => import("../../Pages/OwnersDashboard/Pages/SupportTickets"));
+const AccessRequests = lazy(() => import("../../Pages/OwnersDashboard/Pages/AccessRequests"));
 const OwnerProfile = lazy(() => import("../OwnerServices/OwnerProfile"));
 
 const Routes_path = () => {
@@ -200,6 +201,7 @@ const Routes_path = () => {
                     } />
                     <Route path="settings" element={<Settings />} />
                     <Route path="support-tickets" element={<SupportTickets />} />
+                    <Route path="access-requests" element={<AccessRequests />} />
                     <Route path="profile" element={<OwnerProfile />} />
                 </Route>
 

@@ -25,6 +25,8 @@ import { WorkflowSteps, TechStack } from "./components/HowItWorks";
 import { Testimonials, FAQ } from "./components/SocialProof";
 import { RoleCard } from "./components/Cards";
 import RoleDrawer from "./components/RoleDrawer";
+import RequestAccessDrawer from "./components/RequestAccessDrawer";
+import DemoVideoModal from "./components/DemoVideoModal";
 import AboutModal from "./components/AboutModal";
 import Footer from "./components/Footer";
 import { ROLE_CARDS, HERO_CHIPS, itemVariants, scaleIn } from "./constants";
@@ -49,6 +51,8 @@ const Home = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isRequestAccessOpen, setIsRequestAccessOpen] = useState(false);
+  const [isDemoVideoOpen, setIsDemoVideoOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const { user, isAdmin, loading } = useAuth();
@@ -338,19 +342,19 @@ const Home = () => {
               <motion.button
                 whileHover={{ scale: 1.04, y: -2 }}
                 whileTap={{ scale: 0.97 }}
-                onClick={handleNavigate}
+                onClick={() => setIsRequestAccessOpen(true)}
                 className="w-full sm:w-auto px-7 py-3.5 rounded-2xl font-bold text-white shadow-xl shadow-violet-600/30 flex items-center justify-center gap-2"
                 style={{
                   background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
                 }}
               >
-                Request a Demo <ChevronRight size={17} />
+                Request Access <ChevronRight size={17} />
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.04, y: -2 }}
                 whileTap={{ scale: 0.97 }}
-                onClick={() => scrollToSection("features")}
-                className="w-full sm:w-auto px-7 py-3.5 rounded-2xl font-bold border backdrop-blur-md flex items-center justify-center gap-2"
+                onClick={() => setIsDemoVideoOpen(true)}
+                className="w-full sm:w-auto px-7 py-3.5 rounded-2xl font-bold border backdrop-blur-md flex items-center justify-center gap-2 group"
                 style={{
                   backgroundColor: isDark
                     ? "rgba(255,255,255,0.05)"
@@ -361,8 +365,16 @@ const Home = () => {
                   color: isDark ? "#E2E8F0" : "#0f172a",
                 }}
               >
-                Explore Features <PlayCircle size={17} />
+                <span className="relative flex items-center">
+                  <span className="absolute inline-flex h-4 w-4 animate-ping rounded-full bg-violet-500/40 opacity-75" />
+                  <PlayCircle
+                    size={17}
+                    className="relative text-violet-500 transition-transform group-hover:scale-110"
+                  />
+                </span>
+                Watch Demo
               </motion.button>
+              
             </motion.div>
 
             {/* Trust chips */}
@@ -454,6 +466,28 @@ const Home = () => {
         isDark={isDark}
         onCTA={handleNavigate}
       />
+
+      {/* ══════════ Request Access drawer ══════════ */}
+      <AnimatePresence>
+        {isRequestAccessOpen && (
+          <RequestAccessDrawer
+            isOpen={isRequestAccessOpen}
+            onClose={() => setIsRequestAccessOpen(false)}
+            isDark={isDark}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ══════════ Demo video modal ══════════ */}
+      <AnimatePresence>
+        {isDemoVideoOpen && (
+          <DemoVideoModal
+            isOpen={isDemoVideoOpen}
+            onClose={() => setIsDemoVideoOpen(false)}
+            isDark={isDark}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ══════════ Features ══════════ */}
       <FeaturesGrid isDark={isDark} />

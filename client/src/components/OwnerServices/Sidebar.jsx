@@ -12,6 +12,7 @@ import {
   Pin,
   X,
   Ticket,
+  Inbox,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -44,6 +45,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     if (path.includes("/notifications")) return "notifications";
     if (path.includes("/settings")) return "settings";
     if (path.includes("/support-tickets")) return "support-tickets";
+    if (path.includes("/access-requests")) return "access-requests";
     return "dashboard";
   };
 
@@ -130,6 +132,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       icon: Ticket,
       path: "/OwnersDashboard/support-tickets",
       tourId: "tour-nav-support",
+    },
+    {
+      id: "access-requests",
+      label: "Access Requests",
+      icon: Inbox,
+      path: "/OwnersDashboard/access-requests",
+      tourId: "tour-nav-access-requests",
     },
     {
       id: "settings",
