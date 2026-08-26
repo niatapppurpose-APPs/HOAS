@@ -431,6 +431,8 @@ const flattenFee = (fee) => {
   const student = fee.studentId || {};
   return {
     ...fee,
+    amount: fee.totalAmount ?? fee.amount ?? 0,
+    paidAmount: fee.paidAmount ?? 0,
     studentId: student.studentId || student._id,
     studentName: student.name,
     studentEmail: student.email,

@@ -1,4 +1,13 @@
 import { AppError } from './AppError.js';
+import Hostel from '../models/Hostel.js';
+
+export async function resolveStudentWarden(student) {
+  if (!student) return null;
+  if (student.wardenId) return student.wardenId;
+  if (!student.hostelId) return null;
+  const hostel = await Hostel.findById(student.hostelId).select('wardenId');
+  return hostel?.wardenId?._id || hostel?.wardenId || null;
+}
 
 export function canManageCollege(user, collegeId) {
   if (!user) return false;

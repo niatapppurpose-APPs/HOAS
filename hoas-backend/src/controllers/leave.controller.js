@@ -1,7 +1,7 @@
 import LeaveRequest from '../models/LeaveRequest.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege } from '../utils/scope.js';
+import { canManageCollege, resolveStudentWarden } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { notifyUser } from '../services/notification.service.js';
 import { emitToUser, emitToCollege } from '../services/socket.service.js';
@@ -10,7 +10,8 @@ export async function requestLeave(req, res, next) {
   try {
     const student = req.user;
     if (!student.collegeId) throw new AppError(400, 'COLLEGE_MISSING');
-    if (!student.wardenId) throw new AppError(400, 'NO_WARDEN_ASSIGNED');
+    const wardenId = await resolveStudentWarden(student);
+    if (!wardenId) throw new AppError(400, 'NO_WARDEN_ASSIGNED');
 
     const fromDate = new Date(req.body.fromDate);
     const toDate = new Date(req.body.toDate);
@@ -19,14 +20,14 @@ export async function requestLeave(req, res, next) {
     const leave = await LeaveRequest.create({
       studentId: student._id,
       collegeId: student.collegeId,
-      wardenId: student.wardenId,
+      wardenId,
       leaveType: req.body.leaveType,
       reason: req.body.reason,
       fromDate,
       toDate,
     });
 
-    const warden = await User.findById(student.wardenId);
+    const warden = await User.findById(wardenId);
     if (warden) {
       await notifyUser(warden, {
         type: 'leave_request',

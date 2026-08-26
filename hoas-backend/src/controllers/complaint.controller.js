@@ -1,7 +1,7 @@
 import Complaint from '../models/Complaint.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege, canAccessHostel } from '../utils/scope.js';
+import { canManageCollege, canAccessHostel, resolveStudentWarden } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import {
   computeSlaDeadline,
@@ -22,7 +22,7 @@ export async function createComplaint(req, res, next) {
       studentId: student._id,
       collegeId: student.collegeId,
       hostelId: student.hostelId,
-      assignedWardenId: student.wardenId,
+      assignedWardenId: await resolveStudentWarden(student),
       title: req.body.title,
       description: req.body.description,
       category: req.body.category,

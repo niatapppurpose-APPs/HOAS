@@ -51,6 +51,36 @@ export const NotificationProvider = ({ children }) => {
 
   const seenRef = useRef({});
 
+  // Central dedupe: the same event can arrive via FCM push, the DB
+  // notifications feed, and the specialized feed polls. Claiming an
+  // entity+event key ensures the user is notified only once per event.
+  const notifiedKeysRef = useRef(new Set());
+
+  const entityKeyFromData = (data = {}, type = '') => {
+    const d = data || {};
+    const t = String(type || '');
+    if (d.leaveId) return t === 'leave_request' ? `leave:${d.leaveId}:new` : `leave:${d.leaveId}:status:${d.status || 'updated'}`;
+    if (d.outingId) return t === 'outing_request' ? `outing:${d.outingId}:new` : `outing:${d.outingId}:status:${d.status || 'updated'}`;
+    if (d.complaintId) {
+      if (t === 'complaint_new') return `complaint:${d.complaintId}:new`;
+      if (t === 'complaint_disputed') return `complaint:${d.complaintId}:disputed`;
+      if (t === 'complaint_escalated') return `complaint:${d.complaintId}:escalated`;
+      return `complaint:${d.complaintId}:status:${d.status || t || 'updated'}`;
+    }
+    if (d.announcementId) return `announcement:${d.announcementId}`;
+    if (d.ticketId) return `ticket:${d.ticketId}:${t || d.status || 'new'}`;
+    if (d.userId || d.studentId) return `user:${d.userId || d.studentId}:pending`;
+    if (d.feeId) return `fee:${d.feeId}:${t || 'update'}`;
+    return null;
+  };
+
+  const claimKey = (key) => {
+    if (!key) return true; // no key -> nothing to dedupe against
+    if (notifiedKeysRef.current.has(key)) return false;
+    notifiedKeysRef.current.add(key);
+    return true;
+  };
+
   const runPoll = async (feedKey, fetchItems, onNew, onChanged, sigOf) => {
     const feed = seenRef.current[feedKey] || { seen: new Map(), seeded: false };
     let items = [];
@@ -220,6 +250,11 @@ export const NotificationProvider = ({ children }) => {
         return;
       }
 
+      // Skip if this event was already notified via another channel
+      // (DB notifications feed or a specialized feed poll).
+      const fcmType = payload.data?.type || 'general';
+      if (!claimKey(entityKeyFromData(payload.data, fcmType))) return;
+
       // Foreground FCM path shows browser notification internally when granted.
       if (Notification.permission === 'granted' && payload?.notification) {
         playSound();
@@ -257,6 +292,8 @@ export const NotificationProvider = ({ children }) => {
     (n) => {
       const prefs = userData?.notifPrefs || {};
       if (prefs.systemAlerts === false) return;
+      // Skip events already delivered via FCM or a specialized feed poll.
+      if (!claimKey(entityKeyFromData(n.data, n.type))) return;
       triggerNotification(n.title, { body: n.body, tag: n.id, data: n.data });
       setNotifications(prev => {
         if (prev.some(existing => existing.id === n.id)) return prev;
@@ -280,6 +317,7 @@ export const NotificationProvider = ({ children }) => {
     (c) => {
       const prefs = userData?.notifPrefs || {};
       if (!prefs.complaints) return;
+      if (!claimKey(`complaint:${c.id}:status:${c.status}`)) return;
       const statusLabel = c.status === 'in-progress' ? 'In Progress' : c.status === 'resolved' ? 'Resolved' : c.status;
       const title = `Complaint Updated`;
       const body = `"${c.title}" is now ${statusLabel}`;
@@ -309,6 +347,7 @@ export const NotificationProvider = ({ children }) => {
     (c) => {
       const prefs = userData?.notifPrefs || {};
       if (!prefs.newComplaints) return;
+      if (!claimKey(`complaint:${c.id}:new`)) return;
       const title = `New Complaint`;
       const body = `${c.title} — Room ${c.roomNumber || 'N/A'}`;
       triggerNotification(title, { body, tag: `warden-complaint-${c.id}` });
@@ -338,6 +377,7 @@ export const NotificationProvider = ({ children }) => {
     (a) => {
       const prefs = userData?.notifPrefs || {};
       if (prefs.announcements === false) return;
+      if (!claimKey(`announcement:${a.id}`)) return;
       const priorityEmoji = a.priority === 'urgent' ? '🔴' : a.priority === 'important' ? '🟡' : '📢';
       const title = `${priorityEmoji} New Announcement`;
       const body = a.title || 'A new notice has been posted';
@@ -369,6 +409,7 @@ export const NotificationProvider = ({ children }) => {
     (l) => {
       const prefs = userData?.notifPrefs || {};
       if (!prefs.leaveUpdates) return;
+      if (!claimKey(`leave:${l.id}:status:${l.status}`)) return;
       const statusEmoji = l.status === 'approved' ? '✅' : l.status === 'denied' ? '❌' : '📋';
       const title = `${statusEmoji} Leave Request Updated`;
       const body = `Your ${(l.leaveType || 'leave').replace('_', ' ')} request is now ${l.status}`;
@@ -403,6 +444,7 @@ export const NotificationProvider = ({ children }) => {
     (l) => {
       const prefs = userData?.notifPrefs || {};
       if (!prefs.leaveRequests) return;
+      if (!claimKey(`leave:${l.id}:new`)) return;
       const title = '📋 New Leave Request';
       const body = `${l.studentName} — ${(l.leaveType || 'Leave').replace('_', ' ')}`;
       triggerNotification(title, { body, tag: `warden-leave-${l.id}` });
@@ -430,6 +472,7 @@ useFeedPoll(
       return (complaints || []).map(c => ({ id: c._id, title: c.title, studentName: c.studentId?.name || 'Student', status: c.status }));
     },
     (c) => {
+      if (!claimKey(`complaint:${c.id}:new`)) return;
       const title = `New Complaint Filed`;
       const body = `${c.title} \u2014 by ${c.studentName || 'Student'}`;
       triggerNotification(title, { body, tag: `mgmt-complaint-${c.id}` });
@@ -446,6 +489,7 @@ useFeedPoll(
     },
     (c) => {
       if (c.status === 'escalated') {
+        if (!claimKey(`complaint:${c.id}:escalated`)) return;
         const title = '🚨 Complaint Escalated';
         const body = `"${c.title}" by ${c.studentName || 'Student'} has been escalated`;
         triggerNotification(title, { body, tag: `mgmt-escalated-${c.id}` });
@@ -460,6 +504,7 @@ useFeedPoll(
         }, ...prev]);
         setUnreadCount(prev => prev + 1);
       } else if (c.status === 'disputed') {
+        if (!claimKey(`complaint:${c.id}:disputed`)) return;
         const title = '🚩 Complaint Disputed';
         const body = `"${c.title}" \u2014 student disputes the resolution`;
         triggerNotification(title, { body, tag: `mgmt-disputed-${c.id}` });
@@ -488,6 +533,7 @@ useFeedPoll(
       return (users || []).map(u => ({ id: u._id, role: u.role, name: u.name }));
     },
     (u) => {
+      if (!claimKey(`user:${u.id}:pending`)) return;
       const roleLabel = u.role === 'warden' ? 'Warden' : 'Student';
       const title = `👤 New ${roleLabel} Registration`;
       const body = `${u.name || 'Someone'} has registered and needs approval`;
@@ -523,6 +569,7 @@ useFeedPoll(
       }));
     },
     (l) => {
+      if (!claimKey(`leave:${l.id}:new`)) return;
       const title = '📋 New Leave Request';
       const body = `${l.studentName} — ${(l.leaveType || 'Leave').replace('_', ' ')}`;
       triggerNotification(title, { body, tag: `mgmt-leave-${l.id}` });
@@ -556,6 +603,7 @@ useFeedPoll(
       const prefs = userData?.notifPrefs || {};
       if (!prefs.complaintUpdates) return;
       if (c.status !== 'disputed') return;
+      if (!claimKey(`complaint:${c.id}:disputed`)) return;
       const title = '🚩 Complaint Disputed by Student';
       const body = `"${c.title}" — ${c.studentName} disputes your resolution`;
       triggerNotification(title, { body, tag: `warden-disputed-${c.id}` });
@@ -586,6 +634,7 @@ useFeedPoll(
     (u) => {
       const prefs = userData?.notifPrefs || {};
       if (!prefs.newStudents) return;
+      if (!claimKey(`user:${u.id}:pending`)) return;
       const title = '🎓 New Student Registration';
       const body = `${u.name || 'A student'} has registered for ${u.collegeName || 'your hostel'}`;
       triggerNotification(title, { body, tag: `warden-student-${u.id}` });
@@ -616,6 +665,7 @@ useFeedPoll(
     },
     null,
     (t) => {
+      if (!claimKey(`ticket:${t.id}:${t.status}`)) return;
       const statusEmoji = t.status === 'resolved' ? '✅' : t.status === 'in-progress' ? '🔄' : '📩';
       const title = `${statusEmoji} Support Ticket Updated`;
       const body = `Your ticket "${t.subject || 'Support Request'}" is now ${t.status}`;
@@ -644,6 +694,7 @@ useFeedPoll(
       return (users || []).map(u => ({ id: u._id, name: u.name, createdAt: u.createdAt }));
     },
     (u) => {
+      if (!claimKey(`user:${u.id}:pending`)) return;
       triggerNotification('New Approval Request', {
         body: `${u.name || 'A college'} is requesting approval`,
         tag: `approval-${u.id}`,
@@ -678,6 +729,7 @@ useFeedPoll(
       }));
     },
     (t) => {
+      if (!claimKey(`ticket:${t.id}:new`)) return;
       triggerNotification('New Support Ticket', {
         body: t.subject || 'A new support ticket has been created',
         tag: `ticket-${t.id}`,

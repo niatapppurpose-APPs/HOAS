@@ -6,7 +6,8 @@ import { emitToUser, broadcastUserUpdate } from '../services/socket.service.js';
 
 export async function getMe(req, res, next) {
   try {
-    res.json({ user: req.user });
+    const user = await User.findById(req.user._id).populate('collegeId', 'name logoUrl location');
+    res.json({ user: user || req.user });
   } catch (error) {
     next(error);
   }

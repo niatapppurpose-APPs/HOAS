@@ -1,7 +1,7 @@
 import Outing from '../models/Outing.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege } from '../utils/scope.js';
+import { canManageCollege, resolveStudentWarden } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { notifyUser } from '../services/notification.service.js';
 import { emitToUser, emitToCollege } from '../services/socket.service.js';
@@ -12,7 +12,8 @@ export async function requestOuting(req, res, next) {
     const student = req.user;
     const settings = await getSettingsOrDefaults();
     if (!settings.features?.outings) throw new AppError(403, 'OUTINGS_DISABLED');
-    if (!student.wardenId) throw new AppError(400, 'NO_WARDEN_ASSIGNED');
+    const wardenId = await resolveStudentWarden(student);
+    if (!wardenId) throw new AppError(400, 'NO_WARDEN_ASSIGNED');
 
     const active = await Outing.findOne({
       studentId: student._id,
@@ -26,13 +27,13 @@ export async function requestOuting(req, res, next) {
     const outing = await Outing.create({
       studentId: student._id,
       collegeId: student.collegeId,
-      wardenId: student.wardenId,
+      wardenId,
       destination: req.body.destination,
       reason: req.body.reason,
       outTime,
     });
 
-    const warden = await User.findById(student.wardenId);
+    const warden = await User.findById(wardenId);
     if (warden) {
       await notifyUser(warden, {
         type: 'outing_request',

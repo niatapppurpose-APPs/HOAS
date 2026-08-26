@@ -6,7 +6,7 @@ import Outing from '../models/Outing.js';
 import EmergencyLocation from '../models/EmergencyLocation.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege } from '../utils/scope.js';
+import { canManageCollege, resolveStudentWarden } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { emitToUser } from '../services/socket.service.js';
 
@@ -26,7 +26,7 @@ async function getOrCreateConversation(contextType, contextId, collegeId) {
   if (!context) return null;
 
   const student = await User.findById(context.studentId || context.studentUid);
-  const warden = await User.findById(context.wardenId || (student && student.wardenId));
+  const warden = await User.findById(context.wardenId || (await resolveStudentWarden(student)));
   if (!student || !warden) return null;
 
   conversation = await Conversation.create({

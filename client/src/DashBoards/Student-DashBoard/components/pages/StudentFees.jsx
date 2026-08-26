@@ -31,9 +31,14 @@ const StudentFees = () => {
     setLoading(true);
     try {
       const { fee } = await getStudentFee();
+      const mgmtVerified = fee?.isVerifiedByManagement === true;
+      const wardenVerified = fee?.isVerifiedByWarden === true;
+      const totalAmount = fee?.totalAmount ?? fee?.amount ?? 0;
+      const paidAmount = fee?.paidAmount ?? 0;
+
       let paymentStatus = 'unpaid';
-      if (fee?.amount > 0 && (fee?.status === 'verified' || fee?.status === 'paid')) paymentStatus = 'fully_paid';
-      else if (fee?.amount > 0) paymentStatus = 'partially_paid';
+      if (totalAmount > 0 && paidAmount >= totalAmount) paymentStatus = 'fully_paid';
+      else if (paidAmount > 0) paymentStatus = 'partially_paid';
 
       let reports = [];
       if (fee?.proofImageUrl) {
@@ -48,12 +53,12 @@ const StudentFees = () => {
       setRecord({
         studentName: fee?.studentName || user?.displayName,
         studentId: fee?.studentId || 'N/A',
-        totalAmount: fee?.amount || 0,
-        paidAmount: (fee?.status === 'verified' || fee?.status === 'paid') ? (fee?.amount || 0) : 0,
-        remainingAmount: (fee?.status === 'verified' || fee?.status === 'paid') ? 0 : (fee?.amount || 0),
+        totalAmount,
+        paidAmount,
+        remainingAmount: Math.max(0, totalAmount - paidAmount),
         paymentStatus,
-        isVerifiedByManagement: fee?.status === 'verified',
-        isVerifiedByWarden: fee?.wardenVerified === true,
+        isVerifiedByManagement: mgmtVerified,
+        isVerifiedByWarden: wardenVerified,
       });
       setFeeReports(reports);
     } catch (error) {

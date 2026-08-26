@@ -1,7 +1,7 @@
 import Fee from '../models/Fee.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege } from '../utils/scope.js';
+import { canManageCollege, resolveStudentWarden } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { notifyUser } from '../services/notification.service.js';
 import { emitToUser } from '../services/socket.service.js';
@@ -56,7 +56,7 @@ export async function uploadFees(req, res, next) {
           studentId: student._id,
           collegeId,
           managementId: management._id,
-          wardenId: student.wardenId || null,
+          wardenId: await resolveStudentWarden(student),
           totalAmount: row.totalAmount,
           paidAmount: row.paidAmount,
           status,
@@ -110,7 +110,13 @@ export async function listManagementFees(req, res, next) {
 
 export async function listWardenFees(req, res, next) {
   try {
-    const filter = { wardenId: req.user._id, isVerifiedByManagement: true };
+    const filter = { isVerifiedByManagement: true };
+    if (req.user.role === 'warden') {
+      const hostelStudents = await User.find({ hostelId: req.user.hostelId, role: 'student' }).select('_id');
+      filter.studentId = { $in: hostelStudents.map((s) => s._id) };
+    } else {
+      filter.wardenId = req.user._id;
+    }
     if (req.query.status) filter.status = req.query.status;
     const fees = await Fee.find(filter)
       .populate('studentId', 'name email studentId hostelBlock uid')
@@ -191,7 +197,13 @@ export async function verifyByWarden(req, res, next) {
   try {
     const fee = await Fee.findById(req.params.id);
     if (!fee) throw new AppError(404, 'FEE_NOT_FOUND');
-    if (String(fee.wardenId) !== String(req.user._id)) throw new AppError(403, 'FORBIDDEN');
+
+    let isMyFee = String(fee.wardenId) === String(req.user._id);
+    if (!isMyFee && req.user.role === 'warden' && fee.studentId) {
+      const student = await User.findById(fee.studentId).select('hostelId');
+      isMyFee = student && String(student.hostelId) === String(req.user.hostelId);
+    }
+    if (!isMyFee) throw new AppError(403, 'FORBIDDEN');
     if (!fee.isVerifiedByManagement) throw new AppError(409, 'MANAGEMENT_NOT_VERIFIED');
     if (!fee.proofImageUrl) throw new AppError(409, 'PROOF_IMAGE_REQUIRED');
 
