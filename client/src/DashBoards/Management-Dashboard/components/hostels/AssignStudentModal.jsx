@@ -13,7 +13,7 @@ const mapUser = (u) => ({
     rollNumber: u.rollNumber,
 });
 
-const AssignStudentModal = ({ isOpen, onClose, hostel, collegeName, assignedWardens }) => {
+const AssignStudentModal = ({ isOpen, onClose, hostel, collegeId, assignedWardens }) => {
     const toast = useToast();
     const [loading, setLoading] = useState(false);
     const [students, setStudents] = useState([]);
@@ -23,7 +23,7 @@ const AssignStudentModal = ({ isOpen, onClose, hostel, collegeName, assignedWard
     const [selectedWarden, setSelectedWarden] = useState("");
 
     useEffect(() => {
-        if (!isOpen || !collegeName) return;
+        if (!isOpen) return;
 
         let cancelled = false;
 
@@ -52,7 +52,7 @@ const AssignStudentModal = ({ isOpen, onClose, hostel, collegeName, assignedWard
         return () => {
             cancelled = true;
         };
-    }, [isOpen, collegeName, hostel.students]);
+    }, [isOpen, collegeId, hostel.students]);
 
     const handleSubmit = async () => {
         if (selectedStudents.length === 0) {

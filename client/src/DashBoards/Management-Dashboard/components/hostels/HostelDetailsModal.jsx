@@ -44,6 +44,7 @@ const HostelDetailsModal = ({ isOpen, onClose, hostelId }) => {
 
     const [showAssignWarden, setShowAssignWarden] = useState(false);
     const [showAssignStudent, setShowAssignStudent] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
         if (!isOpen || !hostelId) return;
@@ -89,7 +90,17 @@ const HostelDetailsModal = ({ isOpen, onClose, hostelId }) => {
         return () => {
             cancelled = true;
         };
-    }, [isOpen, hostelId]);
+    }, [isOpen, hostelId, refreshKey]);
+
+    const closeAssignWarden = () => {
+        setShowAssignWarden(false);
+        setRefreshKey((k) => k + 1);
+    };
+
+    const closeAssignStudent = () => {
+        setShowAssignStudent(false);
+        setRefreshKey((k) => k + 1);
+    };
 
     const removeWarden = async (wardenId) => {
         if (!window.confirm("Are you sure you want to remove this warden from the hostel?")) return;
@@ -329,18 +340,18 @@ const HostelDetailsModal = ({ isOpen, onClose, hostelId }) => {
             {showAssignWarden && hostel && (
                 <AssignWardenModal
                     isOpen={showAssignWarden}
-                    onClose={() => setShowAssignWarden(false)}
+                    onClose={closeAssignWarden}
                     hostel={hostel}
-                    collegeName={hostel.collegeName}
+                    collegeId={hostel.collegeId?._id || hostel.collegeId}
                 />
             )}
 
             {showAssignStudent && hostel && (
                 <AssignStudentModal
                     isOpen={showAssignStudent}
-                    onClose={() => setShowAssignStudent(false)}
+                    onClose={closeAssignStudent}
                     hostel={hostel}
-                    collegeName={hostel.collegeName}
+                    collegeId={hostel.collegeId?._id || hostel.collegeId}
                     assignedWardens={wardens}
                 />
             )}

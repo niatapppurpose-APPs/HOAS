@@ -11,7 +11,7 @@ const mapUser = (u) => ({
     email: u.email,
 });
 
-const AssignWardenModal = ({ isOpen, onClose, hostel, collegeName }) => {
+const AssignWardenModal = ({ isOpen, onClose, hostel, collegeId }) => {
     const toast = useToast();
     const [loading, setLoading] = useState(false);
     const [wardens, setWardens] = useState([]);
@@ -19,7 +19,7 @@ const AssignWardenModal = ({ isOpen, onClose, hostel, collegeName }) => {
     const [searchTerm, setSearchTerm] = useState("");
 
 useEffect(() => {
-        if (!isOpen || !collegeName) return;
+        if (!isOpen) return;
 
         let cancelled = false;
 
@@ -48,7 +48,7 @@ useEffect(() => {
         return () => {
             cancelled = true;
         };
-    }, [isOpen, collegeName, hostel.wardens]);
+    }, [isOpen, collegeId, hostel.wardens]);
 
     const handleSubmit = async () => {
         if (selectedWardens.length === 0) {
