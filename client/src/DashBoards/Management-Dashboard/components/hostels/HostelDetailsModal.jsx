@@ -150,7 +150,7 @@ const HostelDetailsModal = ({ isOpen, onClose, hostelId }) => {
                                 {loading ? "Loading..." : hostel?.name}
                             </h2>
                             <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                                {loading ? "..." : `Block: ${hostel?.block} • ${hostel?.location?.address || 'No address'}`}
+                                {loading ? "..." : `Block: ${hostel?.block} • ${hostel?.address || 'No address'}`}
                             </p>
                         </div>
                     </div>

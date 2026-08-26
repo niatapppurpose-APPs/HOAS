@@ -16,15 +16,19 @@ const createHostelSchema = z.object({
   wardenId: objectId.optional(),
   capacity: z.number().min(0).optional(),
   address: z.string().optional(),
+  wardens: z.array(objectId).optional(),
+  students: z.array(objectId).optional(),
 });
 
 const updateHostelSchema = z.object({
   name: z.string().min(1).max(150).optional(),
   block: z.string().optional(),
   wardenId: objectId.optional(),
-  capacity: z.number().min(0).optional(),
+  capacity: z.number().min(0).nullable().optional(),
   address: z.string().optional(),
   active: z.boolean().optional(),
+  wardens: z.array(objectId).optional(),
+  students: z.array(objectId).optional(),
 });
 
 router.use(authenticate);

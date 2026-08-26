@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Search, UserCheck } from "lucide-react";
 import { listUsers } from "../../../../firebase/cloudFunctions";
-import { getHostels, updateHostel } from "../../../../firebase/hostelApi";
+import { updateHostel } from "../../../../firebase/hostelApi";
 import { useToast } from "../../../../components/Toast";
 
 const mapUser = (u) => ({
@@ -58,13 +58,7 @@ useEffect(() => {
 
         setLoading(true);
         try {
-            const fresh = (await getHostels()).find(h => h._id === hostel.id || h.id === hostel.id);
-            const currentWardens = (fresh?.wardens || hostel.wardens || [])
-                .map(w => (typeof w === 'string' ? w : w?._id || w?.id))
-                .filter(Boolean);
-            const merged = Array.from(new Set([...currentWardens, ...selectedWardens]));
-
-            await updateHostel(hostel.id, { wardens: merged });
+            await updateHostel(hostel.id, { wardens: selectedWardens });
 
             toast.success("Wardens assigned successfully");
             onClose();
@@ -80,15 +74,6 @@ useEffect(() => {
         w.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         w.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
-    const isAllSelected = filteredWardens.length > 0 && selectedWardens.length === filteredWardens.length;
-    const handleSelectAll = () => {
-        if (isAllSelected) {
-            setSelectedWardens([]);
-        } else {
-            setSelectedWardens(filteredWardens.map(w => w.id));
-        }
-    };
 
     if (!isOpen) return null;
 
@@ -133,29 +118,14 @@ useEffect(() => {
                             <div className="p-6 text-center text-gray-500">No unassigned wardens found.</div>
                         ) : (
                             <div className="divide-y" style={{ borderColor: 'var(--border-primary)' }}>
-                                <label className="flex items-center gap-3 p-4 hover:bg-black/5 cursor-pointer transition-colors bg-black/5">
-                                    <input
-                                        type="checkbox"
-                                        checked={isAllSelected}
-                                        onChange={handleSelectAll}
-                                        className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                    />
-                                    <div className="flex-1">
-                                        <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Select All {filteredWardens.length} Wardens</p>
-                                    </div>
-                                </label>
                                 {filteredWardens.map(warden => (
                                     <label key={warden.id} className="flex items-center gap-3 p-4 hover:bg-black/5 cursor-pointer transition-colors">
                                         <input
                                             type="checkbox"
                                             value={warden.id}
-                                            checked={selectedWardens.includes(warden.id)}
+                                            checked={selectedWardens[0] === warden.id}
                                             onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setSelectedWardens(prev => [...prev, warden.id]);
-                                                } else {
-                                                    setSelectedWardens(prev => prev.filter(id => id !== warden.id));
-                                                }
+                                                setSelectedWardens(e.target.checked ? [warden.id] : []);
                                             }}
                                             className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                         />

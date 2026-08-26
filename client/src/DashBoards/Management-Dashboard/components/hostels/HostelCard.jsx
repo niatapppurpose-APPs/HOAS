@@ -67,10 +67,10 @@ const HostelCard = ({ hostel, onClick, onDelete, onEdit }) => {
             </div>
 
             <div className="flex flex-col gap-2 mt-auto text-sm" style={{ color: 'var(--text-secondary)' }}>
-                {hostel.location?.address && (
+                {hostel.address && (
                     <div className="flex items-center gap-2">
                         <MapPin size={16} className="text-indigo-400" />
-                        <span className="truncate">{hostel.location.address}</span>
+                        <span className="truncate">{hostel.address}</span>
                     </div>
                 )}
                 <div className="flex items-center gap-4 mt-2">

@@ -42,13 +42,15 @@ setLoading(true);
             const payload = {
                 name: formData.name.trim(),
                 block: formData.block.trim(),
-                capacity: formData.capacity,
-                location: {
-                    address: formData.address.trim(),
-                },
+                address: formData.address.trim(),
             };
 
-            if (collegeId) {
+            const capacityNum = Number(formData.capacity);
+            if (formData.capacity !== "" && !Number.isNaN(capacityNum)) {
+                payload.capacity = capacityNum;
+            }
+
+            if (collegeId && !isEditMode) {
                 payload.collegeId = collegeId;
             }
 
@@ -63,11 +65,7 @@ setLoading(true);
 
                 toast.success("Hostel updated successfully!");
             } else {
-                await createHostel({
-                    ...payload,
-                    wardens: [],
-                    students: [],
-                });
+                await createHostel(payload);
                 toast.success("Hostel added successfully!");
             }
             onClose();

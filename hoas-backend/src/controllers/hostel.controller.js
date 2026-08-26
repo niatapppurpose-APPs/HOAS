@@ -17,7 +17,23 @@ export async function listHostels(req, res, next) {
       .populate('wardenId', 'name email')
       .populate('collegeId', 'name')
       .sort({ createdAt: -1 });
-    res.json({ hostels });
+
+    const hostelIds = hostels.map((h) => h._id);
+    const assignedStudents = await User.find({ hostelId: { $in: hostelIds }, role: 'student' }).select('_id hostelId');
+    const studentsByHostel = new Map();
+    for (const student of assignedStudents) {
+      const key = String(student.hostelId);
+      if (!studentsByHostel.has(key)) studentsByHostel.set(key, []);
+      studentsByHostel.get(key).push(String(student._id));
+    }
+
+    const result = hostels.map((h) => ({
+      ...h.toObject(),
+      wardens: h.wardenId ? [h.wardenId] : [],
+      students: studentsByHostel.get(String(h._id)) || [],
+    }));
+
+    res.json({ hostels: result });
   } catch (error) {
     next(error);
   }
@@ -63,9 +79,35 @@ export async function updateHostel(req, res, next) {
       if (req.body[field] !== undefined) hostel[field] = req.body[field];
     }
 
-    if (req.body.wardenId) {
-      await User.findByIdAndUpdate(req.body.wardenId, { hostelId: hostel._id });
-      hostel.wardenId = req.body.wardenId;
+    const previousWardenId = hostel.wardenId ? String(hostel.wardenId) : null;
+
+    if (Array.isArray(req.body.wardens)) {
+      const nextWardenId = req.body.wardens[0] || null;
+      hostel.wardenId = nextWardenId;
+    } else if (req.body.wardenId !== undefined) {
+      hostel.wardenId = req.body.wardenId || null;
+    }
+
+    const newWardenId = hostel.wardenId ? String(hostel.wardenId) : null;
+    if (newWardenId && newWardenId !== previousWardenId) {
+      await User.findByIdAndUpdate(newWardenId, { hostelId: hostel._id });
+    }
+    if (previousWardenId && previousWardenId !== newWardenId) {
+      await User.updateOne({ _id: previousWardenId, hostelId: hostel._id }, { $unset: { hostelId: 1 } });
+    }
+
+    if (Array.isArray(req.body.students)) {
+      const nextIds = [...new Set(req.body.students.map(String))];
+      const current = await User.find({ hostelId: hostel._id, role: 'student' }).select('_id');
+      const currentIds = current.map((u) => String(u._id));
+      const toAdd = nextIds.filter((id) => !currentIds.includes(id));
+      const toRemove = currentIds.filter((id) => !nextIds.includes(id));
+      if (toAdd.length > 0) {
+        await User.updateMany({ _id: { $in: toAdd } }, { $set: { hostelId: hostel._id, hostelBlock: hostel.block } });
+      }
+      if (toRemove.length > 0) {
+        await User.updateMany({ _id: { $in: toRemove } }, { $unset: { hostelId: 1 } });
+      }
     }
 
     await hostel.save();

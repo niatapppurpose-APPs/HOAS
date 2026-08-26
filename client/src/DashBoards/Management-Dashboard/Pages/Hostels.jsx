@@ -26,7 +26,7 @@ const Hostels = () => {
   const { userData } = useAuth();
 
   const getHostelKey = (hostel) =>
-    String(hostel?.block || hostel?.name || hostel?.id || "")
+    String(hostel?.id || hostel?.block || hostel?.name || "")
       .trim()
       .toLowerCase();
 
@@ -34,7 +34,7 @@ const Hostels = () => {
     let score = 0;
     if (hostel?.block) score += 3;
     if (hostel?.name) score += 2;
-    if (hostel?.location?.address) score += 1;
+    if (hostel?.address) score += 1;
     if (hostel?.capacity) score += 1;
     if (Array.isArray(hostel?.wardens) && hostel.wardens.length > 0) score += 1;
     if (Array.isArray(hostel?.students) && hostel.students.length > 0) score += 1;
@@ -118,13 +118,13 @@ const Hostels = () => {
     if (!term) return true;
     if (searchFilter === "name") return h.name?.toLowerCase().includes(term);
     if (searchFilter === "block") return h.block?.toLowerCase().includes(term);
-    if (searchFilter === "address") return h.location?.address?.toLowerCase().includes(term);
+    if (searchFilter === "address") return h.address?.toLowerCase().includes(term);
 
     // all
     return (
       h.name?.toLowerCase().includes(term) ||
       h.block?.toLowerCase().includes(term) ||
-      h.location?.address?.toLowerCase().includes(term)
+      h.address?.toLowerCase().includes(term)
     );
   });
 
