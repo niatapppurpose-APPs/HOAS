@@ -40,6 +40,9 @@ const WardenComplaints = () => {
     const [activeFilter, setActiveFilter] = useState('all');
     const [selectedComplaint, setSelectedComplaint] = useState(null);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [rejectTarget, setRejectTarget] = useState(null);
+    const [rejectReason, setRejectReason] = useState('');
+    const [rejectError, setRejectError] = useState('');
 
     // ── Fetch complaints for this warden's college ───────────
     useEffect(() => {
@@ -130,7 +133,20 @@ const WardenComplaints = () => {
 
     const handleReject = (e, complaint) => {
         e.stopPropagation();
-        updateStatus(complaint.id, 'rejected', null, complaint);
+        setRejectTarget(complaint);
+        setRejectReason('');
+        setRejectError('');
+    };
+
+    const confirmReject = async () => {
+        const reason = rejectReason.trim();
+        if (reason.length < 5) {
+            setRejectError('Please enter a clear reason (at least 5 characters).');
+            return;
+        }
+        const complaint = rejectTarget;
+        setRejectTarget(null);
+        await updateStatus(complaint.id, 'rejected', reason, complaint);
     };
 
     // ── Modal handlers ───────────────────────────────────────
@@ -337,6 +353,67 @@ const WardenComplaints = () => {
                     onUpdateStatus={updateStatus}
                     isUpdating={isUpdating}
                 />
+            )}
+
+            {/* ── Rejection Reason Modal (mandatory) ──────── */}
+            {rejectTarget && (
+                <div
+                    className="warden-modal-backdrop"
+                    onClick={() => !isUpdating && setRejectTarget(null)}
+                >
+                    <div className="warden-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+                        <div className="warden-modal-header">
+                            <h3>Reject Complaint</h3>
+                            <button className="warden-modal-close" onClick={() => setRejectTarget(null)}>
+                                <XCircle size={16} />
+                            </button>
+                        </div>
+                        <div className="warden-modal-body">
+                            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                                You are rejecting <strong>&ldquo;{rejectTarget.title}&rdquo;</strong>. The student will see your reason — please be specific and respectful.
+                            </p>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+                                <MessageSquareText size={14} />
+                                Reason for rejection <span style={{ color: '#ef4444' }}>*</span>
+                            </label>
+                            <textarea
+                                className="warden-response-textarea"
+                                placeholder="Explain why this complaint cannot be actioned (e.g. duplicate, not a hostel issue, policy restriction)…"
+                                value={rejectReason}
+                                onChange={(e) => {
+                                    setRejectReason(e.target.value);
+                                    if (rejectError) setRejectError('');
+                                }}
+                                maxLength={500}
+                                rows={4}
+                                autoFocus
+                                style={rejectError ? { borderColor: '#ef4444' } : undefined}
+                            />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600 }}>{rejectError}</span>
+                                <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{rejectReason.length}/500</span>
+                            </div>
+                            <div className="warden-response-actions" style={{ marginTop: '0.75rem' }}>
+                                <button
+                                    className="warden-response-submit"
+                                    style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+                                    onClick={() => setRejectTarget(null)}
+                                    disabled={isUpdating}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    className="warden-response-submit reject"
+                                    onClick={confirmReject}
+                                    disabled={isUpdating || rejectReason.trim().length < 5}
+                                >
+                                    {isUpdating ? <Loader2 size={14} className="warden-spinner" /> : <XCircle size={14} />}
+                                    Reject Complaint
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </>
     );

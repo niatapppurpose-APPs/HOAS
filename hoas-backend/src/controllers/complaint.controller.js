@@ -148,15 +148,18 @@ export async function updateComplaintStatus(req, res, next) {
     if (!actorKey || !allowedTransitions[actorKey].includes(status)) {
       throw new AppError(403, 'INVALID_STATUS_TRANSITION');
     }
+    if (status === 'rejected' && !(reason || '').trim()) {
+      throw new AppError(400, 'REJECTION_REASON_REQUIRED', 'A rejection reason is required');
+    }
 
     const previousStatus = complaint.status;
     complaint.status = status;
     if (status === 'warden-resolved') complaint.studentReviewStatus = 'pending';
-    if (status === 'rejected') complaint.rejectionReason = reason || '';
+    if (status === 'rejected') complaint.rejectionReason = reason.trim();
     if (status === 'resolved') complaint.studentReviewStatus = 'accepted';
     appendHistory(complaint, {
       action: 'STATUS_CHANGE',
-      reason: reason || '',
+      reason: status === 'rejected' ? reason.trim() : reason || '',
       previousStatus,
       newStatus: status,
       actor: req.user,

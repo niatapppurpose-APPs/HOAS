@@ -24,6 +24,7 @@ import {
     ThumbsUp,
     ThumbsDown,
     ShieldAlert,
+    XCircle,
 } from 'lucide-react';
 import { CATEGORIES, STATUS_CONFIG, FILTER_OPTIONS, formatDate, getCategoryLabel } from './complaintConstants';
 import compressImage from './utils/compressImage';
@@ -162,11 +163,6 @@ const StudentComplaints = () => {
             return;
         }
 
-        if(!imageFile){
-            toast.warning('Image field id required!')
-            return;
-        }
-        
         setIsSubmitting(true);
         setUploadProgress(0);
 
@@ -384,7 +380,7 @@ const StudentComplaints = () => {
                                 {/* Image Upload */}
                                 <div className="complaints-field">
                                     <label className="complaints-label">
-                                        <ImageIcon  size={13} /> Attach Image <span className='required'    >*</span>
+                                        <ImageIcon  size={13} /> Attach Image <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>(optional)</span>
                                     </label>
 
                                     {!imagePreview ? (
@@ -567,6 +563,18 @@ const StudentComplaints = () => {
                                                 <div className="complaint-escalated-banner">
                                                     <AlertTriangle size={14} />
                                                     <span>This complaint has been escalated to management.</span>
+                                                </div>
+                                            )}
+
+                                            {/* ── Rejected Banner (with warden's reason) ── */}
+                                            {complaint.status === 'rejected' && (
+                                                <div className="complaint-disputed-banner" style={{ borderColor: 'rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)' }}>
+                                                    <XCircle size={14} />
+                                                    <span>
+                                                        {complaint.rejectionReason
+                                                            ? <>Rejected by warden: &ldquo;{complaint.rejectionReason}&rdquo;</>
+                                                            : 'This complaint was rejected by the warden.'}
+                                                    </span>
                                                 </div>
                                             )}
 

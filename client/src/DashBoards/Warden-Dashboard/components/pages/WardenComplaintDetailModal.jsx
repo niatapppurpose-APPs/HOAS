@@ -19,6 +19,7 @@ const WardenComplaintDetailModal = React.memo(({
   isUpdating,
 }) => {
   const [responseText, setResponseText] = useState(complaint.response || '');
+  const [rejectError, setRejectError] = useState('');
   const statusCfg = STATUS_CONFIG[complaint.status] || STATUS_CONFIG.pending;
 
   const handleResolve = () => {
@@ -26,7 +27,11 @@ const WardenComplaintDetailModal = React.memo(({
   };
 
   const handleReject = () => {
-    onUpdateStatus(complaint.id, 'rejected', responseText.trim() || null, complaint);
+    if (responseText.trim().length < 5) {
+      setRejectError('A rejection reason is required before you can reject this complaint.');
+      return;
+    }
+    onUpdateStatus(complaint.id, 'rejected', responseText.trim(), complaint);
   };
 
   const handleMarkInProgress = () => {
@@ -143,12 +148,23 @@ const WardenComplaintDetailModal = React.memo(({
                 className="warden-response-textarea"
                 placeholder={complaint.status === 'disputed'
                   ? "Address the student's concern and explain what action you've taken..."
-                  : "Type your response to the student…"
+                  : complaint.status === 'pending'
+                    ? "Type your response — a reason is required if you reject…"
+                    : "Type your response to the student…"
                 }
                 value={responseText}
-                onChange={(e) => setResponseText(e.target.value)}
+                onChange={(e) => {
+                  setResponseText(e.target.value);
+                  if (rejectError) setRejectError('');
+                }}
                 maxLength={500}
+                style={rejectError ? { borderColor: '#ef4444' } : undefined}
               />
+              {rejectError && (
+                <p style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600, marginTop: '0.25rem' }}>
+                  {rejectError}
+                </p>
+              )}
               <div className="warden-response-actions">
                 {complaint.status === 'pending' && (
                   <button

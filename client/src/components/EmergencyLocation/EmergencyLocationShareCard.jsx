@@ -110,11 +110,14 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
 
     if (normalized.expiresAt && session?.isActive) {
       clearAutoStop();
-      const remainingMs = Math.max(normalized.expiresAt - Date.now(), 0);
-      autoStopRef.current = window.setTimeout(() => {
-        clearSessionState();
-        toast.info('Emergency location sharing expired automatically.');
-      }, remainingMs);
+      const expiresMs = new Date(normalized.expiresAt).getTime();
+      const remainingMs = Number.isFinite(expiresMs) ? Math.max(expiresMs - Date.now(), 0) : 0;
+      if (remainingMs > 0) {
+        autoStopRef.current = window.setTimeout(() => {
+          clearSessionState();
+          toast.info('Emergency location sharing expired automatically.');
+        }, remainingMs);
+      }
     }
   };
 

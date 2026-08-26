@@ -27,10 +27,20 @@ const createSchema = z.object({
   imageUrl: z.string().min(1).max(2000).optional(),
 });
 
-const statusSchema = z.object({
-  status: z.enum(['in-progress', 'warden-resolved', 'resolved', 'escalated', 'rejected']),
-  reason: z.string().max(500).optional(),
-});
+const statusSchema = z
+  .object({
+    status: z.enum(['in-progress', 'warden-resolved', 'resolved', 'escalated', 'rejected']),
+    reason: z.string().max(500).optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.status === 'rejected' && (!val.reason || !val.reason.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['reason'],
+        message: 'A rejection reason is required',
+      });
+    }
+  });
 
 const reviewSchema = z.object({
   decision: z.enum(['accept', 'dispute']),
