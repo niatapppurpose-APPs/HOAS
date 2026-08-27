@@ -167,7 +167,7 @@ const StudentComplaints = () => {
         setUploadProgress(0);
 
         try {
-            let imageUrl = null;
+            let imageUrl = undefined;
 
             // Compress image to a small data URI, then proxy-upload it to Cloudinary
             if (imageFile) {
@@ -181,7 +181,7 @@ const StudentComplaints = () => {
                 } catch (compressErr) {
                     console.warn('Image processing failed:', compressErr);
                     toast.warning('Image processing failed — complaint will be submitted without the attachment.');
-                    imageUrl = null;
+                    imageUrl = undefined;
                 }
             }
 
