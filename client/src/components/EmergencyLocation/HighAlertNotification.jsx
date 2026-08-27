@@ -2,16 +2,35 @@ import { useEffect, useState, useRef } from 'react';
 import { AlertTriangle, Volume2, X } from 'lucide-react';
 import emergencyWarning from '../../assets/sounds/emergency-warning-opt.m4a';
 
+let audioContext = null;
+let audioUnlocked = false;
+
+const unlockAudio = async () => {
+  if (audioUnlocked) return;
+  try {
+    audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume();
+    }
+    audioUnlocked = true;
+  } catch (err) {
+    console.warn('Audio unlock failed:', err);
+  }
+};
+
 const playAlert = (audioRef, repeatCount = 3) => {
   try {
-    // Play the emergency warning audio file
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(err => {
-        console.error('Audio playback failed:', err);
-        // Fallback to synthetic alert if audio file fails
-        playSyntheticAlert(repeatCount);
-      });
+      const playPromise = audioRef.current.play();
+      if (playPromise) {
+        playPromise.catch(err => {
+          console.error('Audio playback failed:', err);
+          playSyntheticAlert(repeatCount);
+        });
+      }
+    } else {
+      playSyntheticAlert(repeatCount);
     }
   } catch (err) {
     console.error('Alert sound failed:', err);
@@ -21,13 +40,16 @@ const playAlert = (audioRef, repeatCount = 3) => {
 
 const playSyntheticAlert = (repeatCount = 3) => {
   try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
     const pattern = [
-      { freq: 1047, duration: 0.15 }, // High C
-      { freq: 0, duration: 0.1 },     // silence
-      { freq: 1047, duration: 0.15 }, // High C
-      { freq: 0, duration: 0.1 },     // silence
-      { freq: 1320, duration: 0.2 },  // High E (urgent)
+      { freq: 1047, duration: 0.15 },
+      { freq: 0, duration: 0.1 },
+      { freq: 1047, duration: 0.15 },
+      { freq: 0, duration: 0.1 },
+      { freq: 1320, duration: 0.2 },
     ];
 
     const schedulePattern = (repeat) => {
@@ -67,6 +89,21 @@ const HighAlertNotification = ({ studentName, isActive = true, onDismiss }) => {
   const [pulseCount, setPulseCount] = useState(0);
   const audioRef = useRef(null);
 
+  // Unlock audio on first user interaction
+  useEffect(() => {
+    const unlock = () => {
+      unlockAudio();
+      document.removeEventListener('click', unlock);
+      document.removeEventListener('keydown', unlock);
+    };
+    document.addEventListener('click', unlock, { once: true });
+    document.addEventListener('keydown', unlock, { once: true });
+    return () => {
+      document.removeEventListener('click', unlock);
+      document.removeEventListener('keydown', unlock);
+    };
+  }, []);
+
   useEffect(() => {
     if (!isActive) return;
 
@@ -95,7 +132,7 @@ const HighAlertNotification = ({ studentName, isActive = true, onDismiss }) => {
   return (
     <>
       {/* Hidden audio element for emergency warning sound */}
-      <audio ref={audioRef} src={emergencyWarning} preload="none" />
+      <audio ref={audioRef} src={emergencyWarning} preload="auto" />
 
       <div className="relative bottom-0 inset-0 z-50 flex items-start justify-center pt-4">
         <div className="bg-gradient-to-b from-red-600 to-red-700 text-white rounded-2xl shadow-2xl p-6 max-w-md w-11/12">

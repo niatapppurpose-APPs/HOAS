@@ -195,7 +195,18 @@ const StudentFees = () => {
 
               {/* Status Verification Checks */}
               <div className="rounded-3xl p-6 sm:p-8 border shadow-sm" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-                <h3 className="text-lg font-bold mb-6" style={{ color: 'var(--text-primary)' }}>Verification Stage</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Verification Stage</h3>
+                  <button
+                    onClick={loadRecord}
+                    disabled={loading}
+                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors flex items-center gap-1.5"
+                    title="Refresh verification status"
+                  >
+                    <Loader2 className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </button>
+                </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {/* Management */}
                   <div className={`rounded-2xl p-4 border flex items-start gap-4 transition-all ${record.isVerifiedByManagement ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-transparent border-dashed'}`}
