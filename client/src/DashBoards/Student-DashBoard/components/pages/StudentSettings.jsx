@@ -7,13 +7,12 @@ import StudentHeader from '../layout/StudentHeader';
 import { auth } from '../../../../firebase/firebaseConfig';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { updateProfile } from '../../../../firebase/cloudFunctions';
-import PWAUpdateSettings from '../../../../components/PWAUpdateSettings';
 // import { useNotifications } from '../../../../context/NotificationContext';
 import {
     Settings, Moon, Sun, Bell, Shield, Lock,
     Eye, EyeOff, Loader2, Check, User,
     Globe, Palette, BellRing, KeyRound,
-    Monitor, ChevronRight, Layout, RefreshCw, Trash2, FileText, XCircle
+    Monitor, ChevronRight, Layout, Trash2, FileText, XCircle
 } from 'lucide-react';
 
 const StudentSettings = () => {
@@ -345,11 +344,6 @@ const StudentSettings = () => {
                                 </div>
                             ))}
                         </div>
-                    </SettingsCard>
-
-                    {/* App Updates */}
-                    <SettingsCard icon={RefreshCw} title="App Updates" description="Control how the app updates" iconColor="text-violet-500">
-                        <PWAUpdateSettings />
                     </SettingsCard>
 
                     {/* Trash Management */}

@@ -34,7 +34,7 @@ const Toast = ({
   };
 
   return (
-    <div className={`toast toast-${type} toast-${position}`}>
+    <div className={`toast toast-${type} toast-${position}`} role={type === 'error' || type === 'warning' ? 'alert' : 'status'} aria-live={type === 'error' || type === 'warning' ? 'assertive' : 'polite'} aria-atomic="true">
       <div className="toast-content">
         {getIcon()}
         <span className="toast-message">{message}</span>

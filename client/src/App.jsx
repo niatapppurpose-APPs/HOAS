@@ -14,8 +14,10 @@ import { useTheme } from "./context/ThemeContext";
 import CookieConsent from "./Pages/HOME/components/CookieConsent";
 import useSocket from "./hooks/useSocket";
 import InstallPrompt from "./components/InstallPrompt.jsx";
+import GlobalEmergencyListener from "./components/EmergencyLocation/GlobalEmergencyListener";
+import { EmergencyProvider } from "./context/EmergencyContext";
 const App = () => {
-  const { isServerOnline } = useServerStatus();
+  useServerStatus();
   const { isAdmin, adminChecked, user, userData } = useAuth();
   const { settings } = useSystemSettings();
   const { isDark } = useTheme();
@@ -68,21 +70,18 @@ const App = () => {
     return <WakeUpScreen offline />;
   }
 
-  // Show premium wake-up loader while the server cold-starts (Render free tier
-  // sleeps after inactivity). NotFound is only for genuine route misses.
-  if (!isServerOnline) {
-    return <WakeUpScreen />;
-  }
-
   const PUBLIC_ROUTES = ['/', '/login', '/admin-login'];
 
 const content = (
-    <>
-      <Routes_path />
-      <GlobalDeleteModal />
-      <CookieConsent isDark={isDark} />
-      <InstallPrompt />
-    </>
+    <EmergencyProvider>
+      <>
+        <Routes_path />
+        <GlobalDeleteModal />
+        <CookieConsent isDark={isDark} />
+        <InstallPrompt />
+        <GlobalEmergencyListener />
+      </>
+    </EmergencyProvider>
   );
 
   // Skip maintenance gate for:

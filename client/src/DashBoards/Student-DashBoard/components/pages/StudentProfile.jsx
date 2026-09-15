@@ -45,7 +45,14 @@ const StudentProfile = () => {
     address: "",
   });
 
-  const collegeLogo = layoutLogo || userData?.collegeLogo || null;
+  const collegeLogo =
+    layoutLogo ||
+    userData?.collegeLogo ||
+    (typeof userData?.collegeId === 'object' && userData?.collegeId?.logoUrl) ||
+    userData?.logoUrl ||
+    managementData?.logoUrl ||
+    managementData?.collegeLogo ||
+    null;
   const collegeName =
     managementData?.collegeName || userData?.collegeName || "Your College";
   const collegeLocation =

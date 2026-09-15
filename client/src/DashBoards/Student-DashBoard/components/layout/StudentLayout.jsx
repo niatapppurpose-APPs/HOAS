@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import StudentSidebar from './StudentSidebar';
 import { useAuth } from '../../../../context/AuthContext';
 import { useTheme } from '../../../../context/ThemeContext';
+import Breadcrumbs from '../../../../components/Breadcrumbs';
 
 const StudentLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -10,13 +11,13 @@ const StudentLayout = () => {
   const { isDark } = useTheme();
 
   const collegeLogo = useMemo(() => {
-    // collegeId can be: (a) a populated mongoose doc with .logoUrl, (b) a plain string ObjectId, or (c) undefined
-    if (userData?.collegeId && typeof userData?.collegeId === 'object' && userData?.collegeId?.logoUrl) {
-      return userData?.collegeId?.logoUrl; // populated ref case
-    }
-    // fallback: student's own logoUrl, or null
-    return userData?.logoUrl || null;
-  }, [userData?.collegeId, userData?.logoUrl]);
+    return (
+      userData?.collegeLogo ||
+      (typeof userData?.collegeId === 'object' && userData?.collegeId?.logoUrl) ||
+      userData?.logoUrl ||
+      null
+    );
+  }, [userData?.collegeLogo, userData?.collegeId, userData?.logoUrl]);
   const themeInfo = userData?.theme || {
     primary: '#3b82f6', // Blue theme for student
     secondary: '#6366f1',
@@ -53,6 +54,7 @@ const StudentLayout = () => {
 
         <main className={`transition-all duration-300 ease-in-out ml-0 pb-24 lg:pb-0 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-72'
           }`}>
+          <div className="hidden px-6 pt-3 lg:block"><Breadcrumbs /></div>
           <Outlet context={{ isCollapsed, setIsCollapsed, collegeLogo }} />
         </main>
       </div>

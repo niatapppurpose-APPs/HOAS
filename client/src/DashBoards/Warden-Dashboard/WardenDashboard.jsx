@@ -32,7 +32,7 @@ const WardenDashboard = () => {
   const [pendingCount, setPendingCount] = useState(0);
 
   // Auto-start tour on first visit (waits for data to load)
-  useDashboardTour("warden", wardenTourSteps, { ready: false });
+  useDashboardTour("warden", wardenTourSteps, { ready: !loading });
 
   useEffect(() => {
     if (!userDataLoading) {

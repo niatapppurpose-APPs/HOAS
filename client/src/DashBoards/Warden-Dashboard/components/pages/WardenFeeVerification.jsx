@@ -33,17 +33,23 @@ const WardenFeeVerification = () => {
       const list = (records || []).map(fee => {
         const isVerifiedByWarden = fee.isVerifiedByWarden === true;
         const isVerifiedByMgmt = fee.isVerifiedByManagement === true;
-        const isVerified = isVerifiedByWarden || fee.status === 'paid';
+        const totalAmount = Number(fee.totalAmount ?? fee.amount ?? 0);
+        const paidAmount = Number(fee.paidAmount ?? 0);
+        const paymentStatus = paidAmount >= totalAmount && totalAmount > 0
+          ? 'fully_paid'
+          : paidAmount > 0
+            ? 'partially_paid'
+            : 'unpaid';
         const proof = fee.proofImageUrl || null;
         return {
           id: fee._id,
           studentName: fee.studentName || 'Unnamed',
           studentId: fee.studentId || 'N/A',
           photoURL: fee.studentPhoto || '',
-          totalAmount: fee.amount || 0,
-          paidAmount: isVerified ? (fee.amount || 0) : 0,
-          remainingAmount: isVerified ? 0 : (fee.amount || 0),
-          paymentStatus: isVerified ? 'fully_paid' : 'unpaid',
+          totalAmount,
+          paidAmount,
+          remainingAmount: Math.max(0, totalAmount - paidAmount),
+          paymentStatus,
           proofImage: proof,
           proofType: proof && /\.pdf($|\?)/i.test(proof) ? 'pdf' : 'image',
           proofName: fee.month ? `${fee.month} ${fee.year} receipt` : 'Document',

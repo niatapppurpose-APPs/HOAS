@@ -4,7 +4,6 @@ import { useAuth } from '../../../context/AuthContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../components/Toast';
 import Header from '../../../components/OwnerServices/header';
-import PWAUpdateSettings from '../../../components/PWAUpdateSettings';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
 import { auth } from '../../../firebase/firebaseConfig';
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
@@ -545,11 +544,6 @@ const GlobalSystemSettings = () => {
                   </div>
                 </div>
               </div>
-            </SectionCard>
-
-            {/* ── 6.5. PWA Update Settings ── */}
-            <SectionCard title="App Updates" icon={RefreshCw} accent="#8b5cf6" status="active">
-              <PWAUpdateSettings />
             </SectionCard>
 
             {/* ── 7. Danger Zone (Inline) ── */}

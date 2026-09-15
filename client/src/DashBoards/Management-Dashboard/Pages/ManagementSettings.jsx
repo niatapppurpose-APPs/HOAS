@@ -5,8 +5,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { useToast } from '../../../components/Toast';
 import LocationAutocomplete from '../../../components/LocationAutocomplete';
 import ManagementHeader from '../components/layout/ManagementHeader';
-import PWAUpdateSettings from '../../../components/PWAUpdateSettings';
-import { MapPin, Save, Building2, Loader2, CheckCircle, ImagePlus, Upload, X, Camera, Layout, RefreshCw } from 'lucide-react';
+import { MapPin, Save, Building2, Loader2, CheckCircle, ImagePlus, Upload, X, Camera, Layout } from 'lucide-react';
 import AppLogo4k from '../../../assets/AppLogo4k.webp';
 import * as cloudFunctions from '../../../firebase/cloudFunctions';
 import { uploadLogo } from '../../../utils/cloudinaryUpload';
@@ -46,7 +45,7 @@ function compressImage(file, maxKB = 200) {
 }
 
 const ManagementSettings = () => {
-    const { user, userData } = useAuth();
+    const { user, userData, fetchProfile } = useAuth();
     const { isDark } = useTheme();
     const { isCollapsed, setIsCollapsed } = useOutletContext();
     const navigate = useNavigate();
@@ -113,11 +112,19 @@ const ManagementSettings = () => {
             // Proxy-upload to Cloudinary when it's still a local data URI
             if (logoPreview.startsWith('data:')) {
                 const uploaded = await uploadLogo(logoPreview);
+                if (!uploaded?.url) {
+                    throw new Error('Logo upload did not return a URL');
+                }
                 logoUrl = uploaded.url;
             }
-            await cloudFunctions.updateCollege(collegeId, { logoUrl });
+            const { college } = await cloudFunctions.updateCollege(collegeId, { logoUrl });
+            if (!college?.logoUrl) {
+                throw new Error('College logo was not saved');
+            }
             toast.success('College logo updated! 🎉');
             setLogoSaved(true);
+            // Refresh user data to show the new logo immediately
+            await fetchProfile();
         } catch (err) {
             console.error(err);
             toast.error('Failed to save logo. Please try again.');
@@ -435,23 +442,6 @@ const ManagementSettings = () => {
                         </button>
                     </div>
 
-                    {/* ── App Updates Section ── */}
-                    <div
-                        className="w-full rounded-2xl p-6 sm:p-8 border"
-                        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
-                    >
-                        <div className="flex items-center gap-3 mb-6 pb-6 border-b" style={{ borderColor: 'var(--border-primary)' }}>
-                            <div className="p-2.5 rounded-xl" style={{ background: 'linear-gradient(135deg,rgba(139,92,246,0.2),rgba(168,85,247,0.2))' }}>
-                                <RefreshCw className="w-5 h-5" style={{ color: '#8b5cf6' }} />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>App Updates</h3>
-                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Control how the app updates</p>
-                            </div>
-                        </div>
-
-                        <PWAUpdateSettings />
-                    </div>
                 </div>
             </div>
         </>

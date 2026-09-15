@@ -284,7 +284,7 @@ const FeeManagement = () => {
                       <td className="py-2">{record.isVerifiedByWarden ? 'Verified' : 'Pending'}</td>
                       <td className="py-2">
                         <button
-                          onClick={() => handleVerify(record.id)}
+                          onClick={() => handleVerify(record.studentUid)}
                           disabled={record.isVerifiedByManagement}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border disabled:opacity-60"
                         >

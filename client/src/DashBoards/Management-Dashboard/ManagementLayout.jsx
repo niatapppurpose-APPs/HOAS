@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import ManagementSidebar from './components/layout/ManagementSidebar';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import Breadcrumbs from '../../components/Breadcrumbs';
 
 const ManagementLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -51,6 +52,7 @@ const ManagementLayout = () => {
 
         <main className={`transition-all duration-300 ease-in-out ml-0 pb-24 lg:pb-0 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-72'
           }`}>
+          <div className="hidden px-6 pt-3 lg:block"><Breadcrumbs /></div>
           <Outlet context={{ isCollapsed, setIsCollapsed }} />
         </main>
       </div>

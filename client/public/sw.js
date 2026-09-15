@@ -1,5 +1,5 @@
 // PWA Service Worker for HOAS
-const CACHE_NAME = 'hoas-cache-v3';
+const CACHE_NAME = 'hoas-cache-v4';
 const STATIC_ASSETS = [
   '/',
   '/Applogo.png',
@@ -70,7 +70,7 @@ self.addEventListener('fetch', (event) => {
   // Always prefer network for page navigations so new deploys are picked up quickly.
   if (isNavigationRequest(event.request)) {
     event.respondWith(
-      fetch(event.request)
+      fetch(new Request(event.request, { cache: 'no-store' }))
         .then((response) => {
           if (response && response.status === 200 && sameOrigin) {
             const responseToCache = response.clone();

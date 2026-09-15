@@ -6,6 +6,7 @@ import { canManageCollege, ensureCollegeAccess } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { deleteAuthUser } from '../services/user.service.js';
 import { checkCollegeCapacity } from '../services/capacity.service.js';
+import { emitToCollege } from '../services/socket.service.js';
 
 export async function listColleges(req, res, next) {
   try {
@@ -50,10 +51,16 @@ export async function updateCollege(req, res, next) {
       (req.user.role === 'management' && String(req.user.collegeId) === String(college._id));
     if (!canUpdate) throw new AppError(403, 'FORBIDDEN');
 
-    if (req.body.logoUrl !== undefined) college.logoUrl = req.body.logoUrl;
+    if (req.body.logoUrl !== undefined) {
+      college.logoUrl = req.body.logoUrl;
+      await User.updateMany({ collegeId: college._id }, { logoUrl: req.body.logoUrl });
+    }
     if (req.body.address !== undefined) college.address = req.body.address;
     if (req.body.location !== undefined) college.location = req.body.location;
     await college.save();
+
+    // Real-time: notify college that settings changed (logo/location)
+    emitToCollege(college._id, 'college:updated', college.toJSON());
 
     await recordAudit({ actor: req.user, action: 'COLLEGE_UPDATED', targetType: 'College', targetId: college._id });
     res.json({ college });

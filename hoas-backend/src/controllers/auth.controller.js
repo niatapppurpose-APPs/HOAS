@@ -30,9 +30,10 @@ export async function updateMe(req, res, next) {
       if (req.body[field] !== undefined) req.user[field] = req.body[field];
     }
     await req.user.save();
-    emitToUser(req.user._id, 'user:updated', { user: req.user.toObject() });
-    broadcastUserUpdate(req.user);
-    res.json({ user: req.user });
+    const populated = await User.findById(req.user._id).populate('collegeId', 'name logoUrl location');
+    emitToUser(req.user._id, 'user:updated', { user: (populated || req.user).toObject() });
+    broadcastUserUpdate(populated || req.user);
+    res.json({ user: populated || req.user });
   } catch (error) {
     next(error);
   }

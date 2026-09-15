@@ -58,9 +58,48 @@ export default function useSocket() {
         console.log('Socket.IO disconnected');
        });
 
-       socket.on('user:updated', (payload) => {
-         window.dispatchEvent(new CustomEvent('hoas:user-updated', { detail: payload }));
-       });
+        socket.on('user:updated', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:user-updated', { detail: payload }));
+        });
+        socket.on('notification', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:notification', { detail: payload }));
+        });
+        socket.on('fee:updated', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:fee-updated', { detail: payload }));
+        });
+        socket.on('complaint:new', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:complaint-new', { detail: payload }));
+        });
+        socket.on('complaint:updated', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:complaint-updated', { detail: payload }));
+        });
+        socket.on('complaint:disputed', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:complaint-disputed', { detail: payload }));
+        });
+        socket.on('complaint:escalated', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:complaint-escalated', { detail: payload }));
+        });
+        socket.on('announcement:new', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:announcement-new', { detail: payload }));
+        });
+        socket.on('leave:new', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:leave-new', { detail: payload }));
+        });
+        socket.on('leave:updated', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:leave-updated', { detail: payload }));
+        });
+        socket.on('emergency:started', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:emergency-started', { detail: payload }));
+        });
+        socket.on('emergency:updated', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:emergency-updated', { detail: payload }));
+        });
+        socket.on('emergency:stopped', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:emergency-stopped', { detail: payload }));
+        });
+        socket.on('college:updated', (payload) => {
+          window.dispatchEvent(new CustomEvent('hoas:college-updated', { detail: payload }));
+        });
      });
   }, [user]);
 

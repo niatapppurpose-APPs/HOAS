@@ -24,6 +24,29 @@ const unknownProfile = (firebaseUser) => ({
   status: 'pending',
 });
 
+const normalizeUserWithCollegeLogo = (user) => {
+  if (!user) return user;
+  const collegeLogo =
+    user.collegeLogo ||
+    (typeof user.collegeId === 'object' && user.collegeId?.logoUrl) ||
+    user.logoUrl ||
+    null;
+  const collegeName =
+    user.collegeName ||
+    (typeof user.collegeId === 'object' && user.collegeId?.name) ||
+    null;
+  const collegeLocation =
+    user.collegeLocation ||
+    (typeof user.collegeId === 'object' && user.collegeId?.location) ||
+    null;
+  return {
+    ...user,
+    collegeLogo,
+    collegeName: collegeName || user.collegeName,
+    collegeLocation: collegeLocation || user.collegeLocation,
+  };
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,10 +71,11 @@ export const AuthProvider = ({ children }) => {
         setAdminChecked(true);
         return;
       }
-      setUserData(profile);
-      setIsAdmin(getRole(profile.role));
+      const normalized = normalizeUserWithCollegeLogo(profile);
+      setUserData(normalized);
+      setIsAdmin(getRole(normalized.role));
       setAdminChecked(true);
-      return profile;
+      return normalized;
     } catch (error) {
       // If getMe fails (e.g., token expired, backend down), don't crash
       // Keep current state and try again later
@@ -95,7 +119,10 @@ export const AuthProvider = ({ children }) => {
               setAdminChecked(true);
                await fetchProfile(currentUser);
                const onlineProfile = await updateProfile({ isOnline: true });
-               if (onlineProfile) setUserData(onlineProfile);
+               if (onlineProfile) {
+                 const normalizedOnline = normalizeUserWithCollegeLogo(onlineProfile);
+                 setUserData(normalizedOnline);
+               }
             } catch (error) {
               console.error("Error loading profile:", error);
               setIsAdmin(false);
@@ -126,8 +153,9 @@ export const AuthProvider = ({ children }) => {
     const handleRealtimeUserUpdate = (event) => {
       const updatedUser = event.detail?.user;
       if (!updatedUser || !user?.uid || updatedUser.uid !== user.uid) return;
-      setUserData(updatedUser);
-      setIsAdmin(getRole(updatedUser.role));
+      const normalized = normalizeUserWithCollegeLogo(updatedUser);
+      setUserData(normalized);
+      setIsAdmin(getRole(normalized.role));
     };
 
     window.addEventListener('hoas:user-updated', handleRealtimeUserUpdate);
@@ -158,8 +186,9 @@ export const AuthProvider = ({ children }) => {
         email: user.email,
         role,
       });
-      setUserData(profile);
-      setIsAdmin(getRole(profile.role));
+      const normalized = normalizeUserWithCollegeLogo(profile);
+      setUserData(normalized);
+      setIsAdmin(getRole(normalized.role));
       return true;
     } catch (error) {
       console.error("Error creating user profile:", error);
@@ -201,6 +230,8 @@ export const AuthProvider = ({ children }) => {
     refreshAdminStatus,
     createUserProfile,
     logout,
+    fetchProfile,
+    refreshProfile: fetchProfile,
   };
 
   return (

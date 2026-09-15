@@ -790,6 +790,23 @@ useFeedPoll(
     return granted;
   };
 
+  // Force request permission (for users who previously denied)
+  const forceRequestPermission = async () => {
+    if (!('Notification' in window)) {
+      console.warn('This browser does not support notifications');
+      return false;
+    }
+    // Reset permission state by trying to request again
+    const permission = await Notification.requestPermission();
+    const granted = permission === 'granted';
+    if (granted && user) {
+      const token = await notificationService.getFCMToken();
+      if (token) await notificationService.saveFCMToken(undefined, user.uid, token);
+    }
+    setPermissionGranted(granted);
+    return granted;
+  };
+
   const playOnce = () => {
     playSound();
   };
@@ -804,6 +821,7 @@ useFeedPoll(
       markAllAsRead,
       clearAll, 
       requestPermission,
+      forceRequestPermission,
       role,
       playSound,
       triggerNotification,

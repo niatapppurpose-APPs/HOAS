@@ -488,6 +488,7 @@ const HeroVisual = ({ isDark = true }) => {
           repeat: Infinity,
           ease: "easeInOut",
         }}
+        layout
         className="absolute -inset-10 rounded-[3rem] blur-3xl pointer-events-none"
         style={{
           background:
@@ -528,6 +529,7 @@ const HeroVisual = ({ isDark = true }) => {
                 ease: "easeInOut",
               },
         }}
+        layout
         style={{
           backgroundColor: card,
           borderColor: border,
@@ -818,6 +820,7 @@ const HeroVisual = ({ isDark = true }) => {
           ease: "easeInOut",
           delay: 1,
         }}
+        layout
         className="absolute -left-10 top-16 rounded-xl p-2.5 pr-4 shadow-xl border flex items-center gap-2"
         style={{
           backgroundColor: card,
@@ -860,6 +863,7 @@ const HeroVisual = ({ isDark = true }) => {
           ease: "easeInOut",
           delay: 2,
         }}
+        layout
         className="absolute -right-8 bottom-20 rounded-xl p-2.5 pr-4 shadow-xl border flex items-center gap-2"
         style={{
           backgroundColor: card,
@@ -900,6 +904,7 @@ const HeroVisual = ({ isDark = true }) => {
           ease: "easeInOut",
           delay: 0.5,
         }}
+        layout
         className="absolute -right-6 top-6 rounded-xl px-3 py-2 shadow-xl border"
         style={{
           backgroundColor: card,

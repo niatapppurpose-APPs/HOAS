@@ -4,7 +4,7 @@ import { AppError } from '../utils/AppError.js';
 import { canManageCollege, resolveStudentWarden } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { notifyUser } from '../services/notification.service.js';
-import { emitToUser } from '../services/socket.service.js';
+import { emitToUser, emitToCollege, emitToHostel, broadcastUserUpdate } from '../services/socket.service.js';
 
 function computeStatus(paid, total) {
   if (paid <= 0) return 'pending';
@@ -110,7 +110,7 @@ export async function listManagementFees(req, res, next) {
 
 export async function listWardenFees(req, res, next) {
   try {
-    const filter = { isVerifiedByManagement: true };
+    const filter = {};
     if (req.user.role === 'warden') {
       const hostelStudents = await User.find({ hostelId: req.user.hostelId, role: 'student' }).select('_id');
       filter.studentId = { $in: hostelStudents.map((s) => s._id) };
@@ -129,7 +129,8 @@ export async function listWardenFees(req, res, next) {
 
 export async function getStudentFee(req, res, next) {
   try {
-    const fee = await Fee.findOne({ studentId: req.user._id });
+    const fee = await Fee.findOne({ studentId: req.user._id })
+      .populate('studentId', 'name email studentId hostelBlock uid');
     if (!fee) throw new AppError(404, 'FEE_NOT_FOUND');
     res.json({ fee });
   } catch (error) {
@@ -186,6 +187,10 @@ export async function verifyByManagement(req, res, next) {
     });
     await fee.save();
 
+    // Real-time: notify college and hostel
+    emitToCollege(fee.collegeId, 'fee:updated', fee.toJSON());
+    if (fee.wardenId) emitToUser(fee.wardenId, 'fee:updated', fee.toJSON());
+
     await recordAudit({ actor: req.user, action: 'FEE_MANAGEMENT_VERIFIED', targetType: 'Fee', targetId: fee._id });
     res.json({ fee });
   } catch (error) {
@@ -226,6 +231,11 @@ export async function verifyByWarden(req, res, next) {
           student.wardenVerification = 'Verified';
           student.managementVerification = 'Verified';
           await student.save();
+          broadcastUserUpdate(student);
+        } else {
+          student.wardenVerification = 'Pending';
+          await student.save();
+          broadcastUserUpdate(student);
         }
         await notifyUser(student, {
           type: 'fee_verified',
@@ -236,6 +246,8 @@ export async function verifyByWarden(req, res, next) {
           data: { feeId: String(fee._id) },
         });
         emitToUser(student._id, 'fee:updated', fee.toJSON());
+        emitToCollege(fee.collegeId, 'fee:updated', fee.toJSON());
+        if (student.hostelId) emitToHostel(student.hostelId, 'fee:updated', fee.toJSON());
       }
     }
 

@@ -7,12 +7,11 @@ import WardenHeader from '../layout/WardenHeader';
 import { auth } from '../../../../firebase/firebaseConfig';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { updateProfile } from '../../../../firebase/cloudFunctions';
-import PWAUpdateSettings from '../../../../components/PWAUpdateSettings';
 import {
     Settings, Moon, Sun, Bell, Shield, Lock,
     Eye, EyeOff, Loader2, Check, User,
     Palette, BellRing, KeyRound, ChevronRight,
-    Building2, Phone, Layout, RefreshCw
+    Building2, Phone, Layout
 } from 'lucide-react';
 
 const WardenSettings = () => {
@@ -264,11 +263,6 @@ const WardenSettings = () => {
                                 label="System Alerts"
                             />
                         </div>
-                    </SettingsCard>
-
-                    {/* PWA App Updates */}
-                    <SettingsCard icon={RefreshCw} title="App Updates" description="Control how the app updates" iconColor="text-violet-500">
-                        <PWAUpdateSettings />
                     </SettingsCard>
 
                     {/* Account Info */}

@@ -4,6 +4,8 @@ import { ThemeToggle } from "../../../../components/ThemeToggle";
 import { useAuth } from "../../../../context/AuthContext";
 import AnimatedLogoutButton from "../../../../components/AnimatedLogoutButton";
 import NotificationBell from "../../../../components/OwnerServices/NotificationBell";
+import EmergencyIndicator from "../../../../components/EmergencyLocation/EmergencyIndicator";
+import SearchModal from "../../../../components/ui/SearchModal/SearchModal";
 
 const ManagementHeader = ({ pendingCount = 0, title = "Dashboard · Management", isCollapsed = true, setIsCollapsed }) => {
   const { logout } = useAuth();
@@ -41,12 +43,18 @@ const ManagementHeader = ({ pendingCount = 0, title = "Dashboard · Management",
             <h1 style={{ color: 'var(--text-primary)' }} className="text-sm sm:text-lg lg:text-xl font-bold truncate">{title}</h1>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+            <SearchModal compact defaultScope="management" />
             {pendingCount > 0 && (
               <span className="px-2 sm:px-4 py-1 rounded-full bg-red-500/20 text-red-400 text-[10px] sm:text-sm font-medium border border-red-500/30 animate-pulse flex-shrink-0">
                 <span className="hidden sm:inline">{pendingCount} Pending</span>
                 <span className="sm:hidden">{pendingCount}</span>
               </span>
             )}
+
+            {/* Emergency Indicator - Shows when emergency is active */}
+            <div className="flex-shrink-0">
+              <EmergencyIndicator />
+            </div>
 
             {/* Notification Bell */}
             <div className="flex-shrink-0">

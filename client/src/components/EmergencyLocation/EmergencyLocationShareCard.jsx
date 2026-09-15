@@ -52,6 +52,9 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
   const [expiresAt, setExpiresAt] = useState(null);
   const [sessionStartMs, setSessionStartMs] = useState(null);
   const [coords, setCoords] = useState(null);
+  const [lastKnownCoords, setLastKnownCoords] = useState(null);
+  const [isGpsLost, setIsGpsLost] = useState(false);
+  const [gpsLostAt, setGpsLostAt] = useState(null);
   const [accuracy, setAccuracy] = useState(null);
   const [slideOffset, setSlideOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -86,6 +89,9 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
     setIsSharing(false);
     setExpiresAt(null);
     setCoords(null);
+    setLastKnownCoords(null);
+    setIsGpsLost(false);
+    setGpsLostAt(null);
     setAccuracy(null);
     setSessionStartMs(null);
     lastUpdateMsRef.current = 0;
@@ -96,7 +102,10 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
 
   const applySessionState = (session) => {
     const normalized = toSessionState(session);
-    setCoords({ latitude: normalized.latitude, longitude: normalized.longitude });
+    if (normalized.latitude && normalized.longitude) {
+      setCoords({ latitude: normalized.latitude, longitude: normalized.longitude });
+      setLastKnownCoords({ latitude: normalized.latitude, longitude: normalized.longitude });
+    }
     setAccuracy(normalized.accuracy);
     setExpiresAt(normalized.expiresAt);
 
@@ -128,7 +137,11 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
         try { await pushLocationUpdate(position); }
         catch (error) { console.error('Emergency location update failed:', error); }
       },
-      (error) => { console.error('Geolocation watch error:', error); },
+      (error) => {
+        console.error('Geolocation watch error:', error);
+        setIsGpsLost(true);
+        setGpsLostAt((prev) => prev || Date.now());
+      },
       { enableHighAccuracy: true, maximumAge: 0, timeout: POSITION_TIMEOUT_MS }
     );
   };
@@ -144,7 +157,10 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
     };
 
     setCoords({ latitude: payload.latitude, longitude: payload.longitude });
+    setLastKnownCoords({ latitude: payload.latitude, longitude: payload.longitude });
     setAccuracy(payload.accuracy ?? null);
+    setIsGpsLost(false);
+    setGpsLostAt(null);
 
     const now = Date.now();
     // throttle updates to avoid flooding backend (every 6 seconds max)
@@ -224,6 +240,7 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
     try {
       await stopEmergencyLocation();
       clearSessionState();
+      window.dispatchEvent(new CustomEvent('hoas:emergency-stopped'));
       toast.success('Emergency location sharing stopped.');
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to stop emergency location sharing'));
@@ -302,12 +319,18 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
         setSessionDurationText('0 mins active');
       }
 
-      // Update sync text
+      // Update sync text and check GPS signal health
       if (isSharingRef.current && lastUpdateMsRef.current > 0) {
         const diffSecs = Math.floor((now - lastUpdateMsRef.current) / 1000);
-        if (diffSecs < 5) setLastSyncedText('Updated just now');
-        else if (diffSecs < 60) setLastSyncedText(`Updated ${diffSecs} seconds ago`);
-        else {
+        if (diffSecs > 18) {
+          setIsGpsLost(true);
+          setGpsLostAt((prev) => prev || now);
+          setLastSyncedText(`GPS signal lost (${diffSecs}s ago) — showing last known`);
+        } else if (diffSecs < 5) {
+          setLastSyncedText('Updated just now');
+        } else if (diffSecs < 60) {
+          setLastSyncedText(`Updated ${diffSecs} seconds ago`);
+        } else {
           const m = Math.floor(diffSecs / 60);
           setLastSyncedText(`Updated ${m} minute${m !== 1 ? 's' : ''} ago`);
         }
@@ -324,6 +347,16 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
   useEffect(() => { if (isSharing) ensureTrackingWatch(); }, [isSharing]);
 
   const accState = (() => {
+    if (isGpsLost && (lastKnownCoords || coords)) {
+      return {
+        label: 'GPS Signal Lost',
+        color: 'text-amber-500',
+        bg: 'bg-amber-500/10',
+        dot: 'bg-amber-500',
+        pulse: true,
+        subtext: `Showing last known position (${gpsLostAt ? new Date(gpsLostAt).toLocaleTimeString() : 'Recent'})`,
+      };
+    }
     if (!accuracy || !isSharing) return { label: 'Waiting for GPS', color: 'text-slate-500', bg: isDark ? 'bg-slate-800' : 'bg-slate-100', dot: 'bg-slate-400' };
     if (accuracy <= 20) return { label: 'Strong Signal', color: 'text-emerald-500', bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', pulse: true };
     if (accuracy <= 50) return { label: 'Medium Signal', color: 'text-amber-500', bg: 'bg-amber-500/10', dot: 'bg-amber-500' };
@@ -333,6 +366,8 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
   const containerTheme = isDark
     ? 'bg-[#0f172a] border-slate-800/80 shadow-2xl shadow-indigo-900/10'
     : 'bg-[#f8fafc] border-slate-200/80 shadow-2xl shadow-slate-200/50';
+
+  const effectiveCoords = coords || lastKnownCoords;
 
   return (
     <>
@@ -377,10 +412,12 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
             <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} mb-2`}>Protection Status</p>
             <div className="flex items-center gap-2">
               <span className="relative flex h-2.5 w-2.5">
-                {isSharing && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
-                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isSharing ? 'bg-emerald-500' : 'bg-slate-500'}`}></span>
+                {isSharing && <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isGpsLost ? 'bg-amber-400' : 'bg-emerald-400'} opacity-75`}></span>}
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isSharing ? (isGpsLost ? 'bg-amber-500' : 'bg-emerald-500') : 'bg-slate-500'}`}></span>
               </span>
-              <span className={`font-bold text-sm ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{isSharing ? 'Live Tracking Enabled' : 'Monitoring Inactive'}</span>
+              <span className={`font-bold text-sm ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+                {isSharing ? (isGpsLost ? 'GPS Lost — Last Known Active' : 'Live Tracking Enabled') : 'Monitoring Inactive'}
+              </span>
             </div>
           </div>
 
@@ -395,14 +432,14 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
 
           {/* Accuracy */}
           <div className={`p-5 rounded-2xl border ${isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}>
-            <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} mb-2`}>GPS Accuracy</p>
+            <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'} mb-2`}>GPS Status</p>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${accState.dot} ${accState.pulse ? 'animate-pulse' : ''}`} />
                 <span className={`font-bold text-sm ${accState.color}`}>{accState.label}</span>
               </div>
               <span className={`text-[11px] font-semibold mt-1 opacity-70 ${accState.color}`}>
-                {accuracy && isSharing ? `Variance: ±${Math.round(accuracy)} meters` : 'Coordinates unavailable'}
+                {accState.subtext || (accuracy && isSharing ? `Variance: ±${Math.round(accuracy)} meters` : 'Coordinates unavailable')}
               </span>
             </div>
           </div>
@@ -463,7 +500,7 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
         <div className={`relative z-10 rounded-[2rem] overflow-hidden border transition-colors duration-500 relative ${isDark ? 'bg-slate-900 border-slate-700/60 dark-map-wrapper' : 'bg-slate-100 border-slate-300'} h-[500px] shadow-2xl`}>
 
           {/* Radar background if no coords */}
-          {!coords && (
+          {!effectiveCoords && (
             <div className="absolute inset-0 flex flex-col items-center justify-center opacity-40">
               <div className={`w-64 h-64 border rounded-full ${isDark ? 'border-slate-700' : 'border-slate-300'} flex items-center justify-center`}>
                 <div className={`w-32 h-32 border rounded-full ${isDark ? 'border-slate-700' : 'border-slate-300'}`}></div>
@@ -472,25 +509,35 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
             </div>
           )}
 
-          {isSharing && coords && (
+          {isSharing && effectiveCoords && (
             <>
               {/* Map UI Overlay */}
               <div className={`absolute top-5 left-5 z-[1000] px-5 py-3 rounded-2xl backdrop-blur-xl border shadow-xl flex items-center gap-3
-                  ${isDark ? 'bg-slate-900/90 border-slate-700/80' : 'bg-white/95 border-slate-200'}`}>
-                <Activity className="w-5 h-5 text-emerald-500 animate-pulse" />
+                  ${isGpsLost ? 'bg-amber-950/90 border-amber-500/60 text-amber-200' : (isDark ? 'bg-slate-900/90 border-slate-700/80' : 'bg-white/95 border-slate-200')}`}>
+                {isGpsLost ? (
+                  <AlertTriangle className="w-5 h-5 text-amber-400 animate-pulse" />
+                ) : (
+                  <Activity className="w-5 h-5 text-emerald-500 animate-pulse" />
+                )}
                 <div className="flex flex-col">
-                  <span className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Current Transmission Area</span>
-                  <span className={`text-xs font-bold uppercase tracking-widest mt-0.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>{lastSyncedText}</span>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${isGpsLost ? 'text-amber-300' : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>
+                    {isGpsLost ? 'GPS Disconnected' : 'Current Transmission Area'}
+                  </span>
+                  <span className={`text-xs font-bold uppercase tracking-widest mt-0.5 ${isGpsLost ? 'text-amber-100' : (isDark ? 'text-white' : 'text-slate-900')}`}>
+                    {lastSyncedText}
+                  </span>
                 </div>
               </div>
 
               <div className={`absolute bottom-5 right-5 z-[1000] px-4 py-2 flex items-center gap-2 rounded-xl backdrop-blur-md border ${isDark ? 'bg-slate-900/80 border-slate-700 text-slate-400' : 'bg-white/80 border-slate-300 text-slate-500'}`}>
                 <Info className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Updates dynamically via Satellite Array</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest">
+                  {isGpsLost ? 'Position locked to last transmission' : 'Updates dynamically via Satellite Array'}
+                </span>
               </div>
 
               <MapContainer
-                center={[coords.latitude, coords.longitude]}
+                center={[effectiveCoords.latitude, effectiveCoords.longitude]}
                 zoom={17}
                 className="w-full h-full"
                 scrollWheelZoom
@@ -503,11 +550,11 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
 
                 {/* Accuracy Radius */}
                 <Circle
-                  center={[coords.latitude, coords.longitude]}
+                  center={[effectiveCoords.latitude, effectiveCoords.longitude]}
                   radius={Math.max(Number(accuracy) || 25, 15)}
                   pathOptions={{
-                    color: isDark ? '#3b82f6' : '#2563eb',
-                    fillColor: isDark ? '#3b82f6' : '#3b82f6',
+                    color: isGpsLost ? '#f59e0b' : (isDark ? '#3b82f6' : '#2563eb'),
+                    fillColor: isGpsLost ? '#f59e0b' : (isDark ? '#3b82f6' : '#3b82f6'),
                     fillOpacity: 0.15,
                     weight: 1,
                     dashArray: '8 8'
@@ -516,31 +563,31 @@ const EmergencyLocationShareCard = ({ tone = 'student' }) => {
 
                 {/* User Pin */}
                 <CircleMarker
-                  center={[coords.latitude, coords.longitude]}
+                  center={[effectiveCoords.latitude, effectiveCoords.longitude]}
                   radius={10}
                   pathOptions={{
                     color: '#fff',
-                    fillColor: '#ef4444',
+                    fillColor: isGpsLost ? '#f59e0b' : '#ef4444',
                     fillOpacity: 1,
                     weight: 3,
                   }}
                 >
                   <Tooltip permanent direction="top" offset={[0, -14]} className="custom-secure-tooltip">
                     <span className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span>
-                      YOU (LIVE)
+                      <span className={`w-1.5 h-1.5 rounded-full ${isGpsLost ? 'bg-amber-400' : 'bg-red-400'} animate-pulse`}></span>
+                      {isGpsLost ? 'LAST KNOWN LOCATION (SIGNAL LOST)' : 'YOU (LIVE)'}
                     </span>
                   </Tooltip>
                 </CircleMarker>
 
                 {/* Pulsing Backlight */}
                 <CircleMarker
-                  center={[coords.latitude, coords.longitude]}
+                  center={[effectiveCoords.latitude, effectiveCoords.longitude]}
                   radius={18}
                   className="animate-ping"
                   pathOptions={{
                     color: 'transparent',
-                    fillColor: '#ef4444',
+                    fillColor: isGpsLost ? '#f59e0b' : '#ef4444',
                     fillOpacity: 0.4,
                   }}
                 />

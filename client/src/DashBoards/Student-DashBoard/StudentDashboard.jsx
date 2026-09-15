@@ -36,13 +36,13 @@ const StudentDashboard = () => {
   const toast = useToast();
   const [isEditing, setIsEditing] = useState(false);
 
-  // Auto-start tour on first visit (waits for data to load)
-  useDashboardTour("student", studentTourSteps, { ready: false });
-
   const [isSaving, setIsSaving] = useState(false);
   const [complaints, setComplaints] = useState([]);
   const [complaintsLoading, setComplaintsLoading] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
+
+  // Auto-start tour on first visit after dashboard data is ready.
+  useDashboardTour("student", studentTourSteps, { ready: !complaintsLoading });
 
   const [formData, setFormData] = useState({
     fullName: "",

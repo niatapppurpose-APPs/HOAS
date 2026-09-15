@@ -6,6 +6,7 @@ import ManagementHeader from '../components/layout/ManagementHeader';
 import { CONTENT_MAP, FAQS, GETTING_STARTED_STEPS } from './helpSupportData';
 import BugReportModal from './BugReportModal';
 import TopicContentModal from './TopicContentModal';
+import FaqAccordion from '../../../components/ui/FaqAccordion';
 import {
   HelpCircle,
   Search,
@@ -249,64 +250,9 @@ const ManagementHelpSupport = () => {
               )}
             </div>
 
-            {/* FAQs List */}
-            <div className="rounded-xl shadow-sm border overflow-hidden"
-              style={{
-                backgroundColor: 'var(--bg-secondary)',
-                borderColor: 'var(--border-color)'
-              }}>
-              <div className="p-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                <h2 className="font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                  <HelpCircle className="w-5 h-5 text-indigo-500" />
-                  Frequently Asked Questions
-                  <span className="ml-auto text-xs font-normal px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>
-                    {filteredFaqs.length} {filteredFaqs.length === 1 ? 'result' : 'results'}
-                  </span>
-                </h2>
-              </div>
-
-              <div className="divide-y" style={{ borderColor: 'var(--border-color)' }}>
-                {filteredFaqs.length > 0 ? (
-                  filteredFaqs.map((faq) => (
-                    <div key={faq.id} className="group">
-                      <button
-                        onClick={() => toggleFaq(faq.id)}
-                        className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-opacity-50 transition-colors"
-                        style={{
-                          backgroundColor: expandedFaq === faq.id ? 'var(--bg-tertiary)' : 'transparent'
-                        }}
-                      >
-                        <span className="font-medium text-sm md:text-base pr-4" style={{ color: 'var(--text-primary)' }}>
-                          {faq.question}
-                        </span>
-                        {expandedFaq === faq.id ? (
-                          <ChevronUp className="w-5 h-5 flex-shrink-0 text-indigo-500" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
-                        )}
-                      </button>
-
-                      {expandedFaq === faq.id && (
-                        <div className="px-6 py-4 pt-0 text-sm leading-relaxed"
-                          style={{
-                            backgroundColor: 'var(--bg-tertiary)',
-                            color: 'var(--text-secondary)'
-                          }}>
-                          <div className="pt-2 border-t border-dashed" style={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
-                            {faq.answer}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-8 text-center">
-                    <Search className="w-10 h-10 mx-auto mb-3 opacity-30" style={{ color: 'var(--text-muted)' }} />
-                    <p className="font-medium" style={{ color: 'var(--text-secondary)' }}>No results found</p>
-                    <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Try a different search term for "{searchQuery}"</p>
-                  </div>
-                )}
-              </div>
+            {/* Enhanced Vengence UI FAQ Accordion */}
+            <div className="mt-2">
+              <FaqAccordion data={FAQS} />
             </div>
 
             {/* Quick Links / Tiles */}

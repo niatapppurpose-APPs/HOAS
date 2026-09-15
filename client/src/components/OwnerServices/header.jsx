@@ -5,7 +5,7 @@ import { useToast } from "../Toast";
 import { ThemeToggle } from "../ThemeToggle";
 import NotificationBell from "./NotificationBell";
 import AnimatedLogoutButton from "../AnimatedLogoutButton";
-import Avatar from "./Avatar";
+import SearchModal from "../ui/SearchModal/SearchModal";
 
 
 const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = true, setIsCollapsed, headerExtra, onProfileClick }) => {
@@ -45,6 +45,8 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
             {/* Mobile menu button */}
             {setIsCollapsed && (
               <button
+                type="button"
+                aria-label="Open navigation menu"
                 onClick={() => setIsCollapsed(false)}
                 className="hidden p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0"
                 style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
@@ -61,6 +63,7 @@ const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = tru
             )}
           </div>
           <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+            <SearchModal compact defaultScope="owner" />
             {headerExtra && (
               <div className="hidden md:flex items-center mr-0 md:mr-2">
                 {headerExtra}

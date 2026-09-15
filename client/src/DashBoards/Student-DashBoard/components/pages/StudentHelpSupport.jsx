@@ -4,6 +4,7 @@ import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import StudentHeader from '../layout/StudentHeader';
 import { createSupportTicket, listUsers } from '../../../../firebase/cloudFunctions';
+import FaqAccordion from '../../../../components/ui/FaqAccordion';
 import {
     HelpCircle, LifeBuoy, MessageCircle, ChevronDown,
     ChevronUp, Send, Loader2, BookOpen, Phone,
@@ -150,6 +151,7 @@ const StudentHelpSupport = () => {
                 {/* Quick Actions Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6">
                     <button
+                        type="button"
                         onClick={() => setShowTicketForm(!showTicketForm)}
                         className="flex items-center gap-3 p-4 rounded-2xl border transition-all hover:scale-[1.02] hover:shadow-lg text-left"
                         style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
@@ -245,7 +247,8 @@ const StudentHelpSupport = () => {
 
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: 'var(--text-muted)' }}>Subject *</label>
-                                <input
+                                <label htmlFor="student-faq-search" className="sr-only">Search frequently asked questions</label><input
+                                    id="student-faq-search"
                                     type="text"
                                     value={ticketData.subject}
                                     onChange={(e) => setTicketData(p => ({ ...p, subject: e.target.value }))}
@@ -285,69 +288,9 @@ const StudentHelpSupport = () => {
                     </div>
                 )}
 
-                {/* FAQ Search */}
-                <div className="relative mb-5">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-muted)' }} />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search FAQs..."
-                        className="w-full pl-12 pr-4 py-3.5 rounded-2xl border text-sm"
-                        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
-                    />
-                </div>
-
-                {/* FAQ Sections */}
-                <div className="space-y-5">
-                    {filteredFAQs.map((category, catIdx) => (
-                        <div key={catIdx} className="rounded-2xl border overflow-hidden"
-                            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-                            <div className="p-4 md:p-5 border-b" style={{ borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-tertiary)' }}>
-                                <div className="flex items-center gap-2">
-                                    <BookOpen className="w-4 h-4 text-indigo-500" />
-                                    <h3 className="text-sm font-black uppercase tracking-widest" style={{ color: 'var(--text-primary)' }}>
-                                        {category.category}
-                                    </h3>
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 font-bold">
-                                        {category.questions.length}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="divide-y" style={{ borderColor: 'var(--border-primary)' }}>
-                                {category.questions.map((faq, faqIdx) => {
-                                    const faqKey = `${catIdx}-${faqIdx}`;
-                                    const isExpanded = expandedFaq === faqKey;
-
-                                    return (
-                                        <div key={faqIdx}>
-                                            <button
-                                                onClick={() => setExpandedFaq(isExpanded ? null : faqKey)}
-                                                className="w-full p-4 md:p-5 flex items-center gap-3 text-left hover:bg-indigo-500/5 transition-all"
-                                            >
-                                                <FileQuestion className="w-4 h-4 text-indigo-500 flex-shrink-0" />
-                                                <span className="flex-1 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{faq.q}</span>
-                                                {isExpanded
-                                                    ? <ChevronUp className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
-                                                    : <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
-                                                }
-                                            </button>
-                                            {isExpanded && (
-                                                <div className="px-4 md:px-5 pb-4 md:pb-5 pt-0 ml-7">
-                                                    <div className="p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                                                        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                                                            {faq.a}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ))}
+                {/* Enhanced Vengence UI FAQ Accordion */}
+                <div className="mt-2">
+                    <FaqAccordion data={FAQ_DATA} />
                 </div>
             </div>
         </>

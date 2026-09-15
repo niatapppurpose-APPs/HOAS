@@ -5,13 +5,13 @@ import { getStudentFee, uploadStudentFeeProof } from '../../../../firebase/cloud
 import { uploadFeeProof } from '../../../../utils/cloudinaryUpload';
 import StudentHeader from '../layout/StudentHeader';
 import { useToast } from '../../../../components/Toast';
-import { Wallet, IndianRupee, Clock, AlertCircle, UploadCloud, FileText, CheckCircle2, ShieldCheck, UserCheck, Loader2, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import FileUploader from '../../../../components/ui/FileUploader';
+import { Wallet, IndianRupee, Clock, AlertCircle, FileText, CheckCircle2, ShieldCheck, UserCheck, Loader2, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 
 const StudentFees = () => {
   const { isCollapsed, setIsCollapsed } = useOutletContext();
   const { user } = useAuth();
   const toast = useToast();
-  const fileInputRef = useRef(null);
   const scrollRef = useRef(null);
 
   const scroll = (direction) => {
@@ -80,18 +80,15 @@ const StudentFees = () => {
 
     if (!isImage && !isPDF) {
       toast.error('Please upload an image or a PDF file');
-      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
       toast.error('File must be under 5MB');
-      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
     if (feeReports.length >= 12) {
       toast.error('You can only upload up to 12 fee reports.');
-      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
@@ -106,7 +103,6 @@ const StudentFees = () => {
       toast.error(error.message || 'Failed to upload proof');
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -219,7 +215,7 @@ const StudentFees = () => {
                       <p className="font-bold" style={{ color: 'var(--text-primary)' }}>Management</p>
                       <p className={`text-sm mt-0.5 font-medium ${record.isVerifiedByManagement ? 'text-emerald-500' : 'opacity-60'}`}
                         style={!record.isVerifiedByManagement ? { color: 'var(--text-muted)' } : {}}>
-                        {record.isVerifiedByManagement ? 'Cleared & Approved' : 'Pending Review'}
+                        {record.isVerifiedByManagement ? 'Cleared & Approved' : (feeReports.length ? 'Submitted - Pending Review' : 'Pending Review')}
                       </p>
                     </div>
                   </div>
@@ -234,7 +230,7 @@ const StudentFees = () => {
                       <p className="font-bold" style={{ color: 'var(--text-primary)' }}>Hostel Warden</p>
                       <p className={`text-sm mt-0.5 font-medium ${record.isVerifiedByWarden ? 'text-emerald-500' : 'opacity-60'}`}
                         style={!record.isVerifiedByWarden ? { color: 'var(--text-muted)' } : {}}>
-                        {record.isVerifiedByWarden ? 'Clearance Granted' : 'Pending Verification'}
+                        {record.isVerifiedByWarden ? 'Clearance Granted' : (feeReports.length ? 'Submitted - Pending Verification' : 'Pending Verification')}
                       </p>
                     </div>
                   </div>
@@ -251,33 +247,14 @@ const StudentFees = () => {
                   Securely upload your payment receipt. Both Wardens and Management use this reference to clear your account.
                 </p>
 
-                <div
-                  className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all ${uploading ? 'opacity-50 pointer-events-none' : 'hover:border-indigo-500/50 hover:bg-indigo-500/5'}`}
-                  style={{ borderColor: 'var(--border-disabled)', backgroundColor: 'var(--bg-tertiary)' }}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*,application/pdf"
-                    onChange={(e) => handleProofUpload(e.target.files?.[0])}
-                    disabled={uploading}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    title="Click to Choose Document"
-                  />
-                  {uploading ? (
-                    <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-                  ) : (
-                    <>
-                      <div className="w-14 h-14 bg-indigo-500/10 text-indigo-500 rounded-full flex items-center justify-center mb-4 border border-indigo-500/20">
-                        <UploadCloud className="w-7 h-7" />
-                      </div>
-                      <p className="font-bold text-center" style={{ color: 'var(--text-primary)' }}>Click to upload or drag & drop</p>
-                      <p className="text-xs mt-2 text-center" style={{ color: 'var(--text-muted)' }}>Images or PDF</p>
-                      <p className="text-xs mt-1 text-center font-semibold text-rose-500">Max file size limit: 5MB</p>
-                      <p className="text-[11px] mt-1 text-center font-semibold text-rose-500">Preferred resolution: 800x600 px to 1920x1080 px</p>
-                    </>
-                  )}
-                </div>
+                <FileUploader
+                  onFile={handleProofUpload}
+                  disabled={uploading}
+                  uploading={uploading}
+                  accept="image/*,application/pdf"
+                  label="Upload payment proof or bank transfer receipt"
+                  subtext="Supports JPG, PNG, and PDF receipts (max. 5MB)"
+                />
               </div>
 
               {/* Seamless Preview Area */}

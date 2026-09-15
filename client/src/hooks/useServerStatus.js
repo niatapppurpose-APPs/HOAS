@@ -5,7 +5,10 @@ const API_BASE = import.meta.env.VITE_API_URL
   : '/api';
 
 export const useServerStatus = (checkInterval = 5000) => {
-  const [isServerOnline, setIsServerOnline] = useState(true);
+  const sessionReady = typeof window !== 'undefined'
+    && window.sessionStorage.getItem('hoas-server-ready') === 'true';
+  const [isServerOnline, setIsServerOnline] = useState(sessionReady);
+  const [initialCheckComplete, setInitialCheckComplete] = useState(sessionReady);
   const [lastChecked, setLastChecked] = useState(new Date());
 
   useEffect(() => {
@@ -23,13 +26,19 @@ export const useServerStatus = (checkInterval = 5000) => {
 
         if (response.ok) {
           setIsServerOnline(true);
-        } else {
+          window.sessionStorage.setItem('hoas-server-ready', 'true');
+        } else if (!initialCheckComplete) {
           setIsServerOnline(false);
+          return;
         }
+        setInitialCheckComplete(true);
         setLastChecked(new Date());
       } catch (error) {
-        // Network error means server is down
-        setIsServerOnline(false);
+        // Only block the initial app load. Once the app has connected, keep
+        // the UI running while the health check retries in the background.
+        if (!initialCheckComplete) {
+          setIsServerOnline(false);
+        }
         setLastChecked(new Date());
       }
     };
@@ -41,7 +50,7 @@ export const useServerStatus = (checkInterval = 5000) => {
     const interval = setInterval(checkServer, checkInterval);
 
     return () => clearInterval(interval);
-  }, [checkInterval]);
+  }, [checkInterval, initialCheckComplete]);
 
-  return { isServerOnline, lastChecked };
+  return { isServerOnline, initialCheckComplete, lastChecked };
 };

@@ -4,6 +4,7 @@ import { ThemeToggle } from "../../../../components/ThemeToggle";
 import { useAuth } from "../../../../context/AuthContext";
 import AnimatedLogoutButton from "../../../../components/AnimatedLogoutButton";
 import NotificationBell from "../../../../components/OwnerServices/NotificationBell";
+import SearchModal from "../../../../components/ui/SearchModal/SearchModal";
 
 const StudentHeader = ({ title = "Dashboard · Student Portal", isCollapsed = true, setIsCollapsed }) => {
   const { logout, userData } = useAuth();
@@ -29,6 +30,8 @@ const StudentHeader = ({ title = "Dashboard · Student Portal", isCollapsed = tr
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             {/* Mobile menu button */}
             <button
+              type="button"
+              aria-label="Open navigation menu"
               onClick={() => setIsCollapsed && setIsCollapsed(false)}
               className="hidden p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0"
               style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
@@ -42,6 +45,7 @@ const StudentHeader = ({ title = "Dashboard · Student Portal", isCollapsed = tr
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-4 flex-shrink-0">
+            <SearchModal compact defaultScope="student" />
             {/* Room Number Badge */}
             {userData?.roomNumber && (
               <span

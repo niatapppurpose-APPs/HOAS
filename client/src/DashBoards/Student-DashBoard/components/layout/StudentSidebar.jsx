@@ -36,6 +36,16 @@ const StudentSidebar = ({
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const effectiveLogo =
+    collegeLogo ||
+    userData?.collegeLogo ||
+    (typeof userData?.collegeId === 'object' && userData?.collegeId?.logoUrl) ||
+    userData?.logoUrl ||
+    managementData?.logoUrl ||
+    managementData?.collegeLogo ||
+    null;
+
   const [isPinned, setIsPinned] = useState(false);
   const [showLogoPopup, setShowLogoPopup] = useState(false);
   const [, forceUpdate] = useState(0);
@@ -213,9 +223,13 @@ const StudentSidebar = ({
               >
                 <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <img
-                  src={collegeLogo ? collegeLogo : Applogo}
-                  className={`relative w-full h-full rounded-xl object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-blue-500/50 transition-all duration-300 group-hover:scale-105 ${collegeLogo ? "bg-white" : ""}`}
-                  alt={collegeLogo ? "College Logo" : "HOAS Logo"}
+                  src={effectiveLogo || Applogo}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = Applogo;
+                  }}
+                  className={`relative w-full h-full rounded-xl object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-blue-500/50 transition-all duration-300 group-hover:scale-105 ${effectiveLogo ? "bg-white" : ""}`}
+                  alt={effectiveLogo ? "College Logo" : "HOAS Logo"}
                 />
               </button>
 
@@ -528,9 +542,13 @@ const StudentSidebar = ({
               </button>
               <div className="flex flex-col items-center">
                 <img
-                  src={collegeLogo ? collegeLogo : Applogo}
+                  src={effectiveLogo || Applogo}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = Applogo;
+                  }}
                   className="w-full h-full rounded-lg object-contain border-4 border-blue-500/30 shadow-lg"
-                  alt={collegeLogo ? "College Logo" : "HOAS Logo"}
+                  alt={effectiveLogo ? "College Logo" : "HOAS Logo"}
                 />
                 <h2
                   className="mt-4 text-2xl font-bold"
@@ -542,7 +560,7 @@ const StudentSidebar = ({
                   className="mt-1 text-sm"
                   style={{ color: "var(--text-muted)" }}
                 >
-                  {collegeLogo
+                  {effectiveLogo
                     ? "College Portal"
                     : "Hostel Accommodation System"}
                 </p>

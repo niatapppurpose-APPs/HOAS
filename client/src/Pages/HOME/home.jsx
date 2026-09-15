@@ -23,6 +23,8 @@ import HeroVisual from "./components/HeroVisual";
 import FeaturesGrid from "./components/FeaturesGrid";
 import { WorkflowSteps, TechStack } from "./components/HowItWorks";
 import { Testimonials, FAQ } from "./components/SocialProof";
+import FlipText from "../../components/ui/vengence/FlipText";
+import StackedLogos from "../../components/ui/vengence/StackedLogos";
 import { RoleCard } from "./components/Cards";
 import RoleDrawer from "./components/RoleDrawer";
 import RequestAccessDrawer from "./components/RequestAccessDrawer";
@@ -58,14 +60,42 @@ const Home = () => {
   const { user, isAdmin, loading } = useAuth();
   const { isDark } = useTheme();
 
-  // Lock body scroll when mobile menu is open
+  // Lock body scroll when mobile menu is open - prevent layout shift
   useEffect(() => {
-    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "unset";
+    if (isMobileMenuOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      if (scrollY) window.scrollTo(0, parseInt(scrollY || '0') * -1);
+    }
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+    };
   }, [isMobileMenuOpen]);
 
-  // Navbar scroll state
+  // Navbar scroll state - throttled to prevent jank on mobile
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 24);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -377,11 +407,25 @@ const Home = () => {
               
             </motion.div>
 
+            {/* Trust team & Stacked Logos */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.65, duration: 0.8 }}
+              className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-8"
+            >
+              <StackedLogos extraCount={240} />
+              <div className="text-left">
+                <p className="text-xs font-bold text-white">Trusted by 240+ Campus Wardens & Deans</p>
+                <p className="text-[11px] text-slate-400">Handling 50,000+ Student Residents Daily</p>
+              </div>
+            </motion.div>
+
             {/* Trust chips */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.7, duration: 0.8 }}
+              transition={{ delay: 0.75, duration: 0.8 }}
               className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2"
             >
               {HERO_CHIPS.map(({ label }) => (

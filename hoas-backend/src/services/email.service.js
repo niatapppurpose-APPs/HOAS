@@ -1,272 +1,294 @@
-import nodemailer from 'nodemailer';
-import dns from 'dns';
 import { env } from '../config/env.js';
 
-// Render instances have no IPv6 egress. Node >=17 prefers AAAA records when
-// resolving smtp.gmail.com, so connects hang until ETIMEDOUT on every SMTP
-// port. Force IPv4 resolution process-wide.
-dns.setDefaultResultOrder('ipv4first');
+// HOAS Email Service - ONLY via Supabase Edge Function
+// All 20 templates are rendered inside the edge function using the HOAS design system
 
-const transporterCache = new Map();
+function getEmailConfig() {
+  const fromEmail = env.smtp?.fromEmail || env.smtp?.user || 'niatapppurpose@gmail.com';
+  // Use public https web app URL for emails so Gmail spam filters do not flag http://localhost
+  const appUrl = (env.appUrl && !env.appUrl.includes('localhost')) 
+    ? env.appUrl 
+    : 'https://hoas-client-4n13.vercel.app';
 
-function buildTransporter(port) {
-  return nodemailer.createTransport({
-    host: env.smtp.host,
-    port,
-    secure: port === 465,
-    auth: { user: env.smtp.user, pass: env.smtp.password },
-    // IPv4 only — see dns note above (Render has no IPv6 route to Gmail).
-    family: 4,
-    // Keep these tight: on Render, a hanging SMTP socket used to block
-    // responses for 20-30s+ per attempt. Fail fast and fall back instead.
-    connectionTimeout: 8000,
-    greetingTimeout: 8000,
-    socketTimeout: 12000,
-    pool: true,
-    maxConnections: 3,
-    maxMessages: 50,
-  });
-}
-
-function getTransporter(preferredPort) {
-  if (!env.smtp.user || !env.smtp.password) return null;
-  const port = preferredPort || env.smtp.port || 587;
-  if (!transporterCache.has(port)) {
-    transporterCache.set(port, buildTransporter(port));
-  }
-  return transporterCache.get(port);
-}
-
-function isConnectionError(error) {
-  const code = error?.code || '';
-  return (
-    code === 'ECONNECTION' ||
-    code === 'ETIMEDOUT' ||
-    code === 'ESOCKET' ||
-    code === 'ECONNRESET' ||
-    code === 'ECONNREFUSED' ||
-    /timeout/i.test(error?.message || '')
-  );
-}
-
-// ── HTTP email APIs (port 443 — never blocked by hosting providers) ────────
-async function fetchWithTimeout(url, options, timeoutMs = 12000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
+  return {
+    appUrl,
+    supportEmail: fromEmail,
+    logoUrl: process.env.HOAS_LOGO_URL || '',
+    brandName: 'HOAS',
   }
 }
 
-async function sendViaResend({ from, to, subject, html, text }) {
-  const response = await fetchWithTimeout('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.resendApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from,
-      to: Array.isArray(to) ? to : [to],
-      subject,
-      html,
-      text: text || undefined,
-    }),
-  });
-  if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    throw new Error(`Resend API ${response.status}: ${body.slice(0, 200)}`);
+function getSupabaseEmailUrl() {
+  // Prefer explicit function URL, else construct from SUPABASE_URL
+  if (env.supabase.emailFunctionUrl) return env.supabase.emailFunctionUrl
+  if (env.supabase.url) return `${env.supabase.url.replace(/\/$/, '')}/functions/v1/send-email`
+  return null
+}
+
+import nodemailer from 'nodemailer';
+
+let directTransporter = null;
+function getDirectTransporter() {
+  if (directTransporter) return directTransporter;
+  if (env.smtp?.host && env.smtp?.user && env.smtp?.password) {
+    directTransporter = nodemailer.createTransport({
+      host: env.smtp.host,
+      port: Number(env.smtp.port) || 587,
+      secure: Number(env.smtp.port) === 465,
+      auth: {
+        user: env.smtp.user,
+        pass: env.smtp.password,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
   }
-  return { via: 'resend' };
+  return directTransporter;
 }
 
-async function sendViaBrevo({ from, to, subject, html, text }) {
-  // Brevo needs a bare address in "from" (name goes separately).
-  const emailMatch = String(from).match(/<([^>]+)>/);
-  const senderEmail = emailMatch ? emailMatch[1] : from;
-  const response = await fetchWithTimeout('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: {
-      'api-key': env.brevoApiKey,
-      'Content-Type': 'application/json',
-      accept: 'application/json',
-    },
-    body: JSON.stringify({
-      sender: { name: env.smtp.fromName, email: senderEmail },
-      to: [{ email: to }],
-      subject,
-      htmlContent: html,
-      textContent: text || undefined,
-    }),
-  });
-  if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    throw new Error(`Brevo API ${response.status}: ${body.slice(0, 200)}`);
+async function sendDirectNodemailer({ to, subject, html, text }) {
+  const transporter = getDirectTransporter();
+  if (!transporter) {
+    throw new Error('Direct SMTP not configured');
   }
-  return { via: 'brevo' };
-}
+  const fromName = env.smtp?.fromName || 'HOAS';
+  const fromEmail = env.smtp?.fromEmail || env.smtp?.user || 'niatapppurpose@gmail.com';
+  const domain = fromEmail.includes('@') ? fromEmail.split('@')[1] : 'gmail.com';
+  const messageId = `<${Date.now()}.${Math.random().toString(36).substring(2, 10)}@${domain}>`;
 
-async function deliverViaHttpApi(payload) {
-  if (env.resendApiKey) return sendViaResend(payload);
-  if (env.brevoApiKey) return sendViaBrevo(payload);
-  return null;
-}
-
-const hasHttpApi = () => Boolean(env.resendApiKey || env.brevoApiKey);
-
-async function deliver({ to, subject, html, text }) {
-  const payload = {
-    from: `"${env.smtp.fromName}" <${env.smtp.fromEmail || env.smtp.user}>`,
+  const info = await transporter.sendMail({
+    from: `"${fromName}" <${fromEmail}>`,
     to,
-    subject,
+    replyTo: `"${fromName}" <${fromEmail}>`,
+    subject: subject || 'HOAS Notification',
     html,
-    text,
-  };
-
-  // Preferred path: HTTP API (works everywhere, no SMTP port issues).
-  if (hasHttpApi()) {
-    try {
-      const result = await deliverViaHttpApi(payload);
-      if (result) return result;
-    } catch (httpError) {
-      console.warn(`[email-http] failed (${httpError.message}); falling back to SMTP`);
-      if (!env.smtp.user || !env.smtp.password) throw httpError;
-    }
-  }
-
-  const primaryPort = env.smtp.port || 587;
-  const fallbackPort = primaryPort === 465 ? 587 : 465;
-  const attempts = [primaryPort, fallbackPort, primaryPort];
-
-  let lastError;
-  for (let i = 0; i < attempts.length; i += 1) {
-    try {
-      return await getTransporter(attempts[i]).sendMail(payload);
-    } catch (error) {
-      lastError = error;
-      if (!isConnectionError(error)) throw error;
-      console.warn(
-        `[email-retry] to=${to} attempt=${i + 1} port=${attempts[i]} failed (${error.code || error.message})`
-      );
-    }
-  }
-  throw lastError;
-}
-
-export async function sendMail({ to, subject, html, text = '' }) {
-  const smtpConfigured = Boolean(env.smtp.user && env.smtp.password);
-  if (!smtpConfigured && !hasHttpApi()) {
-    console.log(`[email-disabled] to=${to} subject=${subject}`);
-    return null;
-  }
-  return deliver({ to, subject, html, text });
-}
-
-/**
- * Send an email without blocking the request that triggered it. Errors are
- * logged so delivery problems remain diagnosable without delaying responses.
- */
-export function sendMailAsync({ to, subject, html, text = '' }) {
-  sendMail({ to, subject, html, text }).catch((error) => {
-    console.error(`[email-failed] to=${to} subject=${subject}`, error.message || error);
+    text: text || '',
+    messageId,
+    headers: {
+      'X-Mailer': 'HOAS Mail Service',
+      'X-Priority': '3',
+      'List-Unsubscribe': `<mailto:${fromEmail}?subject=Unsubscribe>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      'Auto-Submitted': 'auto-generated',
+    },
   });
+  console.log(`[email-direct-smtp] to=${to} subject=${subject} messageId=${info.messageId}`);
+  return { success: true, via: 'direct-smtp', messageId: info.messageId };
 }
+
+async function callSupabaseEmail({ to, type, data, subject }) {
+  const url = getSupabaseEmailUrl()
+  if (!url) {
+    console.warn('[email-supabase] SUPABASE_URL or SUPABASE_EMAIL_FUNCTION_URL not configured')
+    return null
+  }
+
+  const headers = { 'Content-Type': 'application/json' }
+  // Supabase edge functions require Authorization if not public
+  const key = env.supabase.serviceRoleKey || env.supabase.anonKey
+  if (key) headers['Authorization'] = `Bearer ${key}`
+
+  const config = getEmailConfig()
+
+  const payload = { to, type, config, data: data || {}, subject }
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 15000)
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    })
+
+    const body = await res.text()
+    let json
+    try { json = JSON.parse(body) } catch { json = { raw: body } }
+
+    if (!res.ok) {
+      // If edge function returned an error, check if it returned rendered html so we can fallback
+      if (json?.html) {
+        console.warn(`[email-supabase] failed with status ${res.status}, falling back to direct nodemailer...`);
+        return await sendDirectNodemailer({ to, subject: json.subject || subject, html: json.html });
+      }
+      throw new Error(`Supabase edge ${res.status}: ${JSON.stringify(json).slice(0, 500)}`)
+    }
+
+    console.log(`[email-supabase] to=${to} type=${type} via=${json.via || 'supabase'} subject=${json.subject || subject || type}`)
+    return json
+  } catch (err) {
+    console.error(`[email-supabase-failed] to=${to} type=${type}`, err.message || err)
+    // Fallback to direct SMTP if edge function fetch fails
+    try {
+      console.log(`[email-fallback] attempting direct SMTP for ${to}...`);
+      // Request renderOnly from edge function if possible, or send simple fallback
+      const renderRes = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ ...payload, renderOnly: true }),
+      }).catch(() => null);
+
+      if (renderRes && renderRes.ok) {
+        const renderJson = await renderRes.json();
+        if (renderJson?.html) {
+          return await sendDirectNodemailer({ to, subject: renderJson.subject || subject, html: renderJson.html });
+        }
+      }
+    } catch (fallbackErr) {
+      console.error('[email-fallback-failed]', fallbackErr.message);
+    }
+    throw err
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+export async function sendMail({ to, subject, html, text = '', type, data, config }) {
+  // New path: type-based templated email via Supabase (preferred)
+  if (type) {
+    return callSupabaseEmail({ to, type, data, subject })
+  }
+
+  // Legacy path: raw html - wrap as generic notification using account template style
+  // We convert legacy html to a generic email by sending as raw via supabase if html provided
+  // If html is provided without type, we still try supabase with a fallback type
+  if (html) {
+    try {
+      return await sendDirectNodemailer({ to, subject, html, text });
+    } catch (err) {
+      console.warn('[email-direct-nodemailer-failed] trying edge fallback...', err.message);
+    }
+    const url = getSupabaseEmailUrl()
+    if (!url) {
+      console.log(`[email-disabled] to=${to} subject=${subject} - neither SMTP nor SUPABASE configured`)
+      return null
+    }
+    // For legacy callers, we create a minimal templated email by using a generic approach
+    // The edge function expects type, so we use a workaround: send html directly via resend-like payload
+    // We'll call edge with type=account_created but override html - better to add raw support in edge
+    // For now, log and attempt supabase raw path
+    const headers = { 'Content-Type': 'application/json' }
+    const key = env.supabase.serviceRoleKey || env.supabase.anonKey
+    if (key) headers['Authorization'] = `Bearer ${key}`
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          to,
+          type: 'account_created',
+          config: config || getEmailConfig(),
+          data: { userName: 'User', role: 'user', collegeName: 'HOAS', loginUrl: env.appUrl, _rawHtml: html, _rawSubject: subject },
+          subject,
+        }),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      return await res.json()
+    } catch (err) {
+      console.error(`[email-legacy-failed] to=${to}`, err.message)
+      throw err
+    }
+  }
+
+  console.log(`[email-disabled] to=${to} subject=${subject}`)
+  return null
+}
+
+export function sendMailAsync({ to, subject, html, text = '', type, data }) {
+  sendMail({ to, subject, html, text, type, data }).catch((error) => {
+    console.error(`[email-failed] to=${to} subject=${subject} type=${type || 'raw'}`, error.message || error)
+  })
+}
+
+// Helpers kept for backward compat but now they call templated types
 
 export function layout(bodyHtml) {
-  return `
-  <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#1f2937">
-    <div style="background:#6366f1;color:#fff;padding:16px 24px;border-radius:8px 8px 0 0">
-      <strong>HOAS</strong> — Hostel Operations Accountability System
-    </div>
-    <div style="border:1px solid #e5e7eb;border-top:none;padding:24px;border-radius:0 0 8px 8px">
-      ${bodyHtml}
-      <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0" />
-      <p style="color:#6b7280;font-size:12px">This is an automated message from HOAS. Please do not reply to this email.</p>
-    </div>
-  </div>`;
+  // Kept for legacy callers - returns html fragment
+  return bodyHtml
 }
 
 export function credentialBox(name, value) {
-  return `<div style="background:#f3f4f6;border-radius:6px;padding:12px;margin:8px 0">
-    <div style="font-size:12px;color:#6b7280">${name}</div>
-    <div style="font-weight:bold;font-size:16px">${value}</div>
-  </div>`;
+  return `<div>${name}: ${value}</div>`
 }
 
+// Templated senders - all use Supabase edge with proper type
+
 export function sendWelcomeEmail({ to, name, role, extra = [], resetLink = '' }) {
-  const resetBlock = resetLink
-    ? `<p style="margin-top:12px"><a href="${resetLink}" style="background:#6366f1;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none">Set your password</a></p>`
-    : '';
   return sendMailAsync({
     to,
-    subject: `Welcome to HOAS — your ${role} account is ready`,
-    html: layout(`
-      <h2>Welcome, ${name}</h2>
-      <p>Your ${role} account has been created for the HOAS platform.</p>
-      ${extra.map((item) => credentialBox(item.name, item.value)).join('')}
-      ${resetBlock}
-      <p style="color:#6b7280;font-size:13px">App: <a href="${env.appUrl}">${env.appUrl}</a></p>
-    `),
-  });
+    type: 'account_created',
+    data: {
+      userName: name,
+      role,
+      collegeName: extra.find(e => e.name?.toLowerCase().includes('college'))?.value || 'your institution',
+      loginUrl: env.appUrl,
+      tempPassword: extra.find(e => e.name?.toLowerCase().includes('password'))?.value,
+      resetLink,
+    },
+  })
 }
 
 export function sendBulkUploadSummaryEmail({ to, collegeName, created, failed, skipped }) {
-  // Non-blocking: this is called on a request path and previously awaited the
-  // full SMTP round-trip, which caused client/Render timeouts on slow SMTP.
   return sendMailAsync({
     to,
-    subject: `Bulk upload complete — ${created} students created`,
-    html: layout(`
-      <h2>Bulk upload summary</h2>
-      <p>Upload for <strong>${collegeName}</strong> finished.</p>
-      ${credentialBox('Created', created)}
-      ${credentialBox('Failed', failed)}
-      ${credentialBox('Skipped', skipped)}
-    `),
-  });
+    type: 'administrative_report',
+    data: {
+      adminName: 'Admin',
+      collegeName,
+      reportPeriod: 'Bulk Upload',
+      studentCount: created,
+      complaintCount: failed,
+      resolvedComplaints: created,
+      leaveRequests: skipped,
+      reportUrl: env.appUrl,
+    },
+  })
 }
 
 export function sendAccessRequestReceivedEmail({ to, contactPerson, orgName }) {
   return sendMailAsync({
     to,
-    subject: 'We received your HOAS access request',
-    html: layout(`
-      <h2>Thank you, ${contactPerson}!</h2>
-      <p>We have received the access request for <strong>${orgName}</strong>.</p>
-      <p>Our team is reviewing your organization details. Once verified, you will
-      receive a follow-up email with your account credentials.</p>
-      <div style="background:#f3f4f6;border-radius:6px;padding:12px;margin:8px 0">
-        <div style="font-size:12px;color:#6b7280">What happens next?</div>
-        <ol style="margin:8px 0 0 18px;padding:0;color:#374151;font-size:14px">
-          <li>The HOAS owner team verifies your organization details.</li>
-          <li>Your management account is created.</li>
-          <li>You receive your login credentials by email.</li>
-        </ol>
-      </div>
-      <p style="color:#6b7280;font-size:13px">App: <a href="${env.appUrl}">${env.appUrl}</a></p>
-    `),
-  });
+    type: 'account_created',
+    data: {
+      userName: contactPerson,
+      role: 'management',
+      collegeName: orgName,
+      loginUrl: env.appUrl,
+    },
+  })
 }
 
 export function sendAccessRequestDecisionEmail({ to, contactPerson, orgName, approved, reason = '' }) {
+  if (approved) {
+    return sendMailAsync({
+      to,
+      type: 'account_approved',
+      data: {
+        userName: contactPerson,
+        collegeName: orgName,
+        role: 'management',
+        approvedBy: 'HOAS Team',
+        loginUrl: env.appUrl,
+      },
+    })
+  }
   return sendMailAsync({
     to,
-    subject: approved
-      ? `Your HOAS access for ${orgName} has been verified`
-      : `Update on your HOAS access request`,
-    html: layout(`
-      <h2>Hello, ${contactPerson}</h2>
-      ${
-        approved
-          ? `<p>Good news! Your organization <strong>${orgName}</strong> has been verified by the HOAS team.
-             You will receive your account credentials in a separate email shortly.</p>`
-          : `<p>Unfortunately, we could not verify the access request for <strong>${orgName}</strong> at this time.</p>
-             ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
-             <p>If you believe this is a mistake, feel free to submit a new request with updated details.</p>`
-      }
-      <p style="color:#6b7280;font-size:13px">App: <a href="${env.appUrl}">${env.appUrl}</a></p>
-    `),
-  });
+    type: 'account_rejected',
+    data: {
+      userName: contactPerson,
+      collegeName: orgName,
+      reason,
+      supportUrl: env.appUrl,
+    },
+  })
+}
+
+// Generic templated sender for any of the 20 types
+export function sendTemplatedEmail({ to, type, data, subject }) {
+  return sendMailAsync({ to, type, data, subject })
 }

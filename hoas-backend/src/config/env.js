@@ -25,8 +25,14 @@ export const env = {
     fromName: required('SMTP_FROM_NAME', 'HOAS System'),
     fromEmail: required('SMTP_FROM_EMAIL', ''),
   },
-  // HTTP email APIs — preferred on hosts where outbound SMTP is blocked
-  // (e.g. Render). Set RESEND_API_KEY or BREVO_API_KEY to enable.
+  // Supabase Edge Function for emails - ONLY supabase sends emails now
+  supabase: {
+    url: required('SUPABASE_URL', ''),
+    anonKey: required('SUPABASE_ANON_KEY', ''),
+    serviceRoleKey: required('SUPABASE_SERVICE_ROLE_KEY', ''),
+    emailFunctionUrl: required('EMAIL_FUNCTION_URL', ''),
+  },
+  // Legacy - kept for edge function env but not used directly in backend anymore
   resendApiKey: required('RESEND_API_KEY', ''),
   brevoApiKey: required('BREVO_API_KEY', ''),
   appUrl: required('HOAS_APP_URL', 'http://localhost:5173'),

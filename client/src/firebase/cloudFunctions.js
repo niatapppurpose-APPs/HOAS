@@ -12,7 +12,7 @@ const responseCache = new Map(); // path -> { ts, data }
 const inflightRefreshes = new Map(); // path -> Promise
 
 // Realtime data that must never be served from cache
-const NO_CACHE_PATTERNS = ['/emergency', '/notifications', '/chat'];
+const NO_CACHE_PATTERNS = ['/emergency', '/notifications', '/chat', '/fees'];
 
 const isCacheable = (path) => !NO_CACHE_PATTERNS.some((p) => path.includes(p));
 
@@ -429,14 +429,19 @@ export const getLocationHistory = async (studentId) => {
 
 const flattenFee = (fee) => {
   const student = fee.studentId || {};
+  const studentId = typeof student === 'object'
+    ? student.studentId || student._id
+    : student;
   return {
     ...fee,
     amount: fee.totalAmount ?? fee.amount ?? 0,
     paidAmount: fee.paidAmount ?? 0,
-    studentId: student.studentId || student._id,
-    studentName: student.name,
-    studentEmail: student.email,
-    studentUid: student.uid,
+    studentId: studentId ? String(studentId) : fee.studentIdValue || 'N/A',
+    studentName: typeof student === 'object' ? student.name : fee.studentName,
+    studentEmail: typeof student === 'object' ? student.email : fee.studentEmail,
+    studentUid: typeof student === 'object' ? student.uid : fee.studentUid,
+    isVerifiedByManagement: fee.isVerifiedByManagement === true || fee.isVerifiedByManagement === 'true',
+    isVerifiedByWarden: fee.isVerifiedByWarden === true || fee.isVerifiedByWarden === 'true',
   };
 };
 

@@ -4,6 +4,8 @@ import { ThemeToggle } from "../../../../components/ThemeToggle";
 import { useAuth } from "../../../../context/AuthContext";
 import AnimatedLogoutButton from "../../../../components/AnimatedLogoutButton";
 import NotificationBell from "../../../../components/OwnerServices/NotificationBell";
+import EmergencyIndicator from "../../../../components/EmergencyLocation/EmergencyIndicator";
+import SearchModal from "../../../../components/ui/SearchModal/SearchModal";
 
 const WardenHeader = ({ pendingCount = 0, title = "Dashboard · Warden Portal", isCollapsed = true, setIsCollapsed }) => {
   const { logout, userData } = useAuth();
@@ -29,6 +31,8 @@ const WardenHeader = ({ pendingCount = 0, title = "Dashboard · Warden Portal", 
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             {/* Mobile menu button */}
             <button
+              type="button"
+              aria-label="Open navigation menu"
               onClick={() => setIsCollapsed && setIsCollapsed(false)}
               className="hidden p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0"
               style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
@@ -42,12 +46,18 @@ const WardenHeader = ({ pendingCount = 0, title = "Dashboard · Warden Portal", 
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-4 flex-shrink-0">
+            <SearchModal compact defaultScope="warden" />
             {pendingCount > 0 && (
               <span className="px-2 sm:px-4 py-1 rounded-full bg-orange-500/20 text-orange-400 text-[10px] sm:text-sm font-bold border border-orange-500/30 animate-pulse flex-shrink-0">
                 <span className="hidden sm:inline">{pendingCount} Pending</span>
                 <span className="sm:hidden">{pendingCount} P</span>
               </span>
             )}
+
+            {/* Emergency Indicator - Shows when emergency is active */}
+            <div className="flex-shrink-0">
+              <EmergencyIndicator />
+            </div>
 
             {/* Notification Bell */}
             <div className="flex-shrink-0">
