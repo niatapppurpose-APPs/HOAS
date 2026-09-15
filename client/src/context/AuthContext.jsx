@@ -24,6 +24,17 @@ const unknownProfile = (firebaseUser) => ({
   status: 'pending',
 });
 
+const PROFILE_CACHE_KEY = 'hoas-profile-cache';
+
+const readCachedProfile = () => {
+  try {
+    const cached = window.sessionStorage.getItem(PROFILE_CACHE_KEY);
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    return null;
+  }
+};
+
 const normalizeUserWithCollegeLogo = (user) => {
   if (!user) return user;
   const collegeLogo =
@@ -58,8 +69,8 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => { toastRef.current = toast; }, [toast]);
 
   // User data from backend
-  const [userData, setUserData] = useState(null);
-  const [userDataLoading, setUserDataLoading] = useState(true);
+  const [userData, setUserData] = useState(readCachedProfile);
+  const [userDataLoading, setUserDataLoading] = useState(() => !readCachedProfile());
 
   const fetchProfile = async (firebaseUser = user) => {
     try {
@@ -73,6 +84,11 @@ export const AuthProvider = ({ children }) => {
       }
       const normalized = normalizeUserWithCollegeLogo(profile);
       setUserData(normalized);
+      try {
+        window.sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(normalized));
+      } catch {
+        // Session storage may be unavailable in private browsing.
+      }
       setIsAdmin(getRole(normalized.role));
       setAdminChecked(true);
       return normalized;
@@ -111,7 +127,7 @@ export const AuthProvider = ({ children }) => {
 
           // Fetch profile & role from backend in the background (non-blocking)
           (async () => {
-            setUserDataLoading(true);
+            setUserDataLoading((current) => current && !userData);
             try {
               const tokenResult = await currentUser.getIdTokenResult(false);
               const userClaims = tokenResult.claims;
@@ -138,6 +154,11 @@ export const AuthProvider = ({ children }) => {
           setAdminChecked(true);
           setUserData(null);
           setUserDataLoading(false);
+          try {
+            window.sessionStorage.removeItem(PROFILE_CACHE_KEY);
+          } catch {
+            // Ignore storage restrictions during sign-out.
+          }
           setLoading(false);
         }
     });

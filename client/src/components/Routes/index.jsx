@@ -3,12 +3,21 @@ import { useAuth } from '../../context/AuthContext';
 const ProtectedRoute = ({ roles = [], children }) => {
     const { user, loading, userData, userDataLoading, isAdmin, claims } = useAuth();
     const claimsRole = claims?.role;
-    // While authentication state is initializing, don't render anything (avoids premature redirects)
-    if (loading || userDataLoading) {
-        return null; // could show a loader if desired
+    // Firebase auth is authoritative for identity. Once its role claim is available,
+    // render the dashboard shell while the profile refresh continues in the background.
+    if (loading) {
+        return <PageLoader />;
     }
     // After initialization, if there's no authenticated user, send to login
     if (!user) return <Navigate to="/login" replace />;
+
+    const claimMatchesRoute =
+        userDataLoading &&
+        typeof claimsRole === 'string' &&
+        (roles.length === 0 || roles.includes(claimsRole) ||
+            (roles.includes('admin') && claimsRole === 'owner'));
+    if (claimMatchesRoute) return children;
+    if (userDataLoading) return <PageLoader />;
 
     // Pending and denied accounts must remain on the approval status page.
     const accountStatus = String(userData?.status || '').toLowerCase();

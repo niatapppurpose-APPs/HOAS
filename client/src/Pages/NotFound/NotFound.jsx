@@ -1,12 +1,13 @@
 const NotFound = () => {
   return (
-    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <main className="h-screen w-full overflow-hidden bg-[#09334f]">
       <iframe
-        title="Yeti 404"
-        src="/yeti-404/index.html"
-        style={{ width: '100%', height: '100%', border: 'none' }}
+        title="HOAS page not found"
+        src={`${import.meta.env.BASE_URL}yeti-404/index.html`}
+        className="h-full w-full border-0"
+        loading="eager"
       />
-    </div>
+    </main>
   );
 };
 
