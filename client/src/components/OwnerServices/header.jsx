@@ -6,6 +6,7 @@ import { ThemeToggle } from "../ThemeToggle";
 import NotificationBell from "./NotificationBell";
 import AnimatedLogoutButton from "../AnimatedLogoutButton";
 import SearchModal from "../ui/SearchModal/SearchModal";
+import Avatar from "./Avatar";
 
 
 const Header = ({ pendingCount = 0, handleLogout, user, title, isCollapsed = true, setIsCollapsed, headerExtra, onProfileClick }) => {
