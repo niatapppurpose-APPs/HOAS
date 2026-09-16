@@ -398,7 +398,7 @@ const Wardens = () => {
                                             px-3
                                             py-1.5
                                             rounded-full
-                                            text-[11px]
+                                            text-[8px]
                                             font-bold
                                             uppercase
                                             tracking-wider

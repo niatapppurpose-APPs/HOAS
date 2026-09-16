@@ -416,7 +416,7 @@ const Students = () => {
                         py-1.5
                         rounded-full
                         text-[10px]
-                        sm:text-[11px]
+                        sm:text-[8px]
                         font-bold
                         uppercase
                         tracking-wider
