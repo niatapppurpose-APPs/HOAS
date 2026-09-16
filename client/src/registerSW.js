@@ -53,9 +53,10 @@ export function registerServiceWorker() {
           }
         });
 
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          window.location.reload();
-        }, { once: true });
+        // Do not force a reload when a new worker takes control. Reloading here
+        // makes deployed pages flash and can loop while the worker is updating.
+        // The network-first navigation handler applies the new app shell on the
+        // user's next normal navigation or manual reload.
       } catch (error) {
         console.error('SW registration failed:', error);
       }

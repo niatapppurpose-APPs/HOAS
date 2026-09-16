@@ -1,16 +1,28 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../context/AuthContext';
-import { useTheme } from '../../../context/ThemeContext';
-import { useToast } from '../../../components/Toast';
-import Header from '../../../components/OwnerServices/header';
-import * as cloudFunctions from '../../../firebase/cloudFunctions';
-import { auth } from '../../../firebase/firebaseConfig';
-import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { StatusBadge, ToggleSwitch, SectionCard, SettingRow } from './components/SettingsComponents';
-import AccessLogsModal from './components/AccessLogsModal';
-import { DEFAULT_SETTINGS, roleColor } from './settingsConstants';
-import { RefreshButton } from './components/SettingsComponents';
+import { useState, useEffect, useCallback, useMemo } from "react";
+
+import { useOutletContext, useNavigate } from "react-router-dom";
+
+import { useAuth } from "../../../context/AuthContext";
+import { useTheme } from "../../../context/ThemeContext";
+import { useToast } from "../../../components/Toast";
+
+import Header from "../../../components/OwnerServices/header";
+
+import * as cloudFunctions from "../../../firebase/cloudFunctions";
+import { auth } from "../../../firebase/firebaseConfig";
+
+import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+
+import {
+  StatusBadge,
+  ToggleSwitch,
+  RefreshButton,
+} from "./components/SettingsComponents";
+
+import AccessLogsModal from "./components/AccessLogsModal";
+
+import { DEFAULT_SETTINGS, roleColor } from "./settingsConstants";
+
 import {
   Settings,
   Shield,
@@ -51,610 +63,3292 @@ import {
   ScrollText,
   Trash2,
   X,
-} from 'lucide-react';
+  ChevronRight,
+  Database,
+  Lock,
+  Zap,
+  CircleCheck,
+  CircleAlert,
+  SlidersHorizontal,
+} from "lucide-react";
 
-/* ── Theme mode options (stable – hoisted for performance) ── */
+/* =========================================================
+   THEME MODES
+========================================================= */
+
 const THEME_MODES = [
-  { id: 'light', label: 'Light', sub: 'Bright & Clean', icon: Sun },
-  { id: 'dark', label: 'Dark', sub: 'Easy on eyes', icon: Moon },
-  { id: 'system', label: 'System', sub: 'Auto switch', icon: Monitor },
+  {
+    id: "light",
+    label: "Light",
+    sub: "Bright & clean",
+    icon: Sun,
+  },
+  {
+    id: "dark",
+    label: "Dark",
+    sub: "Easy on eyes",
+    icon: Moon,
+  },
+  {
+    id: "system",
+    label: "System",
+    sub: "Follow device",
+    icon: Monitor,
+  },
 ];
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   MAIN SETTINGS PAGE
-   ══════════════════════════════════════════════════════════════════════════════ */
+/* =========================================================
+   SMALL UTILITY
+========================================================= */
+
+const SettingInput = ({ value, onChange, suffix, min = 0, max, disabled }) => {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="number"
+        value={value}
+        min={min}
+        max={max}
+        disabled={disabled}
+        onChange={(e) =>
+          onChange(
+            Math.max(
+              min,
+              max !== undefined
+                ? Math.min(max, Number(e.target.value) || 0)
+                : Number(e.target.value) || 0,
+            ),
+          )
+        }
+        className="
+          w-20
+          h-9
+          px-2
+          rounded-lg
+          border
+          text-sm
+          text-center
+          font-semibold
+          outline-none
+          transition-all
+          focus:ring-2
+          focus:ring-indigo-500/20
+          focus:border-indigo-500
+          disabled:opacity-40
+        "
+        style={{
+          backgroundColor: "var(--bg-primary)",
+          borderColor: "var(--border-primary)",
+          color: "var(--text-primary)",
+        }}
+      />
+
+      {suffix && (
+        <span
+          className="
+            text-[11px]
+            font-semibold
+          "
+          style={{
+            color: "var(--text-muted)",
+          }}
+        >
+          {suffix}
+        </span>
+      )}
+    </div>
+  );
+};
+
+/* =========================================================
+   SECTION CARD
+========================================================= */
+
+const SettingsSection = ({
+  title,
+  description,
+  icon: Icon,
+  children,
+  accent = "indigo",
+  status,
+  className = "",
+  headerAction,
+}) => {
+  const accentMap = {
+    indigo: "text-indigo-500 bg-indigo-500/10",
+    blue: "text-blue-500 bg-blue-500/10",
+    red: "text-red-500 bg-red-500/10",
+    green: "text-emerald-500 bg-emerald-500/10",
+    amber: "text-amber-500 bg-amber-500/10",
+    purple: "text-purple-500 bg-purple-500/10",
+    teal: "text-teal-500 bg-teal-500/10",
+    pink: "text-pink-500 bg-pink-500/10",
+  };
+
+  return (
+    <section
+      className={`
+        group
+        rounded-3xl
+        border
+        overflow-hidden
+        transition-all
+        duration-300
+        hover:shadow-lg
+        hover:shadow-black/5
+        ${className}
+      `}
+      style={{
+        backgroundColor: "var(--bg-card)",
+        borderColor: "var(--border-primary)",
+      }}
+    >
+      {/* Top accent */}
+      <div
+        className={`
+          h-[2px]
+          w-full
+          opacity-70
+          transition-opacity
+          group-hover:opacity-100
+          bg-${accent}-500
+        `}
+      />
+
+      <div className="p-5 sm:p-6">
+        {/* Header */}
+
+        <div
+          className="
+            flex
+            items-start
+            justify-between
+            gap-4
+            mb-5
+          "
+        >
+          <div
+            className="
+              flex
+              items-start
+              gap-3
+              min-w-0
+            "
+          >
+            <div
+              className={`
+                w-10
+                h-10
+                rounded-xl
+                flex
+                items-center
+                justify-center
+                flex-shrink-0
+                ${accentMap[accent]}
+              `}
+            >
+              <Icon className="w-5 h-5" />
+            </div>
+
+            <div className="min-w-0">
+              <div
+                className="
+                  flex
+                  flex-wrap
+                  items-center
+                  gap-2
+                "
+              >
+                <h2
+                  className="
+                    text-sm
+                    sm:text-base
+                    font-extrabold
+                    tracking-tight
+                  "
+                  style={{
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  {title}
+                </h2>
+
+                {status && <StatusPill status={status} />}
+              </div>
+
+              {description && (
+                <p
+                  className="
+                    mt-1
+                    text-[11px]
+                    sm:text-xs
+                    leading-relaxed
+                  "
+                  style={{
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  {description}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {headerAction}
+        </div>
+
+        {children}
+      </div>
+    </section>
+  );
+};
+
+/* =========================================================
+   STATUS PILL
+========================================================= */
+
+const StatusPill = ({ status }) => {
+  const normalized = String(status).toLowerCase();
+
+  const warning =
+    normalized.includes("warning") ||
+    normalized.includes("disabled") ||
+    normalized.includes("inactive");
+
+  const active =
+    normalized.includes("active") ||
+    normalized.includes("enabled") ||
+    normalized.includes("secured");
+
+  return (
+    <span
+      className={`
+        inline-flex
+        items-center
+        gap-1
+        px-2
+        py-0.5
+        rounded-full
+        text-[9px]
+        font-black
+        uppercase
+        tracking-wider
+        ${
+          warning
+            ? "bg-amber-500/10 text-amber-500"
+            : active
+              ? "bg-emerald-500/10 text-emerald-500"
+              : "bg-slate-500/10 text-slate-500"
+        }
+      `}
+    >
+      <span
+        className={`
+          w-1.5
+          h-1.5
+          rounded-full
+          ${
+            warning
+              ? "bg-amber-500"
+              : active
+                ? "bg-emerald-500"
+                : "bg-slate-400"
+          }
+        `}
+      />
+
+      {status}
+    </span>
+  );
+};
+
+/* =========================================================
+   SETTING ROW
+========================================================= */
+
+const SettingItem = ({
+  icon: Icon,
+  title,
+  description,
+  children,
+  warning = false,
+}) => {
+  return (
+    <div
+      className={`
+        flex
+        items-center
+        gap-3
+        p-3
+        sm:p-3.5
+        rounded-2xl
+        border
+        transition-all
+        duration-200
+        hover:-translate-y-[1px]
+        hover:shadow-sm
+        ${warning ? "border-amber-500/20" : ""}
+      `}
+      style={{
+        backgroundColor: "var(--bg-tertiary)",
+        borderColor: warning ? undefined : "var(--border-primary)",
+      }}
+    >
+      <div
+        className="
+          w-9
+          h-9
+          rounded-xl
+          flex
+          items-center
+          justify-center
+          flex-shrink-0
+        "
+        style={{
+          backgroundColor: warning
+            ? "rgba(245,158,11,.10)"
+            : "var(--bg-primary)",
+          color: warning ? "#f59e0b" : "var(--text-secondary)",
+        }}
+      >
+        <Icon className="w-4 h-4" />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div
+          className="
+            flex
+            items-center
+            gap-2
+          "
+        >
+          <p
+            className="
+              text-xs
+              sm:text-sm
+              font-bold
+              truncate
+            "
+            style={{
+              color: "var(--text-primary)",
+            }}
+          >
+            {title}
+          </p>
+
+          {warning && (
+            <CircleAlert
+              className="
+                w-3
+                h-3
+                text-amber-500
+                flex-shrink-0
+              "
+            />
+          )}
+        </div>
+
+        <p
+          className="
+            text-[10px]
+            sm:text-[11px]
+            mt-0.5
+            truncate
+          "
+          style={{
+            color: "var(--text-muted)",
+          }}
+        >
+          {description}
+        </p>
+      </div>
+
+      <div className="flex-shrink-0">{children}</div>
+    </div>
+  );
+};
+
+/* =========================================================
+   MAIN PAGE
+========================================================= */
+
 const GlobalSystemSettings = () => {
   const { isCollapsed, setIsCollapsed } = useOutletContext();
-  const { user, logout, userData } = useAuth();
-  const { theme, mode, setLightMode, setDarkMode, setSystemMode, isDark, isSystemMode } = useTheme();
+
+  const { user, logout } = useAuth();
+
+  const {
+    theme,
+    mode,
+    setLightMode,
+    setDarkMode,
+    setSystemMode,
+    isDark,
+    isSystemMode,
+  } = useTheme();
+
   const toast = useToast();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
-  const [loadError, setLoadError] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [dataSource, setDataSource] = useState('local');
+  /* =======================================================
+     STATE
+  ======================================================= */
 
-  /* ── Role & Access ── */
+  const [loading, setLoading] = useState(false);
+
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  const [loadError, setLoadError] = useState(null);
+
+  const [saving, setSaving] = useState(false);
+
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const [dataSource, setDataSource] = useState("local");
+
+  /* Management users */
+
   const [mgmtUsers, setMgmtUsers] = useState([]);
+
   const [mgmtLoading, setMgmtLoading] = useState(true);
+
   const [busy, setBusy] = useState(null);
 
-  /* ── Access Logs ── */
+  /* Logs */
+
   const [showLogs, setShowLogs] = useState(false);
 
-  /* ── Delete Account ── */
+  /* Delete */
+
   const [showDeleteForm, setShowDeleteForm] = useState(false);
+
   const [deletePw, setDeletePw] = useState("");
+
   const [deleteEmailChallenge, setDeleteEmailChallenge] = useState("");
+
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
   const [showDeletePw, setShowDeletePw] = useState(false);
 
-  const loadData = useCallback(async (showLoading = true) => {
-    try {
-      if (showLoading) setLoading(true);
-      setLoadError(null);
-      const timeout = (p, ms = 25000) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), ms))]);
-      const [res] = await Promise.allSettled([timeout(cloudFunctions.getSystemSettings())]);
-      if (res.status === 'fulfilled') {
-        setSettings(prev => ({ ...prev, ...(res.value?.settings || {}) }));
-        setDataSource('server');
-      } else {
-        setDataSource('local');
-        if (!initialLoad) toast.error('Could not reach server — using local defaults.');
-        setLoadError(res.reason?.message || 'Connection failed');
+  /* =======================================================
+     LOAD SETTINGS
+  ======================================================= */
+
+  const loadData = useCallback(
+    async (showLoading = true) => {
+      try {
+        if (showLoading) {
+          setLoading(true);
+        }
+
+        setLoadError(null);
+
+        const timeout = (promise, ms = 25000) =>
+          Promise.race([
+            promise,
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("Request timed out")), ms),
+            ),
+          ]);
+
+        const result = await Promise.allSettled([
+          timeout(cloudFunctions.getSystemSettings()),
+        ]);
+
+        const response = result[0];
+
+        if (response.status === "fulfilled") {
+          setSettings((previous) => ({
+            ...previous,
+            ...(response.value?.settings || {}),
+          }));
+
+          setDataSource("server");
+        } else {
+          setDataSource("local");
+
+          setLoadError(response.reason?.message || "Unable to connect");
+
+          if (!initialLoad) {
+            toast.error("Could not reach server — using local settings.");
+          }
+        }
+
+        setInitialLoad(false);
+      } catch (error) {
+        console.error("Settings load:", error);
+
+        setDataSource("local");
+
+        setInitialLoad(false);
+      } finally {
+        setLoading(false);
       }
-      setInitialLoad(false);
-    } catch { setDataSource('local'); setInitialLoad(false); }
-    finally { setLoading(false); }
-  }, [toast, initialLoad]);
+    },
+    [toast, initialLoad],
+  );
+
+  /* =======================================================
+     LOAD USERS
+  ======================================================= */
 
   const loadUsers = useCallback(async () => {
     setMgmtLoading(true);
-    try { const r = await cloudFunctions.getAllManagementUsers(); setMgmtUsers(r?.users || []); }
-    catch { setMgmtUsers([]); }
-    finally { setMgmtLoading(false); }
+
+    try {
+      const result = await cloudFunctions.getAllManagementUsers();
+
+      setMgmtUsers(result?.users || []);
+    } catch (error) {
+      console.error("Management users:", error);
+
+      setMgmtUsers([]);
+    } finally {
+      setMgmtLoading(false);
+    }
   }, []);
 
-  useEffect(() => { loadData(false); loadUsers(); }, []);
+  /* =======================================================
+     INITIAL LOAD
+  ======================================================= */
 
-  /* ── Settings refresh on mount (server-driven, no Firestore listener) ── */
   useEffect(() => {
-    let cancelled = false;
-    cloudFunctions.getSystemSettings()
-      .then((res) => {
-        if (cancelled) return;
-        if (res?.settings) {
-          setSettings(prev => ({ ...prev, ...res.settings }));
-          setDataSource('server');
-          setLoadError(null);
-        }
-      })
-      .catch((err) => {
-        console.warn('Settings load error:', err);
-      });
-    return () => { cancelled = true; };
-  }, []);
+    loadData(false);
+    loadUsers();
+  }, [loadData, loadUsers]);
 
-  const update = (u) => { setSettings(p => ({ ...p, ...u })); setHasChanges(true); };
+  /* =======================================================
+     UPDATE
+  ======================================================= */
+
+  const update = (changes) => {
+    setSettings((previous) => ({
+      ...previous,
+      ...changes,
+    }));
+
+    setHasChanges(true);
+  };
+
+  /* =======================================================
+     SAVE
+  ======================================================= */
 
   const save = async () => {
+    if (saving) return;
+
     setSaving(true);
-    try { await cloudFunctions.updateSystemSettings(settings); toast.success('Settings saved'); setHasChanges(false); setDataSource('server'); }
-    catch { toast.error('Save failed'); }
-    finally { setSaving(false); }
+
+    try {
+      await cloudFunctions.updateSystemSettings(settings);
+
+      toast.success("Settings saved successfully");
+
+      setHasChanges(false);
+      setDataSource("server");
+    } catch (error) {
+      console.error("Settings save:", error);
+
+      toast.error("Unable to save settings");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  /* =======================================================
+     USER STATUS
+  ======================================================= */
 
   const toggleUser = async (uid, status) => {
     setBusy(uid);
+
     try {
-      const next = status === 'approved' ? 'suspended' : 'approved';
+      const next = status === "approved" ? "suspended" : "approved";
+
       await cloudFunctions.setUserStatus(uid, next);
-      toast.success(`Account ${next === 'approved' ? 'activated' : 'deactivated'}`);
-      loadUsers();
-    } catch { toast.error('Action failed'); }
-    finally { setBusy(null); }
+
+      toast.success(
+        next === "approved" ? "Account activated" : "Account deactivated",
+      );
+
+      await loadUsers();
+    } catch (error) {
+      console.error("User status:", error);
+
+      toast.error("Unable to update account");
+    } finally {
+      setBusy(null);
+    }
   };
 
+  /* =======================================================
+     LOGOUT
+  ======================================================= */
+
   const handleLogout = async () => {
-    try { await logout(); toast.success('Logged out'); navigate('/', { replace: true }); }
-    catch { toast.error('Logout failed'); }
+    try {
+      await logout();
+
+      toast.success("Logged out");
+
+      navigate("/", {
+        replace: true,
+      });
+    } catch {
+      toast.error("Logout failed");
+    }
   };
+
+  /* =======================================================
+     DELETE ACCOUNT
+  ======================================================= */
 
   const confirmDeleteAccount = async () => {
     if (!deletePw) {
-      toast.error("Password required for deletion");
+      toast.error("Password required");
       return;
     }
+
     if (deleteEmailChallenge !== user.email) {
       toast.error("Email verification does not match");
       return;
     }
 
-    // Final confirmation via Toast instead of popup
     const confirmed = await toast.confirm(
       "CRITICAL: Delete your account permanently? Your hostels and warden data will be lost forever.",
       null,
-      { confirmText: 'DELETE NOW', cancelText: 'ABORT' }
+      {
+        confirmText: "DELETE NOW",
+        cancelText: "ABORT",
+      },
     );
 
     if (!confirmed) return;
 
     setIsDeletingAccount(true);
+
     try {
       if (!user) return;
-      // 1. Re-authenticate for security
-      const cred = EmailAuthProvider.credential(user.email, deletePw);
-      await reauthenticateWithCredential(auth.currentUser, cred);
 
-      // 2. Call cloud function to clean up Firestore data
+      const credential = EmailAuthProvider.credential(user.email, deletePw);
+
+      await reauthenticateWithCredential(auth.currentUser, credential);
+
       await cloudFunctions.deleteUserAccount(user.uid);
 
-      // 3. Delete from Auth
       await auth.currentUser.delete();
 
       toast.success("Account deleted permanently");
+
       setShowDeleteForm(false);
+
       setDeletePw("");
       setDeleteEmailChallenge("");
-      navigate("/login", { replace: true });
-    } catch (err) {
-      console.error("Delete error:", err);
-      let msg = "Failed to delete account";
-      if (err.code === "auth/wrong-password") msg = "Incorrect password";
-      if (err.code === "auth/requires-recent-login") msg = "Security timeout: Please logout and login again to delete";
-      toast.error(msg);
+
+      navigate("/login", {
+        replace: true,
+      });
+    } catch (error) {
+      console.error("Delete error:", error);
+
+      let message = "Failed to delete account";
+
+      if (error.code === "auth/wrong-password") {
+        message = "Incorrect password";
+      }
+
+      if (error.code === "auth/requires-recent-login") {
+        message = "Please login again before deleting your account";
+      }
+
+      toast.error(message);
     } finally {
       setIsDeletingAccount(false);
     }
   };
 
-  const secStatus = useMemo(() =>
-    settings.twoFactorEnabled ? 'secured' : 'warning',
-    [settings.twoFactorEnabled]
+  /* =======================================================
+     DERIVED
+  ======================================================= */
+
+  const securityStatus = useMemo(
+    () => (settings.twoFactorEnabled ? "secured" : "warning"),
+    [settings.twoFactorEnabled],
   );
 
-  const themeSetters = useMemo(() => ({ light: setLightMode, dark: setDarkMode, system: setSystemMode }), [setLightMode, setDarkMode, setSystemMode]);
+  const themeSetters = useMemo(
+    () => ({
+      light: setLightMode,
+      dark: setDarkMode,
+      system: setSystemMode,
+    }),
+    [setLightMode, setDarkMode, setSystemMode],
+  );
 
-  const headerActions = (
-    <div className="flex flex-row items-center gap-3">
-      <div className="flex flex-row items-center gap-3">
-        <div>
-          {loading ? (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"><Loader2 className="w-3 h-3 animate-spin" />Syncing</span>
-          ) : dataSource === 'server' ? (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><CheckCircle className="w-3 h-3" />Synced</span>
-          ) : (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><AlertTriangle className="w-3 h-3" />Local</span>
-          )}
-        </div>
-        <button onClick={() => loadData(true)} disabled={loading}
-          className="p-2.5 rounded-xl border transition hover:scale-105 cursor-pointer"
-          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}>
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+  /* =======================================================
+     HEADER ACTIONS
+  ======================================================= */
+
+  const HeaderActions = () => (
+    <div
+      className="
+        flex
+        items-center
+        gap-2
+      "
+    >
+      {/* Sync status */}
+
+      <div
+        className="
+          hidden
+          sm:flex
+          items-center
+          gap-1.5
+          px-3
+          py-2
+          rounded-xl
+          border
+        "
+        style={{
+          backgroundColor: "var(--bg-card)",
+          borderColor: "var(--border-primary)",
+        }}
+      >
+        {loading ? (
+          <>
+            <Loader2
+              className="
+                w-3.5
+                h-3.5
+                animate-spin
+                text-blue-500
+              "
+            />
+
+            <span
+              className="
+              text-[11px]
+              font-bold
+              text-blue-500
+            "
+            >
+              Syncing
+            </span>
+          </>
+        ) : dataSource === "server" ? (
+          <>
+            <CircleCheck
+              className="
+                w-3.5
+                h-3.5
+                text-emerald-500
+              "
+            />
+
+            <span
+              className="
+              text-[11px]
+              font-bold
+              text-emerald-500
+            "
+            >
+              Synced
+            </span>
+          </>
+        ) : (
+          <>
+            <CircleAlert
+              className="
+                w-3.5
+                h-3.5
+                text-amber-500
+              "
+            />
+
+            <span
+              className="
+              text-[11px]
+              font-bold
+              text-amber-500
+            "
+            >
+              Local
+            </span>
+          </>
+        )}
       </div>
+
+      {/* Refresh */}
+
+      <button
+        type="button"
+        onClick={() => loadData(true)}
+        disabled={loading}
+        aria-label="Refresh settings"
+        className="
+          w-10
+          h-10
+          rounded-xl
+          border
+          flex
+          items-center
+          justify-center
+          transition-all
+          duration-200
+          hover:-translate-y-0.5
+          hover:shadow-md
+          active:scale-95
+          disabled:opacity-50
+        "
+        style={{
+          backgroundColor: "var(--bg-card)",
+          borderColor: "var(--border-primary)",
+          color: "var(--text-secondary)",
+        }}
+      >
+        <RefreshCw
+          className={`
+            w-4
+            h-4
+            ${loading ? "animate-spin" : ""}
+          `}
+        />
+      </button>
+
+      {/* Save */}
+
       {hasChanges && (
-        <button onClick={save} disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-500/25 transition hover:scale-[1.02] disabled:opacity-50 cursor-pointer whitespace-nowrap">
-          {saving ? <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" /> : <Save className="w-4 h-4 flex-shrink-0" />}<span className="md:inline hidden">Save Changes</span><span className="inline md:hidden">Save</span>
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          className="
+            h-10
+            px-4
+            sm:px-5
+            rounded-xl
+            bg-indigo-600
+            hover:bg-indigo-500
+            text-white
+            flex
+            items-center
+            justify-center
+            gap-2
+            text-xs
+            sm:text-sm
+            font-bold
+            shadow-lg
+            shadow-indigo-600/20
+            transition-all
+            duration-200
+            hover:-translate-y-0.5
+            active:scale-95
+            disabled:opacity-50
+          "
+        >
+          {saving ? (
+            <Loader2
+              className="
+                w-4
+                h-4
+                animate-spin
+              "
+            />
+          ) : (
+            <Save
+              className="
+              w-4
+              h-4
+            "
+            />
+          )}
+
+          <span className="hidden sm:inline">
+            {saving ? "Saving..." : "Save Changes"}
+          </span>
+
+          <span className="sm:hidden">Save</span>
         </button>
       )}
     </div>
   );
 
+  /* =======================================================
+     RENDER
+  ======================================================= */
+
   return (
-    <>
-      <Header title="Settings" handleLogout={handleLogout} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} headerExtra={headerActions} />
-      <div className="flex flex-col px-4 pb-4 pt-24 md:px-6 md:pb-6 md:pt-28 lg:px-8 lg:pb-8 lg:pt-32 min-h-screen gap-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <div
+      className="
+        min-h-screen
+        pb-28
+      "
+      style={{
+        backgroundColor: "var(--bg-primary)",
+      }}
+    >
+      <Header
+        title="SETTINGS"
+        handleLogout={handleLogout}
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+        headerExtra={<HeaderActions />}
+      />
 
-        <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center gap-3 mb-2 relative z-10 md:hidden">
-          {headerActions}
-        </div>
+      {/* =================================================
+          MAIN
+      ================================================= */}
 
-        <div className="flex-1 w-full max-w-6xl mx-auto">
-          {/* ── Alerts ── */}
-          {dataSource === 'local' && !loading && loadError && (
-            <div className="mb-4 p-3 rounded-xl flex items-center gap-3 border border-amber-500/25" style={{ backgroundColor: 'rgba(245,158,11,0.05)' }}>
-              <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-amber-500">Unable to reach server</p>
-                <p className="text-[11px] text-amber-500/70 truncate">{loadError}</p>
-              </div>
-              <button onClick={() => loadData(true)} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500 text-white hover:bg-amber-600 cursor-pointer">Retry</button>
+      <main
+        className="
+          w-full
+          max-w-7xl
+          mx-auto
+          px-4
+          sm:px-6
+          lg:px-8
+          pt-28
+          sm:pt-32
+          pb-12
+        "
+      >
+        {/* =================================================
+            PAGE INTRO
+        ================================================= */}
+
+        <div
+          className="
+            mb-7
+            flex
+            flex-col
+            lg:flex-row
+            lg:items-end
+            lg:justify-between
+            gap-5
+          "
+        >
+          <div>
+            <div
+              className="
+                inline-flex
+                items-center
+                gap-2
+                px-2.5
+                py-1.5
+                rounded-full
+                bg-indigo-500/10
+                text-indigo-500
+                text-[10px]
+                font-black
+                uppercase
+                tracking-widest
+                mb-3
+              "
+            >
+              <SlidersHorizontal
+                className="
+                w-3
+                h-3
+              "
+              />
+              Owner controls
             </div>
-          )}
-          {settings.maintenanceMode && (
-            <div className="mb-4 p-3 rounded-xl flex items-center gap-3 border border-amber-500/25" style={{ backgroundColor: 'rgba(245,158,11,0.05)' }}>
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
-              <span className="text-sm font-semibold text-amber-500">Maintenance Mode is ACTIVE</span>
-            </div>
-          )}
 
-          {/* ══════════════════════════════════════════════════════════════════
-           GRID LAYOUT — 2-column on desktop, 1-column on mobile
-           ══════════════════════════════════════════════════════════════════ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5 w-full max-w-6xl">
+            <h1
+              className="
+                text-2xl
+                sm:text-3xl
+                lg:text-4xl
+                font-black
+                tracking-tight
+              "
+              style={{
+                color: "var(--text-primary)",
+              }}
+            >
+              Platform Settings
+            </h1>
 
-            {/* ── 1. Role & Access Management ── */}
-            <SectionCard title="Role & Access" icon={Shield} accent="#f59e0b" status="active" headerExtra={<RefreshButton onRefresh={loadUsers} loading={mgmtLoading} />}>
-              <div className="space-y-3">
-                <div className="flex items-center justify-start">
-                  <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Manage accounts & permissions</p>
-                </div>
-
-                {mgmtLoading ? (
-                  <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-indigo-500" /></div>
-                ) : mgmtUsers.length === 0 ? (
-                  <div className="text-center py-6 rounded-xl" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                    <Users className="w-8 h-8 mx-auto mb-1.5" style={{ color: 'var(--text-muted)' }} />
-                    <p className="text-sm" style={{ color: 'var(--text-primary)' }}>No users found</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
-                    {mgmtUsers.map(u => {
-                      const id = u.uid || u.id;
-                      return (
-                        <div key={id} className="flex items-center justify-between p-3 rounded-xl border"
-                          style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)' }}>
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-8 h-8 rounded-full overflow-hidden border flex-shrink-0" style={{ borderColor: 'var(--border-primary)' }}>
-                              {u.photoURL ? <img src={u.photoURL} alt="" className="w-full h-full object-cover" />
-                                : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}><User className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} /></div>}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-[13px] sm:text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{u.displayName || u.email || 'Unknown'}</p>
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-wrap">
-                                <span className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{u.email}</span>
-                                <span className="w-fit px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" style={{ backgroundColor: roleColor(u.role) + '20', color: roleColor(u.role) }}>{u.role || 'N/A'}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <StatusBadge status={u.status === 'approved' ? 'active' : 'warning'} />
-                            <button onClick={() => toggleUser(id, u.status)} disabled={busy === id}
-                              className="p-1.5 rounded-lg transition cursor-pointer hover:bg-gray-500/20"
-                              title={u.status === 'approved' ? 'Deactivate' : 'Activate'}>
-                              {busy === id ? <Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> :
-                                u.status === 'approved' ? <UserMinus className="w-4 h-4 text-red-400" /> : <UserCheck className="w-4 h-4 text-emerald-400" />}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </SectionCard>
-
-
-            {/* ── 2. Complaint & Escalation ── */}
-            <SectionCard title="Complaint & Escalation" icon={Siren} accent="#ef4444" status={settings.autoEscalation ? 'enabled' : 'disabled'}>
-              <div className="space-y-2">
-                <SettingRow icon={Timer} title="Complaint SLA" description="Default resolution time">
-                  <div className="flex items-center gap-2">
-                    <input type="number" value={settings.complaintSlaHours || 48} onChange={e => update({ complaintSlaHours: parseInt(e.target.value) || 48 })} min={1} max={720} disabled={saving}
-                      className="w-16 sm:w-20 py-1.5 px-2 rounded-lg border text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
-                      style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }} />
-                    <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>hrs</span>
-                  </div>
-                </SettingRow>
-                <SettingRow icon={Siren} title="Auto Escalation" description="Escalate unresolved complaints automatically">
-                  <ToggleSwitch enabled={settings.autoEscalation ?? true} onChange={v => update({ autoEscalation: v })} disabled={saving} />
-                </SettingRow>
-                <SettingRow icon={ArrowRight} title="Escalate to Owner" description="Final escalation reaches Owner" warning={settings.escalateToOwner}>
-                  <ToggleSwitch enabled={settings.escalateToOwner ?? false} onChange={v => update({ escalateToOwner: v })} disabled={saving} />
-                </SettingRow>
-                <SettingRow icon={Clock} title="Overdue Threshold" description="Mark overdue after this time">
-                  <div className="flex items-center gap-2">
-                    <input type="number" value={settings.overdueThresholdHours || 72} onChange={e => update({ overdueThresholdHours: parseInt(e.target.value) || 72 })} min={1} max={720} disabled={saving}
-                      className="w-16 sm:w-20 py-1.5 px-2 rounded-lg border text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
-                      style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }} />
-                    <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>hrs</span>
-                  </div>
-                </SettingRow>
-                <SettingRow icon={MessageSquare} title="SMS Escalation Alerts" description="SMS on complaint escalation">
-                  <ToggleSwitch enabled={settings.smsEscalationAlerts ?? false} onChange={v => update({ smsEscalationAlerts: v })} disabled={saving} />
-                </SettingRow>
-                <SettingRow icon={Mail} title="Email Escalation Alerts" description="Email on complaint escalation">
-                  <ToggleSwitch enabled={settings.emailEscalationAlerts ?? true} onChange={v => update({ emailEscalationAlerts: v })} disabled={saving} />
-                </SettingRow>
-              </div>
-            </SectionCard>
-
-            {/* ── 3. Notification Controls ── */}
-            <SectionCard title="Notifications" icon={Bell} accent="#22c55e" status={settings.emailNotifications ? 'active' : 'inactive'}>
-              <div className="space-y-2">
-                <SettingRow icon={Mail} title="Email Notifications" description="Important updates via email">
-                  <ToggleSwitch enabled={settings.emailNotifications ?? true} onChange={v => update({ emailNotifications: v })} disabled={saving} />
-                </SettingRow>
-                <SettingRow icon={MessageSquare} title="SMS Notifications" description="SMS alerts for critical events">
-                  <ToggleSwitch enabled={settings.smsNotifications ?? false} onChange={v => update({ smsNotifications: v })} disabled={saving} />
-                </SettingRow>
-                <SettingRow icon={BellRing} title="Critical Alerts" description="High-priority system warnings" warning={!(settings.criticalAlerts ?? true)}>
-                  <ToggleSwitch enabled={settings.criticalAlerts ?? true} onChange={v => update({ criticalAlerts: v })} disabled={saving} />
-                </SettingRow>
-                <SettingRow icon={Activity} title="Activity Notifications" description="Logins, registrations & events">
-                  <ToggleSwitch enabled={settings.activityNotifications ?? true} onChange={v => update({ activityNotifications: v })} disabled={saving} />
-                </SettingRow>
-              </div>
-            </SectionCard>
-
-            {/* ── 4. Security & Platform ── */}
-            <SectionCard title="Security & Platform" icon={ShieldCheck} accent="#3b82f6" status={secStatus}>
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <SettingRow icon={Fingerprint} title="Two-Factor Auth" description="Extra security layer for logins">
-                    <ToggleSwitch enabled={settings.twoFactorEnabled ?? false} onChange={v => update({ twoFactorEnabled: v })} disabled={saving} />
-                  </SettingRow>
-                  <SettingRow icon={Key} title="Force Password Reset" description="All users must reset password" warning={settings.forcePasswordReset}>
-                    <ToggleSwitch enabled={settings.forcePasswordReset ?? false} onChange={v => update({ forcePasswordReset: v, ...(v ? { forcePasswordResetEnabledAt: new Date().toISOString() } : {}) })} disabled={saving} />
-                  </SettingRow>
-                  <SettingRow icon={LogOut} title="Auto Logout Timer" description="Logout after inactivity" warning={(settings.autoLogoutMinutes ?? 0) > 0}>
-                    <div className="flex items-center gap-2">
-                      <ToggleSwitch 
-                        enabled={(settings.autoLogoutMinutes ?? 0) > 0}
-                        onChange={(v) => update({ autoLogoutMinutes: v ? 30 : 0 })}
-                        disabled={saving}
-                      />
-                      <input
-                        type="number"
-                        min={0}
-                        max={1440}
-                        value={settings.autoLogoutMinutes ?? 0}
-                        disabled={saving || (settings.autoLogoutMinutes ?? 0) === 0}
-                        onChange={(e) => update({ autoLogoutMinutes: Math.max(0, Math.min(1440, Number(e.target.value) || 0)) })}
-                        className="w-20 px-2 py-1.5 rounded-lg border text-sm outline-none disabled:opacity-40"
-                        style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
-                      />
-                      <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>min</span>
-                    </div>
-                  </SettingRow>
-                  <SettingRow icon={Activity} title="Access Logs" description="Recent settings change activity">
-                    <button onClick={() => setShowLogs(true)} className="px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer hover:opacity-80"
-                      style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-secondary)', border: '1px solid var(--border-primary)' }}>
-                      <span className="flex items-center gap-1.5"><Eye className="w-3 h-3" />View Logs</span>
-                    </button>
-                  </SettingRow>
-                </div>
-
-                {/* Security overview */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { label: '2FA', on: settings.twoFactorEnabled ?? false, icon: Fingerprint },
-                    { label: 'Force Reset', on: settings.forcePasswordReset ?? false, icon: Key },
-                    { label: 'Auto Logout', on: (settings.autoLogoutMinutes ?? 0) > 0, icon: LogOut },
-                    { label: 'Logs', on: true, icon: ScrollText },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 p-2 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                      <item.icon className="w-3.5 h-3.5" style={{ color: item.on ? '#22c55e' : '#ef4444' }} />
-                      <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{item.label}</span>
-                      <span className="ml-auto w-2 h-2 rounded-full" style={{ backgroundColor: item.on ? '#22c55e' : '#ef4444' }} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </SectionCard>
-
-            {/* ── 5. Appearance (full width) ── */}
-            <SectionCard title="Appearance" icon={Palette} accent="#ec4899">
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {THEME_MODES.map(({ id, label, sub, icon: Icon }) => (
-                    <button key={id} onClick={() => themeSetters[id]?.()}
-                      className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-300 w-full cursor-pointer ${mode === id ? 'shadow-lg shadow-indigo-500/20' : 'hover:border-slate-500'}`}
-                      style={{ backgroundColor: mode === id ? '#6366f1' : 'var(--bg-tertiary)', borderColor: mode === id ? '#6366f1' : 'var(--border-secondary)' }}>
-                      <Icon className="w-6 h-6 mb-1.5" style={{ color: mode === id ? '#fff' : 'var(--text-secondary)' }} />
-                      <span className="font-semibold text-sm" style={{ color: mode === id ? '#fff' : 'var(--text-primary)' }}>{label}</span>
-                      <span className="text-[10px] mt-0.5" style={{ color: mode === id ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)' }}>{sub}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
-                  {isDark ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
-                  <span>Using <strong style={{ color: 'var(--text-primary)' }}>{theme}</strong>{isSystemMode && ' (System)'}</span>
-                </div>
-
-                <div className="pt-4 border-t" style={{ borderColor: 'var(--border-secondary)' }}>
-                  <button
-                    onClick={() => navigate('/OwnersDashboard', { state: { startTour: true } })}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] cursor-pointer"
-                    style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-primary)' }}
-                  >
-                    <Layers className="w-4 h-4 text-indigo-500" />
-                    Restart Dashboard Tour
-                  </button>
-                  <p className="text-[10px] mt-2 opacity-60" style={{ color: 'var(--text-muted)' }}>
-                    Re-run the interactive onboarding tour to explore dashboard features.
-                  </p>
-                </div>
-              </div>
-            </SectionCard>
-
-            {/* ── 6. System Controls & Limits ── */}
-            <SectionCard title="System Controls" icon={Settings} accent="#14b8a6" status={settings.maintenanceMode ? 'warning' : 'active'}>
-              <div className="space-y-4">
-                {/* Toggles */}
-                <div className="space-y-2">
-                  {[
-                    { key: 'registrationEnabled', t: 'User Registration', d: 'Allow new users to register', icon: UserCheck, offWarn: true },
-                    { key: 'approvalsEnabled', t: 'Approval Workflows', d: 'Enable approval process', icon: CheckCircle },
-                    { key: 'maintenanceMode', t: 'Maintenance Mode', d: 'System goes into maintenance', icon: AlertTriangle, onWarn: true },
-                  ].map(tg => {
-                    const on = settings[tg.key];
-                    const warn = (tg.onWarn && on) || (tg.offWarn && !on);
-                    return (
-                      <SettingRow key={tg.key} icon={tg.icon} title={tg.t} description={tg.d} warning={warn}>
-                        <ToggleSwitch enabled={on} onChange={v => update({ [tg.key]: v })} disabled={saving} />
-                      </SettingRow>
-                    );
-                  })}
-                </div>
-
-                {settings.maintenanceMode && (
-                  <div className="p-3 rounded-xl border border-amber-500/25" style={{ backgroundColor: 'rgba(245,158,11,0.05)' }}>
-                    <label className="block text-[10px] font-bold mb-1 uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Maintenance Message</label>
-                    <textarea value={settings.maintenanceMessage || ''} onChange={e => update({ maintenanceMessage: e.target.value })}
-                      className="w-full p-3 rounded-xl border resize-none text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/25"
-                      style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
-                      rows={2} placeholder="Message shown during maintenance..." />
-                  </div>
-                )}
-
-                {/* Feature Flags */}
-                <div>
-                  <h4 className="text-[10px] font-bold mb-2 uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Feature Flags</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {[
-                      { key: 'notifications', t: 'Notifications', icon: Bell },
-                      { key: 'reports', t: 'Reports', icon: FileText },
-                      { key: 'analytics', t: 'Analytics', icon: BarChart3 },
-                      { key: 'bulkOperations', t: 'Bulk Ops', icon: Layers },
-                    ].map(f => {
-                      const FIcon = f.icon;
-                      const on = settings.features?.[f.key] !== false;
-                      return (
-                        <div key={f.key} className="flex items-center justify-between p-2.5 rounded-xl border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-secondary)' }}>
-                          <div className="flex items-center gap-2"><FIcon className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} /><span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{f.t}</span></div>
-                          <ToggleSwitch enabled={on} onChange={v => update({ features: { ...settings.features, [f.key]: v } })} disabled={saving} size="sm" />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Limits */}
-                <div>
-                  <h4 className="text-[10px] font-bold mb-2 uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Default Limits</h4>
-                  <div className="space-y-2">
-                    {[
-                      { key: 'defaultStudentLimit', t: 'Student Limit', d: 'Max per hostel', icon: GraduationCap, max: 10000 },
-                      { key: 'defaultWardenLimit', t: 'Warden Limit', d: 'Max per hostel', icon: Shield, max: 100 },
-                      { key: 'defaultHostelLimit', t: 'Hostel Limit', d: 'Max per college', icon: Home, max: 500 },
-                    ].map(l => (
-                      <SettingRow key={l.key} icon={l.icon} title={l.t} description={l.d}>
-                        <input type="number" value={settings[l.key] || 0} onChange={e => update({ [l.key]: parseInt(e.target.value) || 0 })} min={0} max={l.max} disabled={saving}
-                          className="w-16 sm:w-20 py-1.5 px-2 rounded-lg border text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
-                          style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }} />
-                      </SettingRow>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
-
-            {/* ── 7. Danger Zone (Inline) ── */}
-            <SectionCard title="Danger Zone" icon={AlertTriangle} accent="#ef4444" status="warning">
-              <div className="space-y-4">
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  Irreversible actions related to your account security and data permanence.
-                </p>
-
-                {!showDeleteForm ? (
-                  <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-semibold text-red-500">Delete Account</p>
-                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Purge your account and all associated data</p>
-                      </div>
-                      <button
-                        onClick={() => setShowDeleteForm(true)}
-                        className="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-xs font-bold transition-all border border-red-500/30 cursor-pointer"
-                      >
-                        Initiate
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-6 rounded-2xl border-2 border-red-500/20 bg-red-500/[0.02] space-y-5 animate-fadeIn">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-red-500 font-bold text-sm">
-                        <Siren size={18} />
-                        Confirm Deletion Identity
-                      </div>
-                      <button onClick={() => setShowDeleteForm(false)} className="text-[10px] uppercase font-bold text-slate-500 hover:text-red-500 transition-colors cursor-pointer">
-                        Cancel
-                      </button>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5 ml-1">Account Email</label>
-                        <input
-                          type="text"
-                          value={deleteEmailChallenge}
-                          onChange={e => setDeleteEmailChallenge(e.target.value)}
-                          placeholder={user.email}
-                          className="w-full py-2.5 px-4 rounded-xl border text-sm font-medium focus:ring-4 focus:ring-red-500/5 focus:border-red-500/30 transition-all"
-                          style={{ backgroundColor: "var(--bg-primary)", borderColor: "var(--border-primary)", color: "var(--text-primary)" }}
-                        />
-                      </div>
-
-                      <div className="relative">
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5 ml-1">Password</label>
-                        <input
-                          type={showDeletePw ? "text" : "password"}
-                          value={deletePw}
-                          onChange={e => setDeletePw(e.target.value)}
-                          placeholder="••••••••"
-                          className="w-full py-2.5 px-4 rounded-xl border text-sm font-medium focus:ring-4 focus:ring-red-500/5 focus:border-red-500/30 transition-all pr-12"
-                          style={{ backgroundColor: "var(--bg-primary)", borderColor: "var(--border-primary)", color: "var(--text-primary)" }}
-                        />
-                        <button
-                          onClick={() => setShowDeletePw(!showDeletePw)}
-                          className="absolute right-3 bottom-2.5 p-1 text-muted-foreground hover:text-red-500 transition-colors cursor-pointer"
-                        >
-                          {showDeletePw ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={confirmDeleteAccount}
-                      disabled={isDeletingAccount || !deletePw || deleteEmailChallenge !== user.email}
-                      className="w-full py-3 rounded-xl bg-red-600 hover:bg-black text-white text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-red-500/20 disabled:opacity-20 flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      {isDeletingAccount ? <Loader2 size={16} className="animate-spin" /> : <><Trash2 size={14} /> Request Permanent Purge</>}
-                    </button>
-
-                    <p className="text-[10px] text-center text-muted-foreground italic">
-                      Clicking above will trigger a final toast confirmation.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </SectionCard>
+            <p
+              className="
+                mt-2
+                max-w-2xl
+                text-xs
+                sm:text-sm
+                leading-relaxed
+              "
+              style={{
+                color: "var(--text-muted)",
+              }}
+            >
+              Manage security, users, notifications, complaint workflows, system
+              controls, appearance, and platform preferences from one place.
+            </p>
           </div>
 
-          {/* ── Footer ── */}
-          <div className="max-w-6xl mt-6 p-4 rounded-xl border flex items-start gap-3" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}>
-            <Info className="w-5 h-5 flex-shrink-0 mt-0.5 text-indigo-400" />
+          {/* Mobile save controls */}
+
+          <div
+            className="
+            flex
+            sm:hidden
+            items-center
+            justify-between
+            gap-3
+          "
+          >
+            <div
+              className="
+                flex
+                items-center
+                gap-2
+                px-3
+                py-2
+                rounded-xl
+                border
+              "
+              style={{
+                backgroundColor: "var(--bg-card)",
+                borderColor: "var(--border-primary)",
+              }}
+            >
+              <span
+                className={`
+                  w-2
+                  h-2
+                  rounded-full
+                  ${dataSource === "server" ? "bg-emerald-500" : "bg-amber-500"}
+                `}
+              />
+
+              <span
+                className="
+                  text-[10px]
+                  font-bold
+                "
+              >
+                {dataSource === "server" ? "Synced" : "Local"}
+              </span>
+            </div>
+
+            {hasChanges && (
+              <button
+                onClick={save}
+                disabled={saving}
+                className="
+                  flex-1
+                  h-10
+                  rounded-xl
+                  bg-indigo-600
+                  text-white
+                  text-xs
+                  font-bold
+                  flex
+                  items-center
+                  justify-center
+                  gap-2
+                "
+              >
+                {saving ? (
+                  <Loader2
+                    className="
+                    w-4
+                    h-4
+                    animate-spin
+                  "
+                  />
+                ) : (
+                  <Save
+                    className="
+                    w-4
+                    h-4
+                  "
+                  />
+                )}
+                Save Changes
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* =================================================
+            SERVER ERROR
+        ================================================= */}
+
+        {dataSource === "local" && !loading && loadError && (
+          <div
+            className="
+                mb-6
+                p-4
+                rounded-2xl
+                border
+                flex
+                items-center
+                gap-3
+              "
+            style={{
+              backgroundColor: "rgba(245,158,11,.06)",
+              borderColor: "rgba(245,158,11,.20)",
+            }}
+          >
+            <div
+              className="
+                w-9
+                h-9
+                rounded-xl
+                bg-amber-500/10
+                flex
+                items-center
+                justify-center
+                flex-shrink-0
+              "
+            >
+              <AlertTriangle
+                className="
+                  w-4
+                  h-4
+                  text-amber-500
+                "
+              />
+            </div>
+
+            <div
+              className="
+                flex-1
+                min-w-0
+              "
+            >
+              <p
+                className="
+                  text-xs
+                  font-bold
+                  text-amber-500
+                "
+              >
+                Server connection unavailable
+              </p>
+
+              <p
+                className="
+                  text-[10px]
+                  text-amber-500/70
+                  mt-0.5
+                  truncate
+                "
+              >
+                {loadError}
+              </p>
+            </div>
+
+            <button
+              onClick={() => loadData(true)}
+              className="
+                  px-3
+                  py-2
+                  rounded-xl
+                  bg-amber-500
+                  hover:bg-amber-600
+                  text-white
+                  text-[10px]
+                  font-bold
+                  transition
+                "
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* =================================================
+            MAINTENANCE
+        ================================================= */}
+
+        {settings.maintenanceMode && (
+          <div
+            className="
+              mb-6
+              rounded-2xl
+              border
+              p-4
+              flex
+              items-center
+              gap-3
+              animate-[settingsFade_.3s_ease-out]
+            "
+            style={{
+              backgroundColor: "rgba(245,158,11,.07)",
+              borderColor: "rgba(245,158,11,.25)",
+            }}
+          >
+            <div
+              className="
+              w-10
+              h-10
+              rounded-xl
+              bg-amber-500/10
+              flex
+              items-center
+              justify-center
+              flex-shrink-0
+            "
+            >
+              <AlertTriangle
+                className="
+                w-5
+                h-5
+                text-amber-500
+              "
+              />
+            </div>
+
             <div>
-              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Owner-Level Settings</p>
-              <p className="text-[11px] mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                These settings are restricted to the Owner role. System controls, permissions, and security apply platform-wide.
-                Appearance preferences are stored locally. All other changes sync to the server upon saving.
+              <p
+                className="
+                text-sm
+                font-bold
+                text-amber-500
+              "
+              >
+                Maintenance Mode is active
+              </p>
+
+              <p
+                className="
+                text-[11px]
+                text-amber-500/70
+                mt-0.5
+              "
+              >
+                Users may see the maintenance message configured below.
               </p>
             </div>
           </div>
+        )}
+
+        {/* =================================================
+            TOP GRID
+        ================================================= */}
+
+        <div
+          className="
+            grid
+            grid-cols-1
+            xl:grid-cols-2
+            gap-6
+          "
+        >
+          {/* =================================================
+              SECURITY
+          ================================================= */}
+
+          <SettingsSection
+            title="Security & Platform"
+            description="Protect accounts and control authentication behavior."
+            icon={ShieldCheck}
+            accent="blue"
+            status={securityStatus}
+          >
+            <div className="space-y-2">
+              <SettingItem
+                icon={Fingerprint}
+                title="Two-Factor Authentication"
+                description="Add an extra security layer to account logins."
+              >
+                <ToggleSwitch
+                  enabled={settings.twoFactorEnabled ?? false}
+                  onChange={(value) =>
+                    update({
+                      twoFactorEnabled: value,
+                    })
+                  }
+                  disabled={saving}
+                />
+              </SettingItem>
+
+              <SettingItem
+                icon={Key}
+                title="Force Password Reset"
+                description="Require users to create a new password."
+                warning={settings.forcePasswordReset}
+              >
+                <ToggleSwitch
+                  enabled={settings.forcePasswordReset ?? false}
+                  onChange={(value) =>
+                    update({
+                      forcePasswordReset: value,
+                      ...(value
+                        ? {
+                            forcePasswordResetEnabledAt:
+                              new Date().toISOString(),
+                          }
+                        : {}),
+                    })
+                  }
+                  disabled={saving}
+                />
+              </SettingItem>
+
+              <SettingItem
+                icon={LogOut}
+                title="Auto Logout"
+                description="Automatically sign out inactive sessions."
+                warning={(settings.autoLogoutMinutes ?? 0) > 0}
+              >
+                <div
+                  className="
+                  flex
+                  items-center
+                  gap-2
+                "
+                >
+                  <ToggleSwitch
+                    enabled={(settings.autoLogoutMinutes ?? 0) > 0}
+                    onChange={(value) =>
+                      update({
+                        autoLogoutMinutes: value ? 30 : 0,
+                      })
+                    }
+                    disabled={saving}
+                  />
+
+                  <SettingInput
+                    value={settings.autoLogoutMinutes ?? 0}
+                    onChange={(value) =>
+                      update({
+                        autoLogoutMinutes: value,
+                      })
+                    }
+                    suffix="min"
+                    max={1440}
+                    disabled={saving || (settings.autoLogoutMinutes ?? 0) === 0}
+                  />
+                </div>
+              </SettingItem>
+
+              <SettingItem
+                icon={Activity}
+                title="Access Logs"
+                description="Review recent administrative activity."
+              >
+                <button
+                  onClick={() => setShowLogs(true)}
+                  className="
+                    flex
+                    items-center
+                    gap-1.5
+                    px-3
+                    py-2
+                    rounded-lg
+                    border
+                    text-[10px]
+                    font-bold
+                    transition-all
+                    hover:bg-indigo-500/10
+                    hover:text-indigo-500
+                  "
+                  style={{
+                    backgroundColor: "var(--bg-primary)",
+                    borderColor: "var(--border-primary)",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  <Eye
+                    className="
+                    w-3.5
+                    h-3.5
+                  "
+                  />
+                  View Logs
+                </button>
+              </SettingItem>
+            </div>
+
+            {/* Security overview */}
+
+            <div
+              className="
+              mt-4
+              grid
+              grid-cols-2
+              sm:grid-cols-4
+              gap-2
+            "
+            >
+              {[
+                {
+                  label: "2FA",
+                  enabled: settings.twoFactorEnabled ?? false,
+                  icon: Fingerprint,
+                },
+                {
+                  label: "Reset",
+                  enabled: settings.forcePasswordReset ?? false,
+                  icon: Key,
+                },
+                {
+                  label: "Auto logout",
+                  enabled: (settings.autoLogoutMinutes ?? 0) > 0,
+                  icon: LogOut,
+                },
+                {
+                  label: "Logs",
+                  enabled: true,
+                  icon: ScrollText,
+                },
+              ].map(({ label, enabled, icon: Icon }) => (
+                <div
+                  key={label}
+                  className="
+                      flex
+                      items-center
+                      gap-2
+                      px-2.5
+                      py-2
+                      rounded-xl
+                      border
+                    "
+                  style={{
+                    backgroundColor: "var(--bg-tertiary)",
+                    borderColor: "var(--border-primary)",
+                  }}
+                >
+                  <Icon
+                    className={`
+                        w-3.5
+                        h-3.5
+                        ${enabled ? "text-emerald-500" : "text-slate-400"}
+                      `}
+                  />
+
+                  <span
+                    className="
+                        text-[9px]
+                        font-bold
+                        truncate
+                      "
+                    style={{
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    {label}
+                  </span>
+
+                  <span
+                    className={`
+                        ml-auto
+                        w-1.5
+                        h-1.5
+                        rounded-full
+                        flex-shrink-0
+                        ${enabled ? "bg-emerald-500" : "bg-slate-400"}
+                      `}
+                  />
+                </div>
+              ))}
+            </div>
+          </SettingsSection>
+
+          {/* =================================================
+              ROLE & ACCESS
+          ================================================= */}
+
+          <SettingsSection
+            title="Role & Access"
+            description="Manage management accounts and platform access."
+            icon={Users}
+            accent="amber"
+            status="active"
+            headerAction={
+              <RefreshButton onRefresh={loadUsers} loading={mgmtLoading} />
+            }
+          >
+            {mgmtLoading ? (
+              <div
+                className="
+                h-48
+                flex
+                items-center
+                justify-center
+              "
+              >
+                <Loader2
+                  className="
+                  w-6
+                  h-6
+                  animate-spin
+                  text-indigo-500
+                "
+                />
+              </div>
+            ) : mgmtUsers.length === 0 ? (
+              <div
+                className="
+                  h-48
+                  rounded-2xl
+                  flex
+                  flex-col
+                  items-center
+                  justify-center
+                  border
+                  border-dashed
+                "
+                style={{
+                  backgroundColor: "var(--bg-tertiary)",
+                  borderColor: "var(--border-primary)",
+                }}
+              >
+                <Users
+                  className="
+                  w-8
+                  h-8
+                  mb-2
+                  opacity-40
+                "
+                />
+
+                <p
+                  className="
+                  text-sm
+                  font-bold
+                "
+                >
+                  No management users
+                </p>
+
+                <p
+                  className="
+                  text-[10px]
+                  text-slate-500
+                  mt-1
+                "
+                >
+                  Management accounts will appear here.
+                </p>
+              </div>
+            ) : (
+              <div
+                className="
+                space-y-2
+                max-h-[330px]
+                overflow-y-auto
+                pr-1
+                settings-scroll
+              "
+              >
+                {mgmtUsers.map((managementUser) => {
+                  const id = managementUser.uid || managementUser.id;
+
+                  const approved = managementUser.status === "approved";
+
+                  return (
+                    <div
+                      key={id}
+                      className="
+                          flex
+                          items-center
+                          gap-3
+                          p-3
+                          rounded-2xl
+                          border
+                          transition-all
+                          duration-200
+                          hover:-translate-y-0.5
+                        "
+                      style={{
+                        backgroundColor: "var(--bg-tertiary)",
+                        borderColor: "var(--border-primary)",
+                      }}
+                    >
+                      {/* Avatar */}
+
+                      <div
+                        className="
+                            w-10
+                            h-10
+                            rounded-xl
+                            overflow-hidden
+                            flex-shrink-0
+                            border
+                          "
+                        style={{
+                          backgroundColor: "var(--bg-primary)",
+                          borderColor: "var(--border-primary)",
+                        }}
+                      >
+                        {managementUser.photoURL ? (
+                          <img
+                            src={managementUser.photoURL}
+                            alt=""
+                            className="
+                                w-full
+                                h-full
+                                object-cover
+                              "
+                          />
+                        ) : (
+                          <div
+                            className="
+                              w-full
+                              h-full
+                              flex
+                              items-center
+                              justify-center
+                            "
+                          >
+                            <User
+                              className="
+                                w-4
+                                h-4
+                                text-slate-500
+                              "
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info */}
+
+                      <div
+                        className="
+                          flex-1
+                          min-w-0
+                        "
+                      >
+                        <p
+                          className="
+                              text-xs
+                              sm:text-sm
+                              font-bold
+                              truncate
+                            "
+                          style={{
+                            color: "var(--text-primary)",
+                          }}
+                        >
+                          {managementUser.displayName ||
+                            managementUser.email ||
+                            "Unknown"}
+                        </p>
+
+                        <div
+                          className="
+                            flex
+                            items-center
+                            gap-2
+                            mt-1
+                          "
+                        >
+                          <span
+                            className="
+                              text-[10px]
+                              text-slate-500
+                              truncate
+                            "
+                          >
+                            {managementUser.email}
+                          </span>
+
+                          <span
+                            className="
+                                hidden
+                                sm:inline-flex
+                                px-1.5
+                                py-0.5
+                                rounded-md
+                                text-[8px]
+                                font-black
+                                uppercase
+                              "
+                            style={{
+                              backgroundColor:
+                                roleColor(managementUser.role) + "18",
+                              color: roleColor(managementUser.role),
+                            }}
+                          >
+                            {managementUser.role || "N/A"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Status */}
+
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-2
+                        "
+                      >
+                        <StatusBadge status={approved ? "active" : "warning"} />
+
+                        <button
+                          onClick={() => toggleUser(id, managementUser.status)}
+                          disabled={busy === id}
+                          className="
+                              w-8
+                              h-8
+                              rounded-lg
+                              flex
+                              items-center
+                              justify-center
+                              transition
+                              hover:bg-white/5
+                              disabled:opacity-40
+                            "
+                          title={approved ? "Deactivate" : "Activate"}
+                        >
+                          {busy === id ? (
+                            <Loader2
+                              className="
+                                w-4
+                                h-4
+                                animate-spin
+                                text-indigo-500
+                              "
+                            />
+                          ) : approved ? (
+                            <UserMinus
+                              className="
+                                w-4
+                                h-4
+                                text-red-400
+                              "
+                            />
+                          ) : (
+                            <UserCheck
+                              className="
+                                w-4
+                                h-4
+                                text-emerald-400
+                              "
+                            />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </SettingsSection>
+
+          {/* =================================================
+              COMPLAINTS
+          ================================================= */}
+
+          <SettingsSection
+            title="Complaint & Escalation"
+            description="Control complaint resolution times and escalation workflows."
+            icon={Siren}
+            accent="red"
+            status={settings.autoEscalation ? "enabled" : "disabled"}
+          >
+            <div className="space-y-2">
+              <SettingItem
+                icon={Timer}
+                title="Complaint SLA"
+                description="Default resolution time for complaints."
+              >
+                <SettingInput
+                  value={settings.complaintSlaHours || 48}
+                  onChange={(value) =>
+                    update({
+                      complaintSlaHours: value,
+                    })
+                  }
+                  suffix="hrs"
+                  min={1}
+                  max={720}
+                  disabled={saving}
+                />
+              </SettingItem>
+
+              <SettingItem
+                icon={Siren}
+                title="Automatic Escalation"
+                description="Escalate unresolved complaints automatically."
+              >
+                <ToggleSwitch
+                  enabled={settings.autoEscalation ?? true}
+                  onChange={(value) =>
+                    update({
+                      autoEscalation: value,
+                    })
+                  }
+                  disabled={saving}
+                />
+              </SettingItem>
+
+              <SettingItem
+                icon={ArrowRight}
+                title="Escalate to Owner"
+                description="Send final escalation to the Owner."
+                warning={settings.escalateToOwner}
+              >
+                <ToggleSwitch
+                  enabled={settings.escalateToOwner ?? false}
+                  onChange={(value) =>
+                    update({
+                      escalateToOwner: value,
+                    })
+                  }
+                  disabled={saving}
+                />
+              </SettingItem>
+
+              <SettingItem
+                icon={Clock}
+                title="Overdue Threshold"
+                description="Mark complaints overdue after this duration."
+              >
+                <SettingInput
+                  value={settings.overdueThresholdHours || 72}
+                  onChange={(value) =>
+                    update({
+                      overdueThresholdHours: value,
+                    })
+                  }
+                  suffix="hrs"
+                  min={1}
+                  max={720}
+                  disabled={saving}
+                />
+              </SettingItem>
+
+              <SettingItem
+                icon={MessageSquare}
+                title="SMS Escalation Alerts"
+                description="Send an SMS when a complaint escalates."
+              >
+                <ToggleSwitch
+                  enabled={settings.smsEscalationAlerts ?? false}
+                  onChange={(value) =>
+                    update({
+                      smsEscalationAlerts: value,
+                    })
+                  }
+                  disabled={saving}
+                />
+              </SettingItem>
+
+              <SettingItem
+                icon={Mail}
+                title="Email Escalation Alerts"
+                description="Send an email when a complaint escalates."
+              >
+                <ToggleSwitch
+                  enabled={settings.emailEscalationAlerts ?? true}
+                  onChange={(value) =>
+                    update({
+                      emailEscalationAlerts: value,
+                    })
+                  }
+                  disabled={saving}
+                />
+              </SettingItem>
+            </div>
+          </SettingsSection>
+
+          {/* =================================================
+              NOTIFICATIONS
+          ================================================= */}
+
+          <SettingsSection
+            title="Notifications"
+            description="Choose how important HOAS events reach administrators."
+            icon={Bell}
+            accent="green"
+            status={settings.emailNotifications ? "active" : "inactive"}
+          >
+            <div className="space-y-2">
+              <SettingItem
+                icon={Mail}
+                title="Email Notifications"
+                description="Receive important platform updates by email."
+              >
+                <ToggleSwitch
+                  enabled={settings.emailNotifications ?? true}
+                  onChange={(value) =>
+                    update({
+                      emailNotifications: value,
+                    })
+                  }
+                  disabled={saving}
+                />
+              </SettingItem>
+
+              <SettingItem
+                icon={MessageSquare}
+                title="SMS Notifications"
+                description="Receive critical alerts through SMS."
+              >
+                <ToggleSwitch
+                  enabled={settings.smsNotifications ?? false}
+                  onChange={(value) =>
+                    update({
+                      smsNotifications: value,
+                    })
+                  }
+                  disabled={saving}
+                />
+              </SettingItem>
+
+              <SettingItem
+                icon={BellRing}
+                title="Critical Alerts"
+                description="Keep high-priority system warnings enabled."
+                warning={!(settings.criticalAlerts ?? true)}
+              >
+                <ToggleSwitch
+                  enabled={settings.criticalAlerts ?? true}
+                  onChange={(value) =>
+                    update({
+                      criticalAlerts: value,
+                    })
+                  }
+                  disabled={saving}
+                />
+              </SettingItem>
+
+              <SettingItem
+                icon={Activity}
+                title="Activity Notifications"
+                description="Notify about logins, registrations and events."
+              >
+                <ToggleSwitch
+                  enabled={settings.activityNotifications ?? true}
+                  onChange={(value) =>
+                    update({
+                      activityNotifications: value,
+                    })
+                  }
+                  disabled={saving}
+                />
+              </SettingItem>
+            </div>
+          </SettingsSection>
         </div>
 
+        {/* =================================================
+            SYSTEM CONTROLS — FULL WIDTH
+        ================================================= */}
 
-      </div>
+        <div className="mt-6">
+          <SettingsSection
+            title="System Controls"
+            description="Configure registration, approval workflows, maintenance, feature flags and platform limits."
+            icon={Settings}
+            accent="teal"
+            status={settings.maintenanceMode ? "warning" : "active"}
+          >
+            {/* Main controls */}
 
-      {/* ── Access Logs Modal ── */}
+            <div
+              className="
+              grid
+              grid-cols-1
+              lg:grid-cols-3
+              gap-3
+            "
+            >
+              {[
+                {
+                  key: "registrationEnabled",
+                  title: "User Registration",
+                  description: "Allow new users to register.",
+                  icon: UserCheck,
+                  warning: !settings.registrationEnabled,
+                },
+                {
+                  key: "approvalsEnabled",
+                  title: "Approval Workflows",
+                  description: "Enable account approval workflows.",
+                  icon: CheckCircle,
+                },
+                {
+                  key: "maintenanceMode",
+                  title: "Maintenance Mode",
+                  description: "Temporarily place the platform in maintenance.",
+                  icon: AlertTriangle,
+                  warning: settings.maintenanceMode,
+                },
+              ].map(({ key, title, description, icon, warning }) => (
+                <SettingItem
+                  key={key}
+                  icon={icon}
+                  title={title}
+                  description={description}
+                  warning={warning}
+                >
+                  <ToggleSwitch
+                    enabled={settings[key] ?? false}
+                    onChange={(value) =>
+                      update({
+                        [key]: value,
+                      })
+                    }
+                    disabled={saving}
+                  />
+                </SettingItem>
+              ))}
+            </div>
+
+            {/* Maintenance message */}
+
+            {settings.maintenanceMode && (
+              <div
+                className="
+                  mt-4
+                  p-4
+                  rounded-2xl
+                  border
+                  animate-[settingsFade_.25s_ease-out]
+                "
+                style={{
+                  backgroundColor: "rgba(245,158,11,.05)",
+                  borderColor: "rgba(245,158,11,.22)",
+                }}
+              >
+                <div
+                  className="
+                  flex
+                  items-center
+                  gap-2
+                  mb-2
+                "
+                >
+                  <AlertTriangle
+                    className="
+                    w-4
+                    h-4
+                    text-amber-500
+                  "
+                  />
+
+                  <label
+                    className="
+                    text-[10px]
+                    font-black
+                    uppercase
+                    tracking-widest
+                    text-amber-500
+                  "
+                  >
+                    Maintenance Message
+                  </label>
+                </div>
+
+                <textarea
+                  value={settings.maintenanceMessage || ""}
+                  onChange={(e) =>
+                    update({
+                      maintenanceMessage: e.target.value,
+                    })
+                  }
+                  rows={3}
+                  disabled={saving}
+                  placeholder="Message shown to users during maintenance..."
+                  className="
+                    w-full
+                    rounded-xl
+                    border
+                    p-3
+                    text-sm
+                    resize-none
+                    outline-none
+                    transition
+                    focus:ring-2
+                    focus:ring-amber-500/20
+                  "
+                  style={{
+                    backgroundColor: "var(--bg-primary)",
+                    borderColor: "var(--border-primary)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Feature flags */}
+
+            <div className="mt-6">
+              <div
+                className="
+                flex
+                items-center
+                gap-2
+                mb-3
+              "
+              >
+                <Zap
+                  className="
+                  w-4
+                  h-4
+                  text-indigo-500
+                "
+                />
+
+                <h3
+                  className="
+                  text-xs
+                  font-black
+                  uppercase
+                  tracking-widest
+                "
+                >
+                  Feature Flags
+                </h3>
+              </div>
+
+              <div
+                className="
+                grid
+                grid-cols-1
+                sm:grid-cols-2
+                lg:grid-cols-4
+                gap-3
+              "
+              >
+                {[
+                  {
+                    key: "notifications",
+                    title: "Notifications",
+                    icon: Bell,
+                  },
+                  {
+                    key: "reports",
+                    title: "Reports",
+                    icon: FileText,
+                  },
+                  {
+                    key: "analytics",
+                    title: "Analytics",
+                    icon: BarChart3,
+                  },
+                  {
+                    key: "bulkOperations",
+                    title: "Bulk Operations",
+                    icon: Layers,
+                  },
+                ].map(({ key, title, icon: Icon }) => {
+                  const enabled = settings.features?.[key] !== false;
+
+                  return (
+                    <div
+                      key={key}
+                      className="
+                          flex
+                          items-center
+                          justify-between
+                          gap-3
+                          p-3.5
+                          rounded-2xl
+                          border
+                          transition-all
+                          hover:-translate-y-0.5
+                        "
+                      style={{
+                        backgroundColor: "var(--bg-tertiary)",
+                        borderColor: "var(--border-primary)",
+                      }}
+                    >
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-3
+                          min-w-0
+                        "
+                      >
+                        <div
+                          className="
+                            w-9
+                            h-9
+                            rounded-xl
+                            bg-indigo-500/10
+                            text-indigo-500
+                            flex
+                            items-center
+                            justify-center
+                            flex-shrink-0
+                          "
+                        >
+                          <Icon
+                            className="
+                              w-4
+                              h-4
+                            "
+                          />
+                        </div>
+
+                        <div className="min-w-0">
+                          <p
+                            className="
+                              text-xs
+                              font-bold
+                              truncate
+                            "
+                          >
+                            {title}
+                          </p>
+
+                          <p
+                            className="
+                              text-[9px]
+                              text-slate-500
+                              mt-0.5
+                            "
+                          >
+                            {enabled ? "Enabled" : "Disabled"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <ToggleSwitch
+                        enabled={enabled}
+                        onChange={(value) =>
+                          update({
+                            features: {
+                              ...settings.features,
+                              [key]: value,
+                            },
+                          })
+                        }
+                        disabled={saving}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Limits */}
+
+            <div className="mt-6">
+              <div
+                className="
+                flex
+                items-center
+                gap-2
+                mb-3
+              "
+              >
+                <Database
+                  className="
+                  w-4
+                  h-4
+                  text-teal-500
+                "
+                />
+
+                <h3
+                  className="
+                  text-xs
+                  font-black
+                  uppercase
+                  tracking-widest
+                "
+                >
+                  Default Limits
+                </h3>
+              </div>
+
+              <div
+                className="
+                grid
+                grid-cols-1
+                md:grid-cols-3
+                gap-3
+              "
+              >
+                {[
+                  {
+                    key: "defaultStudentLimit",
+                    title: "Student Limit",
+                    description: "Maximum students per hostel.",
+                    icon: GraduationCap,
+                    max: 10000,
+                  },
+                  {
+                    key: "defaultWardenLimit",
+                    title: "Warden Limit",
+                    description: "Maximum wardens per hostel.",
+                    icon: Shield,
+                    max: 100,
+                  },
+                  {
+                    key: "defaultHostelLimit",
+                    title: "Hostel Limit",
+                    description: "Maximum hostels per college.",
+                    icon: Home,
+                    max: 500,
+                  },
+                ].map(({ key, title, description, icon, max }) => (
+                  <SettingItem
+                    key={key}
+                    icon={icon}
+                    title={title}
+                    description={description}
+                  >
+                    <SettingInput
+                      value={settings[key] || 0}
+                      onChange={(value) =>
+                        update({
+                          [key]: value,
+                        })
+                      }
+                      min={0}
+                      max={max}
+                      disabled={saving}
+                    />
+                  </SettingItem>
+                ))}
+              </div>
+            </div>
+          </SettingsSection>
+        </div>
+
+        {/* =================================================
+            APPEARANCE — FULL WIDTH
+        ================================================= */}
+
+        <div className="mt-6">
+          <SettingsSection
+            title="Appearance"
+            description="Customize how the Owner dashboard looks on your device."
+            icon={Palette}
+            accent="pink"
+          >
+            <div
+              className="
+              grid
+              grid-cols-1
+              md:grid-cols-3
+              gap-4
+            "
+            >
+              {THEME_MODES.map(({ id, label, sub, icon: Icon }) => {
+                const selected = mode === id;
+
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => themeSetters[id]?.()}
+                    className={`
+                        relative
+                        overflow-hidden
+                        p-5
+                        rounded-2xl
+                        border-2
+                        text-left
+                        transition-all
+                        duration-300
+                        hover:-translate-y-1
+                        ${
+                          selected
+                            ? "border-indigo-500 shadow-xl shadow-indigo-500/15"
+                            : ""
+                        }
+                      `}
+                    style={{
+                      backgroundColor: selected
+                        ? "#6366f1"
+                        : "var(--bg-tertiary)",
+
+                      borderColor: selected
+                        ? "#6366f1"
+                        : "var(--border-primary)",
+                    }}
+                  >
+                    {selected && (
+                      <div
+                        className="
+                          absolute
+                          top-3
+                          right-3
+                        "
+                      >
+                        <CheckCircle
+                          className="
+                            w-5
+                            h-5
+                            text-white
+                          "
+                        />
+                      </div>
+                    )}
+
+                    <div
+                      className={`
+                          w-11
+                          h-11
+                          rounded-xl
+                          flex
+                          items-center
+                          justify-center
+                          mb-5
+                          ${
+                            selected
+                              ? "bg-white/15 text-white"
+                              : "bg-indigo-500/10 text-indigo-500"
+                          }
+                        `}
+                    >
+                      <Icon
+                        className="
+                          w-5
+                          h-5
+                        "
+                      />
+                    </div>
+
+                    <p
+                      className="
+                          text-sm
+                          font-black
+                        "
+                      style={{
+                        color: selected ? "#fff" : "var(--text-primary)",
+                      }}
+                    >
+                      {label}
+                    </p>
+
+                    <p
+                      className="
+                          text-[10px]
+                          mt-1
+                        "
+                      style={{
+                        color: selected
+                          ? "rgba(255,255,255,.7)"
+                          : "var(--text-muted)",
+                      }}
+                    >
+                      {sub}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Current theme */}
+
+            <div
+              className="
+              mt-4
+              flex
+              flex-col
+              sm:flex-row
+              sm:items-center
+              sm:justify-between
+              gap-4
+              p-4
+              rounded-2xl
+              border
+            "
+              style={{
+                backgroundColor: "var(--bg-tertiary)",
+                borderColor: "var(--border-primary)",
+              }}
+            >
+              <div
+                className="
+                flex
+                items-center
+                gap-3
+              "
+              >
+                <div
+                  className="
+                  w-9
+                  h-9
+                  rounded-xl
+                  bg-indigo-500/10
+                  flex
+                  items-center
+                  justify-center
+                "
+                >
+                  {isDark ? (
+                    <Moon
+                      className="
+                      w-4
+                      h-4
+                      text-indigo-500
+                    "
+                    />
+                  ) : (
+                    <Sun
+                      className="
+                      w-4
+                      h-4
+                      text-indigo-500
+                    "
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <p
+                    className="
+                    text-xs
+                    font-bold
+                  "
+                  >
+                    Current theme
+                  </p>
+
+                  <p
+                    className="
+                    text-[10px]
+                    text-slate-500
+                    mt-0.5
+                  "
+                  >
+                    Using <strong>{theme}</strong>
+                    {isSystemMode && " • follows system"}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/OwnersDashboard", {
+                    state: {
+                      startTour: true,
+                    },
+                  })
+                }
+                className="
+                  flex
+                  items-center
+                  justify-center
+                  gap-2
+                  px-4
+                  py-2.5
+                  rounded-xl
+                  border
+                  text-xs
+                  font-bold
+                  transition-all
+                  hover:-translate-y-0.5
+                  hover:bg-indigo-500/10
+                  hover:text-indigo-500
+                "
+                style={{
+                  backgroundColor: "var(--bg-primary)",
+                  borderColor: "var(--border-primary)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <Layers
+                  className="
+                  w-4
+                  h-4
+                  text-indigo-500
+                "
+                />
+                Restart Dashboard Tour
+                <ChevronRight
+                  className="
+                  w-3.5
+                  h-3.5
+                "
+                />
+              </button>
+            </div>
+          </SettingsSection>
+        </div>
+
+        {/* =================================================
+            DANGER ZONE
+        ================================================= */}
+
+        <div className="mt-6">
+          <SettingsSection
+            title="Danger Zone"
+            description="Permanent and irreversible account actions."
+            icon={AlertTriangle}
+            accent="red"
+            status="warning"
+          >
+            {!showDeleteForm ? (
+              <div
+                className="
+                  p-5
+                  rounded-2xl
+                  border
+                  flex
+                  flex-col
+                  sm:flex-row
+                  sm:items-center
+                  sm:justify-between
+                  gap-4
+                "
+                style={{
+                  backgroundColor: "rgba(239,68,68,.04)",
+                  borderColor: "rgba(239,68,68,.20)",
+                }}
+              >
+                <div
+                  className="
+                  flex
+                  items-start
+                  gap-3
+                "
+                >
+                  <div
+                    className="
+                    w-10
+                    h-10
+                    rounded-xl
+                    bg-red-500/10
+                    flex
+                    items-center
+                    justify-center
+                    flex-shrink-0
+                  "
+                  >
+                    <Trash2
+                      className="
+                      w-5
+                      h-5
+                      text-red-500
+                    "
+                    />
+                  </div>
+
+                  <div>
+                    <p
+                      className="
+                      text-sm
+                      font-black
+                      text-red-500
+                    "
+                    >
+                      Delete Account
+                    </p>
+
+                    <p
+                      className="
+                      text-[10px]
+                      sm:text-xs
+                      text-slate-500
+                      mt-1
+                      max-w-xl
+                    "
+                    >
+                      Permanently delete your account and associated platform
+                      data. This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteForm(true)}
+                  className="
+                    w-full
+                    sm:w-auto
+                    px-5
+                    py-2.5
+                    rounded-xl
+                    border
+                    border-red-500/30
+                    bg-red-500/10
+                    text-red-500
+                    hover:bg-red-500
+                    hover:text-white
+                    text-xs
+                    font-black
+                    transition-all
+                    duration-200
+                    hover:-translate-y-0.5
+                  "
+                >
+                  Delete Account
+                </button>
+              </div>
+            ) : (
+              <div
+                className="
+                  rounded-2xl
+                  border-2
+                  p-5
+                  sm:p-6
+                  animate-[settingsFade_.25s_ease-out]
+                "
+                style={{
+                  backgroundColor: "rgba(239,68,68,.03)",
+                  borderColor: "rgba(239,68,68,.22)",
+                }}
+              >
+                {/* Warning */}
+
+                <div
+                  className="
+                  flex
+                  items-start
+                  justify-between
+                  gap-4
+                  mb-6
+                "
+                >
+                  <div
+                    className="
+                    flex
+                    items-start
+                    gap-3
+                  "
+                  >
+                    <div
+                      className="
+                      w-10
+                      h-10
+                      rounded-xl
+                      bg-red-500/10
+                      flex
+                      items-center
+                      justify-center
+                      flex-shrink-0
+                    "
+                    >
+                      <Lock
+                        className="
+                        w-5
+                        h-5
+                        text-red-500
+                      "
+                      />
+                    </div>
+
+                    <div>
+                      <h3
+                        className="
+                        text-sm
+                        font-black
+                        text-red-500
+                      "
+                      >
+                        Verify your identity
+                      </h3>
+
+                      <p
+                        className="
+                        text-[10px]
+                        text-slate-500
+                        mt-1
+                      "
+                      >
+                        Enter your account email and password to continue.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDeleteForm(false);
+                      setDeletePw("");
+                      setDeleteEmailChallenge("");
+                    }}
+                    className="
+                      p-2
+                      rounded-lg
+                      text-slate-500
+                      hover:text-red-500
+                      hover:bg-red-500/5
+                      transition
+                    "
+                  >
+                    <X
+                      className="
+                      w-4
+                      h-4
+                    "
+                    />
+                  </button>
+                </div>
+
+                <div
+                  className="
+                  grid
+                  grid-cols-1
+                  md:grid-cols-2
+                  gap-4
+                "
+                >
+                  {/* Email */}
+
+                  <div>
+                    <label
+                      className="
+                      block
+                      text-[9px]
+                      font-black
+                      uppercase
+                      tracking-widest
+                      text-slate-500
+                      mb-2
+                    "
+                    >
+                      Account Email
+                    </label>
+
+                    <input
+                      type="text"
+                      value={deleteEmailChallenge}
+                      onChange={(e) => setDeleteEmailChallenge(e.target.value)}
+                      placeholder={user?.email}
+                      className="
+                        w-full
+                        h-11
+                        px-4
+                        rounded-xl
+                        border
+                        text-sm
+                        outline-none
+                        focus:ring-2
+                        focus:ring-red-500/15
+                        focus:border-red-500/40
+                      "
+                      style={{
+                        backgroundColor: "var(--bg-primary)",
+                        borderColor: "var(--border-primary)",
+                        color: "var(--text-primary)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Password */}
+
+                  <div>
+                    <label
+                      className="
+                      block
+                      text-[9px]
+                      font-black
+                      uppercase
+                      tracking-widest
+                      text-slate-500
+                      mb-2
+                    "
+                    >
+                      Password
+                    </label>
+
+                    <div
+                      className="
+                      relative
+                    "
+                    >
+                      <input
+                        type={showDeletePw ? "text" : "password"}
+                        value={deletePw}
+                        onChange={(e) => setDeletePw(e.target.value)}
+                        placeholder="••••••••"
+                        className="
+                          w-full
+                          h-11
+                          px-4
+                          pr-11
+                          rounded-xl
+                          border
+                          text-sm
+                          outline-none
+                          focus:ring-2
+                          focus:ring-red-500/15
+                          focus:border-red-500/40
+                        "
+                        style={{
+                          backgroundColor: "var(--bg-primary)",
+                          borderColor: "var(--border-primary)",
+                          color: "var(--text-primary)",
+                        }}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setShowDeletePw((value) => !value)}
+                        className="
+                          absolute
+                          right-3
+                          top-1/2
+                          -translate-y-1/2
+                          p-1
+                          text-slate-500
+                          hover:text-red-500
+                        "
+                      >
+                        {showDeletePw ? (
+                          <EyeOff
+                            className="
+                            w-4
+                            h-4
+                          "
+                          />
+                        ) : (
+                          <Eye
+                            className="
+                            w-4
+                            h-4
+                          "
+                          />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delete button */}
+
+                <button
+                  type="button"
+                  onClick={confirmDeleteAccount}
+                  disabled={
+                    isDeletingAccount ||
+                    !deletePw ||
+                    deleteEmailChallenge !== user?.email
+                  }
+                  className="
+                    w-full
+                    mt-5
+                    h-12
+                    rounded-xl
+                    bg-red-600
+                    hover:bg-red-700
+                    text-white
+                    text-xs
+                    font-black
+                    uppercase
+                    tracking-widest
+                    flex
+                    items-center
+                    justify-center
+                    gap-2
+                    shadow-lg
+                    shadow-red-500/20
+                    transition-all
+                    hover:-translate-y-0.5
+                    active:scale-[.99]
+                    disabled:opacity-30
+                    disabled:pointer-events-none
+                  "
+                >
+                  {isDeletingAccount ? (
+                    <>
+                      <Loader2
+                        className="
+                        w-4
+                        h-4
+                        animate-spin
+                      "
+                      />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2
+                        className="
+                        w-4
+                        h-4
+                      "
+                      />
+                      Permanently Delete Account
+                    </>
+                  )}
+                </button>
+
+                <p
+                  className="
+                  text-[9px]
+                  text-center
+                  text-slate-500
+                  mt-3
+                "
+                >
+                  This action permanently removes your account and cannot be
+                  reversed.
+                </p>
+              </div>
+            )}
+          </SettingsSection>
+        </div>
+
+        {/* =================================================
+            INFO FOOTER
+        ================================================= */}
+
+        <div
+          className="
+            mt-6
+            p-4
+            sm:p-5
+            rounded-2xl
+            border
+            flex
+            items-start
+            gap-3
+          "
+          style={{
+            backgroundColor: "var(--bg-card)",
+            borderColor: "var(--border-primary)",
+          }}
+        >
+          <div
+            className="
+            w-9
+            h-9
+            rounded-xl
+            bg-indigo-500/10
+            flex
+            items-center
+            justify-center
+            flex-shrink-0
+          "
+          >
+            <Info
+              className="
+              w-4
+              h-4
+              text-indigo-500
+            "
+            />
+          </div>
+
+          <div>
+            <p
+              className="
+              text-xs
+              font-bold
+            "
+            >
+              Owner-level settings
+            </p>
+
+            <p
+              className="
+              text-[10px]
+              sm:text-[11px]
+              leading-relaxed
+              mt-1
+              text-slate-500
+            "
+            >
+              These controls are restricted to the Owner role. Security,
+              permissions, complaint workflows, and system controls apply
+              platform-wide. Appearance preferences are stored locally; other
+              settings are synchronized with the server when saved.
+            </p>
+          </div>
+        </div>
+      </main>
+
+      {/* =================================================
+          STICKY SAVE BAR
+      ================================================= */}
+
+      {hasChanges && (
+        <div
+          className="
+            fixed
+            bottom-0
+            left-0
+            right-0
+            z-40
+            px-4
+            sm:px-6
+            lg:px-8
+            py-3
+            border-t
+            backdrop-blur-xl
+            animate-[settingsSlideUp_.25s_ease-out]
+          "
+          style={{
+            backgroundColor:
+              "color-mix(in srgb, var(--bg-card) 92%, transparent)",
+            borderColor: "var(--border-primary)",
+          }}
+        >
+          <div
+            className="
+            max-w-7xl
+            mx-auto
+            flex
+            items-center
+            justify-between
+            gap-4
+          "
+          >
+            <div
+              className="
+              hidden
+              sm:flex
+              items-center
+              gap-2
+            "
+            >
+              <div
+                className="
+                w-2
+                h-2
+                rounded-full
+                bg-amber-500
+                animate-pulse"
+              />
+
+              <span className="text-xl font-bold">Unsaved changes</span>
+
+              <span className=" text-[10px] text-slate-500">
+                Save before leaving this page.
+              </span>
+            </div>
+
+            <div
+              className="
+              flex
+              items-center
+              gap-2
+              w-full
+              sm:w-auto
+            "
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  loadData(true);
+                  setHasChanges(false);
+                }}
+                className="
+                  flex-1
+                  sm:flex-none
+                  px-4
+                  h-10
+                  rounded-xl
+                  border
+                  text-xs
+                  font-bold
+                  transition
+                  hover:bg-white/5
+                "
+                style={{
+                  backgroundColor: "var(--bg-primary)",
+                  borderColor: "var(--border-primary)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                Discard
+              </button>
+
+              <button
+                type="button"
+                onClick={save}
+                disabled={saving}
+                className="
+                  flex-1
+                  sm:flex-none
+                  px-5
+                  h-10
+                  rounded-xl
+                  bg-indigo-600
+                  hover:bg-indigo-500
+                  text-white
+                  text-xs
+                  font-bold
+                  flex
+                  items-center
+                  justify-center
+                  gap-2
+                  shadow-lg
+                  shadow-indigo-500/20
+                  transition-all
+                  hover:-translate-y-0.5
+                  disabled:opacity-50
+                "
+              >
+                {saving ? (
+                  <Loader2
+                    className="
+                    w-4
+                    h-4
+                    animate-spin
+                  "
+                  />
+                ) : (
+                  <Save
+                    className="
+                    w-4
+                    h-4
+                  "
+                  />
+                )}
+
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =================================================
+          ACCESS LOGS
+      ================================================= */}
+
       {showLogs && <AccessLogsModal onClose={() => setShowLogs(false)} />}
 
+      {/* =================================================
+          ANIMATIONS
+      ================================================= */}
+
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar{width:4px}
-        .custom-scrollbar::-webkit-scrollbar-track{background:transparent}
-        .custom-scrollbar::-webkit-scrollbar-thumb{background:var(--border-secondary);border-radius:4px}
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+        @keyframes settingsFade {
+          from {
+            opacity: 0;
+            transform: translateY(-6px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes settingsSlideUp {
+          from {
+            opacity: 0;
+            transform: translateY(100%);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .settings-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+
+        .settings-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .settings-scroll::-webkit-scrollbar-thumb {
+          background: var(--border-secondary);
+          border-radius: 999px;
+        }
+
+        .settings-scroll::-webkit-scrollbar-thumb:hover {
+          background: var(--text-muted);
+        }
       `}</style>
-    </>
+    </div>
   );
 };
 

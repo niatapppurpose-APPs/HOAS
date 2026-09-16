@@ -1,34 +1,65 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
-import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+
+import {
+  updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+} from "firebase/auth";
+
 import { auth } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../Toast";
 import Avatar from "./Avatar";
-import AnimatedLogoutButton from "../AnimatedLogoutButton";
-import { updateProfile as apiUpdateProfile } from "../../firebase/cloudFunctions";
+import Header from "./header";
+
 import {
   Eye,
   EyeOff,
   Loader2,
   X,
-
-  Camera
+  Camera,
+  ShieldCheck,
+  Mail,
+  Phone,
+  Building2,
+  CalendarDays,
+  Clock3,
+  LockKeyhole,
+  LogOut,
+  CheckCircle2,
+  UserRound,
+  Pencil,
+  Sparkles,
+  KeyRound,
+  Shield,
 } from "lucide-react";
+
 import { HashLoader } from "react-spinners";
-import Header from "./header";
+import { updateProfile as apiUpdateProfile } from "../../firebase/cloudFunctions";
+
+/* =========================================================
+   OWNER PROFILE
+========================================================= */
 
 const OwnerProfile = () => {
   const { user, userData, isAdmin, loading, adminChecked, logout } = useAuth();
+
   const navigate = useNavigate();
+  const location = useLocation();
   const context = useOutletContext();
+  const toast = useToast();
+
   const [localIsCollapsed, setLocalIsCollapsed] = useState(false);
+
   const isCollapsed = context?.isCollapsed ?? localIsCollapsed;
+
   const setIsCollapsed = context?.setIsCollapsed ?? setLocalIsCollapsed;
 
+  /* =======================================================
+     PROFILE
+  ======================================================= */
 
-  const location = useLocation();
-  const toast = useToast();
   const [profileData, setProfileData] = useState({
     displayName: "",
     email: "",
@@ -41,67 +72,131 @@ const OwnerProfile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
 
-  /* ── Password Modal ── */
+  /* =======================================================
+     PASSWORD
+  ======================================================= */
+
   const [showPwModal, setShowPwModal] = useState(false);
-  const [pwForm, setPwForm] = useState({ current: "", newPass: "", confirm: "" });
-  const [showPw, setShowPw] = useState({ current: false, newPass: false, confirm: false });
+
+  const [pwForm, setPwForm] = useState({
+    current: "",
+    newPass: "",
+    confirm: "",
+  });
+
+  const [showPw, setShowPw] = useState({
+    current: false,
+    newPass: false,
+    confirm: false,
+  });
+
   const [changingPw, setChangingPw] = useState(false);
 
-  /* ── Banner State ── */
+  /* =======================================================
+     BANNER
+  ======================================================= */
+
   const [showBanner, setShowBanner] = useState(false);
+
   const [profileBanner, setProfileBanner] = useState(() => {
-    const saved = localStorage.getItem('profileBannerImage');
-    const expiry = localStorage.getItem('profileBannerExpiryDate');
-    if (saved && expiry && Date.now() < parseInt(expiry, 10)) {
-      return saved;
+    try {
+      const saved = localStorage.getItem("profileBannerImage");
+
+      const expiry = localStorage.getItem("profileBannerExpiryDate");
+
+      if (saved && expiry && Date.now() < parseInt(expiry, 10)) {
+        return saved;
+      }
+    } catch {
+      // Ignore localStorage errors.
     }
+
     return null;
   });
 
+  const bannerInputRef = useRef(null);
+
+  /* =======================================================
+     BANNER EXPIRY
+  ======================================================= */
+
   useEffect(() => {
-    const bannerExpiry = localStorage.getItem('profileBannerExpiry');
-    if (!bannerExpiry || Date.now() > parseInt(bannerExpiry, 10)) {
-      setShowBanner(true);
+    try {
+      const expiry = localStorage.getItem("profileBannerExpiry");
+
+      if (!expiry || Date.now() > parseInt(expiry, 10)) {
+        setShowBanner(true);
+      }
+    } catch {
+      setShowBanner(false);
     }
   }, []);
 
   const handleDismissBanner = () => {
     setShowBanner(false);
-    // 30 days in ms = 30 * 24 * 60 * 60 * 1000 = 2592000000 
-    localStorage.setItem('profileBannerExpiry', Date.now() + 2592000000);
-  };
 
-  const bannerInputRef = useRef(null);
-
-  const handleBannerUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("Banner must be under 2MB");
-        return;
-      }
-
-      const reader = new FileReader();
-      setIsSaving(true);
-      reader.onloadend = () => {
-        const base64String = reader.result;
-        try {
-          setProfileBanner(base64String);
-          localStorage.setItem('profileBannerImage', base64String);
-          // Set expiry for 1 month
-          localStorage.setItem('profileBannerExpiryDate', (Date.now() + 2592000000).toString());
-          toast.success("Profile banner saved locally! ✨");
-        } catch (err) {
-          console.error("Storage error:", err);
-          toast.error("Image too large for browser memory. Try a smaller file.");
-        }
-        setIsSaving(false);
-      };
-      reader.readAsDataURL(file);
+    try {
+      localStorage.setItem(
+        "profileBannerExpiry",
+        Date.now() + 30 * 24 * 60 * 60 * 1000,
+      );
+    } catch {
+      // Ignore.
     }
   };
 
-  /* ── Auth Guard ── */
+  /* =======================================================
+     BANNER UPLOAD
+  ======================================================= */
+
+  const handleBannerUpload = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Banner must be under 2MB");
+
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+
+    setIsSaving(true);
+
+    reader.onloadend = () => {
+      const base64String = reader.result;
+
+      try {
+        setProfileBanner(base64String);
+
+        localStorage.setItem("profileBannerImage", base64String);
+
+        localStorage.setItem(
+          "profileBannerExpiryDate",
+          (Date.now() + 30 * 24 * 60 * 60 * 1000).toString(),
+        );
+
+        toast.success("Profile banner updated ✨");
+      } catch (error) {
+        console.error("Storage error:", error);
+
+        toast.error("Image is too large for browser storage.");
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    reader.readAsDataURL(file);
+
+    event.target.value = "";
+  };
+
+  /* =======================================================
+     AUTH GUARD
+  ======================================================= */
+
   useEffect(() => {
     if (!loading && adminChecked) {
       if (!user || !isAdmin) {
@@ -110,332 +205,1770 @@ const OwnerProfile = () => {
     }
   }, [user, isAdmin, loading, adminChecked, navigate]);
 
-  /* ── Fetch Profile ── */
+  /* =======================================================
+     FETCH PROFILE
+  ======================================================= */
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
+
       try {
         const data = userData || {};
+
         setProfileData({
           displayName: data.name || user.displayName || "",
+
           email: data.email || user.email || "",
+
           phone: data.phone || "",
+
           organization: data.address || "",
+
           photoURL: data.avatarUrl || user.photoURL || "",
         });
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error("Profile load error:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    if (user && adminChecked) fetchProfile();
+
+    if (user && adminChecked) {
+      fetchProfile();
+    }
   }, [user, userData, adminChecked]);
 
-  /* ── Logout ── */
+  /* =======================================================
+     LOGOUT
+  ======================================================= */
+
   const handleLogout = async () => {
     try {
       await logout();
+
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
     }
   };
 
-  /* ── Save Profile ── */
+  /* =======================================================
+     SAVE PROFILE
+  ======================================================= */
+
   const handleSave = async () => {
     if (!user) return;
+
     setIsSaving(true);
     setSaveMessage("");
+
     try {
       await apiUpdateProfile({
         name: profileData.displayName,
+
         phone: profileData.phone,
+
         avatarUrl: profileData.photoURL || undefined,
       });
+
       setSaveMessage("Profile updated successfully");
+
       toast.success("Profile updated");
     } catch (error) {
       console.error("Save error:", error);
+
       setSaveMessage("Failed to update profile");
+
       toast.error("Save failed");
     } finally {
       setIsSaving(false);
-      setTimeout(() => setSaveMessage(""), 3000);
+
+      setTimeout(() => {
+        setSaveMessage("");
+      }, 3000);
     }
   };
 
-  /* ── Change Password ── */
+  /* =======================================================
+     CHANGE PASSWORD
+  ======================================================= */
+
   const handleChangePw = async () => {
-    if (pwForm.newPass !== pwForm.confirm) { toast.error("Passwords do not match"); return; }
-    if (pwForm.newPass.length < 6) { toast.error("Minimum 6 characters"); return; }
+    if (pwForm.newPass !== pwForm.confirm) {
+      toast.error("Passwords do not match");
+
+      return;
+    }
+
+    if (pwForm.newPass.length < 6) {
+      toast.error("Minimum 6 characters");
+
+      return;
+    }
+
+    if (!auth.currentUser) {
+      toast.error("Authentication session expired");
+
+      return;
+    }
+
     setChangingPw(true);
+
     try {
-      const cred = EmailAuthProvider.credential(user.email, pwForm.current);
-      await reauthenticateWithCredential(auth.currentUser, cred);
+      const credential = EmailAuthProvider.credential(
+        user.email,
+        pwForm.current,
+      );
+
+      await reauthenticateWithCredential(auth.currentUser, credential);
+
       await updatePassword(auth.currentUser, pwForm.newPass);
+
       toast.success("Password changed successfully");
+
       setShowPwModal(false);
-      setPwForm({ current: "", newPass: "", confirm: "" });
-    } catch (err) {
-      toast.error(err.code === "auth/wrong-password" ? "Current password is incorrect" : "Failed to change password");
+
+      setPwForm({
+        current: "",
+        newPass: "",
+        confirm: "",
+      });
+    } catch (error) {
+      console.error("Password change error:", error);
+
+      toast.error(
+        error.code === "auth/wrong-password"
+          ? "Current password is incorrect"
+          : "Failed to change password",
+      );
     } finally {
       setChangingPw(false);
     }
   };
 
-  /* ── Loading ── */
+  /* =======================================================
+     LOADING
+  ======================================================= */
+
   if (loading || isLoading || !adminChecked) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--bg-primary)" }}>
-        <HashLoader className="w-8 h-8 animate-spin text-indigo-500" />
+      <div
+        className="
+          min-h-screen
+          flex
+          items-center
+          justify-center
+        "
+        style={{
+          backgroundColor: "var(--bg-primary)",
+        }}
+      >
+        <HashLoader size={42} color="#6366f1" />
       </div>
     );
   }
 
-  // Prevent crashes if user is null during transition/deletion
   if (!user) return null;
+
+  /* =======================================================
+     DERIVED DATA
+  ======================================================= */
+
+  const creationDate = user.metadata?.creationTime
+    ? new Date(user.metadata.creationTime).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "N/A";
+
+  const lastLogin = user.metadata?.lastSignInTime
+    ? new Date(user.metadata.lastSignInTime).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "N/A";
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
+
   return (
+    <div
+      className="
+        min-h-screen
+        pb-10
+      "
+      style={{
+        backgroundColor: "var(--bg-primary)",
 
-    <div className="min-h-screen" style={{ backgroundColor: "var(--bg-primary)", color: "var(--text-primary)" }}>
-      <Header title="YOUR PROFILE 🫵" handleLogout={handleLogout} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      {/* ── Main ── */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-34 sm:pt-42 pb-8 relative z-10">
+        color: "var(--text-primary)",
+      }}
+    >
+      <Header
+        title="YOUR PROFILE"
+        handleLogout={handleLogout}
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+      />
+
+      {/* ===================================================
+          MAIN
+      =================================================== */}
+
+      <main
+        className="
+          max-w-7xl
+          mx-auto
+          px-4
+          sm:px-6
+          lg:px-8
+          pt-28
+          sm:pt-32
+          pb-10
+        "
+      >
+        {/* =================================================
+            WELCOME BANNER
+        ================================================= */}
+
         {showBanner && (
-          <div className="mb-6 rounded-2xl p-4 sm:p-5 flex items-center justify-between text-white shadow-xl shadow-pink-500/20 animate-fadeIn" style={{ background: 'linear-gradient(135deg, #f59e0b, #ec4899, #8b5cf6)' }}>
-            <div>
-              <h3 className="font-bold text-lg tracking-tight">Welcome to your pristine Owner Profile!</h3>
-              <p className="text-sm font-medium opacity-90">Keep your details up to date to ensure account security. This banner will return in a month.</p>
-            </div>
-            <button onClick={handleDismissBanner} className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition cursor-pointer flex-shrink-0 ml-4">
-              <X size={18} />
-            </button>
-          </div>
-        )}
+          <div
+            className="
+              mb-6
+              rounded-2xl
+              border
+              overflow-hidden
+              relative
+              animate-[fadeIn_0.4s_ease-out]
+            "
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(99,102,241,.16), rgba(168,85,247,.12))",
 
-        <div className="rounded-[2.5rem] p-6 lg:p-10 shadow-2xl relative overflow-hidden" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border-primary)", backdropFilter: "blur(24px)" }}>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 relative z-10">
-
-            {/* LEFT COLUMN: Profile info */}
-            <div className="lg:col-span-5 rounded-[2.5rem] shadow-xl overflow-hidden flex flex-col relative z-20" style={{ backgroundColor: 'var(--bg-primary)' }}>
-
-              {/* Profile Banner Background - Switched to relative to prevent absolute-layer overlap issues */}
-              <div className="relative w-full h-20 sm:h-40 z-20 group/banner overflow-hidden">
-                {profileBanner ? (
-                  <img profile-banner-img="true" src={profileBanner} alt="Banner" className="w-full h-full object-cover transition-transform duration-500 group-hover/banner:scale-110" />
-                ) : (
-                  <div className="w-full h-full bg-slate-800 animate-pulse" />
-                )}
-                {/* Invisible full-area hover trigger - Upped Z-INDEX to 50 */}
-                <div
-                  onClick={() => bannerInputRef.current?.click()}
-                  className="absolute inset-0 bg-black/40 opacity-0 group-hover/banner:opacity-100 transition-opacity flex items-center justify-center cursor-pointer text-white font-bold text-sm gap-2 backdrop-blur-sm z-[30]"
-                >
-                  <Camera size={20} /> Change Banner
-                </div>
-
-                {/* Small permanent Edit Pill for better UX - Upped Z-INDEX to 60 */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    console.log("Edit button clicked");
-                    bannerInputRef.current?.click();
-                  }}
-                  className="absolute top-4 right-4 z-[40] bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 p-2.5 rounded-full cursor-pointer text-white transition-all hover:scale-110 active:scale-95 shadow-lg flex items-center justify-center"
-                >
-                  <Camera size={16} />
-                </button>
-                <input
-                  ref={bannerInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleBannerUpload}
-                  onClick={(e) => { e.stopPropagation(); }}
+              borderColor: "rgba(99,102,241,.2)",
+            }}
+          >
+            <div
+              className="
+              p-4
+              sm:p-5
+              flex
+              items-start
+              gap-4
+            "
+            >
+              <div
+                className="
+                hidden
+                sm:flex
+                w-10
+                h-10
+                rounded-xl
+                bg-indigo-500/10
+                border
+                border-indigo-500/20
+                items-center
+                justify-center
+                flex-shrink-0
+              "
+              >
+                <Sparkles
+                  className="
+                  w-5
+                  h-5
+                  text-indigo-400
+                "
                 />
               </div>
 
-              {/* Avatar Positioning - Subtle thin ring without shadow */}
-              <div className="w-full relative z-30 -mt-16 sm:-mt-20 flex justify-center pb-4">
-                <div className="relative group/avatar p-1 rounded-full" style={{ backgroundColor: 'var(--bg-primary)', border: '4px solid var(--bg-primary)' }}>
-                  <Avatar
-                    uid={user?.uid}
-                    image={profileData.photoURL}
-                    name={profileData.displayName || user?.displayName}
-                    email={user?.email}
-                    size="3xl"
-                    rounded="full"
-                    className="w-32 h-32 sm:w-30 sm:h-30"
-                    collections={["admins", "users"]}
-                    editable
-                    onUpload={(url) => setProfileData(p => ({ ...p, photoURL: url }))}
+              <div className="flex-1 min-w-0">
+                <h3
+                  className="
+                    text-sm
+                    sm:text-base
+                    font-bold
+                  "
+                  style={{
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  Welcome to your profile
+                </h3>
+
+                <p
+                  className="
+                    mt-1
+                    text-xs
+                    sm:text-sm
+                    leading-relaxed
+                  "
+                  style={{
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  Keep your personal information up to date for a better HOAS
+                  experience.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleDismissBanner}
+                className="
+                  p-2
+                  rounded-xl
+                  transition
+                  hover:bg-black/5
+                  dark:hover:bg-white/5
+                  flex-shrink-0
+                "
+              >
+                <X
+                  className="
+                  w-4
+                  h-4
+                "
+                />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================
+            PROFILE HERO
+        ================================================= */}
+
+        <section
+          className="
+            rounded-3xl
+            border
+            overflow-hidden
+            shadow-sm
+          "
+          style={{
+            backgroundColor: "var(--bg-card)",
+
+            borderColor: "var(--border-primary)",
+          }}
+        >
+          {/* Banner */}
+
+          <div
+            className="
+              relative
+              h-36
+              sm:h-48
+              lg:h-56
+              overflow-hidden
+              group
+            "
+          >
+            {profileBanner ? (
+              <img
+                src={profileBanner}
+                alt="Profile banner"
+                className="
+                  w-full
+                  h-full
+                  object-cover
+                  transition-transform
+                  duration-700
+                  group-hover:scale-105
+                "
+              />
+            ) : (
+              <div
+                className="
+                  w-full
+                  h-full
+                "
+                style={{
+                  background:
+                    "linear-gradient(135deg, #312e81 0%, #4f46e5 45%, #7c3aed 100%)",
+                }}
+              />
+            )}
+
+            {/* Gradient */}
+
+            <div
+              className="
+              absolute
+              inset-0
+              bg-gradient-to-t
+              from-black/45
+              via-black/10
+              to-transparent
+              pointer-events-none
+            "
+            />
+
+            {/* Change banner */}
+
+            <button
+              type="button"
+              onClick={() => bannerInputRef.current?.click()}
+              className="
+                absolute
+                top-4
+                right-4
+                flex
+                items-center
+                gap-2
+                px-3
+                py-2
+                rounded-xl
+                bg-black/25
+                hover:bg-black/40
+                backdrop-blur-md
+                border
+                border-white/20
+                text-white
+                text-xs
+                font-semibold
+                transition-all
+                duration-200
+                hover:scale-[1.02]
+                active:scale-95
+              "
+            >
+              <Camera
+                className="
+                w-4
+                h-4
+              "
+              />
+
+              <span
+                className="
+                hidden
+                sm:inline
+              "
+              >
+                Change cover
+              </span>
+            </button>
+
+            <input
+              ref={bannerInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleBannerUpload}
+            />
+          </div>
+
+          {/* Profile Identity */}
+
+          <div
+            className="
+            px-5
+            sm:px-8
+            lg:px-10
+            pb-7
+          "
+          >
+            <div
+              className="
+              flex
+              flex-col
+              sm:flex-row
+              sm:items-end
+              gap-5
+              -mt-14
+              sm:-mt-16
+              relative
+              z-10
+            "
+            >
+              {/* Avatar */}
+
+              <div
+                className="
+                  w-fit
+                  rounded-full
+                  p-1.5
+                  shadow-xl
+                "
+                style={{
+                  backgroundColor: "var(--bg-card)",
+                }}
+              >
+                <Avatar
+                  uid={user.uid}
+                  image={profileData.photoURL}
+                  name={profileData.displayName || user.displayName}
+                  email={user.email}
+                  size="3xl"
+                  rounded="full"
+                  className="
+                    w-24
+                    h-24
+                    sm:w-32
+                    sm:h-32
+                  "
+                  collections={["admins", "users"]}
+                  editable
+                  onUpload={(url) =>
+                    setProfileData((previous) => ({
+                      ...previous,
+                      photoURL: url,
+                    }))
+                  }
+                />
+              </div>
+
+              {/* Identity */}
+
+              <div
+                className="
+                flex-1
+                min-w-0
+                pb-1
+              "
+              >
+                <div
+                  className="
+                  flex
+                  flex-wrap
+                  items-center
+                  gap-2
+                "
+                >
+                  <h1
+                    className="
+                      text-2xl
+                      sm:text-3xl
+                      font-extrabold
+                      tracking-tight
+                    "
+                    style={{
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    {profileData.displayName || "HOAS Owner"}
+                  </h1>
+
+                  <span
+                    className="
+                    inline-flex
+                    items-center
+                    gap-1
+                    px-2
+                    py-1
+                    rounded-full
+                    text-[10px]
+                    font-bold
+                    bg-emerald-500/10
+                    text-emerald-500
+                    border
+                    border-emerald-500/20
+                  "
+                  >
+                    <CheckCircle2
+                      className="
+                      w-3
+                      h-3
+                    "
+                    />
+                    Verified
+                  </span>
+                </div>
+
+                <p
+                  className="
+                    mt-1
+                    text-sm
+                    flex
+                    items-center
+                    gap-2
+                  "
+                  style={{
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  <Mail
+                    className="
+                    w-3.5
+                    h-3.5
+                  "
                   />
-                </div>
+
+                  {profileData.email || user.email}
+                </p>
               </div>
 
-              <div className="p-8 space-y-6 flex-1">
-                <div className="flex justify-between items-end border-b pb-3" style={{ borderColor: 'var(--border-secondary)' }}>
-                  <h3 className="font-extrabold text-xl" style={{ color: 'var(--text-primary)' }}>My profile</h3>
-                  <div className="text-[10px] text-right" style={{ color: 'var(--text-muted)' }}>
-                    Last Login {user.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleDateString() : "N/A"} <br />
-                    HOAS Platform
+              {/* Role */}
+
+              <div
+                className="
+                flex
+                items-center
+                gap-2
+                px-3
+                py-2
+                rounded-xl
+                border
+                w-fit
+              "
+                style={{
+                  backgroundColor: "var(--bg-tertiary)",
+
+                  borderColor: "var(--border-primary)",
+                }}
+              >
+                <ShieldCheck
+                  className="
+                  w-4
+                  h-4
+                  text-indigo-500
+                "
+                />
+
+                <div>
+                  <p
+                    className="
+                    text-[9px]
+                    uppercase
+                    tracking-wider
+                    font-bold
+                    text-slate-500
+                  "
+                  >
+                    Account
+                  </p>
+
+                  <p
+                    className="
+                    text-xs
+                    font-bold
+                  "
+                    style={{
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    Owner
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =================================================
+            CONTENT GRID
+        ================================================= */}
+
+        <div
+          className="
+          grid
+          grid-cols-1
+          lg:grid-cols-3
+          gap-6
+          mt-6
+        "
+        >
+          {/* ===============================================
+              PROFILE INFORMATION
+          =============================================== */}
+
+          <section
+            className="
+              lg:col-span-2
+              rounded-3xl
+              border
+              p-5
+              sm:p-7
+            "
+            style={{
+              backgroundColor: "var(--bg-card)",
+
+              borderColor: "var(--border-primary)",
+            }}
+          >
+            {/* Header */}
+
+            <div
+              className="
+              flex
+              items-center
+              justify-between
+              gap-4
+              mb-7
+            "
+            >
+              <div>
+                <div
+                  className="
+                  flex
+                  items-center
+                  gap-2
+                "
+                >
+                  <div
+                    className="
+                    w-9
+                    h-9
+                    rounded-xl
+                    bg-indigo-500/10
+                    flex
+                    items-center
+                    justify-center
+                  "
+                  >
+                    <UserRound
+                      className="
+                      w-4
+                      h-4
+                      text-indigo-500
+                    "
+                    />
                   </div>
+
+                  <h2
+                    className="
+                    text-base
+                    sm:text-lg
+                    font-bold
+                  "
+                  >
+                    Personal information
+                  </h2>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <Input placeholder="Full Name" value={profileData.displayName} onChange={e => setProfileData({ ...profileData, displayName: e.target.value })} />
-                  <Input placeholder="Phone Number" value={profileData.phone} onChange={e => setProfileData({ ...profileData, phone: e.target.value })} />
-                </div>
-                <Input placeholder="Email Address" value={profileData.email} onChange={e => setProfileData({ ...profileData, email: e.target.value })} type="email" />
-
-
+                <p
+                  className="
+                  mt-1
+                  ml-11
+                  text-xs
+                  sm:text-sm
+                "
+                  style={{
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  Update the information associated with your account.
+                </p>
               </div>
 
-              <div className="px-8 pb-8 pt-2 flex justify-center">
-                <button onClick={handleSave} disabled={isSaving} className="w-2/3 py-3.5 rounded-full bg-gradient-to-r from-orange-400 to-pink-500 text-white font-bold text-lg shadow-lg hover:shadow-orange-500/40 transition hover:-translate-y-0.5 disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer">
-                  {isSaving && <Loader2 size={18} className="animate-spin" />} Save
-                </button>
-              </div>
-              {saveMessage && <p className={`text-center pb-4 text-sm ${saveMessage.includes("success") ? "text-emerald-500" : "text-red-500"}`}>{saveMessage}</p>}
+              <Pencil
+                className="
+                w-4
+                h-4
+                text-slate-400
+              "
+              />
             </div>
 
-            {/* RIGHT COLUMN: Account Status & Actions */}
-            <div className="lg:col-span-7 flex flex-col gap-6 lg:gap-8">
-              {/* Card 1: Account Status */}
-              <div className="rounded-[2rem] shadow-xl p-8 border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-secondary)' }}>
-                <div className="flex justify-between items-center mb-6 border-b pb-4" style={{ borderColor: 'var(--border-secondary)' }}>
-                  <h3 className="font-bold text-xl" style={{ color: 'var(--text-primary)' }}>My HOAS account</h3>
-                </div>
+            {/* Fields */}
 
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center pb-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                      <div>
-                        <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Active account</p>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Created: {user.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : "N/A"}</p>
-                      </div>
-                    </div>
-                    <span className="px-5 py-2 rounded-full bg-gradient-to-r from-orange-400 to-pink-500 text-white text-xs font-bold shadow-md">Verified</span>
-                  </div>
-                </div>
-              </div>
+            <div
+              className="
+              grid
+              grid-cols-1
+              sm:grid-cols-2
+              gap-5
+            "
+            >
+              <ProfileField
+                label="Full name"
+                value={profileData.displayName}
+                placeholder="Your full name"
+                icon={<UserRound className="w-4 h-4" />}
+                onChange={(value) =>
+                  setProfileData((previous) => ({
+                    ...previous,
+                    displayName: value,
+                  }))
+                }
+              />
 
-              {/* Card 2: Security & Actions */}
-              <div className="rounded-[2rem] shadow-xl p-8 border flex-1" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-secondary)' }}>
-                <div className="flex justify-between items-center mb-6 border-b pb-4" style={{ borderColor: 'var(--border-secondary)' }}>
-                  <h3 className="font-bold text-xl" style={{ color: 'var(--text-primary)' }}>Security Details</h3>
-                  <span className="text-xs px-4 py-1.5 rounded-full font-bold" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>Manage</span>
-                </div>
+              <ProfileField
+                label="Phone number"
+                value={profileData.phone}
+                placeholder="Your phone number"
+                icon={<Phone className="w-4 h-4" />}
+                onChange={(value) =>
+                  setProfileData((previous) => ({
+                    ...previous,
+                    phone: value,
+                  }))
+                }
+              />
 
-                <div className="space-y-6 mt-4">
-                  <div className="flex justify-between items-center pb-6 border-b" style={{ borderColor: 'var(--border-secondary)' }}>
-                    <div className="flex items-center gap-4">
-                      <div className="w-3 h-3 rounded-full bg-amber-500" />
-                      <div>
-                        <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Change Password</p>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Update your credentials</p>
-                      </div>
-                    </div>
-                    <button onClick={() => setShowPwModal(true)} className="px-5 py-2 rounded-full transition text-xs font-bold cursor-pointer hover:bg-black/5 dark:hover:bg-white/5" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
-                      Update
-                    </button>
-                  </div>
+              <ProfileField
+                label="Email address"
+                value={profileData.email}
+                placeholder="Email address"
+                icon={<Mail className="w-4 h-4" />}
+                disabled
+              />
 
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      <div className="w-3 h-3 rounded-full bg-indigo-500" />
-                      <div>
-                        <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>End Session</p>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Log out securely</p>
-                      </div>
-                    </div>
-                    <button onClick={handleLogout} className="px-5 py-2 rounded-full text-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20 transition text-xs font-bold cursor-pointer">
-                      Log out
-                    </button>
-                  </div>
-                </div>
-              </div>
-
+              <ProfileField
+                label="Organization"
+                value={profileData.organization}
+                placeholder="Organization"
+                icon={<Building2 className="w-4 h-4" />}
+                disabled
+              />
             </div>
+
+            {/* Save */}
+
+            <div
+              className="
+              mt-7
+              pt-6
+              border-t
+              flex
+              flex-col
+              sm:flex-row
+              sm:items-center
+              justify-between
+              gap-4
+            "
+              style={{
+                borderColor: "var(--border-primary)",
+              }}
+            >
+              <div>
+                {saveMessage && (
+                  <p
+                    className={`
+                    text-xs
+                    font-semibold
+                    ${
+                      saveMessage.includes("success")
+                        ? "text-emerald-500"
+                        : "text-red-500"
+                    }
+                  `}
+                  >
+                    {saveMessage}
+                  </p>
+                )}
+
+                {!saveMessage && (
+                  <p
+                    className="
+                    text-xs
+                    text-slate-500
+                  "
+                  >
+                    Changes are saved to your HOAS account.
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="
+                  inline-flex
+                  items-center
+                  justify-center
+                  gap-2
+                  px-6
+                  py-3
+                  rounded-xl
+                  bg-indigo-600
+                  hover:bg-indigo-500
+                  text-white
+                  text-sm
+                  font-bold
+                  shadow-lg
+                  shadow-indigo-600/20
+                  hover:shadow-indigo-600/30
+                  transition-all
+                  duration-200
+                  hover:-translate-y-0.5
+                  active:translate-y-0
+                  disabled:opacity-50
+                  disabled:pointer-events-none
+                "
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2
+                      className="
+                      w-4
+                      h-4
+                      animate-spin
+                    "
+                    />
+                    Saving...
+                  </>
+                ) : (
+                  "Save changes"
+                )}
+              </button>
+            </div>
+          </section>
+
+          {/* ===============================================
+              RIGHT SIDEBAR
+          =============================================== */}
+
+          <div
+            className="
+            flex
+            flex-col
+            gap-6
+          "
+          >
+            {/* ACCOUNT */}
+
+            <section
+              className="
+                rounded-3xl
+                border
+                p-5
+              "
+              style={{
+                backgroundColor: "var(--bg-card)",
+
+                borderColor: "var(--border-primary)",
+              }}
+            >
+              <SectionHeading
+                icon={
+                  <Shield
+                    className="
+                    w-4
+                    h-4
+                  "
+                  />
+                }
+                title="Account status"
+              />
+
+              <div
+                className="
+                mt-5
+                rounded-2xl
+                p-4
+                border
+                bg-emerald-500/5
+                border-emerald-500/10
+              "
+              >
+                <div
+                  className="
+                  flex
+                  items-center
+                  justify-between
+                  gap-3
+                "
+                >
+                  <div
+                    className="
+                    flex
+                    items-center
+                    gap-3
+                  "
+                  >
+                    <div
+                      className="
+                      w-10
+                      h-10
+                      rounded-xl
+                      bg-emerald-500/10
+                      flex
+                      items-center
+                      justify-center
+                    "
+                    >
+                      <CheckCircle2
+                        className="
+                        w-5
+                        h-5
+                        text-emerald-500
+                      "
+                      />
+                    </div>
+
+                    <div>
+                      <p
+                        className="
+                        text-sm
+                        font-bold
+                      "
+                      >
+                        Active
+                      </p>
+
+                      <p
+                        className="
+                        text-[11px]
+                        text-slate-500
+                      "
+                      >
+                        Account verified
+                      </p>
+                    </div>
+                  </div>
+
+                  <span
+                    className="
+                    text-[10px]
+                    font-bold
+                    px-2
+                    py-1
+                    rounded-full
+                    bg-emerald-500/10
+                    text-emerald-500
+                  "
+                  >
+                    GOOD
+                  </span>
+                </div>
+              </div>
+
+              <div
+                className="
+                mt-5
+                space-y-4
+              "
+              >
+                <MetaRow
+                  icon={<CalendarDays className="w-4 h-4" />}
+                  label="Created"
+                  value={creationDate}
+                />
+
+                <MetaRow
+                  icon={<Clock3 className="w-4 h-4" />}
+                  label="Last login"
+                  value={lastLogin}
+                />
+              </div>
+            </section>
+
+            {/* SECURITY */}
+
+            <section
+              className="
+                rounded-3xl
+                border
+                p-5
+                flex-1
+              "
+              style={{
+                backgroundColor: "var(--bg-card)",
+
+                borderColor: "var(--border-primary)",
+              }}
+            >
+              <SectionHeading
+                icon={
+                  <LockKeyhole
+                    className="
+                    w-4
+                    h-4
+                  "
+                  />
+                }
+                title="Security"
+              />
+
+              <div
+                className="
+                mt-5
+                space-y-2
+              "
+              >
+                <ActionRow
+                  icon={
+                    <KeyRound
+                      className="
+                      w-4
+                      h-4
+                    "
+                    />
+                  }
+                  title="Password"
+                  description="Update your account password"
+                  button="Update"
+                  onClick={() => setShowPwModal(true)}
+                />
+
+                <ActionRow
+                  danger
+                  icon={
+                    <LogOut
+                      className="
+                      w-4
+                      h-4
+                    "
+                    />
+                  }
+                  title="Sign out"
+                  description="End your current session"
+                  button="Log out"
+                  onClick={handleLogout}
+                />
+              </div>
+            </section>
           </div>
         </div>
       </main>
 
-      {/* ── Password Change Modal ── */}
+      {/* ===================================================
+          PASSWORD MODAL
+      =================================================== */}
+
       {showPwModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md" onClick={() => setShowPwModal(false)}>
-          <div className="w-full max-w-md mx-4 rounded-3xl p-8 space-y-6 shadow-2xl transition-all"
-            style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border-primary)" }}
-            onClick={e => e.stopPropagation()}>
-
-            <div className="flex items-center justify-between pb-2">
-              <div>
-                <h3 className="font-extrabold text-xl" style={{ color: "var(--text-primary)" }}>Change Password</h3>
-                <p className="text-xs mt-1 font-medium" style={{ color: "var(--text-muted)" }}>Ensure your account is using a long, random password to stay secure.</p>
-              </div>
-              <button onClick={() => setShowPwModal(false)} className="p-2 rounded-xl hover:bg-gray-500/10 cursor-pointer transition-colors -mt-4">
-                <X className="w-5 h-5" style={{ color: "var(--text-secondary)" }} />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {[
-                { key: "current", label: "Current Password", ph: "Enter current password" },
-                { key: "newPass", label: "New Password", ph: "Minimum 6 characters" },
-                { key: "confirm", label: "Confirm Password", ph: "Re-enter new password" },
-              ].map(f => (
-                <div key={f.key} className="space-y-1.5 focus-within:transform focus-within:scale-[1.01] transition-transform duration-200">
-                  <label className="block text-xs font-bold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>{f.label}</label>
-                  <div className="relative">
-                    <input type={showPw[f.key] ? "text" : "password"} value={pwForm[f.key]}
-                      onChange={e => setPwForm(p => ({ ...p, [f.key]: e.target.value }))} placeholder={f.ph}
-                      className="w-full py-3.5 px-4 pr-12 rounded-xl border text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500"
-                      style={{ backgroundColor: "var(--bg-primary)", borderColor: "var(--border-primary)", color: "var(--text-primary)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)" }} />
-                    <button onClick={() => setShowPw(p => ({ ...p, [f.key]: !p[f.key] }))} className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer p-1 rounded-md hover:bg-gray-500/10 transition-colors">
-                      {showPw[f.key] ? <EyeOff className="w-4 h-4" style={{ color: "var(--text-muted)" }} /> : <Eye className="w-4 h-4" style={{ color: "var(--text-muted)" }} />}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-2">
-              <button onClick={handleChangePw} disabled={changingPw || !pwForm.current || !pwForm.newPass || !pwForm.confirm}
-                className="w-full py-3.5 rounded-xl text-white text-sm font-bold bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 disabled:opacity-50 transition-all duration-300 hover:shadow-lg shadow-indigo-500/25 cursor-pointer flex items-center justify-center gap-2">
-                {changingPw && <Loader2 className="w-5 h-5 animate-spin" />}
-                Update Password
-              </button>
-            </div>
-          </div>
-        </div>
+        <PasswordModal
+          pwForm={pwForm}
+          setPwForm={setPwForm}
+          showPw={showPw}
+          setShowPw={setShowPw}
+          changingPw={changingPw}
+          onClose={() => setShowPwModal(false)}
+          onSubmit={handleChangePw}
+        />
       )}
+
+      {/* ===================================================
+          ANIMATION STYLES
+      =================================================== */}
+
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
-/* ── Small Components ── */
+/* =========================================================
+   PROFILE FIELD
+========================================================= */
 
-const InfoCard = ({ title, icon, children }) => (
-  <div className="rounded-2xl p-6 border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 relative overflow-hidden group" style={{ backgroundColor: "var(--bg-tertiary)", borderColor: "var(--border-primary)" }}>
-    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-    <h3 className="flex items-center gap-3 text-xs font-bold mb-5 tracking-widest uppercase relative z-10" style={{ color: "var(--text-primary)" }}>
-      <span className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 group-hover:scale-110 transition-transform duration-300">{icon}</span>
-      {title}
-    </h3>
-    <div className="relative z-10 space-y-4">
-      {children}
+const ProfileField = ({
+  label,
+  value,
+  placeholder,
+  icon,
+  onChange,
+  disabled = false,
+}) => {
+  return (
+    <div className="space-y-2">
+      <label
+        className="
+          text-[11px]
+          font-bold
+          uppercase
+          tracking-wider
+          text-slate-500
+          flex
+          items-center
+          gap-2
+        "
+      >
+        {icon}
+
+        {label}
+      </label>
+
+      <input
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        disabled={disabled}
+        onChange={(event) => onChange?.(event.target.value)}
+        className="
+          w-full
+          h-12
+          px-4
+          rounded-xl
+          border
+          text-sm
+          font-medium
+          outline-none
+          transition-all
+          duration-200
+          focus:ring-2
+          focus:ring-indigo-500/20
+          focus:border-indigo-500
+          disabled:opacity-60
+          disabled:cursor-not-allowed
+        "
+        style={{
+          backgroundColor: "var(--bg-primary)",
+
+          borderColor: "var(--border-primary)",
+
+          color: "var(--text-primary)",
+        }}
+      />
     </div>
-  </div>
-);
+  );
+};
 
-const Input = ({ value, onChange, placeholder, type = "text" }) => (
-  <div className="focus-within:transform focus-within:scale-[1.02] transition-transform duration-200">
-    <input type={type} value={value} onChange={onChange} placeholder={placeholder}
-      className="w-full py-2 bg-transparent border-b-2 text-sm font-bold transition-all duration-200 focus:outline-none focus:border-indigo-500"
-      style={{ borderColor: "var(--border-secondary)", color: "var(--text-primary)" }} />
-  </div>
-);
+/* =========================================================
+   SECTION HEADING
+========================================================= */
+
+const SectionHeading = ({ icon, title }) => {
+  return (
+    <div
+      className="
+      flex
+      items-center
+      gap-3
+    "
+    >
+      <div
+        className="
+        w-9
+        h-9
+        rounded-xl
+        bg-indigo-500/10
+        text-indigo-500
+        flex
+        items-center
+        justify-center
+      "
+      >
+        {icon}
+      </div>
+
+      <h2
+        className="
+        text-base
+        font-bold
+      "
+      >
+        {title}
+      </h2>
+    </div>
+  );
+};
+
+/* =========================================================
+   META ROW
+========================================================= */
+
+const MetaRow = ({ icon, label, value }) => {
+  return (
+    <div
+      className="
+      flex
+      items-center
+      gap-3
+    "
+    >
+      <div
+        className="
+        w-8
+        h-8
+        rounded-lg
+        bg-white/5
+        flex
+        items-center
+        justify-center
+        text-slate-500
+      "
+      >
+        {icon}
+      </div>
+
+      <div className="min-w-0">
+        <p
+          className="
+          text-[10px]
+          uppercase
+          tracking-wider
+          font-bold
+          text-slate-500
+        "
+        >
+          {label}
+        </p>
+
+        <p
+          className="
+          text-xs
+          font-semibold
+          mt-0.5
+        "
+          style={{
+            color: "var(--text-primary)",
+          }}
+        >
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+/* =========================================================
+   ACTION ROW
+========================================================= */
+
+const ActionRow = ({
+  icon,
+  title,
+  description,
+  button,
+  onClick,
+  danger = false,
+}) => {
+  return (
+    <div
+      className="
+      group
+      flex
+      items-center
+      gap-3
+      p-3
+      rounded-2xl
+      border
+      transition-all
+      duration-200
+      hover:-translate-y-0.5
+    "
+      style={{
+        backgroundColor: "var(--bg-primary)",
+
+        borderColor: "var(--border-primary)",
+      }}
+    >
+      <div
+        className={`
+        w-9
+        h-9
+        rounded-xl
+        flex
+        items-center
+        justify-center
+        flex-shrink-0
+        ${
+          danger
+            ? "bg-red-500/10 text-red-500"
+            : "bg-indigo-500/10 text-indigo-500"
+        }
+      `}
+      >
+        {icon}
+      </div>
+
+      <div
+        className="
+        flex-1
+        min-w-0
+      "
+      >
+        <p
+          className="
+          text-xs
+          font-bold
+        "
+        >
+          {title}
+        </p>
+
+        <p
+          className="
+          text-[10px]
+          text-slate-500
+          truncate
+          mt-0.5
+        "
+        >
+          {description}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={onClick}
+        className={`
+          flex-shrink-0
+          px-3
+          py-2
+          rounded-lg
+          text-[10px]
+          font-bold
+          transition-all
+          duration-200
+          active:scale-95
+          ${
+            danger
+              ? "text-red-500 bg-red-500/10 hover:bg-red-500/15"
+              : "text-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/15"
+          }
+        `}
+      >
+        {button}
+      </button>
+    </div>
+  );
+};
+
+/* =========================================================
+   PASSWORD MODAL
+========================================================= */
+
+const PasswordModal = ({
+  pwForm,
+  setPwForm,
+  showPw,
+  setShowPw,
+  changingPw,
+  onClose,
+  onSubmit,
+}) => {
+  const fields = [
+    {
+      key: "current",
+      label: "Current password",
+      placeholder: "Enter current password",
+    },
+    {
+      key: "newPass",
+      label: "New password",
+      placeholder: "Minimum 6 characters",
+    },
+    {
+      key: "confirm",
+      label: "Confirm password",
+      placeholder: "Re-enter new password",
+    },
+  ];
+
+  return (
+    <div
+      className="
+        fixed
+        inset-0
+        z-[9999]
+        flex
+        items-center
+        justify-center
+        p-4
+        bg-black/60
+        backdrop-blur-md
+        animate-[fadeIn_0.2s_ease-out]
+      "
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        className="
+          w-full
+          max-w-md
+          rounded-3xl
+          border
+          p-5
+          sm:p-7
+          shadow-2xl
+          animate-[modalIn_0.25s_ease-out]
+        "
+        style={{
+          backgroundColor: "var(--bg-card)",
+
+          borderColor: "var(--border-primary)",
+        }}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        {/* Header */}
+
+        <div
+          className="
+          flex
+          items-start
+          justify-between
+          gap-4
+        "
+        >
+          <div
+            className="
+            flex
+            items-start
+            gap-3
+          "
+          >
+            <div
+              className="
+              w-10
+              h-10
+              rounded-xl
+              bg-indigo-500/10
+              text-indigo-500
+              flex
+              items-center
+              justify-center
+              flex-shrink-0
+            "
+            >
+              <LockKeyhole
+                className="
+                w-5
+                h-5
+              "
+              />
+            </div>
+
+            <div>
+              <h2
+                className="
+                text-lg
+                font-extrabold
+              "
+              >
+                Change password
+              </h2>
+
+              <p
+                className="
+                text-xs
+                text-slate-500
+                mt-1
+                leading-relaxed
+              "
+              >
+                Choose a strong password to keep your account secure.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="
+              p-2
+              rounded-xl
+              text-slate-500
+              hover:text-slate-300
+              hover:bg-white/5
+              transition
+            "
+          >
+            <X
+              className="
+              w-4
+              h-4
+            "
+            />
+          </button>
+        </div>
+
+        {/* Fields */}
+
+        <div
+          className="
+          mt-6
+          space-y-4
+        "
+        >
+          {fields.map((field) => (
+            <div key={field.key} className="space-y-2">
+              <label
+                className="
+                block
+                text-[10px]
+                uppercase
+                tracking-wider
+                font-bold
+                text-slate-500
+              "
+              >
+                {field.label}
+              </label>
+
+              <div
+                className="
+                relative
+              "
+              >
+                <input
+                  type={showPw[field.key] ? "text" : "password"}
+                  value={pwForm[field.key]}
+                  onChange={(event) =>
+                    setPwForm((previous) => ({
+                      ...previous,
+                      [field.key]: event.target.value,
+                    }))
+                  }
+                  placeholder={field.placeholder}
+                  className="
+                    w-full
+                    h-12
+                    px-4
+                    pr-11
+                    rounded-xl
+                    border
+                    text-sm
+                    outline-none
+                    transition-all
+                    focus:ring-2
+                    focus:ring-indigo-500/20
+                    focus:border-indigo-500
+                  "
+                  style={{
+                    backgroundColor: "var(--bg-primary)",
+
+                    borderColor: "var(--border-primary)",
+
+                    color: "var(--text-primary)",
+                  }}
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPw((previous) => ({
+                      ...previous,
+                      [field.key]: !previous[field.key],
+                    }))
+                  }
+                  className="
+                    absolute
+                    right-3
+                    top-1/2
+                    -translate-y-1/2
+                    p-1.5
+                    rounded-lg
+                    text-slate-500
+                    hover:text-slate-300
+                    hover:bg-white/5
+                    transition
+                  "
+                >
+                  {showPw[field.key] ? (
+                    <EyeOff
+                      className="
+                      w-4
+                      h-4
+                    "
+                    />
+                  ) : (
+                    <Eye
+                      className="
+                      w-4
+                      h-4
+                    "
+                    />
+                  )}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Buttons */}
+
+        <div
+          className="
+          mt-6
+          flex
+          flex-col-reverse
+          sm:flex-row
+          gap-2
+        "
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="
+              flex-1
+              h-11
+              rounded-xl
+              border
+              text-sm
+              font-bold
+              transition
+              hover:bg-white/5
+            "
+            style={{
+              borderColor: "var(--border-primary)",
+
+              color: "var(--text-secondary)",
+            }}
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onSubmit}
+            disabled={
+              changingPw ||
+              !pwForm.current ||
+              !pwForm.newPass ||
+              !pwForm.confirm
+            }
+            className="
+              flex-1
+              h-11
+              rounded-xl
+              bg-indigo-600
+              hover:bg-indigo-500
+              text-white
+              text-sm
+              font-bold
+              transition-all
+              duration-200
+              hover:-translate-y-0.5
+              active:translate-y-0
+              disabled:opacity-50
+              disabled:pointer-events-none
+              flex
+              items-center
+              justify-center
+              gap-2
+            "
+          >
+            {changingPw && (
+              <Loader2
+                className="
+                w-4
+                h-4
+                animate-spin
+              "
+              />
+            )}
+
+            {changingPw ? "Updating..." : "Update password"}
+          </button>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes modalIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px) scale(.98);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
 
 export default OwnerProfile;
