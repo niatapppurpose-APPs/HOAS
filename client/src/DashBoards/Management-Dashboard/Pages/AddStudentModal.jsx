@@ -148,6 +148,7 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
                 wardenId: selectedWarden || undefined,
                 totalFee: Number(formData.totalFee),
                 paidFee: Number(formData.paidFee),
+                collegeId: userData?.collegeId?._id || userData?.collegeId,
             });
 
             setSuccess(true);
