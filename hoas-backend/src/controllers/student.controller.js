@@ -161,7 +161,8 @@ export async function bulkCreateStudents(req, res, next) {
           });
           existingEmails.add(email);
           results.created++;
-          await new Promise((resolve) => setTimeout(resolve, 250));
+          // Space out welcome emails so Gmail does not throttle bursts.
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         } catch (innerError) {
           await deleteAuthUser(authUser.uid).catch(() => {});
           results.failed++;

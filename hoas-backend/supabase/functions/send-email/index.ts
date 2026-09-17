@@ -34,7 +34,23 @@ function htmlToPlainText(html: string): string {
     .trim();
 }
 
-async function sendViaSmtp(to: string, subject: string, html: string): Promise<{ success: boolean; via: string; data?: unknown; error?: string }> {
+// Gmail frequently returns transient 4xx errors (rate/throttle/greylisting),
+// especially from shared cloud IPs and after bursts. Retry those with
+// backoff. Auth errors (535/534) and permanent 5xx are NOT retried.
+function isTransientSmtpError(err: any): boolean {
+  const msg = `${err?.code || ''} ${err?.responseCode || ''} ${err?.message || ''}`
+  if (/\b(421|450|451|452)\b/.test(msg)) return true
+  if (/ETIMEDOUT|ECONNRESET|ESOCKET|ECONNREFUSED|EPIPE|Greeting never received|Connection closed|timeout|ESOCKETTIMEDOUT/i.test(msg)) return true
+  return false
+}
+
+function isAuthError(err: any): boolean {
+  const msg = `${err?.code || ''} ${err?.responseCode || ''} ${err?.message || ''}`
+  return /\b(534|535|538)\b/.test(msg)
+    || /invalid login|authentication failed|Username and Password not accepted|Application-specific password required/i.test(msg)
+}
+
+async function sendViaSmtp(to: string, subject: string, html: string): Promise<{ success: boolean; via: string; data?: unknown; error?: string; attempts?: number }> {
   const host = Deno.env.get('SMTP_HOST')
   const user = Deno.env.get('SMTP_USER')
   const pass = Deno.env.get('SMTP_PASSWORD')
@@ -43,46 +59,55 @@ async function sendViaSmtp(to: string, subject: string, html: string): Promise<{
     return { success: false, via: 'smtp', error: 'SMTP credentials not configured in Supabase secrets' }
   }
 
-  try {
-    const nodemailer = await import('npm:nodemailer@6.9.10')
-    const transporter = nodemailer.default.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: { user, pass },
-      tls: {
-        rejectUnauthorized: false
-      }
-    })
+  const fromName = Deno.env.get('SMTP_FROM_NAME') || 'HOAS'
+  const fromEmail = Deno.env.get('SMTP_FROM_EMAIL') || user
+  const sender = `"${fromName}" <${fromEmail}>`
+  const plainText = htmlToPlainText(html)
+  const domain = fromEmail.includes('@') ? fromEmail.split('@')[1] : 'gmail.com'
 
-    const fromName = Deno.env.get('SMTP_FROM_NAME') || 'HOAS'
-    const fromEmail = Deno.env.get('SMTP_FROM_EMAIL') || user
-    const sender = `"${fromName}" <${fromEmail}>`
-    const plainText = htmlToPlainText(html)
-    const domain = fromEmail.includes('@') ? fromEmail.split('@')[1] : 'gmail.com'
-    const messageId = `<${Date.now()}.${Math.random().toString(36).substring(2, 10)}@${domain}>`
+  const backoffs = [2000, 6000]
+  let lastError = 'unknown error'
+  for (let attempt = 0; attempt <= backoffs.length; attempt++) {
+    try {
+      const nodemailer = await import('npm:nodemailer@6.9.10')
+      const transporter = nodemailer.default.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass },
+        tls: {
+          rejectUnauthorized: false
+        }
+      })
 
-    const info = await transporter.sendMail({
-      from: sender,
-      to,
-      replyTo: sender,
-      subject,
-      text: plainText,
-      html,
-      messageId,
-      headers: {
-        'X-Mailer': 'HOAS Mail Service',
-        'X-Priority': '3',
-        'List-Unsubscribe': `<mailto:${fromEmail}?subject=Unsubscribe>`,
-        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-        'Auto-Submitted': 'auto-generated',
-      }
-    })
+      const messageId = `<${Date.now()}.${Math.random().toString(36).substring(2, 10)}@${domain}>`
 
-    return { success: true, via: 'smtp', data: info }
-  } catch (err: any) {
-    return { success: false, via: 'smtp', error: err?.message || String(err) }
+      const info = await transporter.sendMail({
+        from: sender,
+        to,
+        replyTo: sender,
+        subject,
+        text: plainText,
+        html,
+        messageId,
+        headers: {
+          'X-Mailer': 'HOAS Mail Service',
+          'X-Priority': '3',
+          'List-Unsubscribe': `<mailto:${fromEmail}?subject=Unsubscribe>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+          'Auto-Submitted': 'auto-generated',
+        }
+      })
+
+      return { success: true, via: 'smtp', data: info, attempts: attempt + 1 }
+    } catch (err: any) {
+      lastError = err?.message || String(err)
+      // Don't retry auth failures or permanent errors — they will never succeed.
+      if (isAuthError(err) || !isTransientSmtpError(err) || attempt === backoffs.length) break
+      await new Promise((r) => setTimeout(r, backoffs[attempt]))
+    }
   }
+  return { success: false, via: 'smtp', error: lastError }
 }
 
 const DEFAULT_CONFIG: EmailConfig = {

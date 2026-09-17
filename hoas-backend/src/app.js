@@ -25,6 +25,7 @@ import accessRequestRoutes from './routes/accessRequest.routes.js';
 import settingRoutes from './routes/setting.routes.js';
 import reportRoutes from './routes/report.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import emailRoutes from './routes/email.routes.js';
 
 const app = express();
 
@@ -95,6 +96,7 @@ app.use('/api/access-requests', accessRequestRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/emails', emailRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

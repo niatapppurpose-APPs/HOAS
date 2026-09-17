@@ -92,17 +92,41 @@ async function callSupabaseEmail({ to, type, data, subject }) {
 
   const payload = { to, type, config, data: data || {}, subject }
 
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 15000)
+  const postEdge = async (body, timeoutMs) => {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      return await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  // Edge cold starts (Deno isolate + npm import + SMTP handshake) can exceed
+  // 15s, so allow 40s and retry once on network abort/timeout before falling back.
+  let res = null
+  let lastFetchError = null
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      res = await postEdge(payload, 40000)
+      lastFetchError = null
+      break
+    } catch (err) {
+      lastFetchError = err
+      if (attempt === 0) await new Promise((r) => setTimeout(r, 2000))
+    }
+  }
+  if (!res) {
+    console.error(`[email-supabase-failed] to=${to} type=${type}`, lastFetchError?.message || lastFetchError)
+    throw lastFetchError
+  }
 
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    })
-
     const body = await res.text()
     let json
     try { json = JSON.parse(body) } catch { json = { raw: body } }
@@ -119,14 +143,10 @@ async function callSupabaseEmail({ to, type, data, subject }) {
     return json
   } catch (err) {
     console.error(`[email-supabase-failed] to=${to} type=${type}`, err.message || err)
-    // Fallback to direct SMTP if edge function fetch fails
+    // Fallback to direct SMTP if edge function fetch fails (bounded 20s timeout)
     try {
       // Request renderOnly from edge function if possible, or send simple fallback
-      const renderRes = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ ...payload, renderOnly: true }),
-      }).catch(() => null);
+      const renderRes = await postEdge({ ...payload, renderOnly: true }, 20000).catch(() => null);
 
       if (renderRes && renderRes.ok) {
         const renderJson = await renderRes.json();
@@ -138,8 +158,6 @@ async function callSupabaseEmail({ to, type, data, subject }) {
       console.error('[email-fallback-failed]', fallbackErr.message);
     }
     throw err
-  } finally {
-    clearTimeout(timer)
   }
 }
 
