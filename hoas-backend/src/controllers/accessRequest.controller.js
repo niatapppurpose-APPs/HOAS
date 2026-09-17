@@ -12,6 +12,7 @@ import {
 } from '../services/email.service.js';
 import { notifyAdmins } from '../services/notification.service.js';
 import { firebaseAuth } from '../config/firebase.js';
+import { generateResetLink } from '../services/user.service.js';
 
 function generatePassword() {
   const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -222,8 +223,7 @@ export async function createAccountFromRequest(req, res, next) {
 
     // Fire-and-forget: credentials + password-reset link are emailed without
     // blocking the HTTP response (Render kills slow requests).
-    firebaseAuth
-      .generatePasswordResetLink(request.email)
+    generateResetLink(request.email)
       .catch(() => '')
       .then((resetLink) =>
         sendWelcomeEmail({
@@ -232,8 +232,7 @@ export async function createAccountFromRequest(req, res, next) {
           role: 'management',
           extra: [
             { name: 'Organization', value: request.orgName },
-            { name: 'Email', value: request.email },
-            { name: 'Temporary password', value: password },
+            { name: 'Login Email', value: request.email },
           ],
           resetLink,
         })

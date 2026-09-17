@@ -49,6 +49,7 @@ const PageLoader = () => (
 // Core pages - loaded immediately for better UX
 import Home from '../../Pages/HOME/home';
 import Login from '../../Pages/LoginPage/Login';
+import ResetPassword from '../../Pages/ResetPassword/ResetPassword';
 import Dashboard from '../../Pages/Dashboard/Dashboard';
 import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval";
 import NotFound from "../../Pages/NotFound";
@@ -114,6 +115,7 @@ const Routes_path = () => {
                 {/* ------------------------------ Home Page to User role page --------------------------- */}
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 {/* WaitingApproval handles its own auth loading/redirect so denied users do not loop. */}
 <Route path="/waiting-approval" element={<WaitingApproval />} />

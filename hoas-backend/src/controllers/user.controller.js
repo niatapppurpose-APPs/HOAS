@@ -7,6 +7,7 @@ import { recordAudit } from '../services/audit.service.js';
 import { sendWelcomeEmail } from '../services/email.service.js';
 import { notifyUser, notifyAdmins } from '../services/notification.service.js';
 import { firebaseAuth } from '../config/firebase.js';
+import { generateResetLink } from '../services/user.service.js';
 import { emitToUser, broadcastUserUpdate } from '../services/socket.service.js';
 
 const STUDENT_FIELDS = ['studentId', 'rollNumber', 'idNumber', 'feeDetails', 'hostelBlock'];
@@ -108,8 +109,7 @@ export async function createManagement(req, res, next) {
 
     // Non-blocking: reset link fetch + SMTP delivery must never delay the
     // HTTP response (Render times out slow requests).
-    firebaseAuth
-      .generatePasswordResetLink(email)
+    generateResetLink(email)
       .catch(() => '')
       .then((resetLink) =>
         sendWelcomeEmail({
@@ -178,8 +178,7 @@ export async function createWarden(req, res, next) {
     hostel.wardenId = user._id;
     await hostel.save();
 
-    firebaseAuth
-      .generatePasswordResetLink(email)
+    generateResetLink(email)
       .catch(() => '')
       .then((resetLink) =>
         sendWelcomeEmail({
