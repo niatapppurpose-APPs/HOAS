@@ -26,12 +26,26 @@ export async function testEmail(req, res, next) {
       },
     });
 
+    // sendMail resolves null when no email provider is configured at all.
+    // Never report that as success — it is the "silent skip" that hides
+    // misconfiguration (e.g. SUPABASE_URL missing on the host).
+    if (!result) {
+      throw new AppError(
+        503,
+        'EMAIL_NOT_CONFIGURED',
+        'Email provider is not configured on this server (SUPABASE_URL / EMAIL_FUNCTION_URL missing).'
+      );
+    }
+    if (result.success === false) {
+      throw new AppError(502, 'EMAIL_DELIVERY_FAILED', String(result.error || 'Edge function rejected the send'));
+    }
+
     res.json({
       ok: true,
       to,
-      via: result?.via || 'unknown',
-      subject: result?.subject || null,
-      attempts: result?.attempts || null,
+      via: result.via || 'unknown',
+      subject: result.subject || null,
+      attempts: result.attempts || null,
       durationMs: Date.now() - startedAt,
     });
   } catch (error) {
