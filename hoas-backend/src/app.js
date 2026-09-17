@@ -6,7 +6,6 @@ import { env } from './config/env.js';
 import { globalRateLimit } from './middleware/rateLimit.middleware.js';
 import { notFoundHandler, errorHandler } from './middleware/error.middleware.js';
 import { authenticate } from './middleware/auth.middleware.js';
-import { mintDevToken } from './middleware/auth.middleware.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import studentRoutes from './routes/student.routes.js';
@@ -69,13 +68,6 @@ app.get('/health', (req, res) => {
     service: 'hoas-backend',
     time: new Date().toISOString(),
   });
-});
-
-app.post('/api/dev/token', (req, res) => {
-  if (!env.firebaseDevMode) return res.status(404).json({ error: 'NOT_FOUND' });
-  const { uid } = req.body || {};
-  if (!uid) return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'uid required' });
-  res.json({ token: mintDevToken(uid) });
 });
 
 app.use('/api/auth', authRoutes);

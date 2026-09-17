@@ -1,5 +1,3 @@
-import jwt from 'jsonwebtoken';
-import { env } from '../config/env.js';
 import { firebaseAuth } from '../config/firebase.js';
 import { AppError } from '../utils/AppError.js';
 import User from '../models/User.js';
@@ -14,15 +12,7 @@ export async function authenticate(req, res, next) {
       const decoded = await firebaseAuth.verifyIdToken(token);
       uid = decoded.uid;
     } catch {
-      if (!env.firebaseDevMode || !token.startsWith('dev.')) {
-        throw new AppError(401, 'INVALID_TOKEN');
-      }
-      try {
-        const payload = jwt.verify(token.slice(4), env.devTokenSecret);
-        uid = payload.uid;
-      } catch {
-        throw new AppError(401, 'INVALID_TOKEN');
-      }
+      throw new AppError(401, 'INVALID_TOKEN');
     }
 
     const user = await User.findOne({ uid }).populate('collegeId', 'name logoUrl location _id');
@@ -47,15 +37,7 @@ export function verifyTokenOnly(req, res, next) {
         uid = decoded.uid;
         email = decoded.email || null;
       } catch {
-        if (!env.firebaseDevMode || !token.startsWith('dev.')) {
-          throw new AppError(401, 'INVALID_TOKEN');
-        }
-        try {
-          const payload = jwt.verify(token.slice(4), env.devTokenSecret);
-          uid = payload.uid;
-        } catch {
-          throw new AppError(401, 'INVALID_TOKEN');
-        }
+        throw new AppError(401, 'INVALID_TOKEN');
       }
 
       req.auth = { uid, email };
@@ -64,10 +46,6 @@ export function verifyTokenOnly(req, res, next) {
       next(error);
     }
   })();
-}
-
-export function mintDevToken(uid) {
-  return 'dev.' + jwt.sign({ uid }, env.devTokenSecret, { expiresIn: '12h' });
 }
 
 function extractBearer(req) {

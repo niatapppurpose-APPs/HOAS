@@ -1,5 +1,3 @@
-import jwt from 'jsonwebtoken';
-import { env } from '../config/env.js';
 import { firebaseAuth } from '../config/firebase.js';
 import User from '../models/User.js';
 
@@ -13,14 +11,7 @@ export async function authenticateSocket(socket, next) {
       const decoded = await firebaseAuth.verifyIdToken(token);
       uid = decoded.uid;
     } catch {
-      if (!env.firebaseDevMode || !token.startsWith('dev.')) {
-        return next(new Error('INVALID_TOKEN'));
-      }
-      try {
-        uid = jwt.verify(token.slice(4), env.devTokenSecret).uid;
-      } catch {
-        return next(new Error('INVALID_TOKEN'));
-      }
+      return next(new Error('INVALID_TOKEN'));
     }
 
     const user = await User.findOne({ uid });

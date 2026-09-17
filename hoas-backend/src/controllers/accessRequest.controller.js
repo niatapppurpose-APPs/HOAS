@@ -2,7 +2,6 @@ import crypto from 'crypto';
 import AccessRequest from '../models/AccessRequest.js';
 import User from '../models/User.js';
 import College from '../models/College.js';
-import { env } from '../config/env.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from '../services/audit.service.js';
 import {
@@ -180,10 +179,6 @@ export async function createAccountFromRequest(req, res, next) {
       email: request.email,
       password,
       displayName: request.contactPerson,
-    }).catch(async (error) => {
-      // Dev mode without Firebase admin may not support user creation.
-      if (env.firebaseDevMode) return { uid: `dev-${request._id}` };
-      throw error;
     });
 
     const college = await College.findOneAndUpdate(
