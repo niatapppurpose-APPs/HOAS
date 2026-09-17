@@ -25,7 +25,7 @@ export async function authenticate(req, res, next) {
       }
     }
 
-    const user = await User.findOne({ uid }).populate('collegeId', 'name logoUrl location');
+    const user = await User.findOne({ uid }).populate('collegeId', 'name logoUrl location _id');
     if (!user) throw new AppError(404, 'USER_NOT_FOUND');
     req.user = user;
     next();

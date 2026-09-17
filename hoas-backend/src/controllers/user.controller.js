@@ -143,7 +143,7 @@ export async function createManagement(req, res, next) {
 export async function createWarden(req, res, next) {
   try {
     const { name, email, password, collegeId, hostelBlock, hostelName } = req.body;
-    if (req.user.role === 'management' && String(req.user.collegeId) !== String(collegeId)) {
+    if (req.user.role === 'management' && String(req.user.collegeId?._id) !== String(collegeId)) {
       throw new AppError(403, 'FORBIDDEN');
     }
 

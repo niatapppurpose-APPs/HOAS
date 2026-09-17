@@ -106,6 +106,7 @@ const AddWardenModal = ({ isOpen, onClose, collegeName }) => {
                 password: formData.password,
                 hostelBlock: formData.hostelBlock.trim(),
                 hostelName: hostelNameVal,
+                collegeId: userData?.collegeId?._id || userData?.collegeId,
             });
 
             setSuccess(true);
