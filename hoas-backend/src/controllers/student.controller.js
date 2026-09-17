@@ -57,7 +57,7 @@ async function buildStudentPayload(data, collegeId, actingUser) {
 export async function createStudent(req, res, next) {
   try {
     const { collegeId, email } = req.body;
-    if (req.user.role === 'management' && String(req.user.collegeId) !== String(collegeId)) {
+    if (req.user.role === 'management' && String(req.user.collegeId?._id) !== String(collegeId)) {
       throw new AppError(403, 'FORBIDDEN');
     }
 
@@ -106,7 +106,7 @@ export async function createStudent(req, res, next) {
 export async function bulkCreateStudents(req, res, next) {
   try {
     const { collegeId, students } = req.body;
-    if (req.user.role === 'management' && String(req.user.collegeId) !== String(collegeId)) {
+    if (req.user.role === 'management' && String(req.user.collegeId?._id) !== String(collegeId)) {
       throw new AppError(403, 'FORBIDDEN');
     }
 

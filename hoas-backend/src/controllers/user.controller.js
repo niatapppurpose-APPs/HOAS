@@ -299,7 +299,7 @@ export async function updateStudentVerification(req, res, next) {
     if (req.user.role === 'management' && !canManageCollege(req.user, student.collegeId)) {
       throw new AppError(403, 'FORBIDDEN');
     }
-    if (req.user.role === 'warden' && !(student.collegeId && String(req.user.collegeId) === String(student.collegeId))) {
+    if (req.user.role === 'warden' && !(student.collegeId && String(req.user.collegeId?._id) === String(student.collegeId))) {
       throw new AppError(403, 'FORBIDDEN');
     }
 

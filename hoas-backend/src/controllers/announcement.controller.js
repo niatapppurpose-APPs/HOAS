@@ -28,7 +28,7 @@ export async function createAnnouncement(req, res, next) {
       req.user.role === 'owner' ||
       req.user.role === 'admin' ||
       (req.user.role === 'management' && canManageCollege(req.user, collegeId)) ||
-      (req.user.role === 'warden' && String(req.user.collegeId) === String(collegeId));
+      (req.user.role === 'warden' && String(req.user.collegeId?._id) === String(collegeId));
     if (!canCreate) throw new AppError(403, 'FORBIDDEN');
 
     const announcement = await Announcement.create({

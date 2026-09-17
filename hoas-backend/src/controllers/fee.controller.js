@@ -23,7 +23,7 @@ function normalizeRow(row) {
 export async function uploadFees(req, res, next) {
   try {
     const { collegeId, records } = req.body;
-    if (req.user.role === 'management' && String(req.user.collegeId) !== String(collegeId)) {
+    if (req.user.role === 'management' && String(req.user.collegeId?._id) !== String(collegeId)) {
       throw new AppError(403, 'FORBIDDEN');
     }
 

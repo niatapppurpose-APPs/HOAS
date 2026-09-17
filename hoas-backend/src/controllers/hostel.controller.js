@@ -42,7 +42,7 @@ export async function listHostels(req, res, next) {
 export async function createHostel(req, res, next) {
   try {
     const { collegeId } = req.body;
-    if (req.user.role === 'management' && String(req.user.collegeId) !== String(collegeId)) {
+    if (req.user.role === 'management' && String(req.user.collegeId?._id) !== String(collegeId)) {
       throw new AppError(403, 'FORBIDDEN');
     }
     const capacity = await checkCollegeCapacity(req.user, collegeId, 'hostel');

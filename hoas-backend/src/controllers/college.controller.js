@@ -48,7 +48,7 @@ export async function updateCollege(req, res, next) {
     const canUpdate =
       req.user.role === 'owner' ||
       req.user.role === 'admin' ||
-      (req.user.role === 'management' && String(req.user.collegeId) === String(college._id));
+      (req.user.role === 'management' && String(req.user.collegeId?._id) === String(college._id));
     if (!canUpdate) throw new AppError(403, 'FORBIDDEN');
 
     if (req.body.logoUrl !== undefined) {
