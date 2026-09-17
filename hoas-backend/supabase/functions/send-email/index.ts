@@ -87,57 +87,6 @@ const templateMap: Record<EmailType, (config: EmailConfig, data: Record<string, 
   'administrative_report': renderAdministrativeReport as any,
 }
 
-async function sendViaResend(to: string, subject: string, html: string): Promise<{ success: boolean; via: string; data?: unknown; error?: string }> {
-  const resendApiKey = Deno.env.get('RESEND_API_KEY')
-  if (!resendApiKey) return { success: false, via: 'resend', error: 'RESEND_API_KEY not set' }
-
-  const fromName = Deno.env.get('SMTP_FROM_NAME') || 'HOAS'
-  const fromEmail = Deno.env.get('SMTP_FROM_EMAIL') || 'onboarding@resend.dev'
-  const sender = `"${fromName}" <${fromEmail}>`
-
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${resendApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ from: sender, to: [to], subject, html }),
-  })
-
-  if (!res.ok) {
-    const txt = await res.text()
-    return { success: false, via: 'resend', error: txt.slice(0, 500) }
-  }
-  const data = await res.json()
-  return { success: true, via: 'resend', data }
-}
-
-async function sendViaBrevo(to: string, subject: string, html: string): Promise<{ success: boolean; via: string; data?: unknown; error?: string }> {
-  const brevoApiKey = Deno.env.get('BREVO_API_KEY')
-  if (!brevoApiKey) return { success: false, via: 'brevo', error: 'BREVO_API_KEY not set' }
-
-  const fromName = Deno.env.get('SMTP_FROM_NAME') || 'HOAS'
-  const senderEmail = Deno.env.get('SMTP_FROM_EMAIL') || 'no-reply@hoas.app'
-
-  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: { 'api-key': brevoApiKey, 'Content-Type': 'application/json', 'accept': 'application/json' },
-    body: JSON.stringify({
-      sender: { name: fromName, email: senderEmail },
-      to: [{ email: to }],
-      subject,
-      htmlContent: html,
-    }),
-  })
-
-  if (!res.ok) {
-    const txt = await res.text()
-    return { success: false, via: 'brevo', error: txt.slice(0, 500) }
-  }
-  const data = await res.json()
-  return { success: true, via: 'brevo', data }
-}
-
 function htmlToPlainText(html: string): string {
   return html
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -148,9 +97,9 @@ function htmlToPlainText(html: string): string {
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
     .replace(/&middot;/g, '·')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
     .replace(/\n\s+\n/g, '\n\n')
     .trim();
 }
@@ -161,7 +110,7 @@ async function sendViaSmtp(to: string, subject: string, html: string): Promise<{
   const pass = Deno.env.get('SMTP_PASSWORD')
   const port = parseInt(Deno.env.get('SMTP_PORT') || '587', 10)
   if (!host || !user || !pass) {
-    return { success: false, via: 'smtp', error: 'SMTP credentials not configured in environment' }
+    return { success: false, via: 'smtp', error: 'SMTP credentials not configured in Supabase secrets' }
   }
 
   try {
@@ -259,25 +208,14 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true, via: 'render_only', subject, type, html }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    // Attempt 1: Resend
-    let result = await sendViaResend(to, subject, html)
-    // Attempt 2: Brevo
-    if (!result.success) {
-      const brevoResult = await sendViaBrevo(to, subject, html)
-      if (brevoResult.success) result = brevoResult
-      else {
-        // Attempt 3: SMTP (Gmail or custom SMTP)
-        const smtpResult = await sendViaSmtp(to, subject, html)
-        if (smtpResult.success) result = smtpResult
-        else result = { success: false, via: 'all_failed', error: `${result.error} | ${brevoResult.error} | ${smtpResult.error}` } as any
-      }
-    }
+    // Send via SMTP only
+    const result = await sendViaSmtp(to, subject, html)
 
     if (!result.success) {
-      return new Response(JSON.stringify({ success: false, error: result.error, attempted: result.via, html, subject, type }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      return new Response(JSON.stringify({ success: false, error: result.error, attempted: 'smtp', html, subject, type }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    return new Response(JSON.stringify({ success: true, via: result.via, subject, type }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    return new Response(JSON.stringify({ success: true, via: 'smtp', subject, type }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
   } catch (error: any) {
     console.error('Email send error:', error)
