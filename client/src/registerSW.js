@@ -36,7 +36,6 @@ export function registerServiceWorker() {
           scope: '/'
         });
         
-        console.log('SW registered:', registration.scope);
         await registration.update();
          
         // Check for updates

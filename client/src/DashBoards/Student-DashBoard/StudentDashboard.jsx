@@ -139,7 +139,6 @@ const StudentDashboard = () => {
 
   const handleAction = (action) => {
     // Placeholder for quick actions
-    console.log(`Action: ${action}`);
   };
 
   const handleSave = async () => {

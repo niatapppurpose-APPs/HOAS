@@ -2,7 +2,7 @@ import EmergencyLocation from '../models/EmergencyLocation.js';
 import LocationHistory from '../models/LocationHistory.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege } from '../utils/scope.js';
+import { canManageCollege, idOf } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { emitToCollege } from '../services/socket.service.js';
 
@@ -37,14 +37,14 @@ export async function shareLocation(req, res, next) {
     if (student.wardenId) {
       visibleTo = [student.wardenId];
     } else {
-      const wardens = await User.find({ role: 'warden', collegeId: student.collegeId });
+      const wardens = await User.find({ role: 'warden', collegeId: idOf(student.collegeId) });
       visibleTo = wardens.map((w) => w._id);
     }
 
     const session = await EmergencyLocation.create({
       studentId: student._id,
-      collegeId: student.collegeId,
-      managementId: (await User.findOne({ role: 'management', collegeId: student.collegeId }))?._id || null,
+      collegeId: idOf(student.collegeId),
+      managementId: (await User.findOne({ role: 'management', collegeId: idOf(student.collegeId) }))?._id || null,
       visibleTo,
       lat,
       lng,
@@ -152,7 +152,7 @@ export async function listActiveSessions(req, res, next) {
     const filter = { isActive: true, expiresAt: { $gt: now } };
     if (req.user.role === 'warden') filter.visibleTo = req.user._id;
     else if (req.user.role === 'management') {
-      filter.$or = [{ collegeId: req.user.collegeId }, { visibleTo: req.user._id }];
+      filter.$or = [{ collegeId: idOf(req.user.collegeId) }, { visibleTo: req.user._id }];
     }
 
     const sessions = await EmergencyLocation.find(filter)

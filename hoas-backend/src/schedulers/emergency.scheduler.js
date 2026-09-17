@@ -23,8 +23,7 @@ export async function cleanupEmergencyLocations() {
 
 export function startEmergencyScheduler() {
   schedule(30 * 60 * 1000, async () => {
-    const result = await cleanupEmergencyLocations();
-    if (result.deactivated > 0) console.log('Emergency location cleanup:', result);
+    await cleanupEmergencyLocations();
   });
 }
 

@@ -15,19 +15,15 @@ export async function keepRenderAwake() {
     });
 
     clearTimeout(timeoutId);
-    console.log(`Render keeper: Ping ${pingUrl} - status: ${response.status}`);
     return { status: response.status };
   } catch (error) {
-    console.log('Render keeper: Ping failed:', error.message);
     return { error: error.message };
   }
 }
 
 export function startRenderKeeperScheduler() {
   schedule(5 * 60 * 1000, async () => {
-    const result = await keepRenderAwake();
-    if (result.error) console.error('Render keeper failed:', result.error);
-    else console.log('Render keeper: kept awake');
+    await keepRenderAwake();
   });
 }
 

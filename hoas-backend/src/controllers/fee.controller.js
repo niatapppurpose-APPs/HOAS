@@ -1,7 +1,7 @@
 import Fee from '../models/Fee.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege, resolveStudentWarden } from '../utils/scope.js';
+import { canManageCollege, resolveStudentWarden, idOf } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { notifyUser } from '../services/notification.service.js';
 import { emitToUser, emitToCollege, emitToHostel, broadcastUserUpdate } from '../services/socket.service.js';
@@ -97,7 +97,7 @@ export async function uploadFees(req, res, next) {
 
 export async function listManagementFees(req, res, next) {
   try {
-    const filter = { collegeId: req.user.collegeId };
+    const filter = { collegeId: idOf(req.user.collegeId) };
     if (req.query.status) filter.status = req.query.status;
     const fees = await Fee.find(filter)
       .populate('studentId', 'name email studentId hostelBlock uid')
@@ -156,11 +156,18 @@ export async function getFeeById(req, res, next) {
     const fee = await Fee.findById(req.params.id).populate('studentId', 'name email studentId');
     if (!fee) throw new AppError(404, 'FEE_NOT_FOUND');
 
+    let wardenCanView =
+      req.user.role === 'warden' && String(fee.wardenId) === String(req.user._id);
+    if (!wardenCanView && req.user.role === 'warden' && fee.studentId) {
+      const student = await User.findById(fee.studentId._id || fee.studentId).select('hostelId');
+      wardenCanView = !!student && !!student.hostelId && !!req.user.hostelId &&
+        String(student.hostelId) === String(req.user.hostelId);
+    }
     const allowed =
       req.user.role === 'owner' ||
       req.user.role === 'admin' ||
       (req.user.role === 'management' && canManageCollege(req.user, fee.collegeId)) ||
-      (req.user.role === 'warden' && String(fee.wardenId) === String(req.user._id)) ||
+      wardenCanView ||
       (req.user.role === 'student' && String(fee.studentId._id) === String(req.user._id));
     if (!allowed) throw new AppError(403, 'FORBIDDEN');
 

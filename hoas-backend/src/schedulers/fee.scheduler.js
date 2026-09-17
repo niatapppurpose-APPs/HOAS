@@ -58,8 +58,7 @@ export async function autoVerifyFees() {
 
 export function startFeeScheduler() {
   schedule(60 * 60 * 1000, async () => {
-    const result = await autoVerifyFees();
-    if (result.autoVerified > 0 || result.warned > 0) console.log('Fee auto-verification:', result);
+    await autoVerifyFees();
   });
 }
 

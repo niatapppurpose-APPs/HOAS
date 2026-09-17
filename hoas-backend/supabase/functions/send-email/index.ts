@@ -6,55 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-import { renderAccountCreated } from './_templates/accountCreated.ts'
-import { renderEmailVerification } from './_templates/emailVerification.ts'
-import { renderPasswordReset } from './_templates/passwordReset.ts'
-import { renderAccountApproved } from './_templates/accountApproved.ts'
-import { renderAccountRejected } from './_templates/accountRejected.ts'
-import { renderRoleUpdated } from './_templates/roleUpdated.ts'
-import { renderAccessGranted } from './_templates/accessGranted.ts'
-import { renderComplaintCreated } from './_templates/complaintCreated.ts'
-import { renderComplaintUpdated } from './_templates/complaintUpdated.ts'
-import { renderLeaveSubmitted } from './_templates/leaveSubmitted.ts'
-import { renderLeaveApproved } from './_templates/leaveApproved.ts'
-import { renderLeaveRejected } from './_templates/leaveRejected.ts'
-import { renderAnnouncement } from './_templates/announcement.ts'
-import { renderEmergencyAlert } from './_templates/emergencyAlert.ts'
-import { renderSupportTicketCreated } from './_templates/supportTicketCreated.ts'
-import { renderSupportTicketUpdated } from './_templates/supportTicketUpdated.ts'
-import { renderSecurityAlert } from './_templates/securityAlert.ts'
-import { renderAccountDeactivated } from './_templates/accountDeactivated.ts'
-import { renderAccountReactivated } from './_templates/accountReactivated.ts'
-import { renderAdministrativeReport } from './_templates/administrativeReport.ts'
-
-interface EmailConfig {
-  appUrl: string
-  supportEmail: string
-  logoUrl: string
-  brandName: string
-}
-
-type EmailType =
-  | 'account_created'
-  | 'email_verification'
-  | 'password_reset'
-  | 'account_approved'
-  | 'account_rejected'
-  | 'role_updated'
-  | 'access_granted'
-  | 'complaint_created'
-  | 'complaint_updated'
-  | 'leave_submitted'
-  | 'leave_approved'
-  | 'leave_rejected'
-  | 'new_announcement'
-  | 'emergency_alert'
-  | 'support_ticket_created'
-  | 'support_ticket_updated'
-  | 'security_alert'
-  | 'account_deactivated'
-  | 'account_reactivated'
-  | 'administrative_report'
+import { renderEmailTemplate, EMAIL_TYPES, EmailType, EmailConfig } from './_templates/registry.ts'
+import { MOCK_DATA } from './_templates/mockData.ts'
 
 interface EmailPayload {
   to: string
@@ -62,29 +15,6 @@ interface EmailPayload {
   type: EmailType
   config: EmailConfig
   data: Record<string, unknown>
-}
-
-const templateMap: Record<EmailType, (config: EmailConfig, data: Record<string, unknown>) => string> = {
-  'account_created': renderAccountCreated as any,
-  'email_verification': renderEmailVerification as any,
-  'password_reset': renderPasswordReset as any,
-  'account_approved': renderAccountApproved as any,
-  'account_rejected': renderAccountRejected as any,
-  'role_updated': renderRoleUpdated as any,
-  'access_granted': renderAccessGranted as any,
-  'complaint_created': renderComplaintCreated as any,
-  'complaint_updated': renderComplaintUpdated as any,
-  'leave_submitted': renderLeaveSubmitted as any,
-  'leave_approved': renderLeaveApproved as any,
-  'leave_rejected': renderLeaveRejected as any,
-  'new_announcement': renderAnnouncement as any,
-  'emergency_alert': renderEmergencyAlert as any,
-  'support_ticket_created': renderSupportTicketCreated as any,
-  'support_ticket_updated': renderSupportTicketUpdated as any,
-  'security_alert': renderSecurityAlert as any,
-  'account_deactivated': renderAccountDeactivated as any,
-  'account_reactivated': renderAccountReactivated as any,
-  'administrative_report': renderAdministrativeReport as any,
 }
 
 function htmlToPlainText(html: string): string {
@@ -155,9 +85,37 @@ async function sendViaSmtp(to: string, subject: string, html: string): Promise<{
   }
 }
 
+const DEFAULT_CONFIG: EmailConfig = {
+  appUrl: Deno.env.get('HOAS_APP_URL') || 'http://localhost:5173',
+  supportEmail: Deno.env.get('SMTP_FROM_EMAIL') || Deno.env.get('SMTP_USER') || 'support@hoas.app',
+  logoUrl: Deno.env.get('HOAS_LOGO_URL') || '',
+  brandName: 'HOAS',
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: { ...corsHeaders, 'Access-Control-Max-Age': '86400' } })
+  }
+
+  // Dev-only HTML preview: GET ?preview=<type> (also lists types with ?preview=list)
+  if (req.method === 'GET') {
+    try {
+      const url = new URL(req.url)
+      const preview = url.searchParams.get('preview')
+      if (preview === 'list') {
+        return new Response(JSON.stringify({ types: EMAIL_TYPES }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
+      if (preview) {
+        if (!(EMAIL_TYPES as string[]).includes(preview)) {
+          return new Response(JSON.stringify({ error: `Unsupported email template type: ${preview}`, types: EMAIL_TYPES }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+        const mock = (MOCK_DATA as any)[preview] || {}
+        const rendered = renderEmailTemplate(preview, mock.data || {}, { ...DEFAULT_CONFIG, ...(mock.config || {}) })
+        return new Response(rendered.html, { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' } })
+      }
+    } catch {
+      // fall through to POST handling
+    }
   }
 
   try {
@@ -172,37 +130,18 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Missing required fields: to, type, config' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    const renderer = templateMap[type]
-    if (!renderer) {
-      return new Response(JSON.stringify({ error: `Unknown email type: ${type}` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    let rendered: { subject: string; html: string; textBody: string; preheader: string }
+    try {
+      rendered = renderEmailTemplate(type, data || {}, config)
+    } catch (e: any) {
+      const msg = e?.message || String(e)
+      const status = msg.startsWith('Unsupported email template type') ? 400 : 422
+      return new Response(JSON.stringify({ error: msg }), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    const html = renderer(config, data || {})
-
-    const subjectMap: Record<EmailType, string> = {
-      'account_created': 'Welcome to HOAS — Your account is ready',
-      'email_verification': 'Verify your HOAS email address',
-      'password_reset': 'Reset your HOAS password',
-      'account_approved': 'Your HOAS account has been approved',
-      'account_rejected': 'Update regarding your HOAS account request',
-      'role_updated': 'Your HOAS role has been updated',
-      'access_granted': `You now have access to ${String(data?.collegeName || 'your institution')} on HOAS`,
-      'complaint_created': `Complaint received — HOAS #${String(data?.complaintId || '')}`,
-      'complaint_updated': 'Your HOAS complaint has been updated',
-      'leave_submitted': 'Leave request submitted — HOAS',
-      'leave_approved': 'Leave request approved',
-      'leave_rejected': 'Update regarding your leave request',
-      'new_announcement': `New announcement from ${String(data?.collegeName || 'HOAS')}`,
-      'emergency_alert': `URGENT — Emergency alert from ${String(data?.collegeName || 'HOAS')}`,
-      'support_ticket_created': `Support ticket received — HOAS #${String(data?.ticketId || '')}`,
-      'support_ticket_updated': 'Your HOAS support ticket has been updated',
-      'security_alert': 'Security alert for your HOAS account',
-      'account_deactivated': 'Your HOAS account has been deactivated',
-      'account_reactivated': 'Your HOAS account has been reactivated',
-      'administrative_report': `HOAS ${String(data?.reportPeriod || '')} report is ready`,
-    }
-
-    const subject = overrideSubject || subjectMap[type] || 'HOAS Notification'
+    const html = rendered.html
+    const subject = overrideSubject || rendered.subject
+    const textBody = rendered.textBody
 
     if (renderOnly) {
       return new Response(JSON.stringify({ success: true, via: 'render_only', subject, type, html }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })

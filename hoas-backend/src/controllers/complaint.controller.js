@@ -1,7 +1,7 @@
 import Complaint from '../models/Complaint.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege, canAccessHostel, resolveStudentWarden } from '../utils/scope.js';
+import { canManageCollege, canAccessHostel, resolveStudentWarden, idOf } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import {
   computeSlaDeadline,
@@ -20,7 +20,7 @@ export async function createComplaint(req, res, next) {
 
     const complaint = await Complaint.create({
       studentId: student._id,
-      collegeId: student.collegeId,
+      collegeId: idOf(student.collegeId),
       hostelId: student.hostelId,
       assignedWardenId: await resolveStudentWarden(student),
       title: req.body.title,
@@ -70,7 +70,7 @@ export async function listWardenComplaints(req, res, next) {
 
 export async function listManagementComplaints(req, res, next) {
   try {
-    const filter = { collegeId: req.user.collegeId };
+    const filter = { collegeId: idOf(req.user.collegeId) };
     if (req.query.status) filter.status = req.query.status;
     const complaints = await Complaint.find(filter)
       .populate('studentId', 'name email studentId hostelBlock')

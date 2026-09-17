@@ -29,9 +29,7 @@ const InstallPrompt = () => {
     deferredPrompt.prompt();
 
     // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    console.log(`User response to the install prompt: ${outcome}`);
+    await deferredPrompt.userChoice;
     
     // Clear the deferredPrompt
     setDeferredPrompt(null);

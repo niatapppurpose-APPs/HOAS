@@ -1,14 +1,14 @@
 import Announcement from '../models/Announcement.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege } from '../utils/scope.js';
+import { canManageCollege, idOf } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { notifyUser } from '../services/notification.service.js';
 import { emitToCollege } from '../services/socket.service.js';
 
 export async function listAnnouncements(req, res, next) {
   try {
-    const filter = { collegeId: req.user.collegeId };
+    const filter = { collegeId: idOf(req.user.collegeId) };
     if (req.user.role === 'student' && req.user.hostelBlock) {
       filter.$or = [{ hostelBlock: req.user.hostelBlock }, { hostelBlock: { $exists: false } }];
     }

@@ -6,6 +6,7 @@ import { useToast } from '../../../components/Toast';
 import { compressLogoForModal } from '../utils/compressLogo';
 import { uploadLogo } from '../../../utils/cloudinaryUpload';
 import CollegeSelect from '../components/CollegeSelect';
+import ResponsiveSheet from '../../../components/ResponsiveSheet';
 
 const initialForm = {
   collegeName: '',
@@ -136,10 +137,15 @@ const AddManagementModal = React.memo(({ isOpen, onClose, isDark }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <button type="button" aria-label="Close modal" className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={onClose} />
-
-      <div className="relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border shadow-2xl" style={panelStyle}>
+    <ResponsiveSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      busy={isSubmitting}
+      ariaLabel="Add Management"
+      desktopWidthClass="md:w-[560px]"
+      panelStyle={panelStyle}
+    >
+      <div className="relative w-full overflow-hidden" style={panelStyle}>
         <div className="sticky top-0 z-10 flex items-center justify-between border-b px-5 py-4" style={panelStyle}>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
@@ -296,7 +302,7 @@ const AddManagementModal = React.memo(({ isOpen, onClose, isDark }) => {
           </div>
         </form>
       </div>
-    </div>
+    </ResponsiveSheet>
   );
 });
 

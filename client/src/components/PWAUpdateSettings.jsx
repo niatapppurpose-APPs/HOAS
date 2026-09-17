@@ -52,7 +52,7 @@ const PWAUpdateSettings = () => {
               }
               // Scheduled mode: just notify, will update on next launch
               else if (savedMode === 'scheduled') {
-                console.log('Update will apply on next app launch');
+                // No-op: update applies on next launch
               }
             }
           });

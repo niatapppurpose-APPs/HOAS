@@ -29,7 +29,6 @@ export const initializeNotificationPrefs = async (userId) => {
     const user = await getMe();
     if (!user?.notificationPrefs || Object.keys(user.notificationPrefs).length === 0) {
       await updateProfile({ notificationPrefs: DEFAULT_NOTIF_PREFS });
-      console.log(`✅ Initialized notification preferences for user ${userId}`);
     } else {
       const mergedPrefs = {
         ...DEFAULT_NOTIF_PREFS,
@@ -40,7 +39,6 @@ export const initializeNotificationPrefs = async (userId) => {
       );
       if (!hasAllKeys) {
         await updateProfile({ notificationPrefs: mergedPrefs });
-        console.log(`✅ Updated notification preferences for user ${userId}`);
       }
     }
   } catch (error) {
@@ -59,7 +57,6 @@ export const enableNotifPref = async (userId, prefKey) => {
     const user = await getMe();
     const current = user?.notificationPrefs || {};
     await updateProfile({ notificationPrefs: { ...current, [prefKey]: true } });
-    console.log(`✅ Enabled ${prefKey} for user ${userId}`);
   } catch (error) {
     console.error(`Error enabling ${prefKey}:`, error);
   }
@@ -76,7 +73,6 @@ export const disableNotifPref = async (userId, prefKey) => {
     const user = await getMe();
     const current = user?.notificationPrefs || {};
     await updateProfile({ notificationPrefs: { ...current, [prefKey]: false } });
-    console.log(`✅ Disabled ${prefKey} for user ${userId}`);
   } catch (error) {
     console.error(`Error disabling ${prefKey}:`, error);
   }
@@ -105,7 +101,6 @@ export const getNotificationPrefs = async (userId) => {
 export const resetNotificationPrefs = async (userId) => {
   try {
     await updateProfile({ notificationPrefs: DEFAULT_NOTIF_PREFS });
-    console.log(`✅ Reset notification preferences for user ${userId}`);
   } catch (error) {
     console.error(`Error resetting notification preferences:`, error);
   }

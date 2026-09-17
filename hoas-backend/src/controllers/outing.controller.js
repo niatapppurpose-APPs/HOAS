@@ -1,7 +1,7 @@
 import Outing from '../models/Outing.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege, resolveStudentWarden } from '../utils/scope.js';
+import { canManageCollege, resolveStudentWarden, idOf } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { notifyUser } from '../services/notification.service.js';
 import { emitToUser, emitToCollege } from '../services/socket.service.js';
@@ -26,7 +26,7 @@ export async function requestOuting(req, res, next) {
 
     const outing = await Outing.create({
       studentId: student._id,
-      collegeId: student.collegeId,
+      collegeId: idOf(student.collegeId),
       wardenId,
       destination: req.body.destination,
       reason: req.body.reason,
@@ -177,7 +177,7 @@ export async function getOutingHistory(req, res, next) {
     const filter = { status: { $in: ['completed', 'rejected'] } };
     if (req.user.role === 'warden') filter.wardenId = req.user._id;
     else if (req.user.role === 'student') filter.studentId = req.user._id;
-    else if (req.user.role === 'management') filter.collegeId = req.user.collegeId;
+    else if (req.user.role === 'management') filter.collegeId = idOf(req.user.collegeId);
 
     const outings = await Outing.find(filter)
       .populate('studentId', 'name studentId')

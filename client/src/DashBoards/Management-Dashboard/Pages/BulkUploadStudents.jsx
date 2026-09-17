@@ -9,6 +9,7 @@ import {
     Upload, FileSpreadsheet, X, CheckCircle2, AlertTriangle,
     Clock, Users, Loader2, Download, Eye, ChevronDown, ChevronUp
 } from 'lucide-react';
+import ResponsiveSheet from '../../../components/ResponsiveSheet';
 
 /**
  * BulkUploadStudents - Modal component for uploading Excel sheet of students
@@ -176,15 +177,17 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
     const textSecondary = isDark ? '#94a3b8' : '#64748b';
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-            onMouseDown={(e) => e.target === e.currentTarget && step !== 'uploading' && handleClose()}
+        <ResponsiveSheet
+            isOpen={isOpen}
+            onClose={handleClose}
+            busy={step === 'uploading'}
+            ariaLabel="Bulk Upload Students"
+            desktopWidthClass="md:w-[640px]"
+            panelStyle={{ backgroundColor: bg, border: `1px solid ${border}` }}
         >
             <div
-                className="w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl"
-                style={{ backgroundColor: bg, border: `1px solid ${border}`, maxHeight: '90vh' }}
-                onMouseDown={(e) => e.stopPropagation()}
+                className="w-full overflow-hidden"
+                style={{ backgroundColor: bg }}
             >
                 {/* Header */}
                 <div
@@ -481,7 +484,7 @@ const BulkUploadStudents = ({ isOpen, onClose, collegeName }) => {
                     )}
                 </div>
             </div>
-        </div>
+        </ResponsiveSheet>
     );
 };
 

@@ -8,6 +8,7 @@ import {
     X, User, Mail, Phone, BookOpen, Building2, CheckCircle2,
     GraduationCap, Briefcase, IndianRupee
 } from 'lucide-react';
+import ResponsiveSheet from '../../../components/ResponsiveSheet';
 
 const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
     const { userData, user } = useAuth();
@@ -189,14 +190,17 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
     const inputBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-            onClick={(e) => e.target === e.currentTarget && !loading && handleClose()}
+        <ResponsiveSheet
+            isOpen={isOpen}
+            onClose={handleClose}
+            busy={loading}
+            ariaLabel="Add Student"
+            desktopWidthClass="md:w-[600px]"
+            panelStyle={{ backgroundColor: bg, border: `1px solid ${border}` }}
         >
             <div
-                className="w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
-                style={{ backgroundColor: bg, border: `1px solid ${border}` }}
+                className="w-full overflow-hidden flex flex-col"
+                style={{ backgroundColor: bg }}
             >
                 <div
                     className="flex items-center justify-between px-6 py-4 flex-shrink-0"
@@ -502,7 +506,7 @@ const AddStudentModal = ({ isOpen, onClose, collegeName }) => {
                     )}
                 </div>
             </div>
-        </div>
+        </ResponsiveSheet>
     );
 };
 

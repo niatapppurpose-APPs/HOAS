@@ -1,6 +1,7 @@
 import SupportTicket from '../models/SupportTicket.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from '../services/audit.service.js';
+import { idOf } from '../utils/scope.js';
 import { notifyAdmins } from '../services/notification.service.js';
 
 export async function createTicket(req, res, next) {
@@ -12,7 +13,7 @@ export async function createTicket(req, res, next) {
       priority: req.body.priority,
       reporterId: req.user._id,
       reporterRole: req.user.role,
-      collegeId: req.user.collegeId,
+      collegeId: idOf(req.user.collegeId),
     });
 
     await notifyAdmins({

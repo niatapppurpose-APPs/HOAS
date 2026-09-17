@@ -1,7 +1,7 @@
 import Hostel from '../models/Hostel.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege, canAccessHostel } from '../utils/scope.js';
+import { canManageCollege, canAccessHostel, idOf } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { checkCollegeCapacity } from '../services/capacity.service.js';
 
@@ -11,7 +11,7 @@ export async function listHostels(req, res, next) {
     if (req.user.role === 'warden') {
       filter._id = req.user.hostelId;
     } else if (req.user.role === 'management') {
-      filter.collegeId = req.user.collegeId;
+      filter.collegeId = idOf(req.user.collegeId);
     }
     const hostels = await Hostel.find(filter)
       .populate('wardenId', 'name email')

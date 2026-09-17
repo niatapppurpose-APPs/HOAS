@@ -57,8 +57,7 @@ export async function checkComplaintReminders() {
 
 export function startReminderScheduler() {
   schedule(6 * 60 * 60 * 1000, async () => {
-    const result = await checkComplaintReminders();
-    if (result.sent > 0) console.log('Complaint reminders sent:', result);
+    await checkComplaintReminders();
   });
 }
 

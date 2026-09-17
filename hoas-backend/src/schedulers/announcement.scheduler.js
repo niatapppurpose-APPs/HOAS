@@ -83,8 +83,7 @@ async function fanOut(announcement) {
 
 export function startAnnouncementScheduler() {
   schedule(5 * 60 * 1000, async () => {
-    const result = await publishDueAnnouncements();
-    if (result.published > 0) console.log('Announcements published:', result);
+    await publishDueAnnouncements();
   });
 }
 

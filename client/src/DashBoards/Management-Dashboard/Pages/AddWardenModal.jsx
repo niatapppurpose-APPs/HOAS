@@ -8,6 +8,7 @@ import {
     X, User, Mail, Lock, Phone, Building2, Eye, EyeOff,
     ShieldCheck, Loader2, CheckCircle2, AlertTriangle
 } from 'lucide-react';
+import ResponsiveSheet from '../../../components/ResponsiveSheet';
 
 /**
  * AddWardenModal - Modal for Management to manually add a warden
@@ -145,14 +146,17 @@ const AddWardenModal = ({ isOpen, onClose, collegeName }) => {
     const inputBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-            onClick={(e) => e.target === e.currentTarget && !loading && handleClose()}
+        <ResponsiveSheet
+            isOpen={isOpen}
+            onClose={handleClose}
+            busy={loading}
+            ariaLabel="Add Warden"
+            desktopWidthClass="md:w-[500px]"
+            panelStyle={{ backgroundColor: bg, border: `1px solid ${border}` }}
         >
             <div
-                className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
-                style={{ backgroundColor: bg, border: `1px solid ${border}` }}
+                className="w-full overflow-hidden"
+                style={{ backgroundColor: bg }}
             >
                 {/* Header */}
                 <div
@@ -397,7 +401,7 @@ const AddWardenModal = ({ isOpen, onClose, collegeName }) => {
                     )}
                 </div>
             </div>
-        </div>
+        </ResponsiveSheet>
     );
 };
 

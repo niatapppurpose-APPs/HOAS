@@ -2,7 +2,7 @@ import User from '../models/User.js';
 import College from '../models/College.js';
 import Hostel from '../models/Hostel.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege } from '../utils/scope.js';
+import { canManageCollege, idOf } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { sendWelcomeEmail } from '../services/email.service.js';
 import { notifyUser, notifyAdmins } from '../services/notification.service.js';
@@ -31,10 +31,10 @@ export async function listUsers(req, res, next) {
     const { role, status, search, collegeId } = req.query;
     const filter = {};
     if (req.user.role === 'management') {
-      filter.collegeId = req.user.collegeId;
+      filter.collegeId = idOf(req.user.collegeId);
     }
     if (req.user.role === 'warden') {
-      filter.collegeId = req.user.collegeId;
+      filter.collegeId = idOf(req.user.collegeId);
     }
     if (role) filter.role = role;
     if (status) filter.status = status;
@@ -119,8 +119,7 @@ export async function createManagement(req, res, next) {
           extra: [
             { name: 'College', value: collegeName },
             { name: 'Principal', value: principalName },
-            { name: 'Email', value: normalizedEmail },
-            { name: 'Temporary password', value: password },
+            { name: 'Login Email', value: normalizedEmail },
           ],
           resetLink,
         })
@@ -190,8 +189,7 @@ export async function createWarden(req, res, next) {
           extra: [
             { name: 'College', value: college.name },
             { name: 'Hostel block', value: hostelBlock || hostelName },
-            { name: 'Email', value: email },
-            { name: 'Temporary password', value: password },
+            { name: 'Login Email', value: email },
           ],
           resetLink,
         })

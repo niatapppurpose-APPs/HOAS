@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import Complaint from '../models/Complaint.js';
 import { AppError } from '../utils/AppError.js';
 import { recordAudit } from '../services/audit.service.js';
+import { idOf } from '../utils/scope.js';
 
 export async function getReportData(req, res, next) {
   try {
@@ -10,7 +11,7 @@ export async function getReportData(req, res, next) {
       req.user.role === 'owner' || req.user.role === 'admin'
         ? await systemWideReport()
         : req.user.role === 'management'
-          ? await collegeReport(req.user.collegeId)
+          ? await collegeReport(idOf(req.user.collegeId))
           : null;
     if (!data) throw new AppError(403, 'FORBIDDEN');
     res.json(data);
@@ -25,7 +26,7 @@ export async function downloadReportJson(req, res, next) {
       req.user.role === 'owner' || req.user.role === 'admin'
         ? await systemWideReport()
         : req.user.role === 'management'
-          ? await collegeReport(req.user.collegeId)
+          ? await collegeReport(idOf(req.user.collegeId))
           : null;
     if (!data) throw new AppError(403, 'FORBIDDEN');
 
@@ -45,7 +46,7 @@ export async function downloadReportPdf(req, res, next) {
       req.user.role === 'owner' || req.user.role === 'admin'
         ? await systemWideReport()
         : req.user.role === 'management'
-          ? await collegeReport(req.user.collegeId)
+          ? await collegeReport(idOf(req.user.collegeId))
           : null;
     if (!data) throw new AppError(403, 'FORBIDDEN');
 

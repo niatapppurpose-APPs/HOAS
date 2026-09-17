@@ -18,17 +18,14 @@ export const requestNotificationPermission = async () => {
 
     // If permission is already granted or denied, return the current state
     if (Notification.permission !== 'default') {
-      console.log(`ℹ️ Notification permission is already: ${Notification.permission}`);
       return Notification.permission === 'granted';
     }
 
     const permission = await Notification.requestPermission();
 
     if (permission === 'granted') {
-      console.log('✅ Notification permission granted');
       return true;
     } else {
-      console.log('❌ Notification permission denied');
       return false;
     }
   } catch (error) {
@@ -56,10 +53,8 @@ export const getFCMToken = async () => {
     const token = await getToken(messaging, { vapidKey: VAPID_KEY });
 
     if (token) {
-     
       return token;
     } else {
-      console.log('❌ No registration token available');
       return null;
     }
   } catch (error) {
@@ -94,8 +89,6 @@ export const onForegroundMessage = (callback) => {
   }
 
   return onMessage(messaging, (payload) => {
-    console.log('📩 Foreground message received:', payload);
-
     // Show browser notification even when app is open
     if (Notification.permission === 'granted') {
       const notificationTitle = payload.notification?.title || 'HOAS Notification';

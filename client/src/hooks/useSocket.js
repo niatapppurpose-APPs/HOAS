@@ -46,16 +46,10 @@ export default function useSocket() {
 
       socket.on('connect', () => {
         setConnected(true);
-        console.log('Socket.IO connected as user', user.uid, 'role', userData?.role);
-        // Owner/admins automatically join the 'admins' room on the server side.
-        if (userData?.role === 'owner' || userData?.role === 'admin') {
-          // The server joins 'admins' on connect; no extra action needed here.
-        }
       });
 
        socket.on('disconnect', () => {
         setConnected(false);
-        console.log('Socket.IO disconnected');
        });
 
         socket.on('user:updated', (payload) => {

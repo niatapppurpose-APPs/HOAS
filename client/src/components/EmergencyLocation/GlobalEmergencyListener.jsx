@@ -42,7 +42,6 @@ export default function GlobalEmergencyListener() {
       Notification.requestPermission()
         .then((perm) => {
           setPermissionState(perm);
-          console.log('[notifications] Browser permission status:', perm);
         })
         .catch((err) => console.warn('[notifications] Permission request error:', err));
     }
@@ -80,12 +79,8 @@ export default function GlobalEmergencyListener() {
   useEffect(() => {
     if (!user) return;
 
-    // Force re-render on every user/role change to pick up code changes
-    console.log('[emergency-listener] Setting up listeners for user:', user?.uid, 'role:', userData?.role);
-
     // Handle dismiss from EmergencyIndicator (management dashboard)
     const handleEmergencyDismissed = () => {
-      console.log('[emergency-listener] Emergency dismissed from management dashboard');
       dismissAlert();
     };
 
@@ -97,12 +92,10 @@ export default function GlobalEmergencyListener() {
       const currentRole = userData?.role;
       const isCurrentStudent = currentRole === 'student' || window.location.pathname.startsWith('/dashboard/student');
       if (isCurrentStudent) {
-        console.log('[emergency-listener] Suppressing alert sound and modal for student portal');
         return;
       }
 
       const payload = e.detail || {};
-      console.log('[emergency-listener] Emergency started payload for staff:', payload);
 
       const studentName = payload.studentName || payload.student?.name || 'A Student';
       const studentId = payload.studentId || payload.student?._id;
@@ -301,7 +294,6 @@ export default function GlobalEmergencyListener() {
                   type="button"
                   onClick={() => {
                     startEmergencyAlertSound({ loop: false });
-                    console.log('[dev] Test emergency sound triggered');
                   }}
                   className="w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs py-2 px-3 rounded-xl border border-amber-500/30 transition"
                 >

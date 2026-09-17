@@ -11,14 +11,11 @@ async function start() {
   const server = http.createServer(app);
   initSocket(server);
 
-  server.listen(env.port, () => {
-    console.log(`HOAS backend listening on http://localhost:${env.port}`);
-  });
+  server.listen(env.port);
 
   startSchedulers();
 
   const shutdown = async () => {
-    console.log('Shutting down...');
     stopSchedulers();
     server.closeAllConnections?.();
     server.close();

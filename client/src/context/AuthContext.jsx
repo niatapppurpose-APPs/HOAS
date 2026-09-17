@@ -233,7 +233,6 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       await signOut(auth);
       // Note: onAuthStateChanged will set user to null and setLoading(false)
-      console.log("User logged out successfully");
     } catch (error) {
       console.error("Error logging out:", error);
       setLoading(false);

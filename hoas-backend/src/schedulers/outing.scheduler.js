@@ -38,8 +38,7 @@ export async function autoMarkLateOutings() {
 
 export function startOutingScheduler() {
   schedule(10 * 60 * 1000, async () => {
-    const result = await autoMarkLateOutings();
-    if (result.processed > 0) console.log('Auto-marked late outings:', result);
+    await autoMarkLateOutings();
   });
 }
 

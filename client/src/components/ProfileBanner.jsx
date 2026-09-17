@@ -62,7 +62,6 @@ function getDominantColor(src, callback) {
             b = Math.round(b / count);
 
             const color = `rgb(${r},${g},${b})`;
-            console.log("[getDominantColor] extracted →", color);
             callback(color);
         } catch (err) {
             console.error("[getDominantColor] unexpected error:", err);

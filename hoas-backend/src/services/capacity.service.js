@@ -17,7 +17,7 @@ export async function checkCollegeCapacity(user, collegeId, entityType = 'studen
   const settings = await getSettingsOrDefaults();
   const college = await College.findById(collegeId);
   if (!college) throw new AppError(404, 'COLLEGE_NOT_FOUND');
-  if (!canManageCollege(user, collegeId) && user.role !== 'warden' && !String(user.collegeId) === String(collegeId)) {
+  if (!canManageCollege(user, collegeId)) {
     throw new AppError(403, 'FORBIDDEN');
   }
 

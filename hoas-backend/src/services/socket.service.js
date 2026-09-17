@@ -25,9 +25,9 @@ export function initSocket(server) {
   io.on('connection', (socket) => {
     const { user } = socket.data;
     const userId = String(user._id);
-    socket.join(`user:${userId}`);
-    if (user.collegeId) socket.join(`college:${user.collegeId}`);
-    if (user.hostelId) socket.join(`hostel:${user.hostelId}`);
+    socket.join(`user:${roomId(userId)}`);
+    if (user.collegeId) socket.join(`college:${roomId(user.collegeId)}`);
+    if (user.hostelId) socket.join(`hostel:${roomId(user.hostelId)}`);
     if (user.role === 'owner' || user.role === 'admin') socket.join('admins');
     socket.emit('connected', { userId, role: user.role });
 
@@ -58,19 +58,32 @@ export function getIo() {
   return io;
 }
 
+// Normalize any id-like value (populated doc, ObjectId, string) so socket
+// rooms always match: `college:[object Object]` !== `college:<hex>` was
+// silently dropping realtime updates for approvals, fees and emergencies.
+function roomId(value) {
+  if (value === null || value === undefined) return value;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    if (value._id !== undefined && value._id !== null) return String(value._id);
+    if (typeof value.toHexString === 'function') return value.toHexString();
+  }
+  return String(value);
+}
+
 export function emitToUser(userId, event, payload) {
   if (!io) return;
-  io.to(`user:${userId}`).emit(event, payload);
+  io.to(`user:${roomId(userId)}`).emit(event, payload);
 }
 
 export function emitToCollege(collegeId, event, payload) {
   if (!io) return;
-  io.to(`college:${collegeId}`).emit(event, payload);
+  io.to(`college:${roomId(collegeId)}`).emit(event, payload);
 }
 
 export function emitToHostel(hostelId, event, payload) {
   if (!io) return;
-  io.to(`hostel:${hostelId}`).emit(event, payload);
+  io.to(`hostel:${roomId(hostelId)}`).emit(event, payload);
 }
 
 export function emitToAdmins(event, payload) {
@@ -92,7 +105,7 @@ async function publishPresence(userId, isOnline) {
 export function broadcastUserUpdate(user) {
   if (!io || !user) return;
   const payload = { user: typeof user.toObject === 'function' ? user.toObject() : user };
-  if (user.collegeId) io.to(`college:${user.collegeId}`).emit('user:updated', payload);
-  if (user.hostelId) io.to(`hostel:${user.hostelId}`).emit('user:updated', payload);
+  if (user.collegeId) io.to(`college:${roomId(user.collegeId)}`).emit('user:updated', payload);
+  if (user.hostelId) io.to(`hostel:${roomId(user.hostelId)}`).emit('user:updated', payload);
   io.to('admins').emit('user:updated', payload);
 }

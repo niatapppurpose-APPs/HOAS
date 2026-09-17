@@ -9,16 +9,33 @@ export async function resolveStudentWarden(student) {
   return hostel?.wardenId?._id || hostel?.wardenId || null;
 }
 
+// Normalize anything that may represent a Mongo id into its string form:
+// a populated Mongoose document ({ _id, ... }), an ObjectId, or a plain string.
+// The HTTP auth middleware populates req.user.collegeId, so every comparison
+// and every Mongoose filter MUST go through this helper — String(populatedDoc)
+// yields "[object Object]" and silently breaks authorization, queries and
+// realtime rooms.
+export function idOf(value) {
+  if (value === null || value === undefined) return value;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') {
+    if (value._id !== undefined && value._id !== null) return String(value._id);
+    if (typeof value.toHexString === 'function') return value.toHexString();
+  }
+  return String(value);
+}
+
 export function canManageCollege(user, collegeId) {
   if (!user) return false;
   if (user.role === 'owner' || user.role === 'admin') return true;
+  const mine = idOf(user.collegeId);
+  const target = idOf(collegeId);
   if (user.role === 'management') {
-    const sameDocId = user.collegeId && String(user.collegeId) === String(collegeId);
-    const byUid = user.uid === String(collegeId);
-    return sameDocId || byUid;
+    if (mine && target && mine === target) return true;
+    return user.uid === String(target);
   }
   if (user.role === 'warden') {
-    return user.collegeId && String(user.collegeId) === String(collegeId);
+    return !!mine && !!target && mine === target;
   }
   return false;
 }
@@ -33,7 +50,11 @@ export function canAccessHostel(user, hostel) {
   if (!user || !hostel) return false;
   if (user.role === 'owner' || user.role === 'admin') return true;
   if (user.role === 'management') return canManageCollege(user, hostel.collegeId);
-  if (user.role === 'warden') return String(user.hostelId) === String(hostel._id);
+  if (user.role === 'warden') {
+    const mine = idOf(user.hostelId);
+    const target = idOf(hostel._id);
+    return !!mine && !!target && mine === target;
+  }
   return false;
 }
 

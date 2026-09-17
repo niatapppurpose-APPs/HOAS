@@ -8,6 +8,7 @@ import { recordAudit } from '../services/audit.service.js';
 import { sendWelcomeEmail, sendBulkUploadSummaryEmail } from '../services/email.service.js';
 import { createAuthUser, deleteAuthUser, generateResetLink } from '../services/user.service.js';
 import { checkCollegeCapacity } from '../services/capacity.service.js';
+import { idOf } from '../utils/scope.js';
 
 async function buildStudentPayload(data, collegeId, actingUser) {
   const college = await College.findById(collegeId);
@@ -67,7 +68,8 @@ export async function createStudent(req, res, next) {
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) throw new AppError(409, 'EMAIL_EXISTS');
 
-    const authUser = await createAuthUser({ email, password: cryptoRandom(), name: req.body.name });
+    const tempPassword = cryptoRandom();
+    const authUser = await createAuthUser({ email, password: tempPassword, name: req.body.name });
     const payload = await buildStudentPayload(req.body, collegeId, req.user);
     payload.uid = authUser.uid;
 
@@ -88,7 +90,7 @@ export async function createStudent(req, res, next) {
           { name: 'College', value: payload.collegeName },
           { name: 'Hostel', value: payload.hostelBlock || '-' },
           { name: 'Student ID', value: payload.studentId || '-' },
-          { name: 'Email', value: email },
+          { name: 'Login Email', value: email },
         ],
         resetLink,
       });
@@ -133,7 +135,8 @@ export async function bulkCreateStudents(req, res, next) {
       }
 
       try {
-        const authUser = await createAuthUser({ email, password: cryptoRandom(), name: row.name });
+        const tempPassword = cryptoRandom();
+        const authUser = await createAuthUser({ email, password: tempPassword, name: row.name });
         const payload = await buildStudentPayload(row, collegeId, req.user);
         payload.uid = authUser.uid;
         try {
@@ -152,6 +155,7 @@ export async function bulkCreateStudents(req, res, next) {
             extra: [
               { name: 'College', value: payload.collegeName },
               { name: 'Student ID', value: payload.studentId || '-' },
+              { name: 'Login Email', value: email },
             ],
             resetLink,
           });
@@ -201,7 +205,7 @@ export async function listStudents(req, res, next) {
     if (role === 'warden') {
       filter.$or = [{ hostelId: req.user.hostelId }, { wardenId: req.user._id }];
     } else if (role === 'management') {
-      filter.collegeId = req.user.collegeId;
+      filter.collegeId = idOf(req.user.collegeId);
     } else if (role !== 'owner' && role !== 'admin') {
       throw new AppError(403, 'FORBIDDEN');
     }

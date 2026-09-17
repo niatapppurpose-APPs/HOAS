@@ -55,8 +55,6 @@ export const parseExcel = (fileData) => {
             snoCol = 0; nameCol = 1; studentIdCol = 2; emailCol = 3;
         }
         console.warn('Column headers not recognized, using position-based mapping:', { snoCol, nameCol, studentIdCol, emailCol });
-    } else {
-        console.log('Auto-detected columns:', { snoCol, nameCol, studentIdCol, emailCol });
     }
 
     const students = [];

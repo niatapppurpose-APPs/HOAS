@@ -51,9 +51,15 @@ router.post(
   validateBody(createWardenSchema),
   createWarden
 );
-router.post('/:id/approve', validateParams(z.object({ id: objectId })), approveUser);
+router.post(
+  '/:id/approve',
+  requireRole('owner', 'management'),
+  validateParams(z.object({ id: objectId })),
+  approveUser
+);
 router.post(
   '/:id/deny',
+  requireRole('owner', 'management'),
   validateParams(z.object({ id: objectId })),
   validateBody(denySchema),
   denyUser

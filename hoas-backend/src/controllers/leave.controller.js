@@ -1,7 +1,7 @@
 import LeaveRequest from '../models/LeaveRequest.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege, resolveStudentWarden } from '../utils/scope.js';
+import { canManageCollege, resolveStudentWarden, idOf } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { notifyUser } from '../services/notification.service.js';
 import { emitToUser, emitToCollege } from '../services/socket.service.js';
@@ -19,7 +19,7 @@ export async function requestLeave(req, res, next) {
 
     const leave = await LeaveRequest.create({
       studentId: student._id,
-      collegeId: student.collegeId,
+      collegeId: idOf(student.collegeId),
       wardenId,
       leaveType: req.body.leaveType,
       reason: req.body.reason,
@@ -69,7 +69,7 @@ export async function listWardenLeaves(req, res, next) {
 
 export async function listManagementLeaves(req, res, next) {
   try {
-    const filter = { collegeId: req.user.collegeId };
+    const filter = { collegeId: idOf(req.user.collegeId) };
     if (req.query.status) filter.status = req.query.status;
     const leaves = await LeaveRequest.find(filter)
       .populate('studentId', 'name email studentId')

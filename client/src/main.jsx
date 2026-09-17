@@ -33,7 +33,6 @@ const recoverFromChunkLoadFailure = (reason) => {
 
 // Handle Vite dynamic import errors (e.g., when a new deployment invalidates old chunks)
 window.addEventListener('vite:preloadError', (event) => {
-  console.log('Caught a Vite dynamic import error, reloading the page...');
   event.preventDefault();
   recoverFromChunkLoadFailure(event?.payload || event?.error || "vite:preloadError");
 });

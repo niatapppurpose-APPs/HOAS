@@ -73,7 +73,6 @@ async function sendDirectNodemailer({ to, subject, html, text }) {
       'Auto-Submitted': 'auto-generated',
     },
   });
-  console.log(`[email-direct-smtp] to=${to} subject=${subject} messageId=${info.messageId}`);
   return { success: true, via: 'direct-smtp', messageId: info.messageId };
 }
 
@@ -117,13 +116,11 @@ async function callSupabaseEmail({ to, type, data, subject }) {
       throw new Error(`Supabase edge ${res.status}: ${JSON.stringify(json).slice(0, 500)}`)
     }
 
-    console.log(`[email-supabase] to=${to} type=${type} via=${json.via || 'supabase'} subject=${json.subject || subject || type}`)
     return json
   } catch (err) {
     console.error(`[email-supabase-failed] to=${to} type=${type}`, err.message || err)
     // Fallback to direct SMTP if edge function fetch fails
     try {
-      console.log(`[email-fallback] attempting direct SMTP for ${to}...`);
       // Request renderOnly from edge function if possible, or send simple fallback
       const renderRes = await fetch(url, {
         method: 'POST',
@@ -163,7 +160,6 @@ export async function sendMail({ to, subject, html, text = '', type, data, confi
     }
     const url = getSupabaseEmailUrl()
     if (!url) {
-      console.log(`[email-disabled] to=${to} subject=${subject} - neither SMTP nor SUPABASE configured`)
       return null
     }
     // For legacy callers, we create a minimal templated email by using a generic approach
@@ -194,7 +190,6 @@ export async function sendMail({ to, subject, html, text = '', type, data, confi
     }
   }
 
-  console.log(`[email-disabled] to=${to} subject=${subject}`)
   return null
 }
 
@@ -218,15 +213,19 @@ export function credentialBox(name, value) {
 // Templated senders - all use Supabase edge with proper type
 
 export function sendWelcomeEmail({ to, name, role, extra = [], resetLink = '' }) {
+  // Security: never forward passwords to email templates (reset link only).
+  const findVal = (keys) => extra.find(e => keys.some(k => e.name?.toLowerCase().includes(k)))?.value;
   return sendMailAsync({
     to,
     type: 'account_created',
     data: {
       userName: name,
+      email: to,
       role,
-      collegeName: extra.find(e => e.name?.toLowerCase().includes('college'))?.value || 'your institution',
+      collegeName: findVal(['college', 'institution', 'org']) || 'your institution',
       loginUrl: env.appUrl,
-      tempPassword: extra.find(e => e.name?.toLowerCase().includes('password'))?.value,
+      appUrl: env.appUrl,
+      studentId: findVal(['student id', 'studentid', 'roll', 'id number']),
       resetLink,
     },
   })

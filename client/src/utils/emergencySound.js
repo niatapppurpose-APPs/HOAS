@@ -34,9 +34,6 @@ export const setEmergencySoundMuted = (muted) => {
   }
   if (isGloballyMuted) {
     stopEmergencyAlertSound();
-    console.log('[emergency-sound] Permanently muted by user');
-  } else {
-    console.log('[emergency-sound] Unmuted by user');
   }
 };
 
@@ -70,7 +67,6 @@ export const unlockAudio = async () => {
       source.connect(ctx.destination);
       source.start(0);
       isAudioUnlocked = true;
-      console.log('[emergency-sound] Audio system successfully unlocked');
       return true;
     }
   } catch (err) {
@@ -171,7 +167,6 @@ function playMp3Audio() {
  */
 export const startEmergencyAlertSound = async ({ loop = true } = {}) => {
   if (isGloballyMuted) {
-    console.log('[emergency-sound] Sound is muted by user. Ignoring start request.');
     return;
   }
   const generation = soundGeneration;

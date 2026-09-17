@@ -59,7 +59,6 @@ const LoginButton = () => {
         }
 
         loginEmail = resolvedEmail;
-        console.log("Found student email:", loginEmail);
       }
 
       const credential = await signInWithEmailAndPassword(auth, loginEmail, password);

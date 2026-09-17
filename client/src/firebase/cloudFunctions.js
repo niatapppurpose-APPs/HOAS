@@ -112,13 +112,21 @@ const getMyProfile = async () => {
   return user;
 };
 
+const unwrapId = (value) => {
+  if (!value) return value;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && value._id) return String(value._id);
+  return value;
+};
+
 const getMyCollegeId = async () => {
   const user = await getMyProfile();
-  return user?.collegeId || null;
+  return unwrapId(user?.collegeId) || null;
 };
 
 const requireCollegeId = async (collegeId) => {
-  if (collegeId) return collegeId;
+  const normalized = unwrapId(collegeId);
+  if (normalized) return normalized;
   const mine = await getMyCollegeId();
   if (!mine) throw new Error('No college assigned to your account');
   return mine;

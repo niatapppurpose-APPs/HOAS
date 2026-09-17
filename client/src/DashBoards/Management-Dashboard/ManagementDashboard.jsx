@@ -171,8 +171,6 @@ const ManagementDashboard = () => {
   const [approvingUserId, setApprovingUserId] = useState(null);
 
   const handleApprove = async (userId) => {
-    console.log('handleApprove called', { userId, user });
-
     if (!user) {
       toast.error("You must be signed in to approve users");
       return;
