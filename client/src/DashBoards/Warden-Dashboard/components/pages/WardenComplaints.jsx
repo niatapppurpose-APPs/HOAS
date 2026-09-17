@@ -79,6 +79,34 @@ const WardenComplaints = () => {
         };
     }, [userData?.collegeId]);
 
+    // ── Instant realtime updates via socket (no waiting for 30s poll) ──
+    useEffect(() => {
+        const upsert = (e) => {
+            const updated = e.detail;
+            if (!updated) return;
+            const incomingId = updated._id || updated.id;
+            if (!incomingId) return;
+            const merged = { id: incomingId, ...updated };
+            setComplaints((prev) => {
+                const idx = prev.findIndex(
+                    (c) => String(c.id) === String(incomingId) || String(c._id) === String(incomingId)
+                );
+                if (idx === -1) return prev; // poll fallback picks up brand-new items
+                const next = [...prev];
+                next[idx] = { ...prev[idx], ...merged };
+                return next;
+            });
+            setSelectedComplaint((prev) =>
+                prev && (String(prev.id) === String(incomingId) || String(prev._id) === String(incomingId))
+                    ? { ...prev, ...merged }
+                    : prev
+            );
+        };
+        const events = ['hoas:complaint-new', 'hoas:complaint-updated', 'hoas:complaint-disputed', 'hoas:complaint-escalated'];
+        events.forEach((ev) => window.addEventListener(ev, upsert));
+        return () => events.forEach((ev) => window.removeEventListener(ev, upsert));
+    }, []);
+
     // ── Filtered (memoized) ─────────────────────────────────────────
     const filteredComplaints = useMemo(() =>
         activeFilter === 'all'
@@ -106,6 +134,15 @@ const WardenComplaints = () => {
                 newStatus === 'warden-resolved'
                     ? 'Marked as resolved — waiting for student confirmation'
                     : `Complaint marked as ${newStatus}`
+            );
+
+            // Update the list instantly (don't wait for poll/socket)
+            setComplaints((prev) =>
+                prev.map((c) =>
+                    String(c.id) === String(complaintId)
+                        ? { ...c, status: newStatus, response: response || c.response }
+                        : c
+                )
             );
 
             // If modal is open, update it

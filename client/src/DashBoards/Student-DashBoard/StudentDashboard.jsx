@@ -29,6 +29,18 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+// Friendly status labels — mirrors STATUS_CONFIG in components/pages/complaintConstants.js
+// so the dashboard feed badge always matches the Complaints page.
+const COMPLAINT_STATUS_META = {
+  pending: { label: "Pending", tone: "bg-amber-500/10 text-amber-600 border border-amber-500/20" },
+  "in-progress": { label: "In Progress", tone: "bg-blue-500/10 text-blue-600 border border-blue-500/20" },
+  "warden-resolved": { label: "Review Required", tone: "bg-amber-500/10 text-amber-600 border border-amber-500/20" },
+  resolved: { label: "Resolved", tone: "bg-green-500/10 text-green-600 border border-green-500/20" },
+  disputed: { label: "Disputed", tone: "bg-red-500/10 text-red-600 border border-red-500/20" },
+  escalated: { label: "Escalated", tone: "bg-red-500/10 text-red-600 border border-red-500/20" },
+  rejected: { label: "Rejected", tone: "bg-gray-500/10 text-gray-500 border border-gray-500/20" },
+};
+
 const StudentDashboard = () => {
   const { user, userData, userDataLoading, createUserProfile } = useAuth();
   const navigate = useNavigate();
@@ -457,17 +469,16 @@ const StudentDashboard = () => {
                               {userData.roomNumber || "N/A"}
                             </p>
                           </div>
-                          <span
-                            className={`text-[9px] md:text-[10px] px-2 md:px-2.5 py-0.5 md:py-1 rounded-lg font-black tracking-wider uppercase ${
-                              c.status === "pending"
-                                ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                                : c.status === "in-progress"
-                                  ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                                  : "bg-green-500/10 text-green-600 border border-green-500/20"
-                            }`}
-                          >
-                            {c.status}
-                          </span>
+                          {(() => {
+                            const meta = COMPLAINT_STATUS_META[c.status] || COMPLAINT_STATUS_META.pending;
+                            return (
+                              <span
+                                className={`text-[9px] md:text-[10px] px-2 md:px-2.5 py-0.5 md:py-1 rounded-lg font-black tracking-wider uppercase ${meta.tone}`}
+                              >
+                                {meta.label}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </div>
                       <ChevronRight

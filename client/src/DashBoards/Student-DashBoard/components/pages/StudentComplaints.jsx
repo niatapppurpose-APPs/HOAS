@@ -97,6 +97,34 @@ const StudentComplaints = () => {
         };
     }, [user?.uid]);
 
+    // ── Instant realtime updates via socket (no waiting for 30s poll) ──
+    useEffect(() => {
+        const upsert = (e) => {
+            const updated = e.detail;
+            if (!updated) return;
+            const incomingId = updated._id || updated.id;
+            if (!incomingId) return;
+            const merged = { id: incomingId, ...updated };
+            setComplaints((prev) => {
+                const idx = prev.findIndex(
+                    (c) => String(c.id) === String(incomingId) || String(c._id) === String(incomingId)
+                );
+                if (idx === -1) return prev; // poll fallback picks up brand-new items
+                const next = [...prev];
+                next[idx] = { ...prev[idx], ...merged };
+                return next;
+            });
+            setSelectedComplaint((prev) =>
+                prev && (String(prev.id) === String(incomingId) || String(prev._id) === String(incomingId))
+                    ? { ...prev, ...merged }
+                    : prev
+            );
+        };
+        const events = ['hoas:complaint-new', 'hoas:complaint-updated', 'hoas:complaint-disputed', 'hoas:complaint-escalated'];
+        events.forEach((ev) => window.addEventListener(ev, upsert));
+        return () => events.forEach((ev) => window.removeEventListener(ev, upsert));
+    }, []);
+
     // ── Filtered complaints (memoized) ───────────────────────────────
     const filteredComplaints = useMemo(() =>
         activeFilter === 'all'
@@ -226,6 +254,13 @@ const StudentComplaints = () => {
             await reviewComplaint(complaint.id, 'accept');
 
             toast.success('Resolution accepted! Complaint is now resolved.');
+            setComplaints((prev) =>
+                prev.map((c) =>
+                    String(c.id) === String(complaint.id)
+                        ? { ...c, status: 'resolved', studentReviewStatus: 'accepted' }
+                        : c
+                )
+            );
             if (selectedComplaint?.id === complaint.id) {
                 setSelectedComplaint(prev => ({ ...prev, status: 'resolved', studentReviewStatus: 'accepted' }));
             }
@@ -250,6 +285,13 @@ const StudentComplaints = () => {
 
             toast.success('Dispute submitted! The warden will be alerted.');
             setShowDisputeModal(false);
+            setComplaints((prev) =>
+                prev.map((c) =>
+                    String(c.id) === String(complaint.id)
+                        ? { ...c, status: 'disputed', studentReviewStatus: 'disputed', disputeReason: disputeReason.trim() }
+                        : c
+                )
+            );
             if (selectedComplaint?.id === complaint.id) {
                 setSelectedComplaint(prev => ({
                     ...prev,
