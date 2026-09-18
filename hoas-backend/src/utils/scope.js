@@ -58,13 +58,6 @@ export function canAccessHostel(user, hostel) {
   return false;
 }
 
-export function wardenScopeQuery(user) {
-  if (user.role === 'warden') {
-    return { hostelId: user.hostelId, assignedWardenId: user._id };
-  }
-  return {};
-}
-
 // Warden complaint scope: ONLY their assigned complaints plus UNASSIGNED
 // complaints in their own hostel. This prevents cross-warden leakage,
 // including null == null hostel matches when hostelId is unset.
@@ -89,9 +82,4 @@ export function canWardenAccessComplaint(user, complaint) {
     !!complaint.hostelId &&
     String(complaint.hostelId) === String(user.hostelId)
   );
-}
-
-export function studentOwnsRecord(user, record, studentField = 'studentId') {
-  if (!record) return false;
-  return String(record[studentField]) === String(user._id);
 }
