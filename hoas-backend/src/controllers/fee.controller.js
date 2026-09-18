@@ -2,6 +2,7 @@ import Fee from '../models/Fee.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import { canManageCollege, resolveStudentWarden, idOf } from '../utils/scope.js';
+import { getPagination, pageMeta } from '../utils/pagination.js';
 import { recordAudit } from '../services/audit.service.js';
 import { notifyUser } from '../services/notification.service.js';
 import { emitToUser, emitToCollege, emitToHostel, broadcastUserUpdate } from '../services/socket.service.js';
@@ -99,10 +100,15 @@ export async function listManagementFees(req, res, next) {
   try {
     const filter = { collegeId: idOf(req.user.collegeId) };
     if (req.query.status) filter.status = req.query.status;
-    const fees = await Fee.find(filter)
+    const { page, limit, skip } = getPagination(req.query);
+    const query = Fee.find(filter)
       .populate('studentId', 'name email studentId hostelBlock uid')
       .sort({ createdAt: -1 });
-    res.json({ fees });
+    if (limit) query.skip(skip).limit(limit);
+    const fees = await query;
+    const body = { fees };
+    if (limit) body.pagination = await pageMeta(Fee, filter, page, limit);
+    res.json(body);
   } catch (error) {
     next(error);
   }
@@ -118,10 +124,15 @@ export async function listWardenFees(req, res, next) {
       filter.wardenId = req.user._id;
     }
     if (req.query.status) filter.status = req.query.status;
-    const fees = await Fee.find(filter)
+    const { page, limit, skip } = getPagination(req.query);
+    const query = Fee.find(filter)
       .populate('studentId', 'name email studentId hostelBlock uid')
       .sort({ createdAt: -1 });
-    res.json({ fees });
+    if (limit) query.skip(skip).limit(limit);
+    const fees = await query;
+    const body = { fees };
+    if (limit) body.pagination = await pageMeta(Fee, filter, page, limit);
+    res.json(body);
   } catch (error) {
     next(error);
   }

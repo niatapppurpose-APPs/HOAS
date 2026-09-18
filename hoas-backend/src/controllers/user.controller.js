@@ -3,6 +3,7 @@ import College from '../models/College.js';
 import Hostel from '../models/Hostel.js';
 import { AppError } from '../utils/AppError.js';
 import { canManageCollege, idOf } from '../utils/scope.js';
+import { getPagination, pageMeta } from '../utils/pagination.js';
 import { recordAudit } from '../services/audit.service.js';
 import { sendWelcomeEmail } from '../services/email.service.js';
 import { notifyUser, notifyAdmins } from '../services/notification.service.js';
@@ -53,12 +54,17 @@ export async function listUsers(req, res, next) {
         filter.$or = searchOr;
       }
     }
-    const users = await User.find(filter)
+    const { page, limit, skip } = getPagination(req.query);
+    const query = User.find(filter)
       .populate('collegeId', 'name')
       .populate('hostelId', 'name')
       .sort({ createdAt: -1 })
-      .limit(200);
-    res.json({ users: withPresence(users) });
+      .limit(limit || 200);
+    if (limit) query.skip(skip);
+    const users = await query;
+    const body = { users: withPresence(users) };
+    if (limit) body.pagination = await pageMeta(User, filter, page, limit);
+    res.json(body);
   } catch (error) {
     next(error);
   }

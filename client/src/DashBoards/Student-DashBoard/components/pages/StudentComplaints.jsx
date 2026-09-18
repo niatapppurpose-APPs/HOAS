@@ -26,7 +26,9 @@ import {
     ThumbsDown,
     ShieldAlert,
     XCircle,
+    Plus,
 } from 'lucide-react';
+import ResponsiveSheet from '../../../../components/ResponsiveSheet';
 import { CATEGORIES, STATUS_CONFIG, FILTER_OPTIONS, formatDate, getCategoryLabel } from './complaintConstants';
 import compressImage from './utils/compressImage';
 import { uploadComplaintImage } from '../../../../utils/cloudinaryUpload';
@@ -63,6 +65,9 @@ const StudentComplaints = () => {
     // ── Review / Dispute state ───────────────────────────────
     const [showDisputeModal, setShowDisputeModal] = useState(false);
     const [isReviewing, setIsReviewing] = useState(false);
+
+    // ── File-complaint sheet (right drawer on desktop, bottom sheet on mobile)
+    const [showFormSheet, setShowFormSheet] = useState(false);
 
     // ── Fetch complaints (socket merges above give instant updates;
     //    reconnect / tab-focus / safety-net refetch below) ─────────────
@@ -217,12 +222,14 @@ const StudentComplaints = () => {
                 imageUrl,
             });
 
-            // Reset form
+            // Reset form, close the sheet and refresh the list instantly
             setCategory('');
             setTitle('');
             setDescription('');
             removeImage();
             toast.success('Complaint submitted successfully! 🎉');
+            setShowFormSheet(false);
+            await loadComplaints();
         } catch (err) {
             console.error('Failed to submit complaint:', err);
             // Handle specific Cloud Function errors
@@ -341,14 +348,29 @@ const StudentComplaints = () => {
                                 <CheckCircle2 size={13} /> {stats.resolved} Resolved
                             </div>
                         </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowFormSheet(true)}
+                            className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-white text-indigo-600 shadow-lg hover:scale-[1.03] active:scale-95 transition-transform"
+                        >
+                            <Plus size={15} /> File a Complaint
+                        </button>
                     </div>
                 </div>
 
-                {/* ── Main Grid ────────────────────────────────── */}
-                <div className="complaints-grid">
+                {/* ── Complaint History (full width) ───────────── */}
+                <div>
 
-                    {/* ═══ LEFT — Submit Form ═══ */}
-                    <div className="complaints-card">
+                    {/* ═══ Submit Form (opens in sheet) ═══ */}
+                    <ResponsiveSheet
+                        isOpen={showFormSheet}
+                        onClose={() => setShowFormSheet(false)}
+                        busy={isSubmitting}
+                        ariaLabel="File a Complaint"
+                        desktopWidthClass="md:w-[560px]"
+                        panelStyle={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}
+                    >
+                    <div className="complaints-card" style={{ background: 'transparent', border: 'none', boxShadow: 'none', borderRadius: 0 }}>
                         <div className="complaints-card-header">
                             <div
                                 className="complaints-card-header-icon"
@@ -360,6 +382,16 @@ const StudentComplaints = () => {
                                 <h3>File a Complaint</h3>
                                 <p>Describe your issue in detail</p>
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowFormSheet(false)}
+                                disabled={isSubmitting}
+                                aria-label="Close"
+                                className="p-2 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-50"
+                                style={{ color: 'var(--text-muted)', marginLeft: 'auto', alignSelf: 'flex-start' }}
+                            >
+                                <X size={16} />
+                            </button>
                         </div>
 
                         <div className="complaints-card-body">
@@ -480,11 +512,12 @@ const StudentComplaints = () => {
                                         </>
                                     )}
                                 </button>
-                            </form>
+                                </form>
+                            </div>
                         </div>
-                    </div>
+                    </ResponsiveSheet>
 
-                    {/* ═══ RIGHT — Complaint History ═══ */}
+                    {/* ═══ Complaint History (full width) ═══ */}
                     <div className="complaints-card">
                         <div className="complaints-card-header">
                             <div
@@ -639,6 +672,16 @@ const StudentComplaints = () => {
                     </div>
                 </div>
             </div>
+
+            {/* ── Mobile floating action: open the form sheet ─── */}
+            <button
+                type="button"
+                onClick={() => setShowFormSheet(true)}
+                aria-label="File a complaint"
+                className="md:hidden fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-indigo-600 text-white shadow-xl flex items-center justify-center active:scale-95 transition-transform"
+            >
+                <Plus size={24} />
+            </button>
 
             {/* ── Detail Modal ─────────────────────────────────── */}
             <ComplaintDetailModal

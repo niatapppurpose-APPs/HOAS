@@ -2,6 +2,7 @@ import Complaint from '../models/Complaint.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import { canManageCollege, canAccessHostel, resolveStudentWarden, idOf } from '../utils/scope.js';
+import { getPagination, pageMeta } from '../utils/pagination.js';
 import { recordAudit } from '../services/audit.service.js';
 import {
   computeSlaDeadline,
@@ -48,8 +49,13 @@ export async function createComplaint(req, res, next) {
 
 export async function listMyComplaints(req, res, next) {
   try {
-    const complaints = await Complaint.find({ studentId: req.user._id }).sort({ createdAt: -1 });
-    res.json({ complaints });
+    const { page, limit, skip } = getPagination(req.query);
+    const query = Complaint.find({ studentId: req.user._id }).sort({ createdAt: -1 });
+    if (limit) query.skip(skip).limit(limit);
+    const complaints = await query;
+    const body = { complaints };
+    if (limit) body.pagination = await pageMeta(Complaint, { studentId: req.user._id }, page, limit);
+    res.json(body);
   } catch (error) {
     next(error);
   }
@@ -59,10 +65,15 @@ export async function listWardenComplaints(req, res, next) {
   try {
     const filter = { $or: [{ assignedWardenId: req.user._id }, { hostelId: req.user.hostelId }] };
     if (req.query.status) filter.status = req.query.status;
-    const complaints = await Complaint.find(filter)
+    const { page, limit, skip } = getPagination(req.query);
+    const query = Complaint.find(filter)
       .populate('studentId', 'name email studentId hostelBlock')
       .sort({ createdAt: -1 });
-    res.json({ complaints });
+    if (limit) query.skip(skip).limit(limit);
+    const complaints = await query;
+    const body = { complaints };
+    if (limit) body.pagination = await pageMeta(Complaint, filter, page, limit);
+    res.json(body);
   } catch (error) {
     next(error);
   }
@@ -72,11 +83,16 @@ export async function listManagementComplaints(req, res, next) {
   try {
     const filter = { collegeId: idOf(req.user.collegeId) };
     if (req.query.status) filter.status = req.query.status;
-    const complaints = await Complaint.find(filter)
+    const { page, limit, skip } = getPagination(req.query);
+    const query = Complaint.find(filter)
       .populate('studentId', 'name email studentId hostelBlock')
       .populate('hostelId', 'name')
       .sort({ createdAt: -1 });
-    res.json({ complaints });
+    if (limit) query.skip(skip).limit(limit);
+    const complaints = await query;
+    const body = { complaints };
+    if (limit) body.pagination = await pageMeta(Complaint, filter, page, limit);
+    res.json(body);
   } catch (error) {
     next(error);
   }
@@ -87,13 +103,18 @@ export async function getAllComplaints(req, res, next) {
     const filter = {};
     if (req.query.status) filter.status = req.query.status;
     if (req.query.collegeId) filter.collegeId = req.query.collegeId;
-    const complaints = await Complaint.find(filter)
+    const { page, limit, skip } = getPagination(req.query);
+    const query = Complaint.find(filter)
       .populate('studentId', 'name email studentId hostelBlock')
       .populate('collegeId', 'name')
       .populate('hostelId', 'name')
       .sort({ createdAt: -1 })
-      .limit(300);
-    res.json({ complaints });
+      .limit(limit || 300);
+    if (limit) query.skip(skip);
+    const complaints = await query;
+    const body = { complaints };
+    if (limit) body.pagination = await pageMeta(Complaint, filter, page, limit);
+    res.json(body);
   } catch (error) {
     next(error);
   }

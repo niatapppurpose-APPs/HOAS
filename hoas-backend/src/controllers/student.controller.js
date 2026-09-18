@@ -9,6 +9,7 @@ import { sendWelcomeEmail, sendBulkUploadSummaryEmail } from '../services/email.
 import { createAuthUser, deleteAuthUser, generateResetLink } from '../services/user.service.js';
 import { checkCollegeCapacity } from '../services/capacity.service.js';
 import { idOf } from '../utils/scope.js';
+import { getPagination, pageMeta } from '../utils/pagination.js';
 
 async function buildStudentPayload(data, collegeId, actingUser) {
   const college = await College.findById(collegeId);
@@ -221,20 +222,25 @@ export async function listStudents(req, res, next) {
       ];
     }
 
-    const students = await User.find(filter)
+    const { page, limit, skip } = getPagination(req.query);
+    const query = User.find(filter)
       .populate('collegeId', 'name')
       .populate('hostelId', 'name')
       .populate('wardenId', 'name')
       .sort({ createdAt: -1 })
-      .limit(300);
+      .limit(limit || 300);
+    if (limit) query.skip(skip);
+    const students = await query;
     const now = Date.now();
-    res.json({
+    const body = {
       students: students.map((s) => {
         const doc = s.toObject();
         doc.isOnline = !!(s.isOnline && s.lastActiveAt && now - new Date(s.lastActiveAt).getTime() < 90 * 1000);
         return doc;
       }),
-    });
+    };
+    if (limit) body.pagination = await pageMeta(User, filter, page, limit);
+    res.json(body);
   } catch (error) {
     next(error);
   }
