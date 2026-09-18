@@ -1,4 +1,4 @@
-import HOASLogo from "../assets/Applogo4k.png";
+import HOASLogo from "../../src/assets/Applogo4k.png";
 import { CheckCircle } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import AnimatedLogoutButton from "./AnimatedLogoutButton";
