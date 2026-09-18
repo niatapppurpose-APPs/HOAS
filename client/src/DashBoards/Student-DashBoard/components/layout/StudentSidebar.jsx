@@ -20,10 +20,6 @@ import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 import Applogo from "../../../../assets/AppLogo4k.webp";
 import NewBadge from "../../../../components/NewBadge";
-import {
-  isNavItemNew,
-  dismissNavItemFeatures,
-} from "../../../../data/newFeatures";
 import MobileBottomNav from "../../../../components/MobileBottomNav";
 
 const StudentSidebar = ({
@@ -48,7 +44,6 @@ const StudentSidebar = ({
 
   const [isPinned, setIsPinned] = useState(false);
   const [showLogoPopup, setShowLogoPopup] = useState(false);
-  const [, forceUpdate] = useState(0);
 
   // Get active item from current path
   const getActiveItem = () => {
@@ -333,8 +328,8 @@ const StudentSidebar = ({
                           color: isActive ? "#ffffff" : "var(--text-secondary)",
                         }}
                       />
-                      {isNavItemNew(item.id) && !showContent && (
-                        <NewBadge dot />
+                      {!showContent && (
+                        <NewBadge dot itemId={item.id} />
                       )}
                     </span>
                     <span
@@ -342,13 +337,8 @@ const StudentSidebar = ({
                     >
                       {item.label}
                     </span>
-                    {isNavItemNew(item.id) && showContent && (
-                      <NewBadge
-                        onDismiss={() => {
-                          dismissNavItemFeatures(item.id);
-                          forceUpdate((n) => n + 1);
-                        }}
-                      />
+                    {showContent && (
+                      <NewBadge itemId={item.id} />
                     )}
 
                     {/* Tooltip for collapsed state */}
@@ -412,8 +402,8 @@ const StudentSidebar = ({
                         className="w-5 h-5 transition-transform duration-300 group-hover:scale-110"
                         style={{ color: "var(--text-secondary)" }}
                       />
-                      {isNavItemNew(item.id) && !showContent && (
-                        <NewBadge dot />
+                      {!showContent && (
+                        <NewBadge dot itemId={item.id} />
                       )}
                     </span>
                     <span
@@ -421,13 +411,8 @@ const StudentSidebar = ({
                     >
                       {item.label}
                     </span>
-                    {isNavItemNew(item.id) && showContent && (
-                      <NewBadge
-                        onDismiss={() => {
-                          dismissNavItemFeatures(item.id);
-                          forceUpdate((n) => n + 1);
-                        }}
-                      />
+                    {showContent && (
+                      <NewBadge itemId={item.id} />
                     )}
 
                     {/* Tooltip for collapsed state */}

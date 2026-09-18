@@ -26,6 +26,36 @@ export const NEW_FEATURES = [
     sidebarIds: [], // no sidebar item — page-level feature, no nav badge needed
   },
 
+  // ── Shipped 2026-09-18 ─────────────────────────────────────────────────────────
+  {
+    id: "warden-fee-approvals",
+    label: "Fee Approve & Reject",
+    releasedAt: "2026-09-18",
+    expiresAfterDays: 21,
+    sidebarIds: ["fees"], // warden fee approvals + student fee delete/refresh
+  },
+  {
+    id: "complaints-instant-refresh",
+    label: "Instant Complaint Updates",
+    releasedAt: "2026-09-18",
+    expiresAfterDays: 21,
+    sidebarIds: ["complaints"], // student quick-file sheet + realtime status on both portals
+  },
+  {
+    id: "emergency-live-alerts",
+    label: "Live Emergency Alerts",
+    releasedAt: "2026-09-18",
+    expiresAfterDays: 14,
+    sidebarIds: ["emergency-location"], // header siren indicator + sound for staff
+  },
+  {
+    id: "branded-password-reset",
+    label: "Branded Password Reset Page",
+    releasedAt: "2026-09-18",
+    expiresAfterDays: 14,
+    sidebarIds: [], // page-level feature (email link), no nav badge needed
+  },
+
   // ── Add new entries below this line ──────────────────────────────────────────────
   // Example:
   // {
@@ -34,13 +64,6 @@ export const NEW_FEATURES = [
   //   releasedAt: "2026-03-10",
   //   expiresAfterDays: 21,
   //   sidebarIds: ["leave"],          // badges the "leave" item in StudentSidebar
-  // },
-  // {
-  //   id: "bulk-report-export",
-  //   label: "Bulk Report Export",
-  //   releasedAt: "2026-03-15",
-  //   expiresAfterDays: 14,
-  //   sidebarIds: ["reports"],        // badges "reports" in Owner & Management sidebars
   // },
 ];
 

@@ -19,7 +19,6 @@ import { useTheme } from "../../context/ThemeContext";
 import Avatar from "./Avatar";
 import Applogo from "../../assets/Applogo.webp";
 import NewBadge from "../NewBadge";
-import { isNavItemNew, dismissNavItemFeatures } from "../../data/newFeatures";
 import MobileBottomNav from "../MobileBottomNav";
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { user, userData } = useAuth();
@@ -29,7 +28,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const [isPinned, setIsPinned] = useState(false);
   const [showLogoPopup, setShowLogoPopup] = useState(false);
   const [ownerProfile, setOwnerProfile] = useState(null);
-  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
     setOwnerProfile(userData || null);
@@ -341,8 +339,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                           color: isActive ? "#ffffff" : "var(--text-secondary)",
                         }}
                       />
-                      {isNavItemNew(item.id) && !showContent && (
-                        <NewBadge dot />
+                      {!showContent && (
+                        <NewBadge dot itemId={item.id} />
                       )}
                     </span>
                     <span
@@ -350,13 +348,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                     >
                       {item.label}
                     </span>
-                    {isNavItemNew(item.id) && showContent && (
-                      <NewBadge
-                        onDismiss={() => {
-                          dismissNavItemFeatures(item.id);
-                          forceUpdate((n) => n + 1);
-                        }}
-                      />
+                    {showContent && (
+                      <NewBadge itemId={item.id} />
                     )}
 
                     {/* Tooltip for collapsed state */}
@@ -436,8 +429,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                           color: isActive ? "#ffffff" : "var(--text-secondary)",
                         }}
                       />
-                      {isNavItemNew(item.id) && !showContent && (
-                        <NewBadge dot />
+                      {!showContent && (
+                        <NewBadge dot itemId={item.id} />
                       )}
                     </span>
                     <span
@@ -445,13 +438,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                     >
                       {item.label}
                     </span>
-                    {isNavItemNew(item.id) && showContent && (
-                      <NewBadge
-                        onDismiss={() => {
-                          dismissNavItemFeatures(item.id);
-                          forceUpdate((n) => n + 1);
-                        }}
-                      />
+                    {showContent && (
+                      <NewBadge itemId={item.id} />
                     )}
 
                     {/* Tooltip for collapsed state */}

@@ -21,7 +21,6 @@ import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from '../../../../components/OwnerServices/Avatar';
 import AppLogo4k from '../../../../assets/AppLogo4k.webp';
 import NewBadge from "../../../../components/NewBadge";
-import { isNavItemNew, dismissNavItemFeatures } from "../../../../data/newFeatures";
 import MobileBottomNav from "../../../../components/MobileBottomNav";
 const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementData }) => {
   const { user, userData } = useAuth();
@@ -40,7 +39,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
 
   const [isPinned, setIsPinned] = useState(false);
   const [showLogoPopup, setShowLogoPopup] = useState(false);
-  const [, forceUpdate] = useState(0);
+
   const [profileData, setProfileData] = useState({
     displayName: "",
     email: "",
@@ -255,14 +254,14 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
                       className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110`}
                       style={{ color: isActive ? '#ffffff' : 'var(--text-secondary)' }}
                     />
-                    {isNavItemNew(item.id) && !showContent && <NewBadge dot />}
+                    {!showContent && <NewBadge dot itemId={item.id} />}
                   </span>
                   <span className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""}`}>
                     {item.label}
                   </span>
-                  {isNavItemNew(item.id) && showContent && (
-                    <NewBadge onDismiss={() => { dismissNavItemFeatures(item.id); forceUpdate(n => n + 1); }} />
-                  )}
+                    {showContent && (
+                      <NewBadge itemId={item.id} />
+                    )}
 
                   {/* Tooltip for collapsed state */}
                   {!showContent && (
@@ -312,14 +311,14 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
                       className="w-5 h-5 transition-transform duration-300 group-hover:scale-110"
                       style={{ color: 'var(--text-secondary)' }}
                     />
-                    {isNavItemNew(item.id) && !showContent && <NewBadge dot />}
+                    {!showContent && <NewBadge dot itemId={item.id} />}
                   </span>
                   <span className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""}`}>
                     {item.label}
                   </span>
-                  {isNavItemNew(item.id) && showContent && (
-                    <NewBadge onDismiss={() => { dismissNavItemFeatures(item.id); forceUpdate(n => n + 1); }} />
-                  )}
+                    {showContent && (
+                      <NewBadge itemId={item.id} />
+                    )}
 
                   {/* Tooltip for collapsed state */}
                   {!showContent && (

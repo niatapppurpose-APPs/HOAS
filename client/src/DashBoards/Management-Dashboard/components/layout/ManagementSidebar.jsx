@@ -22,10 +22,6 @@ import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 import AppLogo4k from "../../../../assets/AppLogo4k.webp";
 import NewBadge from "../../../../components/NewBadge";
-import {
-  isNavItemNew,
-  dismissNavItemFeatures,
-} from "../../../../data/newFeatures";
 import MobileBottomNav from "../../../../components/MobileBottomNav";
 
 const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
@@ -35,7 +31,6 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
   const location = useLocation();
   const [isPinned, setIsPinned] = useState(false);
   const [showLogoPopup, setShowLogoPopup] = useState(false);
-  const [, forceUpdate] = useState(0);
 
   // Close popup on Escape key
   useEffect(() => {
@@ -345,8 +340,8 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
                           color: isActive ? "#ffffff" : "var(--text-secondary)",
                         }}
                       />
-                      {isNavItemNew(item.id) && !showContent && (
-                        <NewBadge dot />
+                      {!showContent && (
+                        <NewBadge dot itemId={item.id} />
                       )}
                     </span>
                     <span
@@ -354,13 +349,8 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
                     >
                       {item.label}
                     </span>
-                    {isNavItemNew(item.id) && showContent && (
-                      <NewBadge
-                        onDismiss={() => {
-                          dismissNavItemFeatures(item.id);
-                          forceUpdate((n) => n + 1);
-                        }}
-                      />
+                    {showContent && (
+                      <NewBadge itemId={item.id} />
                     )}
 
                     {/* Tooltip for collapsed state */}
@@ -420,8 +410,8 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
                   >
                     <span className="relative flex-shrink-0">
                       <Icon className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
-                      {isNavItemNew(item.id) && !showContent && (
-                        <NewBadge dot />
+                      {!showContent && (
+                        <NewBadge dot itemId={item.id} />
                       )}
                     </span>
                     <span
@@ -429,13 +419,8 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
                     >
                       {item.label}
                     </span>
-                    {isNavItemNew(item.id) && showContent && (
-                      <NewBadge
-                        onDismiss={() => {
-                          dismissNavItemFeatures(item.id);
-                          forceUpdate((n) => n + 1);
-                        }}
-                      />
+                    {showContent && (
+                      <NewBadge itemId={item.id} />
                     )}
 
                     {/* Tooltip for collapsed state */}
