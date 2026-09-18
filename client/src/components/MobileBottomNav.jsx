@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { LayoutGrid, X } from "lucide-react";
 import Avatar from "./OwnerServices/Avatar";
 import { isNavItemNew } from "../data/newFeatures";
@@ -18,6 +18,7 @@ const MobileBottomNav = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [showMore, setShowMore] = useState(false);
+  const dragControls = useDragControls();
 
   const hasMore = items.length > MAX_VISIBLE;
   const visibleItems = hasMore ? items.slice(0, MAX_VISIBLE - 1) : items;
@@ -142,8 +143,20 @@ const MobileBottomNav = ({
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 320 }}
+              drag="y"
+              dragListener={false}
+              dragControls={dragControls}
+              dragConstraints={{ top: 0 }}
+              dragElastic={0.5}
+              dragMomentum={false}
+              onDragEnd={(e, info) => {
+                if (info.offset.y > 110) setShowMore(false);
+              }}
             >
-              <div className="flex justify-center pt-2.5 pb-1">
+              <div
+                className="flex justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing touch-none select-none"
+                onPointerDown={(e) => dragControls.start(e)}
+              >
                 <div className="w-10 h-1 rounded-full" style={{ backgroundColor: 'var(--border-primary)' }} />
               </div>
               <div className="flex items-center justify-between px-5 pt-1 pb-2">
