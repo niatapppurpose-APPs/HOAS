@@ -5,6 +5,7 @@ import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import StudentHeader from '../layout/StudentHeader';
 import { fileComplaint, getMyComplaints, reviewComplaint } from '../../../../firebase/cloudFunctions';
+import useRealtimeRefresh from '../../../../hooks/useRealtimeRefresh';
 import {
     FileText,
     Send,
@@ -63,39 +64,35 @@ const StudentComplaints = () => {
     const [showDisputeModal, setShowDisputeModal] = useState(false);
     const [isReviewing, setIsReviewing] = useState(false);
 
-    // ── Fetch complaints in real-time ────────────────────────
-    useEffect(() => {
+    // ── Fetch complaints (socket merges above give instant updates;
+    //    reconnect / tab-focus / safety-net refetch below) ─────────────
+    const loadComplaints = useCallback(async () => {
         if (!user?.uid) return;
-
-        let cancelled = false;
-
-        const load = async () => {
-            try {
-                const { complaints } = await getMyComplaints();
-                if (cancelled) return;
-                const data = (complaints || []).map((c) => ({ id: c._id, ...c }));
-                data.sort((a, b) => {
-                    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                    return timeB - timeA;
-                });
-                setComplaints(data);
-                setHistoryLoading(false);
-            } catch (err) {
-                console.error('Error fetching complaints:', err);
-                setHistoryLoading(false);
-            }
-        };
-
-        load();
-
-        const interval = setInterval(load, 30000);
-
-        return () => {
-            cancelled = true;
-            clearInterval(interval);
-        };
+        try {
+            const { complaints } = await getMyComplaints();
+            const data = (complaints || []).map((c) => ({ id: c._id, ...c }));
+            data.sort((a, b) => {
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return timeB - timeA;
+            });
+            setComplaints(data);
+            setHistoryLoading(false);
+        } catch (err) {
+            console.error('Error fetching complaints:', err);
+            setHistoryLoading(false);
+        }
     }, [user?.uid]);
+
+    useEffect(() => {
+        loadComplaints();
+    }, [loadComplaints]);
+
+    useRealtimeRefresh({
+        events: [],
+        refetch: loadComplaints,
+        enabled: !!user?.uid,
+    });
 
     // ── Instant realtime updates via socket (no waiting for 30s poll) ──
     useEffect(() => {

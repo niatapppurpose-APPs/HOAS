@@ -3,6 +3,7 @@ import { useAuth } from '../../../../context/AuthContext';
 import { useTheme } from '../../../../context/ThemeContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
+import useRealtimeRefresh from '../../../../hooks/useRealtimeRefresh';
 import StudentHeader from '../layout/StudentHeader';
 import { useNotifications } from '../../../../context/NotificationContext';
 import {
@@ -69,28 +70,30 @@ const StudentOutingRequests = () => {
   const [actualReturnTime, setActualReturnTime] = useState('');
   const [isMarkingReturn, setIsMarkingReturn] = useState(false);
 
-  // ── Fetch outings in real-time ───────────────────────────────
-  useEffect(() => {
+  // ── Fetch outings in real-time (event-driven, not polled) ────
+  const fetchOutings = useCallback(async () => {
     if (!user?.uid) return;
-
-    const fetchOutings = async () => {
-      try {
-        setIsLoading(true);
-        const result = await getStudentOutings();
-        setOutings(result.outings || []);
-      } catch (error) {
-        console.error('Error fetching outings:', error);
-        toast.error('Failed to load outing requests');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOutings();
-    // Poll for updates every 30 seconds
-    const interval = setInterval(fetchOutings, 30000);
-    return () => clearInterval(interval);
+    try {
+      const result = await getStudentOutings();
+      setOutings(result.outings || []);
+    } catch (error) {
+      console.error('Error fetching outings:', error);
+      toast.error('Failed to load outing requests');
+    } finally {
+      setIsLoading(false);
+    }
   }, [user?.uid, toast]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetchOutings();
+  }, [fetchOutings]);
+
+  useRealtimeRefresh({
+    events: ['hoas:outing-new', 'hoas:outing-updated'],
+    refetch: fetchOutings,
+    enabled: !!user?.uid,
+  });
 
   // ── Filtered outings (memoized) ──────────────────────────────
   const filteredOutings = useMemo(() => {

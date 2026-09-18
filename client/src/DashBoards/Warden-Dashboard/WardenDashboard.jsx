@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
+import useRealtimeRefresh from "../../hooks/useRealtimeRefresh";
 import { useNavigate, useOutletContext, Link } from "react-router-dom";
 import { getWardenComplaints } from "../../firebase/cloudFunctions";
 import { useToast } from "../../components/Toast";
@@ -49,50 +50,46 @@ const WardenDashboard = () => {
     }
   }, [userData, userDataLoading, navigate]);
 
-  // Fetch recent complaints
-  useEffect(() => {
+  // Fetch recent complaints (event-driven, not polled)
+  const loadRecentComplaints = useCallback(async () => {
     if (!userData?.collegeId) return;
+    try {
+      const { complaints } = await getWardenComplaints();
+      const list = (complaints || [])
+        .slice(0, 20)
+        .map((c) => ({
+          id: c._id,
+          ...c,
+          createdAt: c.createdAt,
+        }))
+        .sort((a, b) => {
+          const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return tB - tA;
+        });
 
-    let cancelled = false;
+      setComplaints(list);
+      setLoading(false);
 
-    const load = async () => {
-      try {
-        const { complaints } = await getWardenComplaints();
-        if (cancelled) return;
-
-        const list = (complaints || [])
-          .slice(0, 20)
-          .map((c) => ({
-            id: c._id,
-            ...c,
-            createdAt: c.createdAt,
-          }))
-          .sort((a, b) => {
-            const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return tB - tA;
-          });
-
-        setComplaints(list);
-        setLoading(false);
-
-        const pending = list.filter((c) => c.status === "pending").length;
-        setPendingCount(pending);
-      } catch (error) {
-        console.error("Complaints fetch error:", error);
-        setLoading(false);
-      }
-    };
-
-    load();
-
-    const interval = setInterval(load, 30000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
+      const pending = list.filter((c) => c.status === "pending").length;
+      setPendingCount(pending);
+    } catch (error) {
+      console.error("Complaints fetch error:", error);
+      setLoading(false);
+    }
   }, [userData?.collegeId]);
+
+  useEffect(() => {
+    // Initial data load on mount (fetch-on-mount is the intended pattern here).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadRecentComplaints();
+  }, [loadRecentComplaints]);
+
+  useRealtimeRefresh({
+    events: ['hoas:complaint-new', 'hoas:complaint-updated', 'hoas:complaint-disputed', 'hoas:complaint-escalated'],
+    refetch: loadRecentComplaints,
+    enabled: !!userData?.collegeId,
+  });
 
   const handleLogout = async () => {
     await logout();

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
+import useRealtimeRefresh from '../../../../hooks/useRealtimeRefresh';
 import StudentHeader from '../layout/StudentHeader';
 import { requestLeave, getMyLeaves } from '../../../../firebase/cloudFunctions';
 import {
@@ -51,42 +52,36 @@ const StudentLeaveRequests = () => {
         parentContact: '',
     });
 
-    // Fetch leave requests
-    useEffect(() => {
+    // Fetch leave requests — event-driven (socket) instead of 30s polling
+    const loadLeaves = useCallback(async () => {
         if (!user?.uid) return;
-
-        let cancelled = false;
-
-        const load = async () => {
-            try {
-                const { leaves } = await getMyLeaves();
-                if (cancelled) return;
-
-                const list = (leaves || []).map(l => ({
-                    id: l._id,
-                    ...l,
-                })).sort((a, b) => {
-                    const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                    const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                    return tB - tA;
-                });
-                setLeaves(list);
-                setLoading(false);
-            } catch (error) {
-                console.error('Leave fetch error:', error);
-                setLoading(false);
-            }
-        };
-
-        load();
-
-        const interval = setInterval(load, 30000);
-
-        return () => {
-            cancelled = true;
-            clearInterval(interval);
-        };
+        try {
+            const { leaves } = await getMyLeaves();
+            const list = (leaves || []).map(l => ({
+                id: l._id,
+                ...l,
+            })).sort((a, b) => {
+                const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return tB - tA;
+            });
+            setLeaves(list);
+            setLoading(false);
+        } catch (error) {
+            console.error('Leave fetch error:', error);
+            setLoading(false);
+        }
     }, [user?.uid]);
+
+    useEffect(() => {
+        loadLeaves();
+    }, [loadLeaves]);
+
+    useRealtimeRefresh({
+        events: ['hoas:leave-new', 'hoas:leave-updated'],
+        refetch: loadLeaves,
+        enabled: !!user?.uid,
+    });
 
     const handleChange = (e) => {
         const { name, value } = e.target;

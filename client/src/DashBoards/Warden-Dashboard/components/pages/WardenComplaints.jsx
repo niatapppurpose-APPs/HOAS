@@ -6,6 +6,7 @@ import WardenHeader from '../layout/WardenHeader';
 import { STATUS_CONFIG, FILTER_OPTIONS, formatDate, getCategoryLabel } from './wardenComplaintConstants';
 import WardenComplaintDetailModal from './WardenComplaintDetailModal';
 import { getWardenComplaints, updateComplaintStatus } from '../../../../firebase/cloudFunctions';
+import useRealtimeRefresh from '../../../../hooks/useRealtimeRefresh';
 import {
     FileText,
     Clock,
@@ -45,39 +46,36 @@ const WardenComplaints = () => {
     const [rejectError, setRejectError] = useState('');
 
     // ── Fetch complaints for this warden's college ───────────
-    useEffect(() => {
+    // (socket merges below give instant updates; reconnect / tab-focus /
+    // safety-net refetch via the hook)
+    const loadComplaints = useCallback(async () => {
         if (!userData?.collegeId) return;
+        try {
+            const { complaints } = await getWardenComplaints();
+            const data = (complaints || []).map((c) => ({ id: c._id, ...c }));
+            data.sort((a, b) => {
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return timeB - timeA;
+            });
+            setComplaints(data);
+            setLoading(false);
+        } catch (err) {
+            console.error('Error fetching complaints:', err);
+            toast.error('Failed to load complaints');
+            setLoading(false);
+        }
+    }, [userData?.collegeId, toast]);
 
-        let cancelled = false;
+    useEffect(() => {
+        loadComplaints();
+    }, [loadComplaints]);
 
-        const load = async () => {
-            try {
-                const { complaints } = await getWardenComplaints();
-                if (cancelled) return;
-                const data = (complaints || []).map((c) => ({ id: c._id, ...c }));
-                data.sort((a, b) => {
-                    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                    return timeB - timeA;
-                });
-                setComplaints(data);
-                setLoading(false);
-            } catch (err) {
-                console.error('Error fetching complaints:', err);
-                toast.error('Failed to load complaints');
-                setLoading(false);
-            }
-        };
-
-        load();
-
-        const interval = setInterval(load, 30000);
-
-        return () => {
-            cancelled = true;
-            clearInterval(interval);
-        };
-    }, [userData?.collegeId]);
+    useRealtimeRefresh({
+        events: [],
+        refetch: loadComplaints,
+        enabled: !!userData?.collegeId,
+    });
 
     // ── Instant realtime updates via socket (no waiting for 30s poll) ──
     useEffect(() => {

@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
+import useRealtimeRefresh from "../../hooks/useRealtimeRefresh";
 import { useNavigate, useOutletContext, Link } from "react-router-dom";
 import { getMyComplaints } from "../../firebase/cloudFunctions";
 import StudentHeader from "./components/layout/StudentHeader";
@@ -78,47 +79,42 @@ const StudentDashboard = () => {
     }
   }, [userData]);
 
-  // Fetch student's recent complaints
-  useEffect(() => {
+  // Fetch student's recent complaints (event-driven, not polled)
+  const loadRecentComplaints = useCallback(async () => {
     if (!user?.uid) return;
+    try {
+      const { complaints } = await getMyComplaints();
+      const list = (complaints || [])
+        .map((c) => ({
+          id: c._id,
+          ...c,
+        }))
+        .sort((a, b) => {
+          const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return tB - tA;
+        })
+        .slice(0, 5);
+      setComplaints(list);
 
-    let cancelled = false;
-
-    const load = async () => {
-      try {
-        const { complaints } = await getMyComplaints();
-        if (cancelled) return;
-        const list = (complaints || [])
-          .map((c) => ({
-            id: c._id,
-            ...c,
-          }))
-          .sort((a, b) => {
-            const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return tB - tA;
-          })
-          .slice(0, 5);
-        setComplaints(list);
-
-        const pending = list.filter((c) => c.status === "pending").length;
-        setPendingCount(pending);
-        setComplaintsLoading(false);
-      } catch (error) {
-        console.error("Complaints fetch error:", error);
-        setComplaintsLoading(false);
-      }
-    };
-
-    load();
-
-    const interval = setInterval(load, 30000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
+      const pending = list.filter((c) => c.status === "pending").length;
+      setPendingCount(pending);
+      setComplaintsLoading(false);
+    } catch (error) {
+      console.error("Complaints fetch error:", error);
+      setComplaintsLoading(false);
+    }
   }, [user?.uid]);
+
+  useEffect(() => {
+    loadRecentComplaints();
+  }, [loadRecentComplaints]);
+
+  useRealtimeRefresh({
+    events: ['hoas:complaint-new', 'hoas:complaint-updated', 'hoas:complaint-disputed', 'hoas:complaint-escalated'],
+    refetch: loadRecentComplaints,
+    enabled: !!user?.uid,
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;

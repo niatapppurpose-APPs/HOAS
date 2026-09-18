@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import { useOutletContext } from 'react-router-dom';
 import StudentHeader from '../layout/StudentHeader';
 import { getAnnouncements } from '../../../../firebase/cloudFunctions';
+import useRealtimeRefresh from '../../../../hooks/useRealtimeRefresh';
 import {
     Bell, Megaphone, Calendar, Pin, Search,
     Loader2, ChevronDown, ChevronUp, User,
@@ -27,52 +28,48 @@ const StudentAnnouncements = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterPriority, setFilterPriority] = useState('all');
 
-    // Fetch announcements for student's college/hostel
-    useEffect(() => {
+    // Fetch announcements for student's college/hostel (event-driven, not polled)
+    const loadAnnouncements = useCallback(async () => {
         if (!userData?.collegeId) {
             setLoading(false);
             return;
         }
-
-        let cancelled = false;
-
-        const load = async () => {
-            try {
-                const { announcements } = await getAnnouncements();
-                if (cancelled) return;
-
-                const list = (announcements || []).map(a => ({
-                    id: a._id,
-                    ...a,
-                    pinned: a.isPinned,
-                    content: a.body,
-                    postedBy: a.creatorRole === 'warden' ? 'Warden' : 'Management',
-                    createdAt: a.createdAt,
-                })).sort((a, b) => {
-                    // Pinned first, then by date
-                    if (a.pinned && !b.pinned) return -1;
-                    if (!a.pinned && b.pinned) return 1;
-                    const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                    const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                    return tB - tA;
-                });
-                setAnnouncements(list);
-                setLoading(false);
-            } catch (error) {
-                console.error('Announcements fetch error:', error);
-                setLoading(false);
-            }
-        };
-
-        load();
-
-        const interval = setInterval(load, 30000);
-
-        return () => {
-            cancelled = true;
-            clearInterval(interval);
-        };
+        try {
+            const { announcements } = await getAnnouncements();
+            const list = (announcements || []).map(a => ({
+                id: a._id,
+                ...a,
+                pinned: a.isPinned,
+                content: a.body,
+                postedBy: a.creatorRole === 'warden' ? 'Warden' : 'Management',
+                createdAt: a.createdAt,
+            })).sort((a, b) => {
+                // Pinned first, then by date
+                if (a.pinned && !b.pinned) return -1;
+                if (!a.pinned && b.pinned) return 1;
+                const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return tB - tA;
+            });
+            setAnnouncements(list);
+            setLoading(false);
+        } catch (error) {
+            console.error('Announcements fetch error:', error);
+            setLoading(false);
+        }
     }, [userData?.collegeId]);
+
+    useEffect(() => {
+        // Initial data load on mount (fetch-on-mount is the intended pattern here).
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadAnnouncements();
+    }, [loadAnnouncements]);
+
+    useRealtimeRefresh({
+        events: ['hoas:announcement-new'],
+        refetch: loadAnnouncements,
+        enabled: !!userData?.collegeId,
+    });
 
     const formatDate = (timestamp) => {
         if (!timestamp) return '—';
