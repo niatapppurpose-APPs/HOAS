@@ -13,6 +13,7 @@ import {
   verifyByManagement,
   verifyByWarden,
   uploadProof,
+  deleteProof,
 } from '../controllers/fee.controller.js';
 
 const router = Router();
@@ -55,5 +56,6 @@ router.post(
   verifyByWarden
 );
 router.post('/proof', requireRole('student'), validateBody(proofSchema), uploadProof);
+router.delete('/proof', requireRole('student'), deleteProof);
 
 export default router;

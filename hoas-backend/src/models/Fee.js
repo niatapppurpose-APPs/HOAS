@@ -16,7 +16,7 @@ const feeSchema = new Schema(
     semester: String,
     history: [
       {
-        action: { type: String, enum: ['upload', 'management_verify', 'warden_verify', 'warden_reject', 'upload_proof'] },
+        action: { type: String, enum: ['upload', 'management_verify', 'warden_verify', 'warden_reject', 'upload_proof', 'delete_proof'] },
         actorId: Schema.Types.ObjectId,
         actorRole: String,
         timestamp: { type: Date, default: Date.now },

@@ -271,6 +271,32 @@ export async function verifyByWarden(req, res, next) {
   }
 }
 
+export async function deleteProof(req, res, next) {
+  try {
+    const fee = await Fee.findOne({ studentId: req.user._id });
+    if (!fee) throw new AppError(404, 'FEE_NOT_FOUND');
+    if (!fee.proofImageUrl) throw new AppError(404, 'PROOF_NOT_FOUND');
+
+    fee.proofImageUrl = undefined;
+    fee.isVerifiedByWarden = false;
+    fee.approved = false;
+    fee.history.push({
+      action: 'delete_proof',
+      actorId: req.user._id,
+      actorRole: 'student',
+      timestamp: new Date(),
+    });
+    await fee.save();
+
+    emitToUser(req.user._id, 'fee:updated', fee.toJSON());
+    emitToCollege(fee.collegeId, 'fee:updated', fee.toJSON());
+    await recordAudit({ actor: req.user, action: 'FEE_PROOF_DELETED', targetType: 'Fee', targetId: fee._id });
+    res.json({ fee });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function uploadProof(req, res, next) {
   try {
     const { proofImageUrl } = req.body;

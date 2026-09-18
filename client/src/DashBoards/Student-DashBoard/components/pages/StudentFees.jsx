@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../../../context/AuthContext';
-import { getStudentFee, uploadStudentFeeProof } from '../../../../firebase/cloudFunctions';
+import { getStudentFee, uploadStudentFeeProof, deleteStudentFeeProof } from '../../../../firebase/cloudFunctions';
 import { uploadFeeProof } from '../../../../utils/cloudinaryUpload';
 import StudentHeader from '../layout/StudentHeader';
 import { useToast } from '../../../../components/Toast';
@@ -106,8 +106,19 @@ const StudentFees = () => {
     }
   };
 
-  const handleDeleteReport = async (indexToDelete) => {
-    toast.info('Fee report deletion is not available in this build');
+  const handleDeleteReport = async () => {
+    if (uploading) return;
+    if (!window.confirm('Delete your uploaded payment proof? You can upload a new one afterwards.')) return;
+    setUploading(true);
+    try {
+      await deleteStudentFeeProof();
+      toast.success('Payment proof deleted');
+      await loadRecord();
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete proof');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const statusMap = {

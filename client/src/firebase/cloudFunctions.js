@@ -508,6 +508,11 @@ export const uploadStudentFeeProof = async (proofImage) => {
   return { fee: flattenFee(fee) };
 };
 
+export const deleteStudentFeeProof = async () => {
+  const { fee } = await del('/api/fees/proof');
+  return { fee: flattenFee(fee) };
+};
+
 export const getStudentFee = async () => {
   const { fee } = await get('/api/fees/me');
   return { fee: flattenFee(fee) };
@@ -712,6 +717,7 @@ export default {
   verifyFeeByManagement,
   verifyFeeByWarden,
   uploadStudentFeeProof,
+  deleteStudentFeeProof,
   getStudentFee,
   sendContextMessage,
   getContextMessages,

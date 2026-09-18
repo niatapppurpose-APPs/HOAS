@@ -3,8 +3,8 @@ import { useOutletContext } from 'react-router-dom';
 import { useToast } from '../../../../components/Toast';
 import WardenHeader from '../layout/WardenHeader';
 import { useAuth } from '../../../../context/AuthContext';
-import { getWardenFeeRecords } from '../../../../firebase/cloudFunctions';
-import { Search, CheckCircle2, Clock, FileText, Image as ImageIcon, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
+import { getWardenFeeRecords, verifyFeeByWarden } from '../../../../firebase/cloudFunctions';
+import { Search, CheckCircle2, Clock, FileText, Image as ImageIcon, ExternalLink, Loader2, AlertCircle, XCircle } from 'lucide-react';
 import Avatar from '../../../../components/OwnerServices/Avatar';
 
 const statusMap = {
@@ -44,6 +44,7 @@ const WardenFeeVerification = () => {
         return {
           id: fee._id,
           studentName: fee.studentName || 'Unnamed',
+          studentUid: fee.studentUid || '',
           studentId: fee.studentId || 'N/A',
           photoURL: fee.studentPhoto || '',
           totalAmount,
@@ -69,6 +70,42 @@ const WardenFeeVerification = () => {
     fetchRecords();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userData?.collegeId]);
+
+  const [verifyingId, setVerifyingId] = useState(null);
+
+  const handleApprove = async (record) => {
+    if (!record.studentUid || verifyingId) return;
+    setVerifyingId(record.id);
+    try {
+      await verifyFeeByWarden(record.studentUid, true);
+      toast.success(`Fee verified for ${record.studentName}`);
+      await fetchRecords();
+    } catch (error) {
+      toast.error(error.message || 'Verification failed');
+    } finally {
+      setVerifyingId(null);
+    }
+  };
+
+  const handleReject = async (record) => {
+    if (!record.studentUid || verifyingId) return;
+    const reason = window.prompt(`Reason for rejecting ${record.studentName}'s fee proof (sent to student):`, '');
+    if (reason === null) return; // cancelled
+    if (!reason.trim()) {
+      toast.warning('Please provide a rejection reason');
+      return;
+    }
+    setVerifyingId(record.id);
+    try {
+      await verifyFeeByWarden(record.studentUid, false, reason.trim());
+      toast.success(`Fee proof rejected for ${record.studentName}`);
+      await fetchRecords();
+    } catch (error) {
+      toast.error(error.message || 'Rejection failed');
+    } finally {
+      setVerifyingId(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     return records.filter((r) => {
@@ -258,7 +295,7 @@ const WardenFeeVerification = () => {
 
                       <div className="w-px h-6 sm:h-8 hidden md:block" style={{ backgroundColor: 'var(--border-primary)' }}></div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <div className={`px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-[10px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 shadow-sm ${
                           record.isVerifiedByManagement
                             ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
@@ -283,6 +320,35 @@ const WardenFeeVerification = () => {
                           )}
                           WV: {record.isVerifiedByWarden ? 'Verified' : 'Pending'}
                         </div>
+
+                        {/* Warden decision actions */}
+                        {!record.isVerifiedByWarden && record.proofImage && record.isVerifiedByManagement && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(record)}
+                              disabled={verifyingId === record.id}
+                              className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-emerald-500 text-white text-[10px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 shadow-sm hover:bg-emerald-600 transition-colors disabled:opacity-60"
+                            >
+                              {verifyingId === record.id
+                                ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                                : <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleReject(record)}
+                              disabled={verifyingId === record.id}
+                              className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 text-[10px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 shadow-sm hover:bg-red-500 hover:text-white transition-colors disabled:opacity-60"
+                            >
+                              <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        {!record.isVerifiedByWarden && record.proofImage && !record.isVerifiedByManagement && (
+                          <span className="text-[10px] sm:text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                            Awaiting management verification
+                          </span>
+                        )}
                       </div>
 
                     </div>
