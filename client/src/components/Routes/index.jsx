@@ -38,11 +38,17 @@ import { lazy, Suspense } from "react";
 import { HashLoader } from "react-spinners";
 import { FeatureGate } from "../../hooks/useSystemSettings";
 import FeatureDisabled from "../FeatureDisabled";
+import Applogo from "../../assets/Applogo.webp";
 
-// Loading component for lazy loaded routes
+// Loading component for lazy loaded routes.
+// Branded (logo + status text) so a chunk download never reads as a blank page.
 const PageLoader = () => (
-    <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--bg-primary)' }}>
-        <HashLoader color="var(--accent-primary, #6366F1)" size={50} />
+    <div className="flex flex-col items-center justify-center min-h-screen px-6" style={{ background: 'var(--bg-primary)' }}>
+        <img src={Applogo} alt="HOAS" className="h-14 w-auto mb-5" />
+        <HashLoader color="var(--accent-primary, #6366F1)" size={44} />
+        <p className="mt-5 text-sm font-semibold" style={{ color: 'var(--text-muted)' }}>
+            Loading your dashboard…
+        </p>
     </div>
 );
 

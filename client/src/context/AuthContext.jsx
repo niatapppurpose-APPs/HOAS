@@ -3,6 +3,7 @@ import { onAuthStateChanged, getRedirectResult, signOut } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
 import { useToast } from "../components/Toast";
 import { getMe, registerRequest, updateProfile } from "../firebase/cloudFunctions";
+import { preloadDashboard } from "../utils/preloadDashboard";
 
 const AuthContext = createContext();
 
@@ -133,7 +134,10 @@ export const AuthProvider = ({ children }) => {
               const userClaims = tokenResult.claims;
               setClaims(userClaims);
               setAdminChecked(true);
-               await fetchProfile(currentUser);
+               const profile = await fetchProfile(currentUser);
+               // Warm the dashboard chunk while the loader is still visible,
+               // so first route render hits cache instead of network.
+               if (profile?.role) preloadDashboard(profile.role);
                // Presence heartbeat must never block dashboard rendering —
                // dashboards resolve loading state right after fetchProfile.
                updateProfile({ isOnline: true })
