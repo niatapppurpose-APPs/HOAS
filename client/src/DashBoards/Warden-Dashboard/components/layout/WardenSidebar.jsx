@@ -171,6 +171,8 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
             >
               <div className="absolute inset-0 bg-orange-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <img
+                fetchPriority="high"
+                decoding="async"
                 src={effectiveLogo || AppLogo4k}
                 onError={(e) => {
                   e.currentTarget.onerror = null;

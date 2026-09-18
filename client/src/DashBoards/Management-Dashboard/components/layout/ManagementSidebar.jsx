@@ -238,6 +238,8 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
               >
                 <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <img
+                  fetchPriority="high"
+                  decoding="async"
                   src={collegeLogo ? collegeLogo : AppLogo4k}
                   className="relative w-full h-full rounded-xl object-cover border-2 border-slate-600/50 shadow-lg group-hover:border-indigo-500/50 transition-all duration-300 group-hover:scale-105"
                   alt={collegeLogo ? "College Logo" : "HOAS Logo"}

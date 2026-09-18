@@ -134,11 +134,15 @@ export const AuthProvider = ({ children }) => {
               setClaims(userClaims);
               setAdminChecked(true);
                await fetchProfile(currentUser);
-               const onlineProfile = await updateProfile({ isOnline: true });
-               if (onlineProfile) {
-                 const normalizedOnline = normalizeUserWithCollegeLogo(onlineProfile);
-                 setUserData(normalizedOnline);
-               }
+               // Presence heartbeat must never block dashboard rendering —
+               // dashboards resolve loading state right after fetchProfile.
+               updateProfile({ isOnline: true })
+                 .then((onlineProfile) => {
+                   if (onlineProfile) {
+                     setUserData(normalizeUserWithCollegeLogo(onlineProfile));
+                   }
+                 })
+                 .catch(() => {});
             } catch (error) {
               console.error("Error loading profile:", error);
               setIsAdmin(false);

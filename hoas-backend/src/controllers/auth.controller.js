@@ -6,8 +6,9 @@ import { emitToUser, broadcastUserUpdate } from '../services/socket.service.js';
 
 export async function getMe(req, res, next) {
   try {
-    const user = await User.findById(req.user._id).populate('collegeId', 'name logoUrl location');
-    res.json({ user: user || req.user });
+    // req.user is already populated with collegeId (name/logoUrl/location/_id)
+    // by the auth middleware — no second DB round-trip needed.
+    res.json({ user: req.user });
   } catch (error) {
     next(error);
   }
