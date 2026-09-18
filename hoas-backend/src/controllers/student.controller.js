@@ -49,6 +49,15 @@ async function buildStudentPayload(data, collegeId, actingUser) {
     rollNumber: data.rollNumber,
     idNumber: data.idNumber,
     wardenId,
+    // Optional profile fields — captured at creation when provided
+    // (single-add form sends these; existing users fill them via profile).
+    phone: data.phone || undefined,
+    address: data.address || undefined,
+    roomNumber: data.roomNumber || data.hostelRoom || undefined,
+    course: data.course || undefined,
+    branch: data.branch || undefined,
+    year: data.year || undefined,
+    fatherName: data.fatherName || undefined,
     feeDetails: { totalFee, paidFee, pendingFee },
     approvedAt: new Date(),
     approvedBy: actingUser._id,

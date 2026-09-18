@@ -53,6 +53,13 @@ const StudentDashboard = () => {
   const [complaints, setComplaints] = useState([]);
   const [complaintsLoading, setComplaintsLoading] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
+  const [profileNudgeDismissed, setProfileNudgeDismissed] = useState(() => {
+    try {
+      return window.sessionStorage.getItem("hoas-profile-nudge-dismissed") === "1";
+    } catch {
+      return false;
+    }
+  });
 
   // Auto-start tour on first visit after dashboard data is ready.
   useDashboardTour("student", studentTourSteps, { ready: !complaintsLoading });
@@ -145,10 +152,6 @@ const StudentDashboard = () => {
     }
   }, [userData, userDataLoading, navigate]);
 
-  const handleAction = (action) => {
-    // Placeholder for quick actions
-  };
-
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -233,6 +236,57 @@ const StudentDashboard = () => {
 
       {/* Main Content */}
       <div className="pt-20 md:pt-24 px-4 sm:px-6 lg:px-8 pb-4">
+        {/* Profile completion nudge for existing accounts missing details */}
+        {(() => {
+          if (userDataLoading || !userData) return null;
+          const missing = [
+            !userData.roomNumber && "room number",
+            !userData.course && "course",
+            !userData.branch && "branch",
+            !userData.year && "study year",
+          ].filter(Boolean);
+          if (missing.length === 0 || profileNudgeDismissed) return null;
+          return (
+            <div
+              className="mb-6 md:mb-8 rounded-[1.25rem] md:rounded-[1.5rem] border p-4 md:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4"
+              style={{
+                background: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(249,115,22,0.08))",
+                borderColor: "rgba(245,158,11,0.35)",
+              }}
+            >
+              <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-500 flex-shrink-0">
+                <User size={18} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm md:text-base font-black" style={{ color: "var(--text-primary)" }}>
+                  Complete Your Profile
+                </p>
+                <p className="text-xs md:text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  Missing: {missing.join(", ")}. Add them so your warden and records stay up to date.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
+                <button
+                  onClick={() => navigate("profile")}
+                  className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-amber-500 text-white font-bold text-xs md:text-sm shadow-lg shadow-amber-500/30 hover:scale-105 transition-transform"
+                >
+                  Complete Now
+                </button>
+                <button
+                  onClick={() => {
+                    try { window.sessionStorage.setItem("hoas-profile-nudge-dismissed", "1"); } catch { /* ignore */ }
+                    setProfileNudgeDismissed(true);
+                  }}
+                  aria-label="Dismiss"
+                  className="p-2 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/10"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+          );
+        })()}
         {/* Welcome Banner */}
         <div
           id="student-tour-welcome"
