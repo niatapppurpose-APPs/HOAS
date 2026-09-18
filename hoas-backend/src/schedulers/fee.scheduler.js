@@ -7,6 +7,8 @@ import { getSettingsOrDefaults } from '../services/capacity.service.js';
 export async function autoVerifyFees() {
   const settings = await getSettingsOrDefaults();
   if (!settings.features?.feesAutoVerify) return { warned: 0, autoVerified: 0 };
+  const s = typeof settings?.toJSON === 'function' ? settings.toJSON() : settings;
+  const emailMaster = s.notifications?.email ?? s.emailNotifications ?? true;
 
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const warningCutoff = new Date(Date.now() - 23 * 60 * 60 * 1000);
@@ -41,7 +43,7 @@ export async function autoVerifyFees() {
           body: `${student.name} has paid fees awaiting verification for 23+ hours`,
           data: { studentId: String(student._id) },
         });
-        if (management.email) {
+        if (management.email && emailMaster) {
           await sendMail({
             to: management.email,
             subject: 'HOAS — Fee verification pending',

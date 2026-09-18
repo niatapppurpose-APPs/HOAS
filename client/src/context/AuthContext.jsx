@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { onAuthStateChanged, getRedirectResult, signOut } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
 import { useToast } from "../components/Toast";
@@ -73,7 +73,9 @@ export const AuthProvider = ({ children }) => {
   const [userData, setUserData] = useState(readCachedProfile);
   const [userDataLoading, setUserDataLoading] = useState(() => !readCachedProfile());
 
-  const fetchProfile = async (firebaseUser = user) => {
+  // Stable across renders so consumers don't re-fetch / re-render in loops.
+  // Re-created only when the Firebase user identity changes.
+  const fetchProfile = useCallback(async (firebaseUser = user) => {
     try {
       const profile = await getMe();
       // If profile is empty (user not in MongoDB yet), set minimal defaults
@@ -94,6 +96,26 @@ export const AuthProvider = ({ children }) => {
       setAdminChecked(true);
       return normalized;
     } catch (error) {
+      // Revoked accounts come back as 403 ACCOUNT_SUSPENDED from /me.
+      // Preserve the role from cache so WaitingApproval can show "revoked"
+      // instead of a generic pending screen.
+      const msg = String(error?.message || "");
+      if (msg.includes("ACCOUNT_SUSPENDED")) {
+        const cached = readCachedProfile();
+        const suspended = {
+          ...(cached || unknownProfile(firebaseUser)),
+          status: "suspended",
+        };
+        setUserData(suspended);
+        try {
+          window.sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(suspended));
+        } catch {
+          // ignore storage errors
+        }
+        setIsAdmin(false);
+        setAdminChecked(true);
+        return suspended;
+      }
       // If getMe fails (e.g., token expired, backend down), don't crash
       // Keep current state and try again later
       console.error("Error fetching profile, will retry:", error.message);
@@ -102,7 +124,7 @@ export const AuthProvider = ({ children }) => {
       setAdminChecked(true);
       return null;
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     let unsubscribe;
@@ -192,7 +214,7 @@ export const AuthProvider = ({ children }) => {
   }, [user?.uid]);
 
   // Function to refresh role & profile from backend
-  const refreshAdminStatus = async () => {
+  const refreshAdminStatus = useCallback(async () => {
     if (user) {
       try {
         const profile = await fetchProfile();
@@ -203,10 +225,10 @@ export const AuthProvider = ({ children }) => {
       }
     }
     return false;
-  };
+  }, [user, fetchProfile]);
 
   // Function to create or update user profile in backend
-  const createUserProfile = async (role, additionalData = {}) => {
+  const createUserProfile = useCallback(async (role, additionalData = {}) => {
     if (!user) return false;
 
     try {
@@ -223,10 +245,10 @@ export const AuthProvider = ({ children }) => {
       console.error("Error creating user profile:", error);
       return false;
     }
-  };
+  }, [user]);
 
   // Function to logout
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       // Mark user offline before logging out (best-effort)
       if (user) {
@@ -245,9 +267,12 @@ export const AuthProvider = ({ children }) => {
       console.error("Error logging out:", error);
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const value = {
+  // Memoized so every useAuth() consumer doesn't re-render on each
+  // provider render — previously a fresh object identity cascaded renders
+  // app-wide (visible as timeline noise / glitches).
+  const value = useMemo(() => ({
     user,
     loading,
     isAdmin,
@@ -260,7 +285,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     fetchProfile,
     refreshProfile: fetchProfile,
-  };
+  }), [user, loading, isAdmin, claims, adminChecked, userData, userDataLoading, refreshAdminStatus, createUserProfile, logout, fetchProfile]);
 
   return (
     <AuthContext.Provider value={value}>

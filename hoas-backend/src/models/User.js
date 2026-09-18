@@ -46,6 +46,8 @@ const userSchema = new Schema(
     deniedAt: Date,
     deniedBy: String,
     denialReason: String,
+    suspendedAt: Date,
+    suspendedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     lastPasswordResetAt: Date,
     bulkUploaded: { type: Boolean, default: false },
     managementVerification: { type: String, enum: ['Verify', 'Verified', 'Not Verified'], default: 'Not Verified' },

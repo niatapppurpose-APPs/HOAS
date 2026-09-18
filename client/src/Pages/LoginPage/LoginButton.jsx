@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 import { auth } from "../../firebase/firebaseConfig";
+import { getMe, clearRequestCache } from "../../firebase/cloudFunctions";
 import { useToast } from "../../components/Toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, IdCard } from "lucide-react";
@@ -32,6 +34,7 @@ const LoginButton = () => {
   const [changeToggle, setChangeToggle] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const toast = useToast();
+  const navigate = useNavigate();
 
   // Pre-fill email from ?email= query param (e.g. when arriving from welcome email link)
   useEffect(() => {
@@ -39,7 +42,7 @@ const LoginButton = () => {
     const emailParam = params.get('email');
     if (emailParam) setEmail(emailParam.trim().replace(/\s+/g, ''));
   }, []);
-  const handleLogin = async (event) => {
+  const handleLogin = useCallback(async (event) => {
     event.preventDefault();
     if (!email || !password) {
       toast.warning('Please fill in all fields.', 3000);
@@ -63,6 +66,25 @@ const LoginButton = () => {
 
       const credential = await signInWithEmailAndPassword(auth, loginEmail, password);
       const authUser = credential?.user || auth.currentUser;
+      // Suspended accounts go straight to the suspended page with NO toast.
+      // Check status first so revoked users never see "Welcome back".
+      // Clear cache first — it's keyed by path, so a previous user's
+      // profile could otherwise be served stale on a shared device.
+      try {
+        clearRequestCache();
+        const profile = await getMe();
+        if (String(profile?.status || "").toLowerCase() === "suspended") {
+          navigate("/suspended", { replace: true });
+          return;
+        }
+      } catch {
+        // Profile read failed — let Login.jsx redirect handle it, still no toast
+        // until status is known. Fall through to the welcome toast only when
+        // the profile confirms a non-suspended account... unknown means ask
+        // Login.jsx to decide, so skip the toast here too and just return.
+        // (Login.jsx navigates approved → dashboard, others → waiting-approval.)
+        return;
+      }
       const displayName = authUser?.displayName || (authUser?.email ? authUser.email.split('@')[0] : 'User');
       toast.success(`Welcome back ${displayName} 👋`, 3000);
     } catch (e) {
@@ -93,10 +115,11 @@ const LoginButton = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [email, password, changeToggle, toast, navigate]);
 
-  // Shared input styling
-  const inputStyle = (field) => ({
+  // Memoized so typing in one field doesn't rebuild style objects for all
+  // inputs on every keystroke (fewer reconciles → less input lag).
+  const inputStyle = useCallback((field) => ({
     backgroundColor: isDark ? 'rgba(15, 23, 42, 0.7)' : 'rgba(241, 245, 249, 0.8)',
     borderColor: focusedField === field
       ? (isDark ? '#6366f1' : '#4f46e5')
@@ -109,7 +132,7 @@ const LoginButton = () => {
       : (isDark
         ? 'inset 0 1px 2px rgba(0, 0, 0, 0.2)'
         : 'inset 0 1px 2px rgba(0, 0, 0, 0.04)')
-  });
+  }), [isDark, focusedField]);
 
   return (
     <>

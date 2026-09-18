@@ -19,10 +19,14 @@ const ProtectedRoute = ({ roles = [], children }) => {
     if (claimMatchesRoute) return children;
     if (userDataLoading) return <PageLoader />;
 
-    // Pending and denied accounts must remain on the approval status page.
+    // Pending and denied accounts stay on waiting-approval.
+    // Suspended (revoked) accounts get their own dedicated page.
     const accountStatus = String(userData?.status || '').toLowerCase();
     if ((accountStatus === 'pending' || accountStatus === 'denied') && window.location.pathname !== '/waiting-approval') {
         return <Navigate to="/waiting-approval" replace />;
+    }
+    if (accountStatus === 'suspended' && window.location.pathname !== '/suspended') {
+        return <Navigate to="/suspended" replace />;
     }
 
     // Allow admin/owner access for any route that includes admin or owner in roles
@@ -58,6 +62,7 @@ import Login from '../../Pages/LoginPage/Login';
 import ResetPassword from '../../Pages/ResetPassword/ResetPassword';
 import Dashboard from '../../Pages/Dashboard/Dashboard';
 import WaitingApproval from "../../Pages/WaitingApproval/WaitingApproval";
+import Suspended from "../../Pages/Suspended/Suspended";
 import NotFound from "../../Pages/NotFound";
 
 
@@ -125,6 +130,8 @@ const Routes_path = () => {
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 {/* WaitingApproval handles its own auth loading/redirect so denied users do not loop. */}
 <Route path="/waiting-approval" element={<WaitingApproval />} />
+{/* Dedicated page for revoked (suspended) accounts, like waiting-approval. */}
+<Route path="/suspended" element={<Suspended />} />
 
                 {/* ------------------------------ Profile Pages ----------------------------------------- */}
                 <Route path="/profile/student-profile" element={<ProtectedRoute roles={["student"]}><StudentProfile /></ProtectedRoute>} />

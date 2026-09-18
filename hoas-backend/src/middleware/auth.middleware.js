@@ -17,6 +17,15 @@ export async function authenticate(req, res, next) {
 
     const user = await User.findOne({ uid }).populate('collegeId', 'name logoUrl location _id');
     if (!user) throw new AppError(404, 'USER_NOT_FOUND');
+    // Suspended accounts CAN log in, but they can ONLY see the /suspended
+    // page. Block every API except the profile read (GET /api/auth/me) the
+    // Suspended page needs to render name/role/status.
+    if (user.status === 'suspended') {
+      const isProfileRead =
+        req.method === 'GET' &&
+        (req.path === '/me' || String(req.originalUrl || '').split('?')[0].endsWith('/auth/me'));
+      if (!isProfileRead) throw new AppError(403, 'ACCOUNT_SUSPENDED');
+    }
     req.user = user;
     next();
   } catch (error) {

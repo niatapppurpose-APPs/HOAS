@@ -70,7 +70,7 @@ const App = () => {
     return <WakeUpScreen offline />;
   }
 
-  const PUBLIC_ROUTES = ['/', '/login', '/admin-login', '/reset-password'];
+  const PUBLIC_ROUTES = ['/', '/login', '/admin-login', '/reset-password', '/waiting-approval', '/suspended'];
 
 const content = (
     <EmergencyProvider>

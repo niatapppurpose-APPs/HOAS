@@ -73,6 +73,8 @@ if (user && (!userDataLoading || minDelayPassed)) {
             }
           } else if (status === 'pending') {
              if (location.pathname !== "/waiting-approval") navigate("/waiting-approval", { replace: true });
+          } else if (status === 'suspended') {
+             if (location.pathname !== "/suspended") navigate("/suspended", { replace: true });
           } else if (status === 'denied') {
              if (location.pathname !== "/waiting-approval") navigate("/waiting-approval", { replace: true });
           } else {

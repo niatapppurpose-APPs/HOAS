@@ -16,6 +16,7 @@ export async function authenticateSocket(socket, next) {
 
     const user = await User.findOne({ uid });
     if (!user) return next(new Error('USER_NOT_FOUND'));
+    if (user.status === 'suspended') return next(new Error('ACCOUNT_SUSPENDED'));
     socket.data.user = user;
     next();
   } catch {

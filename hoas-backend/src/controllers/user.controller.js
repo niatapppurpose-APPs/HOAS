@@ -252,15 +252,38 @@ export async function setUserStatus(req, res, next) {
   try {
     const user = await User.findById(req.params.id);
     if (!user) throw new AppError(404, 'USER_NOT_FOUND');
+    // Owner cannot revoke their own access from Settings — prevents lockout.
+    if (String(user._id) === String(req.user._id) && req.body.status === 'suspended') {
+      throw new AppError(400, 'CANNOT_SUSPEND_SELF');
+    }
     user.status = req.body.status;
-    if (req.body.status === 'approved') user.approvedAt = new Date();
+    if (req.body.status === 'approved') {
+      user.approvedAt = new Date();
+      user.suspendedAt = undefined;
+    }
+    if (req.body.status === 'suspended') {
+      user.suspendedAt = new Date();
+      user.suspendedBy = req.user._id;
+    }
     await user.save();
+    // Suspended users must still be able to LOG IN — they just only see the
+    // /suspended page. So never disable the Firebase account here; the DB
+    // `status` plus route guards are the enforcement point. Always force
+    // disabled:false to repair accounts disabled by the older behaviour.
+    try {
+      if (user.uid) {
+        await firebaseAuth.updateUser(user.uid, { disabled: false });
+      }
+    } catch (fbError) {
+      console.error('Firebase re-enable sync failed:', fbError.message);
+    }
     await recordAudit({
       actor: req.user,
       action: `USER_${req.body.status.toUpperCase()}`,
       targetType: 'User',
       targetId: user._id,
     });
+    broadcastUserUpdate(user);
     res.json({ user });
   } catch (error) {
     next(error);

@@ -13,6 +13,17 @@ export async function getSettingsOrDefaults() {
   return settings;
 }
 
+function limitFor(settings, entityType) {
+  const s = typeof settings?.toJSON === 'function' ? settings.toJSON() : settings || {};
+  if (entityType === 'student') {
+    return Number(s.limits?.maxStudentsPerCollege ?? s.defaultStudentLimit ?? 500);
+  }
+  if (entityType === 'warden') {
+    return Number(s.limits?.maxWardensPerCollege ?? s.defaultWardenLimit ?? 10);
+  }
+  return Number(s.limits?.maxHostelsPerCollege ?? s.defaultHostelLimit ?? 20);
+}
+
 export async function checkCollegeCapacity(user, collegeId, entityType = 'student') {
   const settings = await getSettingsOrDefaults();
   const college = await College.findById(collegeId);
@@ -22,9 +33,9 @@ export async function checkCollegeCapacity(user, collegeId, entityType = 'studen
   }
 
   const maxByType = {
-    student: settings.limits.maxStudentsPerCollege,
-    warden: settings.limits.maxWardensPerCollege,
-    hostel: settings.limits.maxHostelsPerCollege,
+    student: limitFor(settings, 'student'),
+    warden: limitFor(settings, 'warden'),
+    hostel: limitFor(settings, 'hostel'),
   };
 
   const countByType = {
@@ -39,8 +50,12 @@ export async function checkCollegeCapacity(user, collegeId, entityType = 'studen
 
   return {
     allowed,
+    // Canonical names (backend)
     count,
     max,
+    // Aliases for older frontend hook (useCollegeCapacity)
+    currentCount: count,
+    maxLimit: max,
     remaining: Math.max(0, max - count),
     message: allowed ? '' : `${entityType} limit reached for this college (${max})`,
   };

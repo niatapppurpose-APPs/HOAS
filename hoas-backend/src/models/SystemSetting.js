@@ -23,10 +23,14 @@ const systemSettingSchema = new Schema(
       activity: { type: Boolean, default: true },
     },
     features: {
+      // UI feature flags (Owner → System Controls → Feature Flags)
+      notifications: { type: Boolean, default: true },
+      reports: { type: Boolean, default: true },
+      analytics: { type: Boolean, default: true },
+      bulkOperations: { type: Boolean, default: true },
+      // Enforcement flags used by backend schedulers / controllers
       outings: { type: Boolean, default: true },
       announcements: { type: Boolean, default: true },
-      analytics: { type: Boolean, default: true },
-      reports: { type: Boolean, default: true },
       feesAutoVerify: { type: Boolean, default: true },
       reminders: { type: Schema.Types.Mixed, default: {} },
     },

@@ -22,6 +22,10 @@ import {
 import AccessLogsModal from "./components/AccessLogsModal";
 
 import { DEFAULT_SETTINGS, roleColor } from "./settingsConstants";
+import {
+  normalizeSettings,
+  denormalizeSettingsForSave,
+} from "../../../hooks/useSystemSettings";
 
 import {
   Settings,
@@ -560,10 +564,12 @@ const GlobalSystemSettings = () => {
         const response = result[0];
 
         if (response.status === "fulfilled") {
-          setSettings((previous) => ({
-            ...previous,
-            ...(response.value?.settings || {}),
-          }));
+          setSettings((previous) =>
+            normalizeSettings({
+              ...previous,
+              ...(response.value?.settings || {}),
+            }),
+          );
 
           setDataSource("server");
         } else {
@@ -624,10 +630,40 @@ const GlobalSystemSettings = () => {
   ======================================================= */
 
   const update = (changes) => {
-    setSettings((previous) => ({
-      ...previous,
-      ...changes,
-    }));
+    setSettings((previous) => {
+      const merged = {
+        ...previous,
+        ...changes,
+        features: {
+          ...(previous.features || {}),
+          ...((changes.features || {})),
+        },
+      };
+      // Keep flat aliases and nested canonical objects in sync so the
+      // SMS (SIM) / Email / Critical / Activity switches always persist.
+      if (changes.emailNotifications !== undefined) {
+        merged.notifications = { ...(merged.notifications || {}), email: changes.emailNotifications };
+      }
+      if (changes.smsNotifications !== undefined) {
+        merged.notifications = { ...(merged.notifications || {}), sms: changes.smsNotifications };
+      }
+      if (changes.criticalAlerts !== undefined) {
+        merged.notifications = { ...(merged.notifications || {}), criticalAlerts: changes.criticalAlerts };
+      }
+      if (changes.activityNotifications !== undefined) {
+        merged.notifications = { ...(merged.notifications || {}), activity: changes.activityNotifications };
+      }
+      if (changes.defaultStudentLimit !== undefined) {
+        merged.limits = { ...(merged.limits || {}), maxStudentsPerCollege: changes.defaultStudentLimit };
+      }
+      if (changes.defaultWardenLimit !== undefined) {
+        merged.limits = { ...(merged.limits || {}), maxWardensPerCollege: changes.defaultWardenLimit };
+      }
+      if (changes.defaultHostelLimit !== undefined) {
+        merged.limits = { ...(merged.limits || {}), maxHostelsPerCollege: changes.defaultHostelLimit };
+      }
+      return merged;
+    });
 
     setHasChanges(true);
   };
@@ -642,7 +678,11 @@ const GlobalSystemSettings = () => {
     setSaving(true);
 
     try {
-      await cloudFunctions.updateSystemSettings(settings);
+      const payload = denormalizeSettingsForSave(settings);
+      const result = await cloudFunctions.updateSystemSettings(payload);
+      if (result?.settings) {
+        setSettings(normalizeSettings(result.settings));
+      }
 
       toast.success("Settings saved successfully");
 
@@ -661,23 +701,45 @@ const GlobalSystemSettings = () => {
      USER STATUS
   ======================================================= */
 
-  const toggleUser = async (uid, status) => {
-    setBusy(uid);
+  const toggleUser = async (mongoId, status) => {
+    // Backend PATCH /api/users/:id/status validates a Mongo ObjectId.
+    // Never send Firebase uid here — it always 400s and the button looks dead.
+    if (!mongoId || !/^[0-9a-fA-F]{24}$/.test(String(mongoId))) {
+      toast.error("Invalid user id — refresh the list and try again");
+      return;
+    }
+    const next = status === "approved" ? "suspended" : "approved";
+    const previousUsers = mgmtUsers;
+    setBusy(mongoId);
+
+    // Optimistic update so revoke/activate feels instant
+    setMgmtUsers((list) =>
+      list.map((u) => {
+        const key = String(u._id || u.id || "");
+        return key === String(mongoId) ? { ...u, status: next } : u;
+      }),
+    );
 
     try {
-      const next = status === "approved" ? "suspended" : "approved";
-
-      await cloudFunctions.setUserStatus(uid, next);
+      await cloudFunctions.setUserStatus(mongoId, next);
 
       toast.success(
-        next === "approved" ? "Account activated" : "Account deactivated",
+        next === "approved" ? "Account activated" : "Access revoked — account suspended",
       );
 
       await loadUsers();
     } catch (error) {
       console.error("User status:", error);
-
-      toast.error("Unable to update account");
+      // Revert optimistic change
+      setMgmtUsers(previousUsers);
+      const msg = String(error?.message || "");
+      if (msg.includes("403") || msg.toLowerCase().includes("forbidden")) {
+        toast.error("Not allowed — owner/admin only");
+      } else if (msg.includes("404")) {
+        toast.error("User not found — it may have been deleted");
+      } else {
+        toast.error(error?.message || "Unable to update account");
+      }
     } finally {
       setBusy(null);
     }
@@ -1639,7 +1701,9 @@ const GlobalSystemSettings = () => {
               "
               >
                 {mgmtUsers.map((managementUser) => {
-                  const id = managementUser.uid || managementUser.id;
+                  // Mongo _id is the only id the status API accepts.
+                  // uid is the Firebase id and will 400 if sent.
+                  const id = managementUser._id || managementUser.id;
 
                   const approved = managementUser.status === "approved";
 
@@ -1786,7 +1850,7 @@ const GlobalSystemSettings = () => {
 
                         <button
                           onClick={() => toggleUser(id, managementUser.status)}
-                          disabled={busy === id}
+                          disabled={busy === id || !id}
                           className="
                               w-8
                               h-8
@@ -1798,7 +1862,7 @@ const GlobalSystemSettings = () => {
                               hover:bg-white/5
                               disabled:opacity-40
                             "
-                          title={approved ? "Deactivate" : "Activate"}
+                          title={approved ? "Revoke access (suspend)" : "Restore access (approve)"}
                         >
                           {busy === id ? (
                             <Loader2

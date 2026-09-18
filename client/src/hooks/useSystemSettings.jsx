@@ -9,7 +9,9 @@ import { useState, useEffect, useCallback, createContext, useContext, useRef } f
 import * as cloudFunctions from '../firebase/cloudFunctions';
 
 // Default settings to use when not yet loaded
-const DEFAULT_SETTINGS = {
+// Canonical UI shape: flat notification/limit fields + nested features/notifications
+// for backend compatibility. normalizeSettings() merges both shapes on load.
+export const DEFAULT_SETTINGS = {
   registrationEnabled: true,
   approvalsEnabled: true,
   maintenanceMode: false,
@@ -17,11 +19,25 @@ const DEFAULT_SETTINGS = {
   defaultStudentLimit: 500,
   defaultWardenLimit: 10,
   defaultHostelLimit: 20,
+  limits: {
+    maxStudentsPerCollege: 500,
+    maxWardensPerCollege: 10,
+    maxHostelsPerCollege: 20,
+  },
   features: {
     notifications: true,
     reports: true,
     analytics: true,
     bulkOperations: true,
+    outings: true,
+    announcements: true,
+    feesAutoVerify: true,
+  },
+  notifications: {
+    email: true,
+    sms: false,
+    criticalAlerts: true,
+    activity: true,
   },
   // Complaint & escalation defaults
   complaintSlaHours: 48,
@@ -30,7 +46,7 @@ const DEFAULT_SETTINGS = {
   overdueThresholdHours: 72,
   smsEscalationAlerts: false,
   emailEscalationAlerts: true,
-  // Notification defaults
+  // Notification defaults (flat aliases used by Owner Settings UI)
   emailNotifications: true,
   smsNotifications: false,
   criticalAlerts: true,
@@ -39,6 +55,81 @@ const DEFAULT_SETTINGS = {
   twoFactorEnabled: false,
   forcePasswordReset: false,
   autoLogoutMinutes: 0,
+};
+
+/**
+ * Merge server payload (nested canonical + optional flat aliases)
+ * into the flat UI shape every screen reads.
+ */
+export const normalizeSettings = (serverSettings) => {
+  if (!serverSettings) return { ...DEFAULT_SETTINGS };
+  const s = serverSettings;
+  const notifications = {
+    email: s.notifications?.email ?? s.emailNotifications ?? DEFAULT_SETTINGS.notifications.email,
+    sms: s.notifications?.sms ?? s.smsNotifications ?? DEFAULT_SETTINGS.notifications.sms,
+    criticalAlerts:
+      s.notifications?.criticalAlerts ?? s.criticalAlerts ?? DEFAULT_SETTINGS.notifications.criticalAlerts,
+    activity: s.notifications?.activity ?? s.activityNotifications ?? DEFAULT_SETTINGS.notifications.activity,
+  };
+  const limits = {
+    maxStudentsPerCollege:
+      s.limits?.maxStudentsPerCollege ?? s.defaultStudentLimit ?? DEFAULT_SETTINGS.limits.maxStudentsPerCollege,
+    maxWardensPerCollege:
+      s.limits?.maxWardensPerCollege ?? s.defaultWardenLimit ?? DEFAULT_SETTINGS.limits.maxWardensPerCollege,
+    maxHostelsPerCollege:
+      s.limits?.maxHostelsPerCollege ?? s.defaultHostelLimit ?? DEFAULT_SETTINGS.limits.maxHostelsPerCollege,
+  };
+  const features = {
+    ...DEFAULT_SETTINGS.features,
+    ...(s.features || {}),
+  };
+  return {
+    ...DEFAULT_SETTINGS,
+    ...s,
+    notifications,
+    limits,
+    features,
+    emailNotifications: notifications.email,
+    smsNotifications: notifications.sms,
+    criticalAlerts: notifications.criticalAlerts,
+    activityNotifications: notifications.activity,
+    defaultStudentLimit: limits.maxStudentsPerCollege,
+    defaultWardenLimit: limits.maxWardensPerCollege,
+    defaultHostelLimit: limits.maxHostelsPerCollege,
+  };
+};
+
+/**
+ * Build the save payload from UI state: send BOTH nested canonical
+ * and flat aliases so any backend version persists every toggle —
+ * especially the SMS (SIM) notification switch.
+ */
+export const denormalizeSettingsForSave = (ui) => {
+  const features = { ...(ui.features || {}) };
+  const notifications = {
+    email: ui.emailNotifications ?? ui.notifications?.email ?? true,
+    sms: ui.smsNotifications ?? ui.notifications?.sms ?? false,
+    criticalAlerts: ui.criticalAlerts ?? ui.notifications?.criticalAlerts ?? true,
+    activity: ui.activityNotifications ?? ui.notifications?.activity ?? true,
+  };
+  const limits = {
+    maxStudentsPerCollege: Number(ui.defaultStudentLimit ?? ui.limits?.maxStudentsPerCollege ?? 500),
+    maxWardensPerCollege: Number(ui.defaultWardenLimit ?? ui.limits?.maxWardensPerCollege ?? 10),
+    maxHostelsPerCollege: Number(ui.defaultHostelLimit ?? ui.limits?.maxHostelsPerCollege ?? 20),
+  };
+  return {
+    ...ui,
+    notifications,
+    features,
+    limits,
+    emailNotifications: notifications.email,
+    smsNotifications: notifications.sms,
+    criticalAlerts: notifications.criticalAlerts,
+    activityNotifications: notifications.activity,
+    defaultStudentLimit: limits.maxStudentsPerCollege,
+    defaultWardenLimit: limits.maxWardensPerCollege,
+    defaultHostelLimit: limits.maxHostelsPerCollege,
+  };
 };
 
 // Context for sharing system settings across the app
@@ -51,6 +142,10 @@ const SystemSettingsContext = createContext({
   isMaintenanceMode: () => false,
   isRegistrationEnabled: () => true,
   isApprovalsEnabled: () => true,
+  isEmailEnabled: () => true,
+  isSmsEnabled: () => false,
+  isCriticalAlertsEnabled: () => true,
+  isActivityEnabled: () => true,
 });
 
 /**
@@ -83,12 +178,9 @@ export const SystemSettingsProvider = ({ children }) => {
 
       if (mountedRef.current) {
         if (result?.settings) {
-          setSettings({
-            ...DEFAULT_SETTINGS,
-            ...result.settings
-          });
+          setSettings(normalizeSettings(result.settings));
         } else {
-          setSettings(DEFAULT_SETTINGS);
+          setSettings({ ...DEFAULT_SETTINGS });
         }
         setLoading(false);
         setError(null);
@@ -149,6 +241,24 @@ export const SystemSettingsProvider = ({ children }) => {
     return settings.approvalsEnabled !== false;
   }, [settings]);
 
+  // Notification channel helpers — every toggle on the Owner Settings
+  // Notifications card maps to one of these. SMS == "SIM" switch.
+  const isEmailEnabled = useCallback(() => {
+    return (settings.emailNotifications ?? settings.notifications?.email) !== false;
+  }, [settings]);
+
+  const isSmsEnabled = useCallback(() => {
+    return (settings.smsNotifications ?? settings.notifications?.sms) === true;
+  }, [settings]);
+
+  const isCriticalAlertsEnabled = useCallback(() => {
+    return (settings.criticalAlerts ?? settings.notifications?.criticalAlerts) !== false;
+  }, [settings]);
+
+  const isActivityEnabled = useCallback(() => {
+    return (settings.activityNotifications ?? settings.notifications?.activity) !== false;
+  }, [settings]);
+
   const value = {
     settings,
     loading,
@@ -158,6 +268,10 @@ export const SystemSettingsProvider = ({ children }) => {
     isMaintenanceMode,
     isRegistrationEnabled,
     isApprovalsEnabled,
+    isEmailEnabled,
+    isSmsEnabled,
+    isCriticalAlertsEnabled,
+    isActivityEnabled,
   };
 
   return (
@@ -182,6 +296,10 @@ export const useSystemSettings = () => {
       isMaintenanceMode: () => false,
       isRegistrationEnabled: () => true,
       isApprovalsEnabled: () => true,
+      isEmailEnabled: () => true,
+      isSmsEnabled: () => false,
+      isCriticalAlertsEnabled: () => true,
+      isActivityEnabled: () => true,
     };
   }
   return context;
@@ -209,12 +327,13 @@ export const useCollegeCapacity = (collegeId, role) => {
     const checkCapacity = async () => {
       try {
         const result = await cloudFunctions.checkCollegeCapacity(collegeId, role);
+        // Backend returns both {count,max} and {currentCount,maxLimit} aliases
         setCapacity({
           loading: false,
           allowed: result.allowed,
-          currentCount: result.currentCount || 0,
-          maxLimit: result.maxLimit || 0,
-          remaining: result.remaining || 0,
+          currentCount: result.currentCount ?? result.count ?? 0,
+          maxLimit: result.maxLimit ?? result.max ?? 0,
+          remaining: result.remaining ?? 0,
           message: result.message,
           error: null,
         });

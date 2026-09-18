@@ -21,15 +21,25 @@ const updateSchema = z.object({
   approvalsEnabled: z.boolean().optional(),
   forcePasswordReset: z.boolean().optional(),
   twoFactorEnabled: z.boolean().optional(),
+  autoLogoutMinutes: z.number().min(0).max(1440).optional(),
   complaintSlaHours: z.number().min(1).optional(),
   overdueThresholdHours: z.number().min(1).optional(),
   autoEscalation: z.boolean().optional(),
   escalateToOwner: z.boolean().optional(),
   emailEscalationAlerts: z.boolean().optional(),
   smsEscalationAlerts: z.boolean().optional(),
+  // Nested canonical shapes
   notifications: z.record(z.any()).optional(),
   features: z.record(z.any()).optional(),
   limits: z.record(z.number()).optional(),
+  // Flat UI aliases (Owner Settings page)
+  emailNotifications: z.boolean().optional(),
+  smsNotifications: z.boolean().optional(),
+  criticalAlerts: z.boolean().optional(),
+  activityNotifications: z.boolean().optional(),
+  defaultStudentLimit: z.number().min(0).max(10000).optional(),
+  defaultWardenLimit: z.number().min(0).max(100).optional(),
+  defaultHostelLimit: z.number().min(0).max(500).optional(),
 });
 
 router.use(authenticate);

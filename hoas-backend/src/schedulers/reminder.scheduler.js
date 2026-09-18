@@ -10,6 +10,8 @@ export async function checkComplaintReminders() {
   const settings = await getSettingsOrDefaults();
   const feature = settings.features?.reminders;
   if (!feature?.enabled) return { sent: 0 };
+  const s = typeof settings?.toJSON === 'function' ? settings.toJSON() : settings;
+  const emailMaster = s.notifications?.email ?? s.emailNotifications ?? true;
 
   const triggerStatuses = feature.triggerStatuses || ['pending', 'in-progress', 'warden-resolved', 'disputed'];
   const maxPerComplaint = feature.maxPerComplaint || 3;
@@ -30,7 +32,7 @@ export async function checkComplaintReminders() {
     if (!student) continue;
 
     const message = `You have an update on your complaint "${complaint.title}" that you haven't viewed yet.`;
-    if (feature.emailEnabled && student.email) {
+    if (feature.emailEnabled && emailMaster && student.email) {
       await sendMail({
         to: student.email,
         subject: `HOAS — Complaint update reminder`,

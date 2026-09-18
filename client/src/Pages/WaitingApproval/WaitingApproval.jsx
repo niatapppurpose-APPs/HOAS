@@ -4,10 +4,17 @@ import { useTheme } from "../../context/ThemeContext";
 import { useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase/firebaseConfig";
-import { Clock, Building2, CheckCircle, Loader2, X, IndianRupee, Moon, Sun } from "lucide-react";
-import AnimatedLogoutButton from "../../components/AnimatedLogoutButton";
-import { ThemeToggle } from "../../components/ThemeToggle";
-
+import {
+  Clock,
+  Building2,
+  CheckCircle,
+  Loader2,
+  X,
+  IndianRupee,
+  Moon,
+  Sun,
+} from "lucide-react";
+import AccountStatusShell from "../../components/AccountStatusShell";
 const WaitingApproval = () => {
   const { user, userData, userDataLoading, loading } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -24,7 +31,7 @@ const WaitingApproval = () => {
     // If user data is loaded and status is approved, redirect to dashboard
     if (!userDataLoading && userData) {
       const status = userData.status?.toLowerCase();
-      
+
       if (status === "approved") {
         // Redirect based on role
         if (userData.role === "management") {
@@ -32,8 +39,12 @@ const WaitingApproval = () => {
         } else if (userData.role === "warden") {
           navigate("/dashboard/warden", { replace: true });
         } else if (userData.role === "student") {
-          const needsPayment = !userData?.feeDetails?.paidFee || userData?.feeDetails?.paidFee === 0;
-          const unverified = userData?.managementVerification !== 'Verified' || userData?.wardenVerification !== 'Verified';
+          const needsPayment =
+            !userData?.feeDetails?.paidFee ||
+            userData?.feeDetails?.paidFee === 0;
+          const unverified =
+            userData?.managementVerification !== "Verified" ||
+            userData?.wardenVerification !== "Verified";
           if (!needsPayment && !unverified) {
             navigate("/dashboard/student", { replace: true });
           }
@@ -42,6 +53,8 @@ const WaitingApproval = () => {
         }
       } else if (status === "denied") {
         // Stay on this page but show denied message
+      } else if (status === "suspended") {
+        navigate("/suspended", { replace: true });
       }
     }
   }, [user, userData, userDataLoading, loading, navigate, location.pathname]);
@@ -57,11 +70,13 @@ const WaitingApproval = () => {
 
   if (loading || userDataLoading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${
-        isDark
-          ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'
-          : 'bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100'
-      }`}>
+      <div
+        className={`min-h-screen flex items-center justify-center ${
+          isDark
+            ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+            : "bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100"
+        }`}
+      >
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
       </div>
     );
@@ -69,204 +84,425 @@ const WaitingApproval = () => {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  const isDenied = userData?.status?.toLowerCase() === "denied";
+  const statusLower = String(userData?.status || "").toLowerCase();
+  // Suspended accounts have their own dedicated page
+  if (statusLower === "suspended") return <Navigate to="/suspended" replace />;
+  const isDenied = statusLower === "denied";
+  const isSuspended = false;
   const isUnknownRole = !userData?.role || userData.role === "unknown";
-  const needsPayment = userData?.role === "student" && (!userData?.feeDetails?.paidFee || userData?.feeDetails?.paidFee === 0);
+  const needsPayment =
+    userData?.role === "student" &&
+    (!userData?.feeDetails?.paidFee || userData?.feeDetails?.paidFee === 0);
   const unverifyReason = userData?.unverifyReason;
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-4 ${
-      isDark
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'
-        : 'bg-gradient-to-br from-gray-50 via-white to-gray-50'
-    }`}>
-      <div className="w-full max-w-md">
-        {/* Theme Toggle Button */}
-        <ThemeToggle />
+    <AccountStatusShell
+      isDark={isDark}
+      user={user}
+      userData={userData}
+      eyebrow="Account verification"
+      title={
+        isDenied
+          ? "Access Denied"
+          : needsPayment
+            ? "Payment Required"
+            : unverifyReason
+              ? "Action Required"
+              : isUnknownRole
+                ? "Waiting for Access"
+                : "Waiting for Approval"
+      }
+      statusLabel={
+        isDenied
+          ? "Denied"
+          : needsPayment
+            ? "Payment"
+            : unverifyReason
+              ? "Action required"
+              : "Pending"
+      }
+      statusColor={
+        isDenied
+          ? "red"
+          : unverifyReason
+            ? "rose"
+            : needsPayment
+              ? "amber"
+              : "amber"
+      }
+      description={
+        isDenied
+          ? "Your account request has been reviewed and access was not approved."
+          : needsPayment
+            ? "Complete the required payment before account verification can continue."
+            : unverifyReason
+              ? "There is an issue that needs to be addressed before verification can continue."
+              : "Your account information is being reviewed by the administration."
+      }
+      onLogout={handleLogout}
+      footerText="This page will automatically update when your account status changes."
+    >
+      {/* ================================================================ */}
+      {/* WAITING / DENIED / PAYMENT / ACTION REQUIRED                    */}
+      {/* ================================================================ */}
 
-        {/* Logo & Branding */}
-        <div className="text-center mb-8">
-          <div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
-            <Building2 className="w-12 h-12 text-white" />
-          </div>
-          <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>HOAS</h1>
-          <p className={`mt-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Hostel Owner Admin System</p>
+      <div className="text-center">
+        {/* Icon */}
+
+        <div
+          className={`
+          inline-flex
+          items-center
+          justify-center
+          w-16
+          h-16
+          sm:w-20
+          sm:h-20
+          rounded-[22px]
+          mb-4
+          ${
+            isDenied
+              ? "bg-red-500/10"
+              : unverifyReason
+                ? "bg-rose-500/10"
+                : needsPayment
+                  ? "bg-amber-500/10"
+                  : "bg-yellow-500/10"
+          }
+        `}
+        >
+          {isDenied ? (
+            <X
+              className="w-8 h-8 sm:w-10 sm:h-10 text-red-500"
+              aria-hidden="true"
+            />
+          ) : unverifyReason ? (
+            <X
+              className="w-8 h-8 sm:w-10 sm:h-10 text-rose-500"
+              aria-hidden="true"
+            />
+          ) : needsPayment ? (
+            <IndianRupee
+              className="w-8 h-8 sm:w-10 sm:h-10 text-amber-500"
+              aria-hidden="true"
+            />
+          ) : (
+            <Clock
+              className="
+              w-8
+              h-8
+              sm:w-10
+              sm:h-10
+              text-yellow-500
+              motion-safe:animate-pulse
+            "
+              aria-hidden="true"
+            />
+          )}
         </div>
 
-        {/* Status Card */}
-        <div className={`rounded-2xl p-8 backdrop-blur-sm border ${
-          isDark
-            ? 'bg-slate-800/50 border-slate-700/50'
-            : 'bg-white/50 border-gray-200/50 shadow-lg'
-        }`}>
-          {/* User Info */}
-          <div className={`flex items-center gap-4 mb-6 pb-6 border-b ${
-            isDark ? 'border-slate-700/50' : 'border-gray-200/50'
-          }`}>
-            {user?.photoURL ? (
-              <img
-                src={user.photoURL}
-                alt={user.displayName}
-                className="w-14 h-14 rounded-full ring-2 ring-indigo-500/50"
-              />
-            ) : (
-              <div className="w-14 h-14 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xl font-bold ring-2 ring-indigo-500/50">
-                {user?.displayName?.charAt(0) || "U"}
+        {/* Heading */}
+
+        <h3
+          className="
+          text-xl
+          sm:text-2xl
+          font-black
+        "
+          style={{
+            color: "var(--text-primary)",
+          }}
+        >
+          {isDenied
+            ? "Access Denied"
+            : needsPayment
+              ? "Payment Required"
+              : unverifyReason
+                ? "Action Required"
+                : isUnknownRole
+                  ? "Waiting for access"
+                  : "You're almost there!"}
+        </h3>
+
+        {/* Message */}
+
+        <p
+          className="
+          mt-2
+          text-xs
+          sm:text-sm
+          leading-relaxed
+          max-w-lg
+          mx-auto
+        "
+          style={{
+            color: "var(--text-muted)",
+          }}
+        >
+          {isDenied ? (
+            <>
+              Your request has been reviewed and denied by the administration.
+              <br />
+              Please contact support if you believe this is an error.
+            </>
+          ) : needsPayment ? (
+            <>
+              Account verification is locked until your initial payment is
+              received.
+            </>
+          ) : unverifyReason ? (
+            <>Please review the issue below and address it before continuing.</>
+          ) : isUnknownRole ? (
+            <>
+              Your login is valid, but no HOAS role has been assigned yet.
+              <br />
+              Please wait until an administrator gives you access.
+            </>
+          ) : (
+            <>
+              Your profile is being verified by your administration.
+              <br />
+              Please wait while we review your account.
+            </>
+          )}
+        </p>
+      </div>
+
+      {/* ================================================================ */}
+      {/* PAYMENT                                                          */}
+      {/* ================================================================ */}
+
+      {needsPayment && (
+        <div
+          className="
+          mt-5
+          rounded-2xl
+          border
+          p-4
+          text-center
+        "
+          style={{
+            backgroundColor: isDark
+              ? "rgba(245,158,11,.06)"
+              : "rgba(255,251,235,.90)",
+            borderColor: "rgba(245,158,11,.18)",
+          }}
+        >
+          <p className="text-[9px] uppercase tracking-widest font-black text-amber-500">
+            Current Balance
+          </p>
+
+          <p className="mt-1 text-xl font-black text-amber-500">₹0</p>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* ACTION REQUIRED                                                  */}
+      {/* ================================================================ */}
+
+      {unverifyReason && (
+        <div
+          className="
+          mt-5
+          rounded-2xl
+          border
+          p-4
+        "
+          style={{
+            backgroundColor: isDark
+              ? "rgba(244,63,94,.06)"
+              : "rgba(255,241,242,.80)",
+            borderColor: isDark ? "rgba(244,63,94,.18)" : "rgba(244,63,94,.14)",
+          }}
+        >
+          <p className="text-[9px] uppercase tracking-widest font-black text-rose-500 mb-2">
+            Reason from Management
+          </p>
+
+          <p
+            className="
+            text-sm
+            leading-relaxed
+            italic
+          "
+            style={{
+              color: "var(--text-secondary)",
+            }}
+          >
+            "{unverifyReason}"
+          </p>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* PROGRESS                                                         */}
+      {/* ================================================================ */}
+
+      {!isDenied && (
+        <div
+          className="
+          mt-6
+          rounded-2xl
+          border
+          p-4
+          sm:p-5
+        "
+          style={{
+            backgroundColor: isDark
+              ? "rgba(30,41,59,.40)"
+              : "rgba(248,250,252,.70)",
+            borderColor: "var(--border-primary)",
+          }}
+        >
+          <div className="space-y-4">
+            {/* Created */}
+
+            <div className="flex items-center gap-3">
+              <div
+                className="
+                w-9
+                h-9
+                shrink-0
+                rounded-xl
+                flex
+                items-center
+                justify-center
+                bg-green-500/10
+              "
+              >
+                <CheckCircle className="w-4 h-4 text-green-500" />
               </div>
-            )}
-            <div>
-              <p className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{user?.displayName}</p>
-              <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{user?.email}</p>
-              <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
-                isDark
-                  ? 'bg-indigo-500/20 text-indigo-400'
-                  : 'bg-indigo-100 text-indigo-700'
-              }`}>
-                {isUnknownRole ? "Unknown" : userData?.role || "User"}
+
+              <div className="flex-1">
+                <p
+                  className="text-sm font-semibold"
+                  style={{
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  Account created
+                </p>
+
+                <p
+                  className="text-[10px]"
+                  style={{
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  Your account has been created.
+                </p>
+              </div>
+
+              <span className="text-[9px] font-black text-green-500">DONE</span>
+            </div>
+
+            {/* Connector */}
+
+            <div className="ml-[17px] h-3 border-l border-dashed border-green-500/30" />
+
+            {/* Profile */}
+
+            <div className="flex items-center gap-3">
+              <div
+                className="
+                w-9
+                h-9
+                shrink-0
+                rounded-xl
+                flex
+                items-center
+                justify-center
+                bg-green-500/10
+              "
+              >
+                <CheckCircle className="w-4 h-4 text-green-500" />
+              </div>
+
+              <div className="flex-1">
+                <p
+                  className="text-sm font-semibold"
+                  style={{
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  Profile submitted
+                </p>
+
+                <p
+                  className="text-[10px]"
+                  style={{
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  Your information was submitted.
+                </p>
+              </div>
+
+              <span className="text-[9px] font-black text-green-500">DONE</span>
+            </div>
+
+            {/* Connector */}
+
+            <div className="ml-[17px] h-3 border-l border-dashed border-yellow-500/30" />
+
+            {/* Pending */}
+
+            <div className="flex items-center gap-3">
+              <div
+                className="
+                relative
+                w-9
+                h-9
+                shrink-0
+                rounded-xl
+                flex
+                items-center
+                justify-center
+                bg-yellow-500/10
+              "
+              >
+                <span className="absolute inset-0 rounded-xl bg-yellow-500/10 motion-safe:animate-ping" />
+
+                <Clock
+                  className="
+                  relative
+                  w-4
+                  h-4
+                  text-yellow-500
+                "
+                />
+              </div>
+
+              <div className="flex-1">
+                <p
+                  className="
+                  text-sm
+                  font-bold
+                  text-yellow-600
+                  dark:text-yellow-400
+                "
+                >
+                  Waiting for admin approval
+                </p>
+
+                <p
+                  className="text-[10px]"
+                  style={{
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  Your account is currently under review.
+                </p>
+              </div>
+
+              <span className="text-[9px] font-black text-yellow-600 dark:text-yellow-400">
+                PENDING
               </span>
             </div>
           </div>
-
-          {/* Status Message */}
-          <div className="text-center">
-            {isDenied ? (
-              <>
-                <div className={`inline-flex p-4 rounded-full mb-4 ${
-                  isDark ? 'bg-red-500/20' : 'bg-red-50'
-                }`}>
-                  <svg className={`w-12 h-12 ${isDark ? 'text-red-400' : 'text-red-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </div>
-                <h2 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  Access Denied
-                </h2>
-                <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Your request has been reviewed and denied by the administration.
-                  Please contact support if you believe this is an error.
-                </p>
-              </>
-            ) : isUnknownRole ? (
-              <>
-                <div className={`inline-flex p-4 rounded-full mb-4 animate-pulse ${
-                  isDark ? 'bg-yellow-500/20' : 'bg-yellow-50'
-                }`}>
-                  <Clock className={`w-12 h-12 ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`} />
-                </div>
-                <h2 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  Waiting for access
-                </h2>
-                <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Your login is valid, but no HOAS role has been assigned yet.
-                  <br />
-                  Please wait until an admin gives access.
-                </p>
-              </>
-            ) : needsPayment ? (
-              <>
-                <div className={`inline-flex p-4 rounded-full mb-4 animate-bounce ${
-                  isDark ? 'bg-amber-500/20' : 'bg-amber-50'
-                }`}>
-                  <IndianRupee className={`w-12 h-12 ${isDark ? 'text-amber-400' : 'text-amber-500'}`} />
-                </div>
-                <h2 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  Payment Required
-                </h2>
-                <div className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Account verification is locked until your initial payment is received.
-                  <br />
-                  <span className="text-indigo-400 font-semibold">Current Balance: ₹0</span>
-                </div>
-              </>
-            ) : unverifyReason ? (
-              <>
-                <div className={`inline-flex p-4 rounded-full mb-4 ${
-                  isDark ? 'bg-rose-500/20' : 'bg-rose-50'
-                }`}>
-                  <X className={`w-12 h-12 ${isDark ? 'text-rose-400' : 'text-rose-500'}`} />
-                </div>
-                <h2 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  Action Required
-                </h2>
-                <div className={`rounded-xl p-4 mb-4 text-left border ${
-                  isDark
-                    ? 'bg-rose-500/10 border-rose-500/20'
-                    : 'bg-rose-50 border-rose-200'
-                }`}>
-                  <p className={`text-[10px] uppercase font-bold tracking-widest mb-1 ${
-                    isDark ? 'text-rose-400' : 'text-rose-600'
-                  }`}>Reason from Management:</p>
-                  <p className={`text-sm italic ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>"{unverifyReason}"</p>
-                </div>
-                <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Please address the issue above and contact management if needed.
-                </p>
-              </>
-            ) : (
-              <>
-                <div className={`inline-flex p-4 rounded-full mb-4 animate-pulse ${
-                  isDark ? 'bg-yellow-500/20' : 'bg-yellow-50'
-                }`}>
-                  <Clock className={`w-12 h-12 ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`} />
-                </div>
-                <h2 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  You're almost there!
-                </h2>
-                <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Your profile is being verified by your administration.
-                  <br />
-                  Please wait while we review your account.
-                </p>
-              </>
-            )}
-          </div>
-
-          {/* Status Steps */}
-          {!isDenied && (
-            <div className="mt-8 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  isDark ? 'bg-green-500/20' : 'bg-green-100'
-                }`}>
-                  <CheckCircle className={`w-4 h-4 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
-                </div>
-                <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Account created</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  isDark ? 'bg-green-500/20' : 'bg-green-100'
-                }`}>
-                  <CheckCircle className={`w-4 h-4 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
-                </div>
-                <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Profile submitted</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center animate-pulse ${
-                  isDark ? 'bg-yellow-500/20' : 'bg-yellow-100'
-                }`}>
-                  <Clock className={`w-4 h-4 ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`} />
-                </div>
-                <span className={`text-sm font-medium ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>Waiting for admin approval</span>
-              </div>
-            </div>
-          )}
-
-          {/* Logout Button */}
-          <div className="mt-8 flex justify-center">
-            <AnimatedLogoutButton
-              onLogout={handleLogout}
-              variant={isDark ? "dark" : "light"}
-              text="Sign Out"
-            />
-          </div>
         </div>
-
-        {/* Info Text */}
-        <p className={`text-center text-xs mt-6 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-          This page will automatically update when your status changes.
-        </p>
-      </div>
-    </div>
+      )}
+    </AccountStatusShell>
   );
 };
 

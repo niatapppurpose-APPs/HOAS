@@ -1,5 +1,8 @@
 /* ══════════════════════════════════════════════════════════════════════════════
    Global System Settings – Constants & Utilities
+   Canonical UI shape: flat fields for the Settings screen + nested objects
+   for the backend. Always load/save through normalize/denormalize helpers
+   in hooks/useSystemSettings.jsx so every toggle (incl. SMS) persists.
    ══════════════════════════════════════════════════════════════════════════════ */
 
 export const DEFAULT_SETTINGS = {
@@ -10,7 +13,26 @@ export const DEFAULT_SETTINGS = {
   defaultStudentLimit: 500,
   defaultWardenLimit: 10,
   defaultHostelLimit: 20,
-  features: { notifications: true, reports: true, analytics: true, bulkOperations: true },
+  limits: {
+    maxStudentsPerCollege: 500,
+    maxWardensPerCollege: 10,
+    maxHostelsPerCollege: 20,
+  },
+  features: {
+    notifications: true,
+    reports: true,
+    analytics: true,
+    bulkOperations: true,
+    outings: true,
+    announcements: true,
+    feesAutoVerify: true,
+  },
+  notifications: {
+    email: true,
+    sms: false,
+    criticalAlerts: true,
+    activity: true,
+  },
   complaintSlaHours: 48,
   autoEscalation: true,
   escalateToOwner: false,

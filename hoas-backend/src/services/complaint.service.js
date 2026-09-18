@@ -154,15 +154,49 @@ async function escalate(complaint, reason, settings) {
     newStatus: 'escalated',
   });
   await complaint.save();
-  if (settings.escalateToOwner) {
+  const s = typeof settings?.toJSON === 'function' ? settings.toJSON() : settings || {};
+  const emailMaster = s.notifications?.email ?? s.emailNotifications ?? true;
+  const smsMaster = s.notifications?.sms ?? s.smsNotifications ?? false;
+  const emailEsc = s.emailEscalationAlerts ?? true;
+  const smsEsc = s.smsEscalationAlerts ?? false;
+
+  const targets = [];
+  if (s.escalateToOwner) {
     const owners = await User.find({ role: { $in: ['owner', 'admin'] } });
-    for (const owner of owners) {
-      await notifyUser(owner, {
-        type: 'complaint_escalated',
-        title: 'Complaint escalated to you',
-        body: complaint.title,
-        data: { complaintId: String(complaint._id) },
-      });
+    targets.push(...owners);
+  } else {
+    const management = await User.find({ role: 'management', collegeId: complaint.collegeId });
+    targets.push(...management);
+  }
+  for (const target of targets) {
+    await notifyUser(target, {
+      type: 'complaint_escalated',
+      title: s.escalateToOwner ? 'Complaint escalated to you' : 'Complaint escalated',
+      body: complaint.title,
+      data: { complaintId: String(complaint._id) },
+    });
+    // Owner → Settings → Complaint & Escalation → Email/SMS Escalation Alerts
+    // + Notifications master switches gate these side-channels.
+    if (emailEsc && emailMaster && target.email) {
+      try {
+        const { sendMailAsync } = await import('./email.service.js');
+        sendMailAsync({
+          to: target.email,
+          type: 'complaint_escalated',
+          data: {
+            userName: target.name || 'Manager',
+            complaintTitle: complaint.title,
+            complaintId: String(complaint._id),
+          },
+          subject: `HOAS — Complaint escalated: ${complaint.title}`,
+        });
+      } catch (err) {
+        console.error('[escalation-email-failed]', err.message);
+      }
+    }
+    if (smsEsc && smsMaster && target.phone) {
+      // No SMS provider configured — log intent so the toggle is observable.
+      console.log(`[sms-escalation] to=${target.phone} complaint=${complaint._id} title=${complaint.title}`);
     }
   }
 }
