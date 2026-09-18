@@ -276,13 +276,13 @@ const WardenSettings = () => {
                                 { label: 'Department', value: userData?.department || '—' },
                                 { label: 'Status', value: userData?.status || 'active', isStatus: true },
                             ].map((item, i) => (
-                                <div key={i} className="flex items-center justify-between py-1.5">
-                                    <span className="text-xs font-bold uppercase tracking-widest opacity-50" style={{ color: 'var(--text-muted)' }}>{item.label}</span>
+                                <div key={i} className="py-1.5">
+                                    <span className="block text-xs font-bold uppercase tracking-widest opacity-50" style={{ color: 'var(--text-muted)' }}>{item.label}</span>
                                     {item.isStatus ? (
-                                        <span className={`text-[10px] px-2.5 py-0.5 rounded-md font-bold uppercase ${item.value === 'approved' ? 'bg-green-500/10 text-green-600 border border-green-500/20' : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
+                                        <span className={`inline-block mt-1 text-[10px] px-2.5 py-0.5 rounded-md font-bold uppercase ${item.value === 'approved' ? 'bg-green-500/10 text-green-600 border border-green-500/20' : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
                                             }`}>{item.value}</span>
                                     ) : (
-                                        <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{item.value}</span>
+                                        <span className="block text-sm font-medium mt-0.5 break-words" style={{ color: 'var(--text-primary)' }}>{item.value}</span>
                                     )}
                                 </div>
                             ))}

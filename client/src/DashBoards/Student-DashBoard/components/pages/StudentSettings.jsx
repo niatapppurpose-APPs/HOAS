@@ -338,9 +338,9 @@ const StudentSettings = () => {
                                 { label: 'Room', value: userData?.roomNumber || '—' },
                                 { label: 'Hostel Block', value: userData?.hostelBlock || '—' },
                             ].map((item, i) => (
-                                <div key={i} className="flex items-center justify-between py-1.5">
-                                    <span className="text-xs font-bold uppercase tracking-widest opacity-50" style={{ color: 'var(--text-muted)' }}>{item.label}</span>
-                                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{item.value}</span>
+                                <div key={i} className="py-1.5">
+                                    <span className="block text-xs font-bold uppercase tracking-widest opacity-50" style={{ color: 'var(--text-muted)' }}>{item.label}</span>
+                                    <span className="block text-sm font-medium mt-0.5 break-words" style={{ color: 'var(--text-primary)' }}>{item.value}</span>
                                 </div>
                             ))}
                         </div>

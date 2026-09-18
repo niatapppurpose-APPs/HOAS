@@ -1,7 +1,7 @@
 import Complaint from '../models/Complaint.js';
 import User from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege, canAccessHostel, resolveStudentWarden, idOf } from '../utils/scope.js';
+import { canManageCollege, canAccessHostel, resolveStudentWarden, idOf, wardenComplaintOr, canWardenAccessComplaint } from '../utils/scope.js';
 import { getPagination, pageMeta } from '../utils/pagination.js';
 import { recordAudit } from '../services/audit.service.js';
 import {
@@ -63,7 +63,7 @@ export async function listMyComplaints(req, res, next) {
 
 export async function listWardenComplaints(req, res, next) {
   try {
-    const filter = { $or: [{ assignedWardenId: req.user._id }, { hostelId: req.user.hostelId }] };
+    const filter = { $or: wardenComplaintOr(req.user) };
     if (req.query.status) filter.status = req.query.status;
     const { page, limit, skip } = getPagination(req.query);
     const query = Complaint.find(filter)
@@ -129,9 +129,7 @@ export async function getComplaint(req, res, next) {
     const allowed =
       STUDENT_ROLES.includes(user.role) ||
       (user.role === 'student' && String(complaint.studentId._id) === String(user._id)) ||
-      (user.role === 'warden' &&
-        (String(complaint.assignedWardenId) === String(user._id) ||
-          String(complaint.hostelId) === String(user.hostelId))) ||
+      (user.role === 'warden' && canWardenAccessComplaint(user, complaint)) ||
       (user.role === 'management' && canManageCollege(user, complaint.collegeId));
 
     if (!allowed) throw new AppError(403, 'FORBIDDEN');
@@ -155,9 +153,7 @@ export async function updateComplaintStatus(req, res, next) {
     };
 
     const canActAsWarden =
-      req.user.role === 'warden' &&
-      (String(complaint.assignedWardenId) === String(req.user._id) ||
-        String(complaint.hostelId) === String(req.user.hostelId));
+      req.user.role === 'warden' && canWardenAccessComplaint(req.user, complaint);
     const canActAsManagement =
       req.user.role === 'management' && canManageCollege(req.user, complaint.collegeId);
 

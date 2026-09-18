@@ -25,7 +25,7 @@ import AppLogo4k from "../../../../assets/AppLogo4k.webp";
 import { useToast } from "../../../../components/Toast";
 import { ThemeToggle } from "../../../../components/ThemeToggle";
 const StudentProfile = () => {
-  const { user, userData, userDataLoading } = useAuth();
+  const { user, userData, userDataLoading, fetchProfile } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const toast = useToast();
@@ -116,11 +116,19 @@ const StudentProfile = () => {
         name: trimmedName,
         phone: trimmedPhone,
         address: trimmedAddress,
+        roomNumber: trimmedRoomNumber,
+        course: trimmedCourse,
+        branch: trimmedBranch,
+        year: trimmedYear,
+        fatherName: trimmedFatherName,
       });
 
       if (user.displayName !== trimmedName) {
         await updateProfile(user, { displayName: trimmedName });
       }
+
+      // Refresh context so the view shows saved values immediately
+      if (fetchProfile) await fetchProfile().catch(() => {});
 
       setIsEditing(false);
       toast.success("Profile updated successfully");
