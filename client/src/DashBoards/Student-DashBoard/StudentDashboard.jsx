@@ -235,7 +235,7 @@ const StudentDashboard = () => {
       />
 
       {/* Main Content */}
-      <div className="pt-20 md:pt-24 px-4 sm:px-6 lg:px-8 pb-4">
+      <div className="pt-20 md:pt-24 px-4 sm:px-6 lg:px-8 pb-28 lg:pb-8">
         {/* Profile completion nudge for existing accounts missing details */}
         {(() => {
           if (userDataLoading || !userData) return null;
@@ -287,10 +287,10 @@ const StudentDashboard = () => {
             </div>
           );
         })()}
-        {/* Welcome Banner */}
+        {/* Welcome Banner — deterministic full-width mobile-first layout */}
         <div
           id="student-tour-welcome"
-          className="relative mb-6 md:mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-10 border shadow-2xl transition-all hover:shadow-blue-500/10"
+          className="relative w-full max-w-full mb-6 md:mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-10 border shadow-2xl transition-all hover:shadow-blue-500/10"
           style={{
             backgroundColor: "var(--bg-card)",
             borderColor: "var(--border-primary)",
@@ -298,13 +298,13 @@ const StudentDashboard = () => {
               "linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%)",
           }}
         >
-          <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 rounded-full bg-blue-500/10 blur-[80px]" />
-          <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-48 h-48 rounded-full bg-indigo-500/5 blur-[60px]" />
+          <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 rounded-full bg-blue-500/10 blur-[80px] pointer-events-none" />
+          <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-48 h-48 rounded-full bg-indigo-500/5 blur-[60px] pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
-            <div className="text-center md:text-left">
+          <div className="relative z-10 w-full min-w-0 flex flex-col items-center text-center gap-5 md:gap-8 md:flex-row md:text-left md:justify-between">
+            <div className="w-full min-w-0 md:flex-1">
               <h1
-                className="text-2xl sm:text-3xl md:text-4xl font-mono tracking-tight"
+                className="text-xl sm:text-2xl md:text-4xl font-mono tracking-tight break-words"
                 style={{ color: "var(--text-primary)" }}
               >
                 Welcome,{" "}
@@ -318,16 +318,16 @@ const StudentDashboard = () => {
               >
                 Your quick overview and hostel status
               </p>
-              <div className="mt-6 flex flex-wrap gap-3 justify-center md:justify-start">
+              <div className="mt-6 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center justify-center md:justify-start">
                 <button
                   onClick={() => navigate("help")}
-                  className="px-4 md:px-5 py-2 md:py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs md:text-sm shadow-lg shadow-blue-500/30 hover:scale-105 transition-transform flex items-center gap-2"
+                  className="px-4 md:px-5 py-2.5 md:py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs md:text-sm shadow-lg shadow-blue-500/30 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center gap-2"
                 >
                   <FileText size={14} className="md:w-4 md:h-4" /> Need Help?
                 </button>
                 <button
                   onClick={() => navigate("profile")}
-                  className="px-4 md:px-5 py-2 md:py-2.5 rounded-xl border font-bold text-xs md:text-sm hover:bg-blue-500/5 transition-all flex items-center gap-2"
+                  className="px-4 md:px-5 py-2.5 md:py-2.5 rounded-xl border font-bold text-xs md:text-sm hover:bg-blue-500/5 transition-all flex items-center justify-center gap-2"
                   style={{
                     borderColor: "var(--border-primary)",
                     color: "var(--text-primary)",
@@ -337,7 +337,7 @@ const StudentDashboard = () => {
                 </button>
               </div>
             </div>
-            <div className="flex flex-wrap items-center justify-center md:justify-end gap-4 md:gap-8">
+            <div className="w-full min-w-0 md:w-auto flex flex-wrap items-center justify-center md:justify-end gap-4 md:gap-8">
               {/* Date Widget */}
               <div
                 className="flex flex-col items-center md:items-start p-3 md:p-5 rounded-2xl border backdrop-blur-md transition-all hover:scale-105"
