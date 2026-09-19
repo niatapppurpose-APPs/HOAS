@@ -25,6 +25,10 @@ import settingRoutes from './routes/setting.routes.js';
 import reportRoutes from './routes/report.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import emailRoutes from './routes/email.routes.js';
+import logRoutes from './routes/log.routes.js';
+import visitorRoutes from './routes/visitor.routes.js';
+import messMenuRoutes from './routes/messMenu.routes.js';
+import { requestLogger } from './services/serverLog.service.js';
 
 const app = express();
 
@@ -43,6 +47,7 @@ app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(globalRateLimit);
+app.use(requestLogger);
 
 app.get('/', (req, res) => {
   res.json({
@@ -89,6 +94,9 @@ app.use('/api/settings', settingRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/emails', emailRoutes);
+app.use('/api/logs', logRoutes);
+app.use('/api/visitors', visitorRoutes);
+app.use('/api/mess-menu', messMenuRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

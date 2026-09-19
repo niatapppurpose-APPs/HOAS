@@ -9,6 +9,11 @@ const FeatureDisabled = ({ feature = 'This feature' }) => {
     reports: 'Reports',
     analytics: 'Analytics',
     bulkOperations: 'Bulk Operations',
+    outings: 'Outings',
+    announcements: 'Announcements',
+    feesAutoVerify: 'Fee Auto-Verify',
+    visitors: 'Visitor Management',
+    messMenu: 'Mess Menu',
   };
 
   const label = featureLabels[feature] || feature;

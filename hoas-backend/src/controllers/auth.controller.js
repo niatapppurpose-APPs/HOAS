@@ -150,3 +150,31 @@ export async function resolveStudentLogin(req, res, next) {
     next(error);
   }
 }
+
+// ── Step-up auth for secure Owner pages (OTP emailed to the signer) ──
+export async function requestSecureOtp(req, res, next) {
+  try {
+    const { requestSecureOtp: request } = await import('../services/otp.service.js');
+    const result = await request(req.user, req.body?.purpose);
+    res.json({ ok: true, sentTo: maskEmail(req.user.email), ...result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function verifySecureOtp(req, res, next) {
+  try {
+    const { verifySecureOtp: verify } = await import('../services/otp.service.js');
+    const result = await verify(req.user, req.body?.purpose, req.body?.code);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+function maskEmail(email) {
+  const [name = '', domain = ''] = String(email || '').split('@');
+  if (!domain) return 'your email';
+  const head = name.slice(0, 2);
+  return `${head}***@${domain}`;
+}

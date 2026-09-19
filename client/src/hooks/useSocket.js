@@ -37,6 +37,9 @@ const SOCKET_EVENT_MAP = [
   ['emergency:updated', 'hoas:emergency-updated'],
   ['emergency:stopped', 'hoas:emergency-stopped'],
   ['college:updated', 'hoas:college-updated'],
+  ['settings:updated', 'hoas:settings-updated'],
+  ['visitor:updated', 'hoas:visitor-updated'],
+  ['messmenu:updated', 'hoas:messmenu-updated'],
 ];
 
 const attachForwarders = (socket) => {

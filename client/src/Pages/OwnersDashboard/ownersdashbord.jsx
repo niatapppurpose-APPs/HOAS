@@ -82,7 +82,8 @@ const OwnersDashboard = () => {
   const { user, isAdmin, loading, adminChecked, logout } = useAuth();
 
   const { isDark } = useTheme();
-  const { isApprovalsEnabled } = useSystemSettings();
+  const { isApprovalsEnabled, isFeatureEnabled } = useSystemSettings();
+  const bulkEnabled = isFeatureEnabled('bulkOperations');
 
   const navigate = useNavigate();
   const toast = useToast();
@@ -341,6 +342,14 @@ const OwnersDashboard = () => {
     if (!isApprovalsEnabled()) {
       toast.warning(
         "Approval workflows are currently disabled in System Settings.",
+      );
+
+      return;
+    }
+
+    if (!bulkEnabled) {
+      toast.warning(
+        "Bulk operations are currently disabled in System Settings.",
       );
 
       return;
@@ -1333,9 +1342,10 @@ const OwnersDashboard = () => {
               </div>
             )}
 
-            {/* Bulk actions */}
+            {/* Bulk actions — hidden when Bulk Operations flag is off */}
 
-            {pendingCount >= 1 &&
+            {bulkEnabled &&
+              pendingCount >= 1 &&
               (activeTab === "all" || activeTab === "pending") &&
               pendingOnPage.length > 0 && (
                 <div className="px-3 sm:px-4 pb-3">

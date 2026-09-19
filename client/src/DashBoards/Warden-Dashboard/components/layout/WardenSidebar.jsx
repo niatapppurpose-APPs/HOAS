@@ -15,8 +15,10 @@ import {
   ShieldAlert,
   PieChart,
   Wallet,
+  ClipboardList,
 } from "lucide-react";
 import { useAuth } from "../../../../context/AuthContext";
+import { useSystemSettings } from "../../../../hooks/useSystemSettings";
 import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from '../../../../components/OwnerServices/Avatar';
 import AppLogo4k from '../../../../assets/AppLogo4k.webp';
@@ -24,6 +26,7 @@ import NewBadge from "../../../../components/NewBadge";
 import MobileBottomNav from "../../../../components/MobileBottomNav";
 const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementData }) => {
   const { user, userData } = useAuth();
+  const { isFeatureEnabled } = useSystemSettings();
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,6 +59,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
     if (path.includes('/emergency-location')) return 'emergency-location';
     if (path.includes('/analytics')) return 'analytics';
     if (path.includes('/leave-requests')) return 'leave-requests';
+    if (path.includes('/visitors')) return 'visitors';
     if (path.includes('/announcements')) return 'announcements';
     if (path.includes('/settings')) return 'settings';
     if (path.includes('/help')) return 'help';
@@ -93,6 +97,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
     { id: "students", label: "Students", icon: Users, path: "/dashboard/warden/students", tourId: "warden-tour-nav-students" },
     { id: "complaints", label: "Complaints", icon: FileText, path: "/dashboard/warden/complaints", tourId: "warden-tour-nav-complaints" },
     { id: "leave-requests", label: "Leave Requests", icon: CalendarDays, path: "/dashboard/warden/leave-requests", tourId: "warden-tour-nav-leave-requests" },
+    { id: "visitors", label: "Visitors", icon: ClipboardList, path: "/dashboard/warden/visitors", feature: "visitors" },
     { id: "announcements", label: "Announcements", icon: Bell, path: "/dashboard/warden/announcements", tourId: "warden-tour-nav-announcements" },
     { id: "analytics", label: "Analytics", icon: PieChart, path: "/dashboard/warden/analytics", tourId: "warden-tour-nav-analytics", isNew: true },
     { id: "fees", label: "Student Fee Reports", icon: Wallet, path: "/dashboard/warden/fees", tourId: "warden-tour-nav-fees" },
@@ -130,9 +135,14 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
 
   const handleDateYear = () => new Date().getFullYear();
 
+  // Feature-flagged items vanish the instant the Owner disables them
+  // (desktop lists and the mobile bottom nav share the filtered arrays)
+  const visibleMenuItems = menuItems.filter((i) => !i.feature || isFeatureEnabled(i.feature));
+  const visibleBottomMenuItems = bottomMenuItems.filter((i) => !i.feature || isFeatureEnabled(i.feature));
+
   const bottomNavItems = [
-    ...menuItems,
-    ...bottomMenuItems,
+    ...visibleMenuItems,
+    ...visibleBottomMenuItems,
     { id: "profile", label: "Profile", path: "/dashboard/warden/profile", isProfile: true },
   ];
 
@@ -230,7 +240,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
             >
               Main Menu
             </p>
-            {menuItems.map((item) => {
+            {visibleMenuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeItem === item.id;
 
@@ -291,7 +301,7 @@ const WardenSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo, managementDat
             >
               More
             </p>
-            {bottomMenuItems.map((item) => {
+              {visibleBottomMenuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeItem === item.id;
 

@@ -164,6 +164,23 @@ export const changePassword = async (newPassword) => {
   return post('/api/auth/me/change-password', { newPassword });
 };
 
+// Step-up auth for secure Owner pages (OTP emailed to the signer)
+export const requestSecureOtp = async (purpose) => {
+  return post('/api/auth/secure-otp/request', { purpose }, 30000);
+};
+
+export const verifySecureOtp = async (purpose, code) => {
+  return post('/api/auth/secure-otp/verify', { purpose, code }, 30000);
+};
+
+// Secure log pages
+export const getServerLogs = async (params = {}) => {
+  const qs = new URLSearchParams(
+    Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+  ).toString();
+  return get(`/api/logs/server${qs ? `?${qs}` : ''}`);
+};
+
 // =============================================================================
 // USER MANAGEMENT
 // =============================================================================
@@ -279,6 +296,56 @@ export const listUsers = async (params = {}) => {
     Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '')
   ).toString();
   return get(`/api/users${query ? `?${query}` : ''}`);
+};
+
+// =============================================================================
+// VISITOR MANAGEMENT (gated by features.visitors)
+// =============================================================================
+
+export const createVisitor = async (data) => {
+  const { visitor } = await post('/api/visitors', data);
+  return { visitor };
+};
+
+export const listVisitors = async (params = {}) => {
+  const query = new URLSearchParams(
+    Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '')
+  ).toString();
+  return get(`/api/visitors${query ? `?${query}` : ''}`);
+};
+
+export const decideVisitor = async (visitorId, decision, remarks = '') => {
+  const { visitor } = await patch(`/api/visitors/${visitorId}/decision`, { decision, remarks });
+  return { visitor };
+};
+
+export const checkoutVisitor = async (visitorId) => {
+  const { visitor } = await patch(`/api/visitors/${visitorId}/checkout`, {});
+  return { visitor };
+};
+
+// =============================================================================
+// MESS MENU (gated by features.messMenu)
+// =============================================================================
+
+export const getCurrentMenu = async () => {
+  return get('/api/mess-menu');
+};
+
+export const listMenus = async () => {
+  return get('/api/mess-menu/all');
+};
+
+export const saveMenu = async (data) => {
+  return post('/api/mess-menu', data);
+};
+
+export const publishMenu = async (menuId) => {
+  return patch(`/api/mess-menu/${menuId}/publish`, {});
+};
+
+export const rateMeal = async (menuId, day, score) => {
+  return post(`/api/mess-menu/${menuId}/rate`, { day, score });
 };
 
 // =============================================================================
@@ -671,6 +738,18 @@ export default {
   markNotificationRead,
   markAllNotificationsRead,
   changePassword,
+  requestSecureOtp,
+  verifySecureOtp,
+  getServerLogs,
+  createVisitor,
+  listVisitors,
+  decideVisitor,
+  checkoutVisitor,
+  getCurrentMenu,
+  listMenus,
+  saveMenu,
+  publishMenu,
+  rateMeal,
   approveUser,
   denyUser,
   deleteUserAccount,

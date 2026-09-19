@@ -14,8 +14,11 @@ import {
   X,
   GraduationCap,
   Wallet,
+  ClipboardList,
+  UtensilsCrossed,
 } from "lucide-react";
 import { useAuth } from "../../../../context/AuthContext";
+import { useSystemSettings } from "../../../../hooks/useSystemSettings";
 import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 import Applogo from "../../../../assets/AppLogo4k.webp";
@@ -29,6 +32,7 @@ const StudentSidebar = ({
   managementData,
 }) => {
   const { user, userData } = useAuth();
+  const { isFeatureEnabled } = useSystemSettings();
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,6 +56,8 @@ const StudentSidebar = ({
     if (path.includes("/fees")) return "fees";
     if (path.includes("/leave")) return "leave";
     if (path.includes("/announcements")) return "announcements";
+if (path.includes("/visitors")) return "visitors";
+if (path.includes("/mess-menu")) return "mess-menu";
     if (path.includes("/emergency-location")) return "emergency-location";
     if (path.includes("/settings")) return "settings";
     if (path.includes("/help")) return "help";
@@ -127,6 +133,20 @@ const StudentSidebar = ({
       path: "/dashboard/student/announcements",
       tourId: "student-tour-nav-announcements",
     },
+    {
+      id: "visitors",
+      label: "My Visitors",
+      icon: ClipboardList,
+      path: "/dashboard/student/visitors",
+      feature: "visitors",
+    },
+    {
+      id: "mess-menu",
+      label: "Mess Menu",
+      icon: UtensilsCrossed,
+      path: "/dashboard/student/mess-menu",
+      feature: "messMenu",
+    },
   ];
 
   const bottomMenuItems = [
@@ -171,9 +191,12 @@ const StudentSidebar = ({
 
   const handleDateYear = () => new Date().getFullYear();
 
+  const visibleMenuItems = menuItems.filter((i) => !i.feature || isFeatureEnabled(i.feature));
+  const visibleBottomMenuItems = bottomMenuItems.filter((i) => !i.feature || isFeatureEnabled(i.feature));
+
   const bottomNavItems = [
-    ...menuItems,
-    ...bottomMenuItems,
+    ...visibleMenuItems,
+    ...visibleBottomMenuItems,
     {
       id: "profile",
       label: "Profile",
@@ -295,7 +318,7 @@ const StudentSidebar = ({
               >
                 Main Menu
               </p>
-              {menuItems.map((item) => {
+              {visibleMenuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeItem === item.id;
 
@@ -382,7 +405,7 @@ const StudentSidebar = ({
               >
                 More
               </p>
-              {bottomMenuItems.map((item) => {
+              {visibleBottomMenuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeItem === item.id;
 

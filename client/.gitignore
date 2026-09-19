@@ -35,3 +35,6 @@ pnpm-debug.log*
 # Cache
 .eslintcache
 .cache
+
+# Legacy/unused files parked for review before deletion (never push)
+_unwanted/

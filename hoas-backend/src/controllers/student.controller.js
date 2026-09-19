@@ -7,7 +7,7 @@ import { AppError } from '../utils/AppError.js';
 import { recordAudit } from '../services/audit.service.js';
 import { sendWelcomeEmail, sendBulkUploadSummaryEmail } from '../services/email.service.js';
 import { createAuthUser, deleteAuthUser, generateResetLink } from '../services/user.service.js';
-import { checkCollegeCapacity } from '../services/capacity.service.js';
+import { checkCollegeCapacity, getSettingsOrDefaults } from '../services/capacity.service.js';
 import { idOf } from '../utils/scope.js';
 import { getPagination, pageMeta } from '../utils/pagination.js';
 
@@ -118,6 +118,10 @@ export async function createStudent(req, res, next) {
 export async function bulkCreateStudents(req, res, next) {
   try {
     const { collegeId, students } = req.body;
+    // Owner → Settings → Feature Flags → Bulk Operations kills this endpoint.
+    const settings = await getSettingsOrDefaults();
+    const bulkOff = settings?.features?.bulkOperations === false;
+    if (bulkOff) throw new AppError(403, 'BULK_OPERATIONS_DISABLED');
     if (req.user.role === 'management' && String(req.user.collegeId?._id) !== String(collegeId)) {
       throw new AppError(403, 'FORBIDDEN');
     }

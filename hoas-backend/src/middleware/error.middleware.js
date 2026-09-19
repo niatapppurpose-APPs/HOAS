@@ -1,4 +1,5 @@
 import { AppError } from '../utils/AppError.js';
+import { logServerError } from '../services/serverLog.service.js';
 
 export function notFoundHandler(req, res, next) {
   next(new AppError(404, 'ROUTE_NOT_FOUND', `${req.method} ${req.originalUrl}`));
@@ -23,5 +24,6 @@ export function errorHandler(err, req, res, next) {
     return res.status(400).json({ error: 'INVALID_ID', message: 'Invalid id format' });
   }
   console.error('Unhandled error:', err);
+  logServerError(err.message, { path: req?.originalUrl, method: req?.method });
   res.status(500).json({ error: 'INTERNAL_SERVER_ERROR', message: err.message });
 }

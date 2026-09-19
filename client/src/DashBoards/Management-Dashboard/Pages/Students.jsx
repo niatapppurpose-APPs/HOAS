@@ -13,6 +13,8 @@ import AddStudentModal from './AddStudentModal';
 import NoDataLight from '../../../assets/No-Data.avif';
 import NoDataDark from '../../../assets/NoDataDark.webp';
 import { useToast } from "../../../components/Toast";
+import { useSystemSettings } from "../../../hooks/useSystemSettings";
+import FeatureDisabled from "../../../components/FeatureDisabled";
 import * as cloudFunctions from "../../../firebase/cloudFunctions";
 
 const mapUser = (u) => ({
@@ -51,6 +53,9 @@ const Students = () => {
   const [unverifyModal, setUnverifyModal] = useState({ show: false, studentId: null, reason: "" });
   const { isDark } = useTheme()
   const toast = useToast();
+  // Owner → Settings → Feature Flags → Bulk Operations gates bulk upload
+  const { isFeatureEnabled } = useSystemSettings();
+  const bulkEnabled = isFeatureEnabled('bulkOperations');
 
   // Use Auth context — management user's own UID is the tenant key
   const { userData, user } = useAuth();
@@ -240,10 +245,12 @@ const Students = () => {
               <Plus size={20} />
               Add Student
             </button>
-            <button type="button" className="btn-primary" onClick={() => setShowBulkUpload(true)}>
-              <FileSpreadsheet size={20} />
-              Bulk Upload
-            </button>
+            {bulkEnabled && (
+              <button type="button" className="btn-primary" onClick={() => setShowBulkUpload(true)}>
+                <FileSpreadsheet size={20} />
+                Bulk Upload
+              </button>
+            )}
           </div>
         </div>
 
@@ -341,9 +348,11 @@ const Students = () => {
           <div className="mb-4">
             <EmptyState
               title="No students yet"
-              description="You haven't added any students to your institution yet. Use Bulk Upload to add students from an Excel sheet."
-              ctaLabel="Bulk Upload"
-              onCta={() => setShowBulkUpload(true)}
+              description={bulkEnabled
+                ? "You haven't added any students to your institution yet. Use Bulk Upload to add students from an Excel sheet."
+                : "You haven't added any students to your institution yet. Use Add Student to create one."}
+              ctaLabel={bulkEnabled ? "Bulk Upload" : "Add Student"}
+              onCta={() => bulkEnabled ? setShowBulkUpload(true) : setShowAddStudent(true)}
               videoSrc={!isDark ? NoDataLight : NoDataDark}
               className="max-w-5xl mx-auto"
             />
@@ -458,12 +467,16 @@ const Students = () => {
         ))}
       </div>
 
-      {/* Bulk Upload Modal */}
-      <BulkUploadStudents
-        isOpen={showBulkUpload}
-        onClose={() => setShowBulkUpload(false)}
-        collegeName={userData?.collegeName}
-      />
+      {/* Bulk Upload Modal — hard-gated by the Bulk Operations feature flag */}
+      {bulkEnabled ? (
+        <BulkUploadStudents
+          isOpen={showBulkUpload}
+          onClose={() => setShowBulkUpload(false)}
+          collegeName={userData?.collegeName}
+        />
+      ) : (
+        showBulkUpload && <FeatureDisabled feature="bulkOperations" />
+      )}
 
       {/* Add Single Student Modal */}
       <AddStudentModal

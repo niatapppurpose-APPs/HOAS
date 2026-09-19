@@ -13,6 +13,8 @@ import {
   X,
   Ticket,
   Inbox,
+  ScrollText,
+  Terminal,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -41,6 +43,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     if (path.includes("/analytics")) return "analytics";
     if (path.includes("/reports")) return "reports";
     if (path.includes("/notifications")) return "notifications";
+    if (path.includes("/audit-logs")) return "audit-logs";
+    if (path.includes("/server-logs")) return "server-logs";
     if (path.includes("/settings")) return "settings";
     if (path.includes("/support-tickets")) return "support-tickets";
     if (path.includes("/access-requests")) return "access-requests";
@@ -137,6 +141,18 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       icon: Inbox,
       path: "/OwnersDashboard/access-requests",
       tourId: "tour-nav-access-requests",
+    },
+    {
+      id: "audit-logs",
+      label: "Audit Logs",
+      icon: ScrollText,
+      path: "/OwnersDashboard/audit-logs",
+    },
+    {
+      id: "server-logs",
+      label: "Server Logs",
+      icon: Terminal,
+      path: "/OwnersDashboard/server-logs",
     },
     {
       id: "settings",

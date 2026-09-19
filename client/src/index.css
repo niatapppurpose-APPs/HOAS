@@ -118,6 +118,31 @@ html {
   min-height: 100%;
 }
 
+/* ── Smooth theme cross-fade ──
+   .theme-anim is added to <html> for ~450ms whenever the theme changes,
+   so every surface glides between light/dark instead of snapping. Only
+   paint-cheap properties are transitioned to avoid jank. */
+html.theme-anim,
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition:
+    background-color 0.35s ease,
+    border-color 0.35s ease,
+    color 0.35s ease,
+    fill 0.35s ease,
+    stroke 0.35s ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-anim,
+  html.theme-anim *,
+  html.theme-anim *::before,
+  html.theme-anim *::after {
+    transition: none !important;
+  }
+}
+
 body {
   background: var(--app-background);
   background-attachment: fixed;

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticate, verifyTokenOnly } from '../middleware/auth.middleware.js';
+import { requireRole } from '../middleware/role.middleware.js';
 import {
   getMe,
   updateMe,
@@ -9,6 +10,8 @@ import {
   changePassword,
   registerRequest,
   resolveStudentLogin,
+  requestSecureOtp,
+  verifySecureOtp,
 } from '../controllers/auth.controller.js';
 import { validateBody, validateParams } from '../middleware/validate.middleware.js';
 import { z } from 'zod';
@@ -59,5 +62,22 @@ router.patch(
   markNotificationRead
 );
 router.post('/me/change-password', validateBody(changePasswordSchema), changePassword);
+
+// Step-up auth: OTP to the signer's email before opening secure Owner pages.
+router.post(
+  '/secure-otp/request',
+  requireRole('owner', 'admin'),
+  validateBody(z.object({ purpose: z.enum(['audit-logs', 'server-logs']) })),
+  requestSecureOtp
+);
+router.post(
+  '/secure-otp/verify',
+  requireRole('owner', 'admin'),
+  validateBody(z.object({
+    purpose: z.enum(['audit-logs', 'server-logs']),
+    code: z.string().min(4).max(12),
+  })),
+  verifySecureOtp
+);
 
 export default router;

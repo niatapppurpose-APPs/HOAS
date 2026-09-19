@@ -78,6 +78,8 @@ const StudentAnnouncements = lazy(() => import("../../DashBoards/Student-DashBoa
 const StudentEmergencyLocation = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentEmergencyLocation"));
 const StudentFees = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentFees"));
 const StudentSettings = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentSettings"));
+const StudentVisitors = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentVisitors"));
+const StudentMessMenu = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentMessMenu"));
 const StudentHelpSupport = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentHelpSupport"));
 const StudentProfile = lazy(() => import("../../DashBoards/Student-DashBoard/components/pages/StudentProfile"));
 const WardenDashboard = lazy(() => import("../../DashBoards/Warden-Dashboard/WardenDashboard"));
@@ -89,6 +91,7 @@ const WardenAnnouncements = lazy(() => import("../../DashBoards/Warden-Dashboard
 const WardenEmergencyLocation = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenEmergencyLocation"));
 const WardenFeeVerification = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenFeeVerification"));
 const WardenSettings = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenSettings"));
+const WardenVisitors = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenVisitors"));
 const WardenHelpSupport = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenHelpSupport"));
 const WardenProfile = lazy(() => import("../../DashBoards/Warden-Dashboard/components/pages/WardenProfile"));
 
@@ -104,6 +107,7 @@ const ManagementComplaints = lazy(() => import("../../DashBoards/Management-Dash
 const ManagementEmergencyLocation = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementEmergencyLocation"));
 const ManagementHelp = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/HelpSupport"));
 const ManagementSettings_Page = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementSettings"));
+const ManagementMessMenu = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/MessMenu"));
 const ManagementProfile = lazy(() => import("../../DashBoards/Management-Dashboard/Pages/ManagementProfile"));
 
 // Management Dashboard - lazy loaded
@@ -117,6 +121,8 @@ const Notifications = lazy(() => import("../../Pages/OwnersDashboard/Pages/Notif
 const Settings = lazy(() => import("../../Pages/OwnersDashboard/Pages/GlobalSystemSettings"));
 const SupportTickets = lazy(() => import("../../Pages/OwnersDashboard/Pages/SupportTickets"));
 const AccessRequests = lazy(() => import("../../Pages/OwnersDashboard/Pages/AccessRequests"));
+const AuditLogs = lazy(() => import("../../Pages/OwnersDashboard/Pages/AuditLogs"));
+const ServerLogs = lazy(() => import("../../Pages/OwnersDashboard/Pages/ServerLogs"));
 const OwnerProfile = lazy(() => import("../OwnerServices/OwnerProfile"));
 
 const Routes_path = () => {
@@ -149,6 +155,16 @@ const Routes_path = () => {
                     <Route path="leave" element={<StudentLeaveRequests />} />
                     <Route path="fees" element={<StudentFees />} />
                     <Route path="announcements" element={<StudentAnnouncements />} />
+                    <Route path="visitors" element={
+                        <FeatureGate feature="visitors" fallback={<FeatureDisabled feature="visitors" />}>
+                            <StudentVisitors />
+                        </FeatureGate>
+                    } />
+                    <Route path="mess-menu" element={
+                        <FeatureGate feature="messMenu" fallback={<FeatureDisabled feature="messMenu" />}>
+                            <StudentMessMenu />
+                        </FeatureGate>
+                    } />
                     <Route path="settings" element={<StudentSettings />} />
                     <Route path="help" element={<StudentHelpSupport />} />
                     <Route path="profile" element={<StudentProfile />} />
@@ -170,6 +186,11 @@ const Routes_path = () => {
                         </FeatureGate>
                     } />
                     <Route path="announcements" element={<WardenAnnouncements />} />
+                    <Route path="visitors" element={
+                        <FeatureGate feature="visitors" fallback={<FeatureDisabled feature="visitors" />}>
+                            <WardenVisitors />
+                        </FeatureGate>
+                    } />
                     <Route path="settings" element={<WardenSettings />} />
                     <Route path="help" element={<WardenHelpSupport />} />
                     <Route path="profile" element={<WardenProfile />} />
@@ -193,6 +214,11 @@ const Routes_path = () => {
                     <Route path="reports" element={
                         <FeatureGate feature="reports" fallback={<FeatureDisabled feature="reports" />}>
                             <ManagementReports />
+                        </FeatureGate>
+                    } />
+                    <Route path="mess-menu" element={
+                        <FeatureGate feature="messMenu" fallback={<FeatureDisabled feature="messMenu" />}>
+                            <ManagementMessMenu />
                         </FeatureGate>
                     } />
                     <Route path="settings" element={<ManagementSettings_Page />} />
@@ -226,6 +252,8 @@ const Routes_path = () => {
                     <Route path="settings" element={<Settings />} />
                     <Route path="support-tickets" element={<SupportTickets />} />
                     <Route path="access-requests" element={<AccessRequests />} />
+                    <Route path="audit-logs" element={<ProtectedRoute roles={["admin"]}><AuditLogs /></ProtectedRoute>} />
+                    <Route path="server-logs" element={<ProtectedRoute roles={["admin"]}><ServerLogs /></ProtectedRoute>} />
                     <Route path="profile" element={<OwnerProfile />} />
                 </Route>
 

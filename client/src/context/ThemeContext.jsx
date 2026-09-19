@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 const ThemeContext = createContext();
 
@@ -44,7 +44,10 @@ export const ThemeProvider = ({ children }) => {
     }
   });
 
-  // Apply theme to document immediately and on changes
+  // Apply theme to document immediately and on changes.
+  // Adds .theme-anim for a smooth cross-fade (removed after the transition).
+  const animTimer = useRef(null);
+  const firstRender = useRef(true);
   useEffect(() => {
     const applyTheme = (themeValue) => {
       const root = document.documentElement;
@@ -61,12 +64,30 @@ export const ThemeProvider = ({ children }) => {
       document.body.classList.remove('light', 'dark');
       document.body.classList.add(themeValue);
       document.body.setAttribute('data-theme', themeValue);
+
+      // Smooth cross-fade on every real switch (skip first paint)
+      if (!firstRender.current) {
+        root.classList.add('theme-anim');
+        if (animTimer.current) clearTimeout(animTimer.current);
+        animTimer.current = setTimeout(() => {
+          document.documentElement.classList.remove('theme-anim');
+          animTimer.current = null;
+        }, 450);
+      }
+      firstRender.current = false;
     };
 
     applyTheme(theme);
 
     // Save to localStorage
     localStorage.setItem('hoas-theme', theme);
+
+    return () => {
+      if (animTimer.current) {
+        clearTimeout(animTimer.current);
+        animTimer.current = null;
+      }
+    };
   }, [theme]);
 
   // Listen for system preference changes when in system mode
@@ -87,41 +108,41 @@ export const ThemeProvider = ({ children }) => {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [isSystemMode]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setIsSystemMode(false);
     localStorage.setItem('hoas-theme-mode', 'manual');
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+  }, []);
 
-  const setLightMode = () => {
+  const setLightMode = useCallback(() => {
     setIsSystemMode(false);
     localStorage.setItem('hoas-theme-mode', 'manual');
     setTheme('light');
-  };
+  }, []);
 
-  const setDarkMode = () => {
+  const setDarkMode = useCallback(() => {
     setIsSystemMode(false);
     localStorage.setItem('hoas-theme-mode', 'manual');
     setTheme('dark');
-  };
+  }, []);
 
-  const setSystemMode = () => {
+  const setSystemMode = useCallback(() => {
     setIsSystemMode(true);
     localStorage.setItem('hoas-theme-mode', 'system');
     const systemTheme = getSystemTheme();
     setTheme(systemTheme);
-  };
+  }, []);
 
   // Get the mode for UI display (light, dark, or system)
-  const getMode = () => {
+  const getMode = useCallback(() => {
     if (isSystemMode) return 'system';
     return theme;
-  };
+  }, [isSystemMode, theme]);
 
   const isDark = theme === 'dark';
   const isLight = theme === 'light';
 
-  const value = {
+  const value = useMemo(() => ({
     theme,
     mode: getMode(),
     toggleTheme,
@@ -131,7 +152,7 @@ export const ThemeProvider = ({ children }) => {
     isDark,
     isLight,
     isSystemMode,
-  };
+  }), [theme, getMode, toggleTheme, setLightMode, setDarkMode, setSystemMode, isDark, isLight, isSystemMode]);
 
   return (
     <ThemeContext.Provider value={value}>

@@ -32,6 +32,9 @@ const systemSettingSchema = new Schema(
       outings: { type: Boolean, default: true },
       announcements: { type: Boolean, default: true },
       feesAutoVerify: { type: Boolean, default: true },
+      // New platform modules (Owner → System Controls → Feature Flags)
+      visitors: { type: Boolean, default: true },
+      messMenu: { type: Boolean, default: true },
       reminders: { type: Schema.Types.Mixed, default: {} },
     },
     limits: {

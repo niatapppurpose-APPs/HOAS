@@ -5,6 +5,7 @@ import { canManageCollege, idOf } from '../utils/scope.js';
 import { recordAudit } from '../services/audit.service.js';
 import { notifyUser } from '../services/notification.service.js';
 import { emitToCollege } from '../services/socket.service.js';
+import { getSettingsOrDefaults } from '../services/capacity.service.js';
 
 export async function listAnnouncements(req, res, next) {
   try {
@@ -30,6 +31,11 @@ export async function createAnnouncement(req, res, next) {
       (req.user.role === 'management' && canManageCollege(req.user, collegeId)) ||
       (req.user.role === 'warden' && String(req.user.collegeId?._id) === String(collegeId));
     if (!canCreate) throw new AppError(403, 'FORBIDDEN');
+    // Owner → Settings → Feature Flags → Announcements kills publishing.
+    const settings = await getSettingsOrDefaults();
+    if (settings?.features?.announcements === false) {
+      throw new AppError(403, 'ANNOUNCEMENTS_DISABLED');
+    }
 
     const announcement = await Announcement.create({
       title: req.body.title,

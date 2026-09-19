@@ -64,6 +64,8 @@ export function normalizeSettingsForResponse(settingsDoc) {
     outings: s.features?.outings ?? true,
     announcements: s.features?.announcements ?? true,
     feesAutoVerify: s.features?.feesAutoVerify ?? true,
+    visitors: s.features?.visitors ?? true,
+    messMenu: s.features?.messMenu ?? true,
     reminders: s.features?.reminders ?? {},
   };
   return {
@@ -152,6 +154,8 @@ export async function updateSettings(req, res, next) {
       outings: featMerge.outings ?? true,
       announcements: featMerge.announcements ?? true,
       feesAutoVerify: featMerge.feesAutoVerify ?? true,
+      visitors: featMerge.visitors ?? true,
+      messMenu: featMerge.messMenu ?? true,
       reminders: featMerge.reminders ?? {},
     };
 
@@ -190,6 +194,14 @@ export async function updateSettings(req, res, next) {
       targetId: settings._id,
       metadata: { changes, fromVersion: previous.version },
     });
+
+    // Instant apply: push to every connected client in milliseconds.
+    try {
+      const { broadcastSettingsUpdate } = await import('../services/socket.service.js');
+      broadcastSettingsUpdate(normalizeSettingsForResponse(settings));
+    } catch {
+      // Socket unavailable — clients fall back to next refresh. Never fail save.
+    }
 
     res.json({ settings: normalizeSettingsForResponse(settings) });
   } catch (error) {

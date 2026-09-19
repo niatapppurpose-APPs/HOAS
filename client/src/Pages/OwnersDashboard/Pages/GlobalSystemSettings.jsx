@@ -74,6 +74,11 @@ import {
   CircleCheck,
   CircleAlert,
   SlidersHorizontal,
+  Megaphone,
+  DoorOpen,
+  BadgeCheck,
+  ClipboardList,
+  UtensilsCrossed,
 } from "lucide-react";
 
 /* =========================================================
@@ -2280,24 +2285,58 @@ const GlobalSystemSettings = () => {
                   {
                     key: "notifications",
                     title: "Notifications",
+                    desc: "In-app + push notification center.",
                     icon: Bell,
                   },
                   {
                     key: "reports",
                     title: "Reports",
+                    desc: "PDF/Excel downloads & report boards.",
                     icon: FileText,
                   },
                   {
                     key: "analytics",
                     title: "Analytics",
+                    desc: "Charts, trends & insights pages.",
                     icon: BarChart3,
                   },
                   {
                     key: "bulkOperations",
                     title: "Bulk Operations",
+                    desc: "Bulk student upload & bulk approvals.",
                     icon: Layers,
                   },
-                ].map(({ key, title, icon: Icon }) => {
+                  {
+                    key: "outings",
+                    title: "Outings",
+                    desc: "Student outing requests & approvals.",
+                    icon: DoorOpen,
+                  },
+                  {
+                    key: "announcements",
+                    title: "Announcements",
+                    desc: "Publish & scheduled announcements.",
+                    icon: Megaphone,
+                  },
+                  {
+                    key: "feesAutoVerify",
+                    title: "Fee Auto-Verify",
+                    desc: "Auto-verify fees after 24 hours.",
+                    icon: BadgeCheck,
+                  },
+                  {
+                    key: "visitors",
+                    title: "Visitor Management",
+                    desc: "Gate register, approvals & check-out.",
+                    icon: ClipboardList,
+                  },
+                  {
+                    key: "messMenu",
+                    title: "Mess Menu",
+                    desc: "Weekly mess menu & meal ratings.",
+                    icon: UtensilsCrossed,
+                  },
+                ].map(({ key, title, desc, icon: Icon }) => {
                   const enabled = settings.features?.[key] !== false;
 
                   return (
@@ -2360,13 +2399,15 @@ const GlobalSystemSettings = () => {
                           </p>
 
                           <p
-                            className="
+                              className="
                               text-[9px]
                               text-slate-500
                               mt-0.5
+                              truncate
                             "
+                            title={desc}
                           >
-                            {enabled ? "Enabled" : "Disabled"}
+                            {enabled ? "Enabled" : "Disabled"} · {desc}
                           </p>
                         </div>
                       </div>

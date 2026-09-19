@@ -32,6 +32,8 @@ export const DEFAULT_SETTINGS = {
     outings: true,
     announcements: true,
     feesAutoVerify: true,
+    visitors: true,
+    messMenu: true,
   },
   notifications: {
     email: true,
@@ -223,6 +225,25 @@ export const SystemSettingsProvider = ({ children }) => {
     retryCountRef.current = 0;
     return loadSettings();
   }, [loadSettings]);
+
+  // Lightning-fast apply: when the Owner saves anywhere, the backend
+  // broadcasts `settings:updated` over sockets — every open client applies
+  // the payload instantly without waiting for a refresh round-trip.
+  useEffect(() => {
+    const applyBroadcast = (event) => {
+      const incoming = event?.detail?.settings;
+      if (!incoming || !mountedRef.current) return;
+      try {
+        setSettings(normalizeSettings(incoming));
+        setError(null);
+        retryCountRef.current = 0;
+      } catch {
+        // Malformed payload — ignore, next refresh will heal.
+      }
+    };
+    window.addEventListener('hoas:settings-updated', applyBroadcast);
+    return () => window.removeEventListener('hoas:settings-updated', applyBroadcast);
+  }, []);
 
   // Helper functions
   const isFeatureEnabled = useCallback((featureName) => {

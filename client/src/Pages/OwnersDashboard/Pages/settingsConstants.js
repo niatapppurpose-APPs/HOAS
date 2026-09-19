@@ -26,6 +26,8 @@ export const DEFAULT_SETTINGS = {
     outings: true,
     announcements: true,
     feesAutoVerify: true,
+    visitors: true,
+    messMenu: true,
   },
   notifications: {
     email: true,

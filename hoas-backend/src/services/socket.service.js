@@ -109,3 +109,13 @@ export function broadcastUserUpdate(user) {
   if (user.hostelId) io.to(`hostel:${roomId(user.hostelId)}`).emit('user:updated', payload);
   io.to('admins').emit('user:updated', payload);
 }
+
+// Push fresh system settings to EVERY connected client the instant the Owner
+// saves — toggles apply in a fraction of a second, no refresh needed.
+export function broadcastSettingsUpdate(settings) {
+  if (!io || !settings) return;
+  const payload = {
+    settings: typeof settings.toObject === 'function' ? settings.toObject() : settings,
+  };
+  io.emit('settings:updated', payload);
+}

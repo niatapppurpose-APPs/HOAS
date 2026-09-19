@@ -16,8 +16,10 @@ import {
   X,
   MessageSquare,
   Wallet,
+  UtensilsCrossed,
 } from "lucide-react";
 import { useAuth } from "../../../../context/AuthContext";
+import { useSystemSettings } from "../../../../hooks/useSystemSettings";
 import { useTheme } from "../../../../context/ThemeContext";
 import Avatar from "../../../../components/OwnerServices/Avatar";
 import AppLogo4k from "../../../../assets/AppLogo4k.webp";
@@ -26,6 +28,7 @@ import MobileBottomNav from "../../../../components/MobileBottomNav";
 
 const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
   const { user, userData } = useAuth();
+  const { isFeatureEnabled } = useSystemSettings();
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,6 +56,7 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
     if (path.includes("/emergency-location")) return "emergency-location";
     if (path.includes("/analytics")) return "analytics";
     if (path.includes("/reports")) return "reports";
+if (path.includes("/mess-menu")) return "mess-menu";
     if (path.includes("/settings")) return "settings";
     if (path.includes("/help")) return "help";
     return "dashboard";
@@ -141,6 +145,13 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
       path: "/dashboard/management/reports",
       tourId: "mgmt-tour-nav-reports",
     },
+    {
+      id: "mess-menu",
+      label: "Mess Menu",
+      icon: UtensilsCrossed,
+      path: "/dashboard/management/mess-menu",
+      feature: "messMenu",
+    },
   ];
 
   const bottomMenuItems = [
@@ -185,9 +196,12 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
 
   const handleDateYear = () => new Date().getFullYear();
 
+  const visibleMenuItems = menuItems.filter((i) => !i.feature || isFeatureEnabled(i.feature));
+  const visibleBottomMenuItems = bottomMenuItems.filter((i) => !i.feature || isFeatureEnabled(i.feature));
+
   const bottomNavItems = [
-    ...menuItems,
-    ...bottomMenuItems,
+    ...visibleMenuItems,
+    ...visibleBottomMenuItems,
     {
       id: "profile",
       label: "Profile",
@@ -306,7 +320,7 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
               >
                 Main Menu
               </p>
-              {menuItems.map((item) => {
+              {visibleMenuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeItem === item.id;
 
@@ -394,7 +408,7 @@ const ManagementSidebar = ({ isCollapsed, setIsCollapsed, collegeLogo }) => {
               >
                 More
               </p>
-              {bottomMenuItems.map((item) => {
+              {visibleBottomMenuItems.map((item) => {
                 const Icon = item.icon;
 
                 return (
