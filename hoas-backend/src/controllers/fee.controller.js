@@ -118,8 +118,10 @@ export async function listWardenFees(req, res, next) {
   try {
     const filter = {};
     if (req.user.role === 'warden') {
-      const hostelStudents = await User.find({ hostelId: req.user.hostelId, role: 'student' }).select('_id');
-      filter.studentId = { $in: hostelStudents.map((s) => s._id) };
+      // ONLY fees of this warden's own students — null-safe scope.
+      const { wardenStudentFilter } = await import('../utils/scope.js');
+      const scopedIds = await User.find({ role: 'student', ...wardenStudentFilter(req.user) }).select('_id');
+      filter.studentId = { $in: scopedIds.map((s) => s._id) };
     } else {
       filter.wardenId = req.user._id;
     }

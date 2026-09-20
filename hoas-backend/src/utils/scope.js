@@ -58,28 +58,56 @@ export function canAccessHostel(user, hostel) {
   return false;
 }
 
-// Warden complaint scope: ONLY their assigned complaints plus UNASSIGNED
-// complaints in their own hostel. This prevents cross-warden leakage,
-// including null == null hostel matches when hostelId is unset.
-export function wardenComplaintOr(user) {
+// Warden student scope: ONLY students assigned to this warden, in their
+// hostel, or in their block — always within their own college. Every clause
+// requires a set (non-null) key so null == null can never leak the hostel.
+export function wardenStudentFilter(user) {
+  const or = [{ wardenId: user._id }];
+  if (user.hostelId) or.push({ hostelId: idOf(user.hostelId) });
+  if (user.hostelBlock) or.push({ hostelBlock: user.hostelBlock });
+  return { collegeId: idOf(user.collegeId), $or: or };
+}
+
+// Warden complaint scope: complaints assigned to them, complaints filed by
+// their scoped students, plus UNASSIGNED complaints in their own hostel.
+export async function wardenComplaintFilter(user) {
   const or = [{ assignedWardenId: user._id }];
+  try {
+    const Student = (await import('../models/User.js')).default;
+    const scope = wardenStudentFilter(user);
+    const myStudentIds = await Student.distinct('_id', { role: 'student', ...scope });
+    if (myStudentIds.length > 0) or.push({ studentId: { $in: myStudentIds } });
+  } catch {
+    // Fall back to assignment-only scope rather than failing the request.
+  }
   if (user.hostelId) {
     or.push({
-      hostelId: user.hostelId,
+      hostelId: idOf(user.hostelId),
       $or: [{ assignedWardenId: null }, { assignedWardenId: { $exists: false } }],
     });
   }
-  return or;
+  return { $or: or };
 }
 
-export function canWardenAccessComplaint(user, complaint) {
+export async function canWardenAccessComplaint(user, complaint) {
   if (!user || !complaint) return false;
   if (String(complaint.assignedWardenId) === String(user._id)) return true;
   const unassigned = complaint.assignedWardenId === null || complaint.assignedWardenId === undefined;
-  return (
+  if (
     unassigned &&
     !!user.hostelId &&
     !!complaint.hostelId &&
     String(complaint.hostelId) === String(user.hostelId)
-  );
+  ) return true;
+  // Filed by one of my scoped students (even if assigned elsewhere).
+  try {
+    const Student = (await import('../models/User.js')).default;
+    const studentId = complaint.studentId?._id || complaint.studentId;
+    if (!studentId) return false;
+    const scope = wardenStudentFilter(user);
+    const match = await Student.exists({ _id: studentId, role: 'student', ...scope });
+    return !!match;
+  } catch {
+    return false;
+  }
 }

@@ -8,7 +8,7 @@ import { recordAudit } from '../services/audit.service.js';
 import { sendWelcomeEmail, sendBulkUploadSummaryEmail } from '../services/email.service.js';
 import { createAuthUser, deleteAuthUser, generateResetLink } from '../services/user.service.js';
 import { checkCollegeCapacity, getSettingsOrDefaults } from '../services/capacity.service.js';
-import { idOf } from '../utils/scope.js';
+import { idOf, wardenStudentFilter } from '../utils/scope.js';
 import { getPagination, pageMeta } from '../utils/pagination.js';
 
 async function buildStudentPayload(data, collegeId, actingUser) {
@@ -218,7 +218,8 @@ export async function listStudents(req, res, next) {
     const filter = { role: 'student' };
 
     if (role === 'warden') {
-      filter.$or = [{ hostelId: req.user.hostelId }, { wardenId: req.user._id }];
+      // ONLY this warden's students — never whole-college, never null-leak.
+      Object.assign(filter, wardenStudentFilter(req.user));
     } else if (role === 'management') {
       filter.collegeId = idOf(req.user.collegeId);
     } else if (role !== 'owner' && role !== 'admin') {
@@ -226,7 +227,10 @@ export async function listStudents(req, res, next) {
     }
 
     if (req.query.status) filter.status = req.query.status;
-    if (req.query.collegeId) filter.collegeId = req.query.collegeId;
+    // College override is owner/admin-only; management & wardens stay locked.
+    if (req.query.collegeId && (role === 'owner' || role === 'admin')) {
+      filter.collegeId = req.query.collegeId;
+    }
     if (req.query.search) {
       filter.$or = [
         { name: { $regex: req.query.search, $options: 'i' } },

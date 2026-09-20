@@ -2,7 +2,7 @@ import User from '../models/User.js';
 import College from '../models/College.js';
 import Hostel from '../models/Hostel.js';
 import { AppError } from '../utils/AppError.js';
-import { canManageCollege, idOf } from '../utils/scope.js';
+import { canManageCollege, idOf, wardenStudentFilter } from '../utils/scope.js';
 import { getPagination, pageMeta } from '../utils/pagination.js';
 import { recordAudit } from '../services/audit.service.js';
 import { sendWelcomeEmail } from '../services/email.service.js';
@@ -36,11 +36,20 @@ export async function listUsers(req, res, next) {
       filter.collegeId = idOf(req.user.collegeId);
     }
     if (req.user.role === 'warden') {
-      filter.collegeId = idOf(req.user.collegeId);
+      if (!role || role === 'student') {
+        // Wardens see ONLY their own students — never the whole college.
+        Object.assign(filter, wardenStudentFilter(req.user));
+        if (!role) filter.role = 'student';
+      } else {
+        filter.collegeId = idOf(req.user.collegeId);
+      }
     }
     if (role) filter.role = role;
     if (status) filter.status = status;
-    if (collegeId) filter.collegeId = collegeId;
+    // College override is a privilege: owner/admin (and pre-role onboarding)
+    // may filter freely; management & wardens stay locked to their college.
+    const canOverrideCollege = ['owner', 'admin', 'unknown'].includes(req.user.role);
+    if (collegeId && canOverrideCollege) filter.collegeId = collegeId;
     if (search) {
       const searchOr = [
         { name: { $regex: search, $options: 'i' } },
@@ -373,13 +382,30 @@ export async function deleteUser(req, res, next) {
       }
       await Hostel.deleteMany({ collegeId: target.collegeId });
       await College.findByIdAndDelete(target.collegeId);
-    } else {
-      const students = await User.find({ wardenId: target._id });
-      for (const student of students) {
-        await firebaseAuth.deleteUser(student.uid).catch(() => {});
-        await User.findByIdAndDelete(student._id);
+    } else if (target.role === 'warden') {
+      // Deleting a warden must NEVER delete students. Reassign their students
+      // to another warden in the same college/block when one exists,
+      // otherwise leave them unassigned for management to reassign.
+      const replacement = await User.findOne({
+        _id: { $ne: target._id },
+        role: 'warden',
+        status: 'approved',
+        collegeId: target.collegeId,
+        ...(target.hostelBlock ? { hostelBlock: target.hostelBlock } : {}),
+      }).sort({ createdAt: 1 });
+      const fallback = replacement || await User.findOne({
+        _id: { $ne: target._id },
+        role: 'warden',
+        status: 'approved',
+        collegeId: target.collegeId,
+      }).sort({ createdAt: 1 });
+
+      if (fallback) {
+        await User.updateMany({ wardenId: target._id }, { $set: { wardenId: fallback._id } });
+      } else {
+        await User.updateMany({ wardenId: target._id }, { $unset: { wardenId: 1 } });
       }
-      await Hostel.updateOne({ wardenId: target._id }, { $unset: { wardenId: 1 } });
+      await Hostel.updateMany({ wardenId: target._id }, { $unset: { wardenId: 1 } });
     }
 
     await firebaseAuth.deleteUser(target.uid).catch(() => {});

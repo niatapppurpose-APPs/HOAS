@@ -67,6 +67,7 @@ export async function listVisitors(req, res, next) {
     if (req.user.role === 'student') {
       filter.$or = [{ requestedBy: req.user._id }, { studentId: req.user._id }];
     } else if (req.user.role === 'warden') {
+      // Gate register is shared within the warden's own college + block.
       filter.collegeId = idOf(req.user.collegeId);
       if (req.user.hostelBlock) filter.hostelBlock = req.user.hostelBlock;
     } else if (req.user.role === 'management') {
