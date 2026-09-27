@@ -119,7 +119,7 @@ html {
 }
 
 /* ── Smooth theme cross-fade ──
-   .theme-anim is added to <html> for ~450ms whenever the theme changes,
+   .theme-anim is added to <html> for ~650ms whenever the theme changes,
    so every surface glides between light/dark instead of snapping. Only
    paint-cheap properties are transitioned to avoid jank. */
 html.theme-anim,
@@ -127,11 +127,11 @@ html.theme-anim *,
 html.theme-anim *::before,
 html.theme-anim *::after {
   transition:
-    background-color 0.35s ease,
-    border-color 0.35s ease,
-    color 0.35s ease,
-    fill 0.35s ease,
-    stroke 0.35s ease !important;
+    background-color 0.6s ease,
+    border-color 0.6s ease,
+    color 0.6s ease,
+    fill 0.6s ease,
+    stroke 0.6s ease !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -140,6 +140,81 @@ html.theme-anim *::after {
   html.theme-anim *::before,
   html.theme-anim *::after {
     transition: none !important;
+  }
+}
+
+/* ── Theme toggle flash reveal (View Transitions API) ──
+   Expands a circle from the toggle button (--theme-flash-x/y, set in JS).
+   Browsers without startViewTransition fall back to .theme-anim above. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.9s;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2;
+  animation-name: theme-flash-reveal;
+}
+
+@keyframes theme-flash-reveal {
+  from {
+    clip-path: circle(0px at var(--theme-flash-x, 50vw) var(--theme-flash-y, 24px));
+  }
+  to {
+    clip-path: circle(150vmax at var(--theme-flash-x, 50vw) var(--theme-flash-y, 24px));
+  }
+}
+
+/* ── Theme toggle button flash ring + icon pop ── */
+.theme-toggle-flash {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: theme-toggle-flash 0.8s ease-out;
+}
+
+@keyframes theme-toggle-flash {
+  from {
+    box-shadow: 0 0 0 0 rgba(129, 140, 248, 0.55);
+    opacity: 1;
+  }
+  to {
+    box-shadow: 0 0 0 12px rgba(129, 140, 248, 0);
+    opacity: 0;
+  }
+}
+
+.theme-toggle-icon {
+  display: inline-flex;
+  animation: theme-toggle-icon-in 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes theme-toggle-icon-in {
+  from {
+    transform: rotate(-120deg) scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+  .theme-toggle-flash,
+  .theme-toggle-icon {
+    animation: none;
   }
 }
 

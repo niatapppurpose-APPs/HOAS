@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { Sun, Moon, Monitor } from 'lucide-react';
 
 /**
  * A compact theme toggle button that switches between light and dark mode
- * Can be placed in headers, sidebars, or any navigation area
+ * Can be placed in headers, sidebars, or any navigation area.
+ * Single click plays a flash-reveal theme animation; double-click enables Auto System mode.
  */
 const ThemeToggle = ({ className = '', size = 'md' }) => {
-  const { toggleTheme, setSystemMode, isDark, mode } = useTheme();
+  const { toggleThemeAnimated, setSystemMode, isDark, mode } = useTheme();
   const [clickTimeout, setClickTimeout] = useState(null);
+  const [flashKey, setFlashKey] = useState(0);
+  const buttonRef = useRef(null);
 
   const sizes = {
     sm: { button: 'w-8 h-8', icon: 'w-4 h-4' },
@@ -18,7 +21,20 @@ const ThemeToggle = ({ className = '', size = 'md' }) => {
 
   const { button, icon } = sizes[size] || sizes.md;
 
-  const handleSingleClick = (e) => {
+  const fireToggle = () => {
+    // Origin for the circular reveal: center of this button in viewport coords
+    let x;
+    let y;
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      x = rect.left + rect.width / 2;
+      y = rect.top + rect.height / 2;
+    }
+    setFlashKey((k) => k + 1);
+    toggleThemeAnimated(x, y);
+  };
+
+  const handleSingleClick = () => {
     // If a timer is already running, it means this is a second click coming in fast.
     // We clear the timer (canceling the single click action) to let the double click handler take over.
     if (clickTimeout) {
@@ -29,7 +45,7 @@ const ThemeToggle = ({ className = '', size = 'md' }) => {
 
     // Set a timer to delay the single click action
     const timeout = setTimeout(() => {
-      toggleTheme();
+      fireToggle();
       setClickTimeout(null);
     }, 250);
 
@@ -50,9 +66,10 @@ const ThemeToggle = ({ className = '', size = 'md' }) => {
   return (
     <button
       id="tour-theme-toggle"
+      ref={buttonRef}
       onClick={handleSingleClick}
       onDoubleClick={handleDoubleClick}
-      className={`${button} flex items-center justify-center rounded-lg transition-all duration-300 hover:scale-105 ${className}`}
+      className={`${button} relative flex items-center justify-center rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 ${className}`}
       style={{
         backgroundColor: 'var(--bg-tertiary)',
         color: 'var(--text-primary)',
@@ -61,13 +78,25 @@ const ThemeToggle = ({ className = '', size = 'md' }) => {
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode (Double-click for Auto System)`}
       title={`Click: Switch Theme | Double-Click: Auto System Mode (${mode === 'system' ? 'Active' : 'Inactive'})`}
     >
-      {mode === 'system' ? (
-        <Monitor className={`${icon} ${isDark ? 'text-blue-400' : 'text-blue-600'} transition-transform duration-300`} />
-      ) : isDark ? (
-        <Sun className={`${icon} text-yellow-400 transition-transform duration-300`} />
-      ) : (
-        <Moon className={`${icon} text-indigo-600 transition-transform duration-300`} />
+      {flashKey > 0 && (
+        <span
+          key={flashKey}
+          aria-hidden="true"
+          className="theme-toggle-flash"
+          onAnimationEnd={(e) => {
+            if (e.target === e.currentTarget) setFlashKey(0);
+          }}
+        />
       )}
+      <span key={`${mode}-${isDark ? 'dark' : 'light'}`} className="theme-toggle-icon">
+        {mode === 'system' ? (
+          <Monitor className={`${icon} ${isDark ? 'text-blue-400' : 'text-blue-600'} transition-transform duration-300`} />
+        ) : isDark ? (
+          <Sun className={`${icon} text-yellow-400 transition-transform duration-300`} />
+        ) : (
+          <Moon className={`${icon} text-indigo-600 transition-transform duration-300`} />
+        )}
+      </span>
     </button>
   );
 };
@@ -76,11 +105,14 @@ const ThemeToggle = ({ className = '', size = 'md' }) => {
  * A switch-style theme toggle (iOS style)
  */
 export const ThemeSwitch = ({ className = '' }) => {
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, toggleThemeAnimated } = useTheme();
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        toggleThemeAnimated(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      }}
       className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${className}`}
       style={{
         backgroundColor: isDark ? 'var(--accent-primary)' : '#e2e8f0',

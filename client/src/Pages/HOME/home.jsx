@@ -23,7 +23,6 @@ import HeroVisual from "./components/HeroVisual";
 import FeaturesGrid from "./components/FeaturesGrid";
 import { WorkflowSteps, TechStack } from "./components/HowItWorks";
 import { Testimonials, FAQ } from "./components/SocialProof";
-import FlipText from "../../components/ui/vengence/FlipText";
 import StackedLogos from "../../components/ui/vengence/StackedLogos";
 import { RoleCard } from "./components/Cards";
 import RoleDrawer from "./components/RoleDrawer";

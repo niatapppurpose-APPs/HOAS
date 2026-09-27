@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { flushSync } from 'react-dom';
 
 const ThemeContext = createContext();
 
@@ -46,8 +47,11 @@ export const ThemeProvider = ({ children }) => {
 
   // Apply theme to document immediately and on changes.
   // Adds .theme-anim for a smooth cross-fade (removed after the transition).
+  // Skipped when a View Transition reveal is driving the animation instead.
+  // Timings match the CSS: 0.6s cross-fade / 0.9s circular reveal.
   const animTimer = useRef(null);
   const firstRender = useRef(true);
+  const skipAnimRef = useRef(false);
   useEffect(() => {
     const applyTheme = (themeValue) => {
       const root = document.documentElement;
@@ -65,16 +69,19 @@ export const ThemeProvider = ({ children }) => {
       document.body.classList.add(themeValue);
       document.body.setAttribute('data-theme', themeValue);
 
-      // Smooth cross-fade on every real switch (skip first paint)
-      if (!firstRender.current) {
+      // Smooth cross-fade on every real switch (skip first paint).
+      // When a View Transition reveal is active it owns the animation,
+      // so the blanket transition would only fight the snapshot.
+      if (!firstRender.current && !skipAnimRef.current) {
         root.classList.add('theme-anim');
         if (animTimer.current) clearTimeout(animTimer.current);
         animTimer.current = setTimeout(() => {
           document.documentElement.classList.remove('theme-anim');
           animTimer.current = null;
-        }, 450);
+        }, 650);
       }
       firstRender.current = false;
+      skipAnimRef.current = false;
     };
 
     applyTheme(theme);
@@ -114,6 +121,46 @@ export const ThemeProvider = ({ children }) => {
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
   }, []);
 
+  // Animated toggle: circular flash reveal expanding from (x, y) via the
+  // View Transitions API where supported. Falls back to the plain toggle
+  // (the .theme-anim cross-fade covers it). Honors reduced-motion.
+  const toggleThemeAnimated = useCallback((x, y) => {
+    const apply = () => {
+      setIsSystemMode(false);
+      localStorage.setItem('hoas-theme-mode', 'manual');
+      setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    };
+
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const canTransition =
+      !reduceMotion &&
+      typeof document !== 'undefined' &&
+      typeof document.startViewTransition === 'function';
+
+    if (!canTransition) {
+      apply();
+      return;
+    }
+
+    const root = document.documentElement;
+    if (typeof x === 'number') root.style.setProperty('--theme-flash-x', `${x}px`);
+    if (typeof y === 'number') root.style.setProperty('--theme-flash-y', `${y}px`);
+
+    skipAnimRef.current = true;
+    try {
+      document.startViewTransition(() => {
+        flushSync(apply);
+      });
+    } catch {
+      skipAnimRef.current = false;
+      apply();
+    }
+  }, []);
+
   const setLightMode = useCallback(() => {
     setIsSystemMode(false);
     localStorage.setItem('hoas-theme-mode', 'manual');
@@ -146,13 +193,14 @@ export const ThemeProvider = ({ children }) => {
     theme,
     mode: getMode(),
     toggleTheme,
+    toggleThemeAnimated,
     setLightMode,
     setDarkMode,
     setSystemMode,
     isDark,
     isLight,
     isSystemMode,
-  }), [theme, getMode, toggleTheme, setLightMode, setDarkMode, setSystemMode, isDark, isLight, isSystemMode]);
+  }), [theme, getMode, toggleTheme, toggleThemeAnimated, setLightMode, setDarkMode, setSystemMode, isDark, isLight, isSystemMode]);
 
   return (
     <ThemeContext.Provider value={value}>
