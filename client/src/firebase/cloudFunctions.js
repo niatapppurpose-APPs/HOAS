@@ -12,7 +12,7 @@ const responseCache = new Map(); // path -> { ts, data }
 const inflightRefreshes = new Map(); // path -> Promise
 
 // Realtime data that must never be served from cache
-const NO_CACHE_PATTERNS = ['/emergency', '/notifications', '/chat', '/fees'];
+const NO_CACHE_PATTERNS = ['/emergency', '/notifications', '/chat', '/fees', '/logs/server', '/settings/audit'];
 
 const isCacheable = (path) => !NO_CACHE_PATTERNS.some((p) => path.includes(p));
 
@@ -241,8 +241,11 @@ export const getSystemSettings = async () => {
   return get('/api/settings');
 };
 
-export const getSettingsAuditLogs = async () => {
-  return get('/api/settings/audit');
+export const getSettingsAuditLogs = async (params = {}) => {
+  const qs = new URLSearchParams(
+    Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+  ).toString();
+  return get(`/api/settings/audit${qs ? `?${qs}` : ''}`);
 };
 
 export const updateSystemSettings = async (settings) => {

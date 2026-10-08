@@ -9,8 +9,8 @@ router.use(authenticate);
 
 // Owner-only: live server request/error log + runtime stats.
 router.get('/server', requireRole('owner', 'admin'), (req, res) => {
-  const { level, limit } = req.query;
-  res.json(getServerLogSnapshot({ level, limit: Number(limit) || 200 }));
+  const { level, limit, search, q } = req.query;
+  res.json(getServerLogSnapshot({ level, limit: Number(limit) || 200, search: search || q || '' }));
 });
 
 export default router;

@@ -46,9 +46,9 @@ export const ThemeProvider = ({ children }) => {
   });
 
   // Apply theme to document immediately and on changes.
-  // Adds .theme-anim for a smooth cross-fade (removed after the transition).
-  // Skipped when a View Transition reveal is driving the animation instead.
-  // Timings match the CSS: 0.6s cross-fade / 0.9s circular reveal.
+  // Adds .theme-anim for a quick cross-fade (removed after the transition).
+  // Skipped when a View Transition wipe is driving the animation instead.
+  // Timings match the CSS: 0.32s cross-fade / 0.9s circular flash-wipe.
   const animTimer = useRef(null);
   const firstRender = useRef(true);
   const skipAnimRef = useRef(false);
@@ -78,7 +78,7 @@ export const ThemeProvider = ({ children }) => {
         animTimer.current = setTimeout(() => {
           document.documentElement.classList.remove('theme-anim');
           animTimer.current = null;
-        }, 650);
+        }, 380);
       }
       firstRender.current = false;
       skipAnimRef.current = false;

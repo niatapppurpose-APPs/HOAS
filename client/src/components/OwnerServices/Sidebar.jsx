@@ -15,9 +15,11 @@ import {
   Inbox,
   ScrollText,
   Terminal,
+  SquareTerminal,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { toggleBottomTerminal, TERMINAL_STATE_EVENT } from "../BottomTerminal/terminalBus";
 import Avatar from "./Avatar";
 import Applogo from "../../assets/Applogo.webp";
 import NewBadge from "../NewBadge";
@@ -30,6 +32,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const [isPinned, setIsPinned] = useState(false);
   const [showLogoPopup, setShowLogoPopup] = useState(false);
   const [ownerProfile, setOwnerProfile] = useState(null);
+  const [terminalOpen, setTerminalOpen] = useState(false);
+
+  useEffect(() => {
+    const onState = (e) => setTerminalOpen(!!e?.detail?.open);
+    window.addEventListener(TERMINAL_STATE_EVENT, onState);
+    return () => window.removeEventListener(TERMINAL_STATE_EVENT, onState);
+  }, []);
 
   useEffect(() => {
     setOwnerProfile(userData || null);
@@ -478,6 +487,70 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                   </button>
                 );
               })}
+            </div>
+
+            {/* Bottom terminal drawer trigger — slides a console up from the
+                website bottom (same as Ctrl+`). NOT a page navigation. */}
+            <div className="px-3 mt-1">
+              <button
+                onClick={toggleBottomTerminal}
+                className={`w-full flex items-center gap-3 px-3 cursor-pointer py-2.5 rounded-xl transition-all duration-200 group
+                  ${!showContent ? "lg:justify-center" : ""}
+                `}
+                style={
+                  terminalOpen
+                    ? {
+                        background: `linear-gradient(90deg, var(--owner-accent), var(--owner-accent-2))`,
+                        color: "#ffffff",
+                      }
+                    : { color: "var(--text-secondary)" }
+                }
+                title="Terminal (Ctrl+`)"
+              >
+                <span className="relative flex-shrink-0">
+                  <SquareTerminal
+                    size={20}
+                    className="w-5 h-5 transition-transform duration-300 group-hover:scale-110"
+                    style={{
+                      color: terminalOpen ? "#ffffff" : "var(--text-secondary)",
+                    }}
+                  />
+                </span>
+                <span
+                  className={`font-medium text-sm whitespace-nowrap transition-opacity duration-200 ${!showContent ? "lg:hidden" : ""}`}
+                >
+                  Terminal
+                </span>
+                {showContent && (
+                  <kbd
+                    className="ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded-md border"
+                    style={{
+                      borderColor: "var(--border-primary)",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Ctrl+`
+                  </kbd>
+                )}
+
+                {/* Tooltip for collapsed state */}
+                {!showContent && (
+                  <div
+                    className="hidden lg:block absolute left-full ml-3 px-3 py-2 text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50"
+                    style={{
+                      backgroundColor: "var(--bg-card)",
+                      color: "var(--text-primary)",
+                      boxShadow: "var(--shadow-lg)",
+                    }}
+                  >
+                    Terminal (Ctrl+`)
+                    <div
+                      className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 rotate-45"
+                      style={{ backgroundColor: "var(--bg-card)" }}
+                    />
+                  </div>
+                )}
+              </button>
             </div>
 
             {/* User Profile Card */}

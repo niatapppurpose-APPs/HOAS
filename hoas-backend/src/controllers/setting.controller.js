@@ -223,11 +223,16 @@ export async function listAuditLogs(req, res, next) {
     const filter = {};
     if (req.query.action) filter.action = req.query.action;
     if (req.query.targetType) filter.targetType = req.query.targetType;
-    if (req.query.limit) req.query.limit = Number(req.query.limit);
+    // Free-text search for the xterm terminal filter box (`?q=…`).
+    const q = String(req.query.q || req.query.search || '').trim();
+    if (q) {
+      const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      filter.$or = [{ action: rx }, { targetType: rx }, { actorRole: rx }];
+    }
     const logs = await AuditLog.find(filter)
       .populate('actorId', 'name email role')
       .sort({ timestamp: -1 })
-      .limit(Math.min(req.query.limit || 100, 500));
+      .limit(Math.min(Number(req.query.limit) || 200, 500));
     res.json({ logs });
   } catch (error) {
     next(error);

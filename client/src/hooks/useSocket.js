@@ -40,6 +40,8 @@ const SOCKET_EVENT_MAP = [
   ['settings:updated', 'hoas:settings-updated'],
   ['visitor:updated', 'hoas:visitor-updated'],
   ['messmenu:updated', 'hoas:messmenu-updated'],
+  ['log:new', 'hoas:log-new'],
+  ['audit:new', 'hoas:audit-new'],
 ];
 
 const attachForwarders = (socket) => {

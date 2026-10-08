@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from '../../components/OwnerServices/Sidebar';
+import BottomTerminal from '../../components/BottomTerminal/BottomTerminal';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -44,6 +45,9 @@ const OwnersLayout = () => {
         }`}>
           <Outlet context={{ isCollapsed, setIsCollapsed }} />
         </main>
+
+        {/* Global bottom terminal drawer (sidebar / header / Ctrl+` toggle) */}
+        <BottomTerminal />
       </div>
     </div>
   );

@@ -9,13 +9,28 @@ const MAX_ENTRIES = 500;
 const buffer = [];
 const bootTime = Date.now();
 
+// Lazy socket emit (avoids circular imports at module load): every new
+// server-log line is pushed to owner/admin consoles for live xterm tail.
+function emitLive(entry) {
+  try {
+    // socket.service owns the `io` instance; dynamic import keeps this
+    // logger safe to import from app.js before sockets initialize.
+    import('./socket.service.js').then(({ getIo }) => {
+      const io = getIo?.();
+      if (io) io.to('admins').emit('log:new', { entry });
+    }).catch(() => { /* live tail is best-effort */ });
+  } catch { /* never break logging */ }
+}
+
 export function pushServerLog(entry) {
-  buffer.push({
+  const full = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     at: new Date().toISOString(),
     ...entry,
-  });
+  };
+  buffer.push(full);
   if (buffer.length > MAX_ENTRIES) buffer.splice(0, buffer.length - MAX_ENTRIES);
+  emitLive(full);
 }
 
 export function logServerError(message, context = {}) {
@@ -47,11 +62,18 @@ export function requestLogger(req, res, next) {
   next();
 }
 
-export function getServerLogSnapshot({ level, limit = 200 } = {}) {
-  const entries = (level && level !== 'all'
+export function getServerLogSnapshot({ level, limit = 200, search = '' } = {}) {
+  const q = String(search || '').trim().toLowerCase();
+  let entries = level && level !== 'all'
     ? buffer.filter((e) => e.level === level)
-    : buffer
-  ).slice(-Math.min(Math.max(Number(limit) || 200, 1), MAX_ENTRIES)).reverse();
+    : buffer.slice();
+  if (q) {
+    entries = entries.filter((e) =>
+      [e.method, e.path, e.message, e.role, e.level, String(e.status ?? '')]
+        .filter(Boolean).join(' ').toLowerCase().includes(q)
+    );
+  }
+  entries = entries.slice(-Math.min(Math.max(Number(limit) || 200, 1), MAX_ENTRIES)).reverse();
   const mem = process.memoryUsage();
   return {
     entries,

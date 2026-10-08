@@ -1,8 +1,9 @@
-import { Crown, Menu, LogOutIcon } from "lucide-react";
+import { Crown, Menu, LogOutIcon, SquareTerminal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../Toast";
 import { ThemeToggle } from "../ThemeToggle";
+import { toggleBottomTerminal } from "../BottomTerminal/terminalBus";
 import NotificationBell from "./NotificationBell";
 import AnimatedLogoutButton from "../AnimatedLogoutButton";
 import SearchModal from "../ui/SearchModal/SearchModal";
@@ -102,6 +103,21 @@ const Header = ({
             <div id="tour-theme-toggle" className="flex-shrink-0">
               <ThemeToggle size="sm" />
             </div>
+
+            {/* Bottom terminal drawer trigger (Ctrl+`) */}
+            <button
+              type="button"
+              onClick={toggleBottomTerminal}
+              className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 flex-shrink-0"
+              style={{
+                backgroundColor: "var(--bg-tertiary)",
+                color: "var(--text-primary)",
+              }}
+              aria-label="Toggle terminal (Ctrl+`)"
+              title="Terminal (Ctrl+`)"
+            >
+              <SquareTerminal className="w-4 h-4" />
+            </button>
 
             {/* Notification Bell */}
             <div id="tour-notifications" className="flex-shrink-0">

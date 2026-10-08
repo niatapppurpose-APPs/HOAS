@@ -5,11 +5,11 @@ import { Sun, Moon, Monitor } from 'lucide-react';
 /**
  * A compact theme toggle button that switches between light and dark mode
  * Can be placed in headers, sidebars, or any navigation area.
- * Single click plays a flash-reveal theme animation; double-click enables Auto System mode.
+ * Single click plays a flash-wipe theme animation (fires instantly);
+ * double-click enables Auto System mode.
  */
 const ThemeToggle = ({ className = '', size = 'md' }) => {
   const { toggleThemeAnimated, setSystemMode, isDark, mode } = useTheme();
-  const [clickTimeout, setClickTimeout] = useState(null);
   const [flashKey, setFlashKey] = useState(0);
   const buttonRef = useRef(null);
 
@@ -21,8 +21,10 @@ const ThemeToggle = ({ className = '', size = 'md' }) => {
 
   const { button, icon } = sizes[size] || sizes.md;
 
+  // Fires instantly on click — no artificial delay, so the wipe feels glued
+  // to the finger. A double-click toggles twice then lands on system mode.
   const fireToggle = () => {
-    // Origin for the circular reveal: center of this button in viewport coords
+    // Origin for the circular wipe: center of this button in viewport coords
     let x;
     let y;
     if (buttonRef.current) {
@@ -34,30 +36,7 @@ const ThemeToggle = ({ className = '', size = 'md' }) => {
     toggleThemeAnimated(x, y);
   };
 
-  const handleSingleClick = () => {
-    // If a timer is already running, it means this is a second click coming in fast.
-    // We clear the timer (canceling the single click action) to let the double click handler take over.
-    if (clickTimeout) {
-      clearTimeout(clickTimeout);
-      setClickTimeout(null);
-      return;
-    }
-
-    // Set a timer to delay the single click action
-    const timeout = setTimeout(() => {
-      fireToggle();
-      setClickTimeout(null);
-    }, 250);
-
-    setClickTimeout(timeout);
-  };
-
   const handleDoubleClick = (e) => {
-    // Clear any pending single click action
-    if (clickTimeout) {
-      clearTimeout(clickTimeout);
-      setClickTimeout(null);
-    }
     e.preventDefault();
     e.stopPropagation();
     setSystemMode(); // Enable Auto System mode
@@ -67,7 +46,7 @@ const ThemeToggle = ({ className = '', size = 'md' }) => {
     <button
       id="tour-theme-toggle"
       ref={buttonRef}
-      onClick={handleSingleClick}
+      onClick={fireToggle}
       onDoubleClick={handleDoubleClick}
       className={`${button} relative flex items-center justify-center rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 ${className}`}
       style={{

@@ -112,26 +112,80 @@
   color-scheme: dark;
 }
 
+/* ── Forced light scope ──
+   Add class="force-light" to any page wrapper to pin it to the white/light
+   theme even while the rest of the app is in dark mode. Re-declares every
+   light token so inheritance from html.dark is overridden for the subtree.
+   (xterm terminals keep their own fixed dark palette — unaffected.) */
+.force-light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.7);
+  --bg-sidebar: rgba(255, 255, 255, 0.7);
+  --bg-header: rgba(255, 255, 255, 0.8);
+  --bg-input: rgba(255, 255, 255, 0.6);
+  --bg-hover: rgba(241, 245, 249, 0.8);
+  --bg-modal: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+
+  --text-primary: #0f172a;
+  --text-secondary: #475565;
+  --text-tertiary: #64748b;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --border-focus: #6366f1;
+
+  --accent-primary: #6366f1;
+  --accent-primary-hover: #4f46e5;
+  --accent-secondary: #8b5cf6;
+  --accent-success: #22c55e;
+  --accent-warning: #f59e0b;
+  --accent-danger: #ef4444;
+  --accent-info: #3b82f6;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+
+  --app-background:
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(236, 72, 153, 0.1) 0px, transparent 50%),
+    #ffffff;
+
+  color-scheme: light;
+}
+
 /* Base Styles */
 html {
   transition: background-color 0.3s ease, color 0.3s ease;
   min-height: 100%;
 }
 
-/* ── Smooth theme cross-fade ──
-   .theme-anim is added to <html> for ~650ms whenever the theme changes,
-   so every surface glides between light/dark instead of snapping. Only
-   paint-cheap properties are transitioned to avoid jank. */
+/* ── Smooth theme cross-fade (fallback path) ──
+   .theme-anim is added to <html> for ~380ms whenever the theme changes
+   without a View Transition, so surfaces glide instead of snapping. Kept
+   short on purpose: long blanket transitions feel laggy, not smooth. */
 html.theme-anim,
 html.theme-anim *,
 html.theme-anim *::before,
 html.theme-anim *::after {
   transition:
-    background-color 0.6s ease,
-    border-color 0.6s ease,
-    color 0.6s ease,
-    fill 0.6s ease,
-    stroke 0.6s ease !important;
+    background-color 0.32s ease-out,
+    border-color 0.32s ease-out,
+    color 0.32s ease-out,
+    fill 0.32s ease-out,
+    stroke 0.32s ease-out !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -143,8 +197,10 @@ html.theme-anim *::after {
   }
 }
 
-/* ── Theme toggle flash reveal (View Transitions API) ──
-   Expands a circle from the toggle button (--theme-flash-x/y, set in JS).
+/* ── Theme toggle flash-wipe (View Transitions API) ──
+   A visible brightness FLASH at the toggle point, then the new theme WIPES
+   in as a smooth circle expanding from (--theme-flash-x/y, set in JS).
+   ~0.9s ease-in-out so the wipe reads clearly without feeling laggy.
    Browsers without startViewTransition fall back to .theme-anim above. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
@@ -155,19 +211,25 @@ html.theme-anim *::after {
 
 ::view-transition-old(root) {
   z-index: 1;
+  animation: none;
 }
 
 ::view-transition-new(root) {
   z-index: 2;
-  animation-name: theme-flash-reveal;
+  animation-name: theme-flash-wipe;
 }
 
-@keyframes theme-flash-reveal {
-  from {
+@keyframes theme-flash-wipe {
+  0% {
     clip-path: circle(0px at var(--theme-flash-x, 50vw) var(--theme-flash-y, 24px));
+    filter: brightness(2);
   }
-  to {
+  25% {
+    filter: brightness(1.05);
+  }
+  100% {
     clip-path: circle(150vmax at var(--theme-flash-x, 50vw) var(--theme-flash-y, 24px));
+    filter: brightness(1);
   }
 }
 
@@ -177,7 +239,7 @@ html.theme-anim *::after {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  animation: theme-toggle-flash 0.8s ease-out;
+  animation: theme-toggle-flash 0.9s ease-out;
 }
 
 @keyframes theme-toggle-flash {
@@ -193,7 +255,7 @@ html.theme-anim *::after {
 
 .theme-toggle-icon {
   display: inline-flex;
-  animation: theme-toggle-icon-in 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: theme-toggle-icon-in 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes theme-toggle-icon-in {
