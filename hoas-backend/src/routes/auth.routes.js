@@ -12,6 +12,7 @@ import {
   resolveStudentLogin,
   requestSecureOtp,
   verifySecureOtp,
+  endSecureSession,
 } from '../controllers/auth.controller.js';
 import { validateBody, validateParams } from '../middleware/validate.middleware.js';
 import { z } from 'zod';
@@ -78,6 +79,12 @@ router.post(
     code: z.string().min(4).max(12),
   })),
   verifySecureOtp
+);
+router.post(
+  '/secure-otp/end-session',
+  requireRole('owner', 'admin'),
+  validateBody(z.object({ purpose: z.enum(['audit-logs', 'server-logs']) })),
+  endSecureSession
 );
 
 export default router;

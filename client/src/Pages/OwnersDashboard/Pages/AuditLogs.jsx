@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { HashLoader } from 'react-spinners';
-import { ScrollText, RefreshCw, User, Clock, List, SquareTerminal } from 'lucide-react';
+import { ScrollText, RefreshCw, User, Clock, List, SquareTerminal, Lock } from 'lucide-react';
 import Header from '../../../components/OwnerServices/header';
-import SecureGate from '../../../components/SecureGate/SecureGate';
+import SecureGate, { lockSecurePage } from '../../../components/SecureGate/SecureGate';
 import { useToast } from '../../../components/Toast';
 import useSocket from '../../../hooks/useSocket';
 import LogTerminal from '../../../components/LogTerminal/LogTerminal';
@@ -90,6 +90,20 @@ const AuditLogsBody = () => {
     }
   }, [visible, toast]);
 
+  // Manual "End session": audit + confirmation mail, then re-lock the page.
+  const endSession = useCallback(async () => {
+    const yes = await toast.confirm('End this secure session? The page locks and a confirmation mail is sent to you.');
+    if (!yes) return;
+    try {
+      await cloudFunctions.endSecureSession('audit-logs');
+      toast.success('Session ended — confirmation mail sent');
+    } catch (err) {
+      toast.error(err?.message || 'Mail failed — locking the page anyway');
+    } finally {
+      lockSecurePage('audit-logs');
+    }
+  }, [toast]);
+
   // `$` prompt commands wired to page state
   const handleCommand = useCallback((input, { print, search }) => {
     const [name, ...rest] = input.trim().split(/\s+/);
@@ -109,9 +123,10 @@ const AuditLogsBody = () => {
         return true;
       case 'search': search(arg); print(arg ? `searching for “${arg}”` : 'search cleared'); return true;
       case 'export': doExport(arg === 'json' ? 'json' : 'log'); return true;
+      case 'end-session': endSession(); return true;
       default: return false;
     }
-  }, [load, doExport]);
+  }, [load, doExport, endSession]);
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -144,6 +159,15 @@ const AuditLogsBody = () => {
               title="Refresh"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              onClick={endSession}
+              className="h-10 px-3 rounded-xl border flex items-center gap-1.5 text-xs font-bold hover:-translate-y-0.5 transition-all"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'rgba(239,68,68,0.45)', color: '#ef4444' }}
+              title="End secure session (locks page + sends confirmation mail)"
+            >
+              <Lock className="w-4 h-4" />
+              <span className="hidden sm:inline">End session</span>
             </button>
             <div className="flex rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-primary)' }}>
               <button

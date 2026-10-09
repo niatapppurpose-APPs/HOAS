@@ -173,6 +173,10 @@ export const verifySecureOtp = async (purpose, code) => {
   return post('/api/auth/secure-otp/verify', { purpose, code }, 30000);
 };
 
+export const endSecureSession = async (purpose) => {
+  return post('/api/auth/secure-otp/end-session', { purpose }, 30000);
+};
+
 // Secure log pages
 export const getServerLogs = async (params = {}) => {
   const qs = new URLSearchParams(
@@ -743,6 +747,7 @@ export default {
   changePassword,
   requestSecureOtp,
   verifySecureOtp,
+  endSecureSession,
   getServerLogs,
   createVisitor,
   listVisitors,

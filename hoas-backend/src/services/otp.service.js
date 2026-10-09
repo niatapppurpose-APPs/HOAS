@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import { sendMail } from './email.service.js';
 import { recordAudit } from './audit.service.js';
+import { env } from '../config/env.js';
+import { lookupLocation } from '../utils/clientMeta.js';
 
 /**
  * Step-up authentication for the secure Owner pages (Audit Logs, Server Logs).
@@ -33,7 +35,17 @@ export function isValidOtpPurpose(purpose) {
   return PURPOSES.has(String(purpose));
 }
 
-export async function requestSecureOtp(user, purpose) {
+function appBaseUrl() {
+  const u = env.appUrl;
+  if (u && !u.includes('localhost')) return u.replace(/\/+$/, '');
+  return 'https://hoas-client-4n13.vercel.app';
+}
+
+function pageForPurpose(purpose) {
+  return purpose === 'server-logs' ? 'server-logs' : 'audit-logs';
+}
+
+export async function requestSecureOtp(user, purpose, meta = {}) {
   if (!isValidOtpPurpose(purpose)) {
     const err = new Error('Invalid OTP purpose');
     err.statusCode = 400;
@@ -68,17 +80,36 @@ export async function requestSecureOtp(user, purpose) {
   });
 
   // Fire-and-forget: OTP request must return fast even if email is slow.
-  sendMail({
-    to: user.email,
-    type: 'security_alert',
-    data: {
-      userName: user.name || 'Owner',
-      alertType: `Secure page verification — ${purposeLabel(purpose)}`,
-      message: `Your one-time verification code is: ${code}. It expires in 10 minutes. Never share this code.`,
-      timestamp: new Date().toLocaleString('en-IN'),
-    },
-    subject: `HOAS security code: ${code}`,
-  }).catch((err) => console.error('[otp-email-failed]', err.message));
+  // Device/Location/IP rows + deep links are resolved here (location lookup
+  // is capped at ~2.5s and cached, so the mail carries real values).
+  const base = appBaseUrl();
+  const page = pageForPurpose(purpose);
+  const unlockUrl = `${base}/OwnersDashboard/${page}?purpose=${purpose}&code=${code}`;
+  (async () => {
+    try {
+      const location = await lookupLocation(meta.ip);
+      await sendMail({
+        to: user.email,
+        type: 'security_alert',
+        data: {
+          userName: user.name || 'Owner',
+          alertType: `Secure page verification — ${purposeLabel(purpose)}`,
+          message: `Your one-time verification code is: ${code}. It expires in 10 minutes. Never share this code.`,
+          timestamp: new Date().toLocaleString('en-IN'),
+          device: meta.device || undefined,
+          location: location || undefined,
+          ipAddress: meta.ip || undefined,
+          ip: meta.ip || undefined,
+          otpCode: code,
+          unlockUrl,
+          securityUrl: `${base}/OwnersDashboard/profile`,
+        },
+        subject: `HOAS security code: ${code}`,
+      });
+    } catch (err) {
+      console.error('[otp-email-failed]', err.message);
+    }
+  })();
 
   await recordAudit({
     actor: user,
@@ -91,8 +122,7 @@ export async function requestSecureOtp(user, purpose) {
   return { expiresInSeconds: OTP_TTL_MS / 1000 };
 }
 
-export async function verifySecureOtp(user, purpose, code) {
-  if (!isValidOtpPurpose(purpose)) {
+export async function verifySecureOtp(user, purpose, code) {  if (!isValidOtpPurpose(purpose)) {
     const err = new Error('Invalid OTP purpose');
     err.statusCode = 400;
     err.code = 'INVALID_OTP_PURPOSE';
@@ -128,5 +158,53 @@ export async function verifySecureOtp(user, purpose, code) {
     targetId: user._id,
     metadata: { purpose },
   }).catch(() => {});
+  return { ok: true };
+}
+
+/**
+ * Manual "End session" from a secure Owner page. Revoking is enforced
+ * client-side (sessionStorage unlock is cleared); this call records the
+ * audit trail and emails the admin a confirmation receipt.
+ */
+export async function endSecureSession(user, purpose, meta = {}) {
+  if (!isValidOtpPurpose(purpose)) {
+    const err = new Error('Invalid OTP purpose');
+    err.statusCode = 400;
+    err.code = 'INVALID_OTP_PURPOSE';
+    throw err;
+  }
+  const base = appBaseUrl();
+  (async () => {
+    try {
+      const location = await lookupLocation(meta.ip);
+      await sendMail({
+        to: user.email,
+        type: 'security_alert',
+        data: {
+          userName: user.name || 'Owner',
+          alertType: `Secure session ended — ${purposeLabel(purpose)}`,
+          message: `You ended the secure ${purposeLabel(purpose)} session. The page is locked again and needs a new code to reopen.`,
+          timestamp: new Date().toLocaleString('en-IN'),
+          device: meta.device || undefined,
+          location: location || undefined,
+          ipAddress: meta.ip || undefined,
+          ip: meta.ip || undefined,
+          securityUrl: `${base}/OwnersDashboard/profile`,
+        },
+        subject: 'HOAS secure session ended',
+      });
+    } catch (err) {
+      console.error('[session-end-email-failed]', err.message);
+    }
+  })();
+
+  await recordAudit({
+    actor: user,
+    action: 'SECURE_SESSION_ENDED',
+    targetType: 'User',
+    targetId: user._id,
+    metadata: { purpose },
+  }).catch(() => {});
+
   return { ok: true };
 }

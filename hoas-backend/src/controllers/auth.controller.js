@@ -155,7 +155,11 @@ export async function resolveStudentLogin(req, res, next) {
 export async function requestSecureOtp(req, res, next) {
   try {
     const { requestSecureOtp: request } = await import('../services/otp.service.js');
-    const result = await request(req.user, req.body?.purpose);
+    const { clientIp, parseDevice } = await import('../utils/clientMeta.js');
+    const result = await request(req.user, req.body?.purpose, {
+      ip: clientIp(req),
+      device: parseDevice(req.headers?.['user-agent']),
+    });
     res.json({ ok: true, sentTo: maskEmail(req.user.email), ...result });
   } catch (error) {
     next(error);
@@ -166,6 +170,21 @@ export async function verifySecureOtp(req, res, next) {
   try {
     const { verifySecureOtp: verify } = await import('../services/otp.service.js');
     const result = await verify(req.user, req.body?.purpose, req.body?.code);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+// ── Manual end of a secure Owner session (locks page + confirmation mail) ──
+export async function endSecureSession(req, res, next) {
+  try {
+    const { endSecureSession: end } = await import('../services/otp.service.js');
+    const { clientIp, parseDevice } = await import('../utils/clientMeta.js');
+    const result = await end(req.user, req.body?.purpose, {
+      ip: clientIp(req),
+      device: parseDevice(req.headers?.['user-agent']),
+    });
     res.json(result);
   } catch (error) {
     next(error);

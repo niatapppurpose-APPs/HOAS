@@ -408,8 +408,26 @@ export const EMAIL_TEMPLATES: Record<EmailType, TemplateDef> = {
     subject: () => 'Security alert for your HOAS account',
     body: (d, c) => {
       const url = v(d, 'securityUrl', 'url') || c.appUrl
+      const code = v(d, 'otpCode', 'code')
+      const unlockUrl = v(d, 'unlockUrl') || url
+      // Big copy-ready code block: email clients block JavaScript, so there
+      // is no clipboard access from mail - the code is rendered large and
+      // selectable for manual copy, and the button deep-links to the locked
+      // page with the code prefilled (one tap, no typing).
+      const codeBlock = code
+        ? `<div style="text-align:center;margin:4px 0 20px;">`
+          + `<div style="font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#6b7280;margin:0 0 8px;">Your verification code (tap-hold to copy)</div>`
+          + `<div style="display:inline-block;font-size:34px;font-weight:800;letter-spacing:10px;text-indent:10px;color:#111827;background:#f3f4ff;border:2px dashed #6366f1;border-radius:14px;padding:12px 8px 12px 18px;user-select:all;-webkit-user-select:all;">${esc(code)}</div>`
+          + `<div style="font-size:13px;color:#6b7280;margin:10px 0 0;">Expires in 10 minutes. Never share this code.</div>`
+          + `</div>`
+        : ''
+      const unlockBtn = code
+        ? EmailButton(unlockUrl, 'Open & autofill code')
+          + p(`Button not working? Copy the code above, or paste this link:<br/><a href="${esc(unlockUrl)}" style="color:#4f46e5;word-break:break-all;">${esc(unlockUrl)}</a>`, true)
+        : ''
       return `${greet(v(d, 'userName', 'name'))}`
         + EmailAlert('security', 'Security event detected', v(d, 'alertType', 'activity') || 'Unusual account activity')
+        + codeBlock
         + EmailCard('Activity', [
           { label: 'What happened', value: esc(v(d, 'message', 'activity')) },
           { label: 'When', value: esc(v(d, 'timestamp') || '—') },
@@ -417,14 +435,23 @@ export const EMAIL_TEMPLATES: Record<EmailType, TemplateDef> = {
           { label: 'Location', value: esc(v(d, 'location') || '—') },
           { label: 'IP', value: esc(v(d, 'ipAddress', 'ip') || '—') },
         ])
+        + unlockBtn
         + EmailButton(url, 'Review Account Security')
         + EmailAlert('security', 'Not you?', 'If you don’t recognize this activity, secure your account and contact your institution administrator.')
     },
-    text: (d, c) => [`Hi ${v(d, 'userName', 'name') || 'there'},`, '',
-      `Security event: ${v(d, 'message', 'activity')}`, `When: ${v(d, 'timestamp')}`,
-      `Device: ${v(d, 'device')}`, `Location: ${v(d, 'location')}`,
-      '', `Review: ${v(d, 'securityUrl', 'url') || c.appUrl}`,
-      '', 'If this wasn’t you, contact your administrator.'].join('\n'),
+    text: (d, c) => {
+      const code = v(d, 'otpCode', 'code')
+      const unlockUrl = v(d, 'unlockUrl')
+      return [`Hi ${v(d, 'userName', 'name') || 'there'},`, '',
+        `Security event: ${v(d, 'message', 'activity')}`,
+        ...(code ? [`Your verification code: ${code} (expires in 10 minutes)`, ''] : []),
+        `When: ${v(d, 'timestamp')}`,
+        `Device: ${v(d, 'device') || '-'}`, `Location: ${v(d, 'location') || '-'}`,
+        `IP: ${v(d, 'ipAddress', 'ip') || '-'}`,
+        ...(unlockUrl ? ['', `Open & autofill: ${unlockUrl}`] : []),
+        '', `Review: ${v(d, 'securityUrl', 'url') || c.appUrl}`,
+        '', 'If this wasn’t you, contact your administrator.'].join('\n')
+    },
     preheader: () => 'Security alert for your HOAS account.',
   },
 
