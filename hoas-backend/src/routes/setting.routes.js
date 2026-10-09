@@ -9,6 +9,12 @@ import {
   getCollegeCapacity,
   listAuditLogs,
 } from '../controllers/setting.controller.js';
+import {
+  listFeatureAnnouncements,
+  triggerFeatureAnnounce,
+  aiAnnounceStatus,
+  triggerAiAnnounce,
+} from '../controllers/featureAnnouncement.controller.js';
 
 const router = Router();
 
@@ -53,5 +59,14 @@ router.get(
   getCollegeCapacity
 );
 router.get('/audit', requireRole('owner', 'admin'), listAuditLogs);
+
+// "What's new" mails: registry status + manual send-now trigger
+// (the scheduler announces automatically; this is for instant sends).
+router.get('/feature-announcements', requireRole('owner', 'admin'), listFeatureAnnouncements);
+router.post('/feature-announcements/announce', requireRole('owner', 'admin'), triggerFeatureAnnounce);
+
+// AI-written release notes from git changes (needs AI_API_* env configured)
+router.get('/feature-announcements/ai-status', requireRole('owner', 'admin'), aiAnnounceStatus);
+router.post('/feature-announcements/announce-ai', requireRole('owner', 'admin'), triggerAiAnnounce);
 
 export default router;

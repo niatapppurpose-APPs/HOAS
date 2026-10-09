@@ -6,6 +6,7 @@ import { startAnnouncementScheduler } from './announcement.scheduler.js';
 import { startFeeScheduler } from './fee.scheduler.js';
 import { startEmergencyScheduler } from './emergency.scheduler.js';
 import { startRenderKeeperScheduler } from './render-keeper.scheduler.js';
+import { startFeatureAnnounceScheduler } from './featureAnnounce.scheduler.js';
 
 export function startSchedulers() {
   startComplaintScheduler();
@@ -15,6 +16,7 @@ export function startSchedulers() {
   startFeeScheduler();
   startEmergencyScheduler();
   startRenderKeeperScheduler();
+  startFeatureAnnounceScheduler();
 }
 
 export function stopSchedulers() {

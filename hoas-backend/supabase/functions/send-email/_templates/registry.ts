@@ -15,7 +15,7 @@ export type EmailType =
   | 'new_announcement' | 'emergency_alert'
   | 'support_ticket_created' | 'support_ticket_updated'
   | 'security_alert' | 'account_deactivated' | 'account_reactivated'
-  | 'administrative_report'
+  | 'administrative_report' | 'feature_announcement'
 
 export const EMAIL_TYPES: EmailType[] = [
   'account_created', 'email_verification', 'password_reset',
@@ -25,7 +25,7 @@ export const EMAIL_TYPES: EmailType[] = [
   'new_announcement', 'emergency_alert',
   'support_ticket_created', 'support_ticket_updated',
   'security_alert', 'account_deactivated', 'account_reactivated',
-  'administrative_report',
+  'administrative_report', 'feature_announcement',
 ]
 
 type Data = Record<string, any>
@@ -453,6 +453,42 @@ export const EMAIL_TEMPLATES: Record<EmailType, TemplateDef> = {
         '', 'If this wasn’t you, contact your administrator.'].join('\n')
     },
     preheader: () => 'Security alert for your HOAS account.',
+  },
+
+  feature_announcement: {
+    required: ['featureTitle'],
+    subject: (d) => `New in HOAS: ${v(d, 'featureTitle')}`,
+    body: (d, c) => {
+      const url = v(d, 'featureUrl', 'url') || c.appUrl
+      const title = v(d, 'featureTitle')
+      const summary = v(d, 'featureSummary', 'message')
+      const points = Array.isArray((d as any).featurePoints) ? (d as any).featurePoints : []
+      const version = v(d, 'version')
+      const pointsHtml = points.length
+        ? `<ul style="margin:0 0 20px;padding-left:20px;color:#374151;font-size:15px;line-height:1.7;">`
+          + points.map((pt: unknown) => `<li>${esc(pt)}</li>`).join('')
+          + `</ul>`
+        : ''
+      return `${greet(v(d, 'userName', 'name'))}`
+        + `<div style="margin:0 0 16px;">${EmailBadge("What's new", '#6366f1')}`
+        + (version ? ` ${EmailBadge(`v${esc(version)}`, '#6b7280')}` : '') + `</div>`
+        + p(`<strong style="font-size:18px;color:#111827;">${esc(title)}</strong>`)
+        + (summary ? p(esc(summary)) : '')
+        + pointsHtml
+        + (v(d, 'audienceNote') ? p(`<em>${esc(v(d, 'audienceNote'))}</em>`, true) : '')
+        + EmailButton(url, v(d, 'ctaLabel') || 'Open HOAS')
+        + p(`Button not working? Copy and paste this link:<br/><a href="${esc(url)}" style="color:#4f46e5;word-break:break-all;">${esc(url)}</a>`, true)
+    },
+    text: (d, c) => {
+      const points = Array.isArray((d as any).featurePoints) ? (d as any).featurePoints : []
+      return [`Hi ${v(d, 'userName', 'name') || 'there'},`, '',
+        `New in HOAS: ${v(d, 'featureTitle')}`,
+        v(d, 'featureSummary', 'message'),
+        ...points.map((pt: unknown) => `- ${pt}`),
+        ...(v(d, 'audienceNote') ? ['', v(d, 'audienceNote')] : []),
+        '', `Open HOAS: ${v(d, 'featureUrl', 'url') || c.appUrl}`].join('\n')
+    },
+    preheader: (d) => `New in HOAS: ${v(d, 'featureTitle')}`,
   },
 
   account_deactivated: {

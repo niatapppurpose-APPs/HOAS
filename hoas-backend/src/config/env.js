@@ -35,6 +35,15 @@ export const env = {
   brevoApiKey: required('BREVO_API_KEY', ''),
   appUrl: required('HOAS_APP_URL', 'http://localhost:5173'),
   renderUrl: required('RENDER_URL', 'https://hoas.onrender.com'),
+  // Automatic "What's new" mails for registry features (set false to only use the manual endpoint)
+  featureAnnounceAuto: required('FEATURE_ANNOUNCE_AUTO', 'true') === 'true',
+  // AI-written release notes from git changes (any OpenAI-compatible API)
+  ai: {
+    announceEnabled: required('AI_ANNOUNCE_ENABLED', 'false') === 'true',
+    baseUrl: required('AI_API_BASE_URL', ''),
+    key: required('AI_API_KEY', ''),
+    model: required('AI_MODEL', 'gpt-4o-mini'),
+  },
   cloudinary: {
     cloudName: required('CLOUDINARY_CLOUD_NAME', ''),
     apiKey: required('CLOUDINARY_API_KEY', ''),
