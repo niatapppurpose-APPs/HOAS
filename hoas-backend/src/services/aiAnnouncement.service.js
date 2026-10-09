@@ -25,9 +25,15 @@ const execGit = promisify(execFile);
 const AI_TIMEOUT_MS = 60000;
 
 function aiConfig() {
+  let baseUrl = (env.ai?.baseUrl || '').replace(/\/+$/, '');
+  // Safety net: a bare "googleapis.com" host is not an API endpoint —
+  // point it at Gemini's OpenAI-compatible root automatically.
+  if (/^https?:\/\/googleapis\.com\/?$/.test(baseUrl)) {
+    baseUrl = 'https://generativelanguage.googleapis.com/v1beta/openai';
+  }
   return {
     enabled: env.ai?.announceEnabled === true,
-    baseUrl: (env.ai?.baseUrl || '').replace(/\/+$/, ''),
+    baseUrl,
     key: env.ai?.key || '',
     model: env.ai?.model || 'gpt-4o-mini',
   };
